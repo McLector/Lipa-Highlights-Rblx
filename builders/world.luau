@@ -89,14 +89,21 @@ end
 -- Grass under the plaza as Pavement. Keep this region in step with PlazaPaving in site01.luau.
 -- ReplaceMaterial takes a Region3 in studs, aligned to the 4-stud grid, with resolution exactly 4 (docs). Only Grass is
 -- converted, so the asphalt road mouth at (0,100..) is untouched; the terrain surface height does not change.
-local PLAZA = { x0 = -100, x1 = 100, z0 = 0, z1 = 100 }
+-- Carmel forecourt (Slice 04): same treatment under the monastery's paved forecourt. Keep this region in step with the
+-- forecourt paving in builders/site05.luau. Edges are multiples of 4, as ReplaceMaterial requires.
+local PAVED = {
+	{ x0 = -100, x1 = 100, z0 = 0, z1 = 100 }, -- Plaza Independencia
+	{ x0 = -352, x1 = -248, z0 = -600, z1 = -508 }, -- Carmel forecourt
+}
 local function buildPlazaGround()
-	T:ReplaceMaterial(
-		Region3.new(Vector3.new(PLAZA.x0, -4, PLAZA.z0), Vector3.new(PLAZA.x1, 4, PLAZA.z1)),
-		4,
-		Enum.Material.Grass,
-		Enum.Material.Pavement
-	)
+	for _, r in ipairs(PAVED) do
+		T:ReplaceMaterial(
+			Region3.new(Vector3.new(r.x0, -4, r.z0), Vector3.new(r.x1, 4, r.z1)),
+			4,
+			Enum.Material.Grass,
+			Enum.Material.Pavement
+		)
+	end
 	task.wait()
 end
 

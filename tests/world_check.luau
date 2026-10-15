@@ -138,6 +138,34 @@ do
 	check("plaza ground is paved and the paint stays inside the plaza", #problems == 0, table.concat(problems, "; "))
 end
 
+-- Carmel forecourt (Slice 04): world.luau repaints the Grass under the monastery forecourt (x -352..-248, z -600..-508) as
+-- Pavement, for the same reason as the plaza. Same exact voxel read; the controls prove the paint stays inside the region
+-- and leaves the end of road A (x -300, z -508..-512 is asphalt) alone.
+do
+	local function cellMaterial(x, z)
+		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
+		local mats = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 0, fz + 4)), 4)
+		return mats[1][1][1]
+	end
+	local problems = {}
+	for _, p in ipairs({ { -350, -598 }, { -250, -510 }, { -350, -510 }, { -250, -598 }, { -300, -550 } }) do
+		local m = cellMaterial(p[1], p[2])
+		if m ~= Enum.Material.Pavement then
+			table.insert(problems, string.format("cell (%d,%d) is %s, expected Pavement", p[1], p[2], tostring(m)))
+		end
+	end
+	for _, c in ipairs({
+		{ -356, -550, Enum.Material.Grass }, { -244, -550, Enum.Material.Grass }, { -300, -604, Enum.Material.Grass },
+		{ -348, -504, Enum.Material.Grass }, { -300, -508, Enum.Material.Asphalt },
+	}) do
+		local m = cellMaterial(c[1], c[2])
+		if m ~= c[3] then
+			table.insert(problems, string.format("control cell (%d,%d) is %s, expected %s", c[1], c[2], tostring(m), tostring(c[3])))
+		end
+	end
+	check("Carmel forecourt is paved and the paint stays inside the region", #problems == 0, table.concat(problems, "; "))
+end
+
 -- Baseplate removal is only required once the terrain checks above are green.
 if REQUIRE_BASEPLATE_REMOVED then
 	check("Baseplate removed", workspace:FindFirstChild("Baseplate") == nil)

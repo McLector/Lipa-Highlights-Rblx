@@ -25,6 +25,9 @@ local function xzDist(a, b)
 	return Vector3.new(a.X - b.X, 0, a.Z - b.Z).Magnitude
 end
 
+-- Sites whose real builder has run (the rest are still placeholder Blocks).
+local BUILT = { [1] = true, [5] = true }
+
 local sites = workspace:FindFirstChild("Sites")
 check("Workspace.Sites exists", sites ~= nil)
 if sites then
@@ -38,9 +41,22 @@ if sites then
 			local pivot = m:GetPivot()
 			check(label .. " pivot within 1 stud of pos", (pivot.Position - s.pos).Magnitude <= 1, tostring(pivot.Position))
 			check(label .. " facing dot > 0.99", pivot.LookVector:Dot(SiteData.facingVector(s.facing)) > 0.99, tostring(pivot.LookVector))
-			if s.id == 1 then
-				-- Slice 02: the Cathedral builder replaced the placeholder Block with Structure.
+			if BUILT[s.id] then
+				-- Built sites (1: Slice 02, 5: Slice 04): the builder replaced the placeholder Block with Structure.
 				check(label .. " Structure present and Block absent", m:FindFirstChild("Structure") ~= nil and m:FindFirstChild("Block") == nil)
+				if s.id == 5 then
+					-- Orientation guard (Slice 04): the pivot is yawed 180 degrees, so a build that used the pivot as its origin is
+					-- mirrored yet still passes the symmetric bounds check. The facade must be south (+Z) of the nave, and the east
+					-- wing must be east (+X) of it.
+					local st = m:FindFirstChild("Structure")
+					local podium = st and st:FindFirstChild("Podium", true)
+					local nave = st and st:FindFirstChild("NaveBlock", true)
+					local wing = st and st:FindFirstChild("EastWingBlock", true)
+					check(label .. " facade is south of the nave", podium ~= nil and nave ~= nil and podium.Position.Z > nave.Position.Z + 20,
+						podium and nave and (podium.Position.Z .. " vs " .. nave.Position.Z) or "parts missing")
+					check(label .. " east wing is east of the nave", wing ~= nil and nave ~= nil and wing.Position.X > nave.Position.X + 15,
+						wing and nave and (wing.Position.X .. " vs " .. nave.Position.X) or "parts missing")
+				end
 			else
 				check(label .. " Block present", m:FindFirstChild("Block") ~= nil and m.Block:IsA("BasePart"))
 			end
