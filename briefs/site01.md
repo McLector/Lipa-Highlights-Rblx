@@ -12,7 +12,7 @@ The **2024 scheme**. **Colour source photo: `Cathedral_Front_2024.jpg`.** The ov
 | Walls | cream-yellow (233, 214, 165) |
 | Pilasters, cornices, trim, arch surrounds | mauve-grey (176, 160, 172) |
 | Tower cupola and main dome | cream (236, 226, 196) with blue-grey ribs (140, 160, 175) |
-| Nave roof, wing roofs | maroon (150, 60, 70), corrugated look via thin ribs |
+| Nave, transept and wing roofs | terracotta red (176, 58, 52), ribs (198, 78, 66), corrugated look via thin ribs. The aerial photos show a brighter red than `Cathedral_Front_2024.jpg` (dusty maroon), so the roofs follow the aerials. |
 | Door | warm timber (150, 100, 60) |
 
 Left out on purpose: the purple Lenten banners (seasonal) and the parked cars.
@@ -34,14 +34,14 @@ Left out on purpose: the purple Lenten banners (seasonal) and the parked cars.
 
 **Nave**: plain walls with arched windows along the sides, red roof running back about 90 studs. Nave bays are dropped to fit the footprint (massScale rule: drop repeats, never shrink human-scale parts).
 
-**Dome**: on the nave axis, about 50 studs behind the facade, over a drum with arched windows and four small corner turrets; ribbed dome with a lantern. Top about 70 studs.
+**Transept and dome**: on the nave axis, about 50 studs behind the facade (z −50). The crossing block is 60 wide (x ±30, 12 studs of arm each side of the nave) with gabled arm roofs (ridge along X at y 39.5), an end gable and an arched window on each arm end. On top, an octagonal drum (apothem 16, y 34–48) with an arched window on every face and a cornice, four small corner turrets on the arm roofs, and a ribbed dome of radius 15 (dome top 64.5) with a lantern, cap and cross (cross top 73.4, just below the tower's 75.7). The enlarged dome and transept follow the aerial photos, where the dome is about as wide as the nave.
 
 **Rear**: no rear elevation is documented, so the nave ends in a plain rounded apse.
 
 **Adjoining wing** (viewer's right, +X, front face recessed about 5 studs behind the facade): 2 storeys, arched upper windows in pilaster bays, red hip roof, a central pavilion with a curved gable and cross. About 70 studs long.
 
 ## Plaza and required props
-South half of the footprint (z +10 … +100): low paving (top ≈ +0.05, cut around the JeepStop pad, InfoPanel and spawn), a central walkway to the door.
+South half of the footprint (z +6 … +100): low paving (top ≈ +0.05, so it never hides the JeepStop pad, InfoPanel or spawn), a central walkway to the door, a paving medallion, and a 0.3-stud kerb round the edge with a gap at x ±8 for the road mouth at (0, 100). The terrain under it (x ±100, z 0…100) is repainted as Pavement by `builders/world.luau` so grass does not show through. Hedges flank the tower front and the wing front; a south row of palms echoes the aerial photo.
 Required prop names, each a **direct child folder of the site model containing at least one part**:
 - `PlazaPeople`: 4 idle R15 rigs, never named `Guide`, only the HumanoidRootPart anchored.
 - `Benches`, `Lamps`: along both plaza flanks.

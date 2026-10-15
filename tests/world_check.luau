@@ -106,6 +106,38 @@ if spawn then
 	check("spawn faces -Z", spawn.CFrame.LookVector.Z < -0.99, tostring(spawn.CFrame.LookVector))
 end
 
+-- Plaza ground: world.luau repaints the Grass under Plaza Independencia (x -100..100, z 0..100) as Pavement, so the
+-- terrain's grass blades do not poke through the thin plaza paving. This reads the surface voxel of the 4-stud cell
+-- containing each point (ReadVoxels, exact). Raycasts are NOT used here: within about 2 studs of a material boundary
+-- a ray reports a blended material (measured 2026-10-16), which made edge samples unreliable. Controls in the cells
+-- just outside prove that the paint does not spill, including onto the asphalt road mouth (x 0..4, z 100..104).
+do
+	local function cellMaterial(x, z)
+		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
+		local mats = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 0, fz + 4)), 4)
+		return mats[1][1][1]
+	end
+	local problems = {}
+	-- cells inside the plaza, including the four corner-most cells
+	for _, p in ipairs({ { 2, 50 }, { 62, 82 }, { -58, 22 }, { -98, 2 }, { 98, 98 }, { 98, 2 }, { -98, 98 } }) do
+		local m = cellMaterial(p[1], p[2])
+		if m ~= Enum.Material.Pavement then
+			table.insert(problems, string.format("cell (%d,%d) is %s, expected Pavement", p[1], p[2], tostring(m)))
+		end
+	end
+	-- cells just outside
+	for _, c in ipairs({
+		{ -102, 50, Enum.Material.Grass }, { 102, 50, Enum.Material.Grass }, { 50, -2, Enum.Material.Grass },
+		{ 50, 102, Enum.Material.Grass }, { 2, 102, Enum.Material.Asphalt },
+	}) do
+		local m = cellMaterial(c[1], c[2])
+		if m ~= c[3] then
+			table.insert(problems, string.format("control cell (%d,%d) is %s, expected %s", c[1], c[2], tostring(m), tostring(c[3])))
+		end
+	end
+	check("plaza ground is paved and the paint stays inside the plaza", #problems == 0, table.concat(problems, "; "))
+end
+
 -- Baseplate removal is only required once the terrain checks above are green.
 if REQUIRE_BASEPLATE_REMOVED then
 	check("Baseplate removed", workspace:FindFirstChild("Baseplate") == nil)

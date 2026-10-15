@@ -84,6 +84,22 @@ local function buildLakes()
 	end
 end
 
+-- Plaza Independencia ground. The plaza paving built by builders/site01.luau (PlazaPaving, x -100..100, z 6..100, plus
+-- the wing apron in front of it) is only 0.1 stud thick, so the terrain's grass blades would poke through it. Repaint the
+-- Grass under the plaza as Pavement. Keep this region in step with PlazaPaving in site01.luau.
+-- ReplaceMaterial takes a Region3 in studs, aligned to the 4-stud grid, with resolution exactly 4 (docs). Only Grass is
+-- converted, so the asphalt road mouth at (0,100..) is untouched; the terrain surface height does not change.
+local PLAZA = { x0 = -100, x1 = 100, z0 = 0, z1 = 100 }
+local function buildPlazaGround()
+	T:ReplaceMaterial(
+		Region3.new(Vector3.new(PLAZA.x0, -4, PLAZA.z0), Vector3.new(PLAZA.x1, 4, PLAZA.z1)),
+		4,
+		Enum.Material.Grass,
+		Enum.Material.Pavement
+	)
+	task.wait()
+end
+
 -- Malarayat slope: a wedge rising toward +X. Wedge ramps toward local +Z, so rotate 90 degrees about Y.
 local function buildSlope()
 	local x0, x1 = 320, 760 -- starts west of the footprint so the ground reads ~0 at x=360
@@ -159,6 +175,7 @@ clearAll()
 buildFloor()
 buildLakes()
 buildRoads()
+buildPlazaGround()
 buildSlope()
 buildWorldModels()
 placeSpawn()

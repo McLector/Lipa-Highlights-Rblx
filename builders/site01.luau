@@ -4,6 +4,8 @@
 -- Run builders/placeholders first (it creates Workspace.Sites.Site01_Cathedral with Guide, InfoPanel, JeepStop...).
 -- IDEMPOTENT: replaces Block / Structure / Plaza / PlazaPeople / Benches / Lamps / Flagpole / EventStage and keeps
 -- Guide, InfoPanel, JeepStop, JeepSign*, Jeepney. Touches nothing outside Workspace.Sites.Site01_Cathedral.
+-- (The terrain under the plaza is repainted as Pavement by builders/world.luau, which owns terrain; PlazaPaving
+-- below must stay inside that region: x -100..100, z 0..100.)
 -- Brief: briefs/site01.md. Colours come from Cathedral_Front_2024.jpg. World axes: x east, z south (+Z is the
 -- facade side), y up; the site pivot is at the origin, and everything is placed in world coordinates.
 -- Fail-safe order: everything is built into unparented components first (budget and CSG included); only then are
@@ -32,8 +34,9 @@ return function()
 	-- Colours (Cathedral_Front_2024.jpg).
 	local WALL = Color3.fromRGB(233, 214, 165)
 	local TRIM = Color3.fromRGB(176, 160, 172)
-	local ROOF = Color3.fromRGB(150, 60, 70)
-	local ROOF_RIB = Color3.fromRGB(172, 78, 88)
+	local ROOF = Color3.fromRGB(176, 58, 52) -- terracotta, as in the aerial photos (the front photo reads dustier)
+	local ROOF_RIB = Color3.fromRGB(198, 78, 66)
+	local HEDGE = Color3.fromRGB(52, 110, 56)
 	local DOME = Color3.fromRGB(236, 226, 196)
 	local RIB = Color3.fromRGB(140, 160, 175)
 	local TIMBER = Color3.fromRGB(150, 100, 60)
@@ -234,35 +237,52 @@ return function()
 
 	------------------------------------------------------------------ Dome and transept
 	local CROSS_Z = -50
+	local DRUM_APOTHEM, DRUM_T = 16, 2.5
+	local DRUM_OUTER = DRUM_APOTHEM + DRUM_T / 2 -- the drum's outer face, where its windows sit
+	local DRUM_BASE, DRUM_TOP = 34, 48
+	local DOME_R, DOME_Y = 15, 49.5 -- DOME_Y = DRUM_TOP + the 1.5-stud cornice; the dome top is 64.5
 	local function buildDome(ctx)
-		-- Crossing block with the transept arms, a window in each arm end.
-		ctx:part("CrossingBlock", V(48, 36, 24), CF(0, 18, CROSS_Z), WALL, CONC)
+		-- Crossing block with the transept arms (x +-30): gabled arm roofs with the ridge along X at y 39.5, an end
+		-- gable and a window on each arm end. The roofs start at x 18.5 so they also cover the block top where it
+		-- would otherwise show between the nave roof ribs.
+		ctx:part("CrossingBlock", V(60, 36, 24), CF(0, 18, CROSS_Z), WALL, CONC)
+		local armRun, armRise = 13.5, 3.5 -- eaves y 36 at CROSS_Z +- 13.5
+		local armLen = math.sqrt(armRun * armRun + armRise * armRise)
+		local armTheta = math.atan(armRise / armRun)
 		for _, side in ipairs({ -1, 1 }) do
-			ctx:part("ArmRoof", V(5.2, 0.8, 25.6), CF(side * 22, 36.4, CROSS_Z), ROOF, METAL)
-			ctx:part("ArmCornice", V(4.6, 1.4, 25.6), CF(side * 22.3, 35.5, CROSS_Z), TRIM, CONC)
-			arched(ctx, "ArmWindow", V(side * 24, 12, CROSS_Z), side * PI / 2, 5, 14)
+			local rx = side * 24.75 -- the roofs span x 18.5 .. 31
+			for _, slope in ipairs({ 1, -1 }) do
+				local cf = CF(rx, 36 + armRise / 2, CROSS_Z + slope * armRun / 2) * ANG(slope * armTheta, 0, 0)
+				ctx:part("ArmRoof", V(12.5, 0.6, armLen), cf, ROOF, METAL)
+				for _, x in ipairs({ 20, 23, 26, 29 }) do
+					ctx:part("ArmRoofRib", V(0.5, 0.35, armLen), cf * CF(side * x - rx, 0.45, 0), ROOF_RIB, METAL)
+				end
+			end
+			ctx:gable("ArmEndGable", 24, armRise, 1.5, CF(side * 29.4, 36, CROSS_Z) * ANG(0, PI / 2, 0), WALL, CONC)
+			ctx:part("ArmCornice", V(1.2, 1.4, 26), CF(side * 30.1, 35.3, CROSS_Z), TRIM, CONC)
+			arched(ctx, "ArmWindow", V(side * 30, 12, CROSS_Z), side * PI / 2, 5, 14)
 		end
 		-- Octagonal drum with a window on every face, and its cornice.
 		local cx, cz = 0, CROSS_Z
-		ctx:octagonRing("Drum", 14, 16, 34, 2.5, WALL, CONC, CF(cx, 0, cz))
-		local outer = 14 + 1.25
+		ctx:octagonRing("Drum", DRUM_APOTHEM, DRUM_TOP - DRUM_BASE, DRUM_BASE, DRUM_T, WALL, CONC, CF(cx, 0, cz))
 		for k = 1, 8 do
 			local theta = (k - 1) * PI / 4
 			local nx, nz = math.cos(theta), math.sin(theta)
-			arched(ctx, "DrumWin" .. k, V(cx + nx * outer, 40, cz + nz * outer), math.atan2(nx, nz), 3, 6.5)
+			-- windows span y 40 .. 46.5, clear of the arm roof ridge (39.5) and of the cornice (48)
+			arched(ctx, "DrumWin" .. k, V(cx + nx * DRUM_OUTER, 40, cz + nz * DRUM_OUTER), math.atan2(nx, nz), 3, 6.5)
 		end
-		ctx:octagonRing("DrumCornice", outer + 0.6, 1.5, 50, 3.2, TRIM, CONC, CF(cx, 0, cz))
-		-- Four small corner turrets on the transept roofs.
+		ctx:octagonRing("DrumCornice", DRUM_OUTER + 0.6, 1.5, DRUM_TOP, 3.2, TRIM, CONC, CF(cx, 0, cz))
+		-- Four small corner turrets on the arm roofs (the roof surface at z = CROSS_Z +- 9.5 is y ~37.0).
 		for _, sx in ipairs({ -1, 1 }) do
 			for _, sz in ipairs({ -1, 1 }) do
-				local x, z = sx * 21.5, CROSS_Z + sz * 9.5
-				ctx:part("Turret", V(3.6, 8, 3.6), CF(x, 40.8, z), WALL, CONC)
-				ctx:ball("TurretCap", 4.2, CF(x, 45.2, z), DOME, CONC)
-				ctx:part("TurretSlit", V(1.2, 3, 0.3), CF(x, 40.8, z + sz * 1.85), GLASS, Enum.Material.Glass)
+				local x, z = sx * 27, CROSS_Z + sz * 9.5
+				ctx:part("Turret", V(3.6, 8, 3.6), CF(x, 41, z), WALL, CONC)
+				ctx:ball("TurretCap", 4.2, CF(x, 45.4, z), DOME, CONC)
+				ctx:part("TurretSlit", V(1.2, 3, 0.3), CF(x, 41, z + sz * 1.85), GLASS, Enum.Material.Glass)
 			end
 		end
 		-- Ribbed dome, lantern and cross.
-		ctx:dome("Dome", 13, 8, CF(cx, 51.5, cz), DOME, RIB, CONC)
+		ctx:dome("Dome", DOME_R, 8, CF(cx, DOME_Y, cz), DOME, RIB, CONC)
 		ctx:octagonRing("Lantern", 2.6, 4, 64.2, 0.6, WALL, CONC, CF(cx, 0, cz))
 		ctx:ball("LanternCap", 5.2, CF(cx, 68.6, cz), DOME, CONC)
 		ctx:part("DomeCrossV", V(0.5, 4, 0.5), CF(cx, 71.4, cz), TRIM, METAL)
@@ -331,10 +351,25 @@ return function()
 	end
 
 	------------------------------------------------------------------ Plaza
-	local PALMS = { { -88, 38 }, { -88, 62 }, { -88, 86 }, { 88, 38 }, { 88, 62 }, { 88, 86 }, { -34, 16 }, { 34, 16 } }
+	local PALMS = {
+		{ -88, 38 }, { -88, 62 }, { -88, 86 }, { 88, 38 }, { 88, 62 }, { 88, 86 }, { -34, 16 }, { 34, 16 },
+		{ -64, 96 }, { -40, 96 }, { -16, 96 }, { 16, 96 }, { 40, 96 }, { 64, 96 }, -- south row, as in the aerial photo
+	}
 	local function buildPlaza(ctx)
 		ctx:part("PlazaPaving", V(200, 0.1, 94), CF(0, 0, 53), STONE, CONC)
-		ctx:part("WingApron", V(80, 0.1, 6), CF(62, 0, 3), STONE, CONC)
+		ctx:part("WingApron", V(78, 0.1, 6), CF(61, 0, 3), STONE, CONC) -- x 22..100, inside the repainted terrain
+		-- Kerb (0.3 high) round the plaza so the paving reads as a raised plaza. The side kerbs start at z 6 (the
+		-- apron runs z 0..6), and the south kerb leaves a gap at x +-8 for the E_to_Tagbakin road mouth at (0,100).
+		ctx:part("KerbWest", V(0.6, 0.3, 94), CF(-100.3, 0.15, 53), STONE_LIGHT, CONC)
+		ctx:part("KerbEast", V(0.6, 0.3, 94), CF(100.3, 0.15, 53), STONE_LIGHT, CONC)
+		ctx:part("KerbSouthW", V(92, 0.3, 0.6), CF(-54, 0.15, 100.3), STONE_LIGHT, CONC)
+		ctx:part("KerbSouthE", V(92, 0.3, 0.6), CF(54, 0.15, 100.3), STONE_LIGHT, CONC)
+		-- Hedges (1.8 high): two flanking the tower front, two along the wing front with a gap at the pavilion
+		-- (its body and pilasters span x 46.6..58.6 and the scrolls reach 59.4, so the gap is x 44..60).
+		ctx:part("HedgeTowerW", V(6, 1.8, 2), CF(-39, 0.95, 9), HEDGE, Enum.Material.Grass)
+		ctx:part("HedgeTowerE", V(6, 1.8, 2), CF(-25, 0.95, 9), HEDGE, Enum.Material.Grass)
+		ctx:part("HedgeWingW", V(20, 1.8, 2), CF(34, 0.95, 3.5), HEDGE, Enum.Material.Grass)
+		ctx:part("HedgeWingE", V(30, 1.8, 2), CF(75, 0.95, 3.5), HEDGE, Enum.Material.Grass)
 		for z = 12, 96, 12 do
 			ctx:part("PavingBand", V(200, 0.1, 0.8), CF(0, 0.03, z), STONE_DARK, CONC)
 		end
