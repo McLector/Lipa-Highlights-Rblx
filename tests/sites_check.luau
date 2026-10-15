@@ -26,7 +26,7 @@ local function xzDist(a, b)
 end
 
 -- Sites whose real builder has run (the rest are still placeholder Blocks).
-local BUILT = { [1] = true, [5] = true }
+local BUILT = { [1] = true, [5] = true, [6] = true }
 
 local sites = workspace:FindFirstChild("Sites")
 check("Workspace.Sites exists", sites ~= nil)
@@ -42,7 +42,7 @@ if sites then
 			check(label .. " pivot within 1 stud of pos", (pivot.Position - s.pos).Magnitude <= 1, tostring(pivot.Position))
 			check(label .. " facing dot > 0.99", pivot.LookVector:Dot(SiteData.facingVector(s.facing)) > 0.99, tostring(pivot.LookVector))
 			if BUILT[s.id] then
-				-- Built sites (1: Slice 02, 5: Slice 04): the builder replaced the placeholder Block with Structure.
+				-- Built sites (1: Slice 02, 5: Slice 04, 6: Slice 05): the builder replaced the placeholder Block with Structure.
 				check(label .. " Structure present and Block absent", m:FindFirstChild("Structure") ~= nil and m:FindFirstChild("Block") == nil)
 				if s.id == 5 then
 					-- Orientation guard (Slice 04): the pivot is yawed 180 degrees, so a build that used the pivot as its origin is
@@ -56,6 +56,24 @@ if sites then
 						podium and nave and (podium.Position.Z .. " vs " .. nave.Position.Z) or "parts missing")
 					check(label .. " east wing is east of the nave", wing ~= nil and nave ~= nil and wing.Position.X > nave.Position.X + 15,
 						wing and nave and (wing.Position.X .. " vs " .. nave.Position.X) or "parts missing")
+				elseif s.id == 6 then
+					-- Orientation guards (Slice 05): the site is diagonal (SW), so the symmetric bounds check cannot see a mirrored or
+					-- rotated build. Each anchor is ONE uniquely named BasePart, searched through the whole site (the pitch lives
+					-- outside Structure); a missing or non-part anchor fails cleanly instead of erroring the run.
+					local function anchor(name)
+						local p = m:FindFirstChild(name, true)
+						return (p ~= nil and p:IsA("BasePart")) and p or nil
+					end
+					local body, walkway = anchor("ShopBody"), anchor("WalkwayRoof")
+					local turf, tiers = anchor("PitchTurf"), anchor("StandTiers")
+					local sw = SiteData.facingVector("SW")
+					check(label .. " walkway is in front (SW) of the shop body", body ~= nil and walkway ~= nil
+						and (walkway.Position - body.Position):Dot(sw) > 10,
+						body and walkway and string.format("%.1f studs along SW", (walkway.Position - body.Position):Dot(sw)) or "parts missing")
+					check(label .. " pitch is east of the shop body", body ~= nil and turf ~= nil and turf.Position.X > body.Position.X + 40,
+						body and turf and (turf.Position.X .. " vs " .. body.Position.X) or "parts missing")
+					check(label .. " stand is south of the pitch", turf ~= nil and tiers ~= nil and tiers.Position.Z > turf.Position.Z + 30,
+						turf and tiers and (tiers.Position.Z .. " vs " .. turf.Position.Z) or "parts missing")
 				end
 			else
 				check(label .. " Block present", m:FindFirstChild("Block") ~= nil and m.Block:IsA("BasePart"))

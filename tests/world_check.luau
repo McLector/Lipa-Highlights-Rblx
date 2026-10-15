@@ -166,6 +166,41 @@ do
 	check("Carmel forecourt is paved and the paint stays inside the region", #problems == 0, table.concat(problems, "; "))
 end
 
+-- Outlets paving (Slice 05): world.luau repaints the Grass under the Outlets' paved areas as Pavement, because the terrain's
+-- tall grass blades otherwise bury the thin paving and poke through the pitch turf. Three regions (4-stud aligned):
+-- arrival plaza + forecourt (x 472..592, z -724..-604), entry path / spur / sign apron / car park (x 424..612, z -632..-548),
+-- pitch + stand (x 636..708, z -752..-612). Same exact voxel read as the plaza check; the controls prove the paint stays
+-- inside the regions (and does not touch the asphalt of road B at x 424..436).
+do
+	local function cellMaterial(x, z)
+		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
+		local mats = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 0, fz + 4)), 4)
+		return mats[1][1][1]
+	end
+	local problems = {}
+	for _, p in ipairs({
+		{ 474, -722 }, { 590, -606 }, { 530, -660 }, { 590, -722 }, { 474, -606 }, -- plaza + forecourt, corners and middle
+		{ 426, -630 }, { 610, -550 }, { 510, -626 }, { 560, -560 }, -- entry, car park
+		{ 638, -750 }, { 706, -614 }, { 672, -690 }, { 706, -750 }, -- pitch + stand
+	}) do
+		local m = cellMaterial(p[1], p[2])
+		if m ~= Enum.Material.Pavement then
+			table.insert(problems, string.format("cell (%d,%d) is %s, expected Pavement", p[1], p[2], tostring(m)))
+		end
+	end
+	for _, c in ipairs({
+		{ 466, -700, Enum.Material.Grass }, { 598, -700, Enum.Material.Grass }, { 672, -606, Enum.Material.Grass },
+		{ 712, -690, Enum.Material.Grass }, { 420, -600, Enum.Material.Grass }, { 630, -690, Enum.Material.Grass },
+		{ 430, -552, Enum.Material.Asphalt },
+	}) do
+		local m = cellMaterial(c[1], c[2])
+		if m ~= c[3] then
+			table.insert(problems, string.format("control cell (%d,%d) is %s, expected %s", c[1], c[2], tostring(m), tostring(c[3])))
+		end
+	end
+	check("Outlets paving is Pavement and the paint stays inside the regions", #problems == 0, table.concat(problems, "; "))
+end
+
 -- Baseplate removal is only required once the terrain checks above are green.
 if REQUIRE_BASEPLATE_REMOVED then
 	check("Baseplate removed", workspace:FindFirstChild("Baseplate") == nil)

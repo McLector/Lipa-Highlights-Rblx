@@ -94,6 +94,11 @@ end
 local PAVED = {
 	{ x0 = -100, x1 = 100, z0 = 0, z1 = 100 }, -- Plaza Independencia
 	{ x0 = -352, x1 = -248, z0 = -600, z1 = -508 }, -- Carmel forecourt
+	-- The Outlets (Slice 05): the tall grass blades bury thin paving and poke through the pitch turf. Keep these in step with
+	-- builders/site06.luau (arrival plaza + forecourt, entry path / spur / sign apron / car park, pitch + stand).
+	{ x0 = 472, x1 = 592, z0 = -724, z1 = -604 },
+	{ x0 = 424, x1 = 612, z0 = -632, z1 = -548 },
+	{ x0 = 636, x1 = 708, z0 = -752, z1 = -612 },
 }
 local function buildPlazaGround()
 	for _, r in ipairs(PAVED) do
