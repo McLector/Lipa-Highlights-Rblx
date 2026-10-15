@@ -18,6 +18,9 @@ local excluded = {}
 if workspace:FindFirstChild("Baseplate") then table.insert(excluded, workspace.Baseplate) end
 if workspace:FindFirstChild("SpawnLocation") then table.insert(excluded, workspace.SpawnLocation) end
 if workspace:FindFirstChild("World") then table.insert(excluded, workspace.World) end
+-- Sites are built on the terrain (the placeholder blocks, later the real structures), so rays that probe the
+-- terrain itself must ignore them. Without this the Malarayat slope probe at (560,720) hits Site08's block.
+if workspace:FindFirstChild("Sites") then table.insert(excluded, workspace.Sites) end
 params.FilterDescendantsInstances = excluded
 
 local function ground(x, z)

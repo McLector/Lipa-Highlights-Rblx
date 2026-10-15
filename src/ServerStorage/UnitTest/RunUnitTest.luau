@@ -75,7 +75,8 @@ return function(filter, timeout)
 
 	for _, module in ipairs(ServerStorage.UnitTest.Cases:GetDescendants()) do
 		if module:IsA("ModuleScript") and (filter == nil or string.find(module.Name, filter, 1, true)) then
-			local okRequire, caseFn = pcall(require, module)
+			-- Clone so edits take effect: require() caches the module that was first loaded.
+			local okRequire, caseFn = pcall(require, module:Clone())
 			if not okRequire or type(caseFn) ~= "function" then
 				totals.run += 1; totals.failed += 1
 				warn(string.format("[FAIL] %s | case did not return a function: %s", module.Name, tostring(caseFn)))

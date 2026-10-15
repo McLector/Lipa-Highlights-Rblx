@@ -2,6 +2,8 @@
 -- destroys and rebuilds Workspace.Sites). Studio copy lives at ServerStorage.Builders.placeholders (ModuleScript);
 -- run with: require(game.ServerStorage.Builders.placeholders:Clone())()
 -- Slice 02+ replaces each placeholder's Block with the real site; Guide/InfoPanel/JeepStop contracts stay the same.
+-- REBUILD ORDER: this builder wipes ALL of Workspace.Sites, including any real site already built. After running
+-- it, re-run every real site builder (currently only builders/site01.luau): placeholders -> site01 -> ...
 -- Y is seated by a terrain raycast (never by groundY alone) because Malarayat is on a slope.
 local Players = game:GetService("Players")
 

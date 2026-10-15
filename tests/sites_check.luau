@@ -38,7 +38,12 @@ if sites then
 			local pivot = m:GetPivot()
 			check(label .. " pivot within 1 stud of pos", (pivot.Position - s.pos).Magnitude <= 1, tostring(pivot.Position))
 			check(label .. " facing dot > 0.99", pivot.LookVector:Dot(SiteData.facingVector(s.facing)) > 0.99, tostring(pivot.LookVector))
-			check(label .. " Block present", m:FindFirstChild("Block") ~= nil and m.Block:IsA("BasePart"))
+			if s.id == 1 then
+				-- Slice 02: the Cathedral builder replaced the placeholder Block with Structure.
+				check(label .. " Structure present and Block absent", m:FindFirstChild("Structure") ~= nil and m:FindFirstChild("Block") == nil)
+			else
+				check(label .. " Block present", m:FindFirstChild("Block") ~= nil and m.Block:IsA("BasePart"))
+			end
 
 			-- Guide
 			local guide = m:FindFirstChild("Guide")
@@ -96,10 +101,18 @@ if sites then
 				check(label .. " Guide on dry land", mat ~= nil and mat ~= Enum.Material.Water, tostring(mat))
 			end
 
-			-- Everything that is not part of the rig is anchored.
+			-- Everything that is not part of a rig (any Model with a Humanoid: the Guide, plaza people) is anchored.
+			local function insideRig(part)
+				local p = part.Parent
+				while p and p ~= m do
+					if p:IsA("Model") and p:FindFirstChildOfClass("Humanoid") then return true end
+					p = p.Parent
+				end
+				return false
+			end
 			local loose = 0
 			for _, d in ipairs(m:GetDescendants()) do
-				if d:IsA("BasePart") and not (guide and d:IsDescendantOf(guide)) and not d.Anchored then loose += 1 end
+				if d:IsA("BasePart") and not insideRig(d) and not d.Anchored then loose += 1 end
 			end
 			check(label .. " all non-rig parts anchored", loose == 0, "unanchored: " .. loose)
 		end
