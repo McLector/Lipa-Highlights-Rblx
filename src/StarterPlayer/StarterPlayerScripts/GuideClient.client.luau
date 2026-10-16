@@ -1,6 +1,8 @@
 -- GuideClient: handles Guide prompts. Opens a typewriter dialogue (Next / Close; pressing the prompt key again also
 -- advances) and asks the server to stamp the passport. Only prompts with PromptKind == "Guide" are handled.
 -- ScreenGui attributes DialogueOpen / DialogueSiteId expose state for playtests.
+-- Layout (Slice 13): the box sizes itself to its text and uses fixed text sizes and 48 px buttons, so it stays readable and
+-- tappable on a phone. A transparent "ghost" label holds the whole line so the box does not change height while it types.
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,6 +16,9 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 local TYPE_DELAY = 0.02
+local BUTTON_HEIGHT = 48
+local BODY_TEXT = 18
+local TITLE_TEXT = 16
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "GuideDialogue"
@@ -25,56 +30,99 @@ gui.Parent = playerGui
 local frame = Instance.new("Frame")
 frame.Name = "Box"
 frame.AnchorPoint = Vector2.new(0.5, 1)
-frame.Position = UDim2.fromScale(0.5, 0.96)
-frame.Size = UDim2.fromScale(0.62, 0.26)
+frame.Position = UDim2.new(0.5, 0, 1, -12)
+frame.Size = UDim2.new(0.8, 0, 0, 0)
+frame.AutomaticSize = Enum.AutomaticSize.Y
 frame.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
 frame.BackgroundTransparency = 0.08
 frame.Parent = gui
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+local limit = Instance.new("UISizeConstraint")
+limit.MaxSize = Vector2.new(680, 2000)
+limit.Parent = frame
 local pad = Instance.new("UIPadding", frame)
 pad.PaddingLeft, pad.PaddingRight, pad.PaddingTop, pad.PaddingBottom = UDim.new(0, 16), UDim.new(0, 16), UDim.new(0, 10), UDim.new(0, 10)
+local list = Instance.new("UIListLayout", frame)
+list.Padding = UDim.new(0, 6)
+list.SortOrder = Enum.SortOrder.LayoutOrder
 
 local title = Instance.new("TextLabel")
 title.Name = "Title"
-title.Size = UDim2.new(1, 0, 0.2, 0)
+title.LayoutOrder = 1
+title.Size = UDim2.new(1, 0, 0, 0)
+title.AutomaticSize = Enum.AutomaticSize.Y
 title.BackgroundTransparency = 1
 title.TextXAlignment = Enum.TextXAlignment.Left
+title.TextWrapped = true
 title.TextColor3 = Color3.fromRGB(255, 214, 102)
 title.Font = Enum.Font.GothamBold
-title.TextScaled = true
+title.TextSize = TITLE_TEXT
 title.Parent = frame
+
+-- bodyHolder is as tall as the full line (the ghost); the visible body fills it and types over it.
+local bodyHolder = Instance.new("Frame")
+bodyHolder.Name = "BodyHolder"
+bodyHolder.LayoutOrder = 2
+bodyHolder.Size = UDim2.new(1, 0, 0, 0)
+bodyHolder.AutomaticSize = Enum.AutomaticSize.Y
+bodyHolder.BackgroundTransparency = 1
+bodyHolder.Parent = frame
+
+local ghost = Instance.new("TextLabel")
+ghost.Name = "Ghost"
+ghost.Size = UDim2.new(1, 0, 0, 0)
+ghost.AutomaticSize = Enum.AutomaticSize.Y
+ghost.BackgroundTransparency = 1
+ghost.TextTransparency = 1
+ghost.TextXAlignment = Enum.TextXAlignment.Left
+ghost.TextYAlignment = Enum.TextYAlignment.Top
+ghost.TextWrapped = true
+ghost.Font = Enum.Font.Gotham
+ghost.TextSize = BODY_TEXT
+ghost.Parent = bodyHolder
 
 local body = Instance.new("TextLabel")
 body.Name = "Body"
-body.Position = UDim2.fromScale(0, 0.23)
-body.Size = UDim2.fromScale(1, 0.5)
+body.Size = UDim2.fromScale(1, 1)
 body.BackgroundTransparency = 1
 body.TextXAlignment = Enum.TextXAlignment.Left
 body.TextYAlignment = Enum.TextYAlignment.Top
 body.TextColor3 = Color3.new(1, 1, 1)
 body.Font = Enum.Font.Gotham
 body.TextWrapped = true
-body.TextScaled = true
-body.Parent = frame
+body.TextSize = BODY_TEXT
+body.Parent = bodyHolder
 
-local function button(name, text, x)
+local buttons = Instance.new("Frame")
+buttons.Name = "Buttons"
+buttons.LayoutOrder = 3
+buttons.Size = UDim2.new(1, 0, 0, BUTTON_HEIGHT)
+buttons.BackgroundTransparency = 1
+buttons.Parent = frame
+local row = Instance.new("UIListLayout", buttons)
+row.FillDirection = Enum.FillDirection.Horizontal
+row.HorizontalAlignment = Enum.HorizontalAlignment.Right
+row.VerticalAlignment = Enum.VerticalAlignment.Center
+row.SortOrder = Enum.SortOrder.LayoutOrder
+row.Padding = UDim.new(0, 8)
+
+local function button(name, text, order)
 	local b = Instance.new("TextButton")
 	b.Name = name
 	b.Text = text
-	b.AnchorPoint = Vector2.new(1, 1)
-	b.Position = UDim2.fromScale(x, 1)
-	b.Size = UDim2.fromScale(0.16, 0.22)
+	b.LayoutOrder = order
+	b.Size = UDim2.new(0, 110, 1, 0)
 	b.BackgroundColor3 = Color3.fromRGB(70, 120, 220)
 	b.TextColor3 = Color3.new(1, 1, 1)
 	b.Font = Enum.Font.GothamBold
-	b.TextScaled = true
-	b.Parent = frame
+	b.TextSize = 18
+	b.Parent = buttons
 	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
 	return b
 end
-local nextButton = button("Next", "Next", 1)
-local closeButton = button("Close", "Close", 0.82)
+local closeButton = button("Close", "Close", 1)
 closeButton.BackgroundColor3 = Color3.fromRGB(90, 90, 100)
+local nextButton = button("Next", "Next", 2)
 
 local dialogue, current, typing, typeToken = nil, nil, false, 0
 
@@ -90,6 +138,7 @@ local function show()
 	typeToken += 1
 	local token = typeToken
 	typing = true
+	ghost.Text = line
 	nextButton.Text = DialogueLogic.index(dialogue) == #dialogue.lines and "Done" or "Next"
 	task.spawn(function()
 		for i = 1, #line do
