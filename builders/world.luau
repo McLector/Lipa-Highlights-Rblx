@@ -105,6 +105,9 @@ local PAVED = {
 	-- Lomi King (Slice 07): shophouse floor, front step, forecourt and driveway (x 128..228, z 100..180, the footprint). x0 128
 	-- stops at the east edge of road G's asphalt cells (x 120..128). Keep in step with builders/site03.luau.
 	{ x0 = 128, x1 = 228, z0 = 100, z1 = 180 },
+	-- Café de Lipa (Slice 08): terrace, unit floor and forecourt (x 112..212, z -200..-120, the footprint). x0 112 stops at the
+	-- east edge of road H's asphalt cells (x 96..112). Keep in step with builders/site04.luau.
+	{ x0 = 112, x1 = 212, z0 = -200, z1 = -120 },
 }
 local function buildPlazaGround()
 	for _, r in ipairs(PAVED) do

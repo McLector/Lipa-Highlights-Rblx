@@ -26,7 +26,7 @@ local function xzDist(a, b)
 end
 
 -- Sites whose real builder has run (the rest are still placeholder Blocks).
-local BUILT = { [1] = true, [2] = true, [3] = true, [5] = true, [6] = true }
+local BUILT = { [1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true }
 
 local sites = workspace:FindFirstChild("Sites")
 check("Workspace.Sites exists", sites ~= nil)
@@ -124,6 +124,64 @@ if sites then
 						if not inRig then table.insert(blockers, h:GetFullName()) end
 					end
 					check(label .. " walking lane into the shop is free", #blockers == 0, #blockers .. " blocking: " .. table.concat(blockers, ", ", 1, math.min(#blockers, 4)))
+				elseif s.id == 4 then
+					-- Orientation + walkability guards (Slice 08): the pivot is yawed to W, so a build that used it as its origin is
+					-- rotated yet passes the symmetric bounds check. Anchors are ONE uniquely named BasePart each. The sign fascia is
+					-- on the west frontage, the coffee bar is inside and behind it, the arcade roof is in front (west) of the fascia,
+					-- and the representative-interior sign is inside the unit (x 164..204, z -186..-134). The interior is required,
+					-- so the lane guard sweeps a person-sized box (4 wide, y 2..8) along the lane (z -160) from the terrace (x 144)
+					-- through the door to just short of the bar (x 185): any colliding non-rig part of the site in it fails. On the
+					-- placeholder it is red because the Block fills it.
+					local function anchor(name)
+						local p = m:FindFirstChild(name, true)
+						return (p ~= nil and p:IsA("BasePart")) and p or nil
+					end
+					local body, fascia = anchor("CafeBody"), anchor("SignFascia")
+					local bar, roof, note = anchor("BarTop"), anchor("ArcadeRoof"), anchor("RepresentativeSign")
+					check(label .. " sign fascia is on the west frontage", body ~= nil and fascia ~= nil and fascia.Position.X < body.Position.X - 10,
+						body and fascia and (fascia.Position.X .. " vs " .. body.Position.X) or "parts missing")
+					check(label .. " coffee bar is inside, behind the fascia", fascia ~= nil and bar ~= nil and bar.Position.X > fascia.Position.X + 15,
+						fascia and bar and (bar.Position.X .. " vs " .. fascia.Position.X) or "parts missing")
+					check(label .. " arcade roof is in front of the fascia", fascia ~= nil and roof ~= nil and roof.Position.X < fascia.Position.X - 5,
+						fascia and roof and (roof.Position.X .. " vs " .. fascia.Position.X) or "parts missing")
+					check(label .. " representative sign is inside the unit", note ~= nil and note.Position.X > 164 and note.Position.X < 204
+						and note.Position.Z > -186 and note.Position.Z < -134,
+						note and tostring(note.Position) or "part missing")
+					local lp = OverlapParams.new()
+					lp.FilterType = Enum.RaycastFilterType.Include
+					lp.FilterDescendantsInstances = { m }
+					lp.RespectCanCollide = true
+					local blockers = {}
+					for _, h in ipairs(workspace:GetPartBoundsInBox(CFrame.new(164.5, 5, -160), Vector3.new(41, 6, 4), lp)) do
+						local inRig, p = false, h.Parent
+						while p and p ~= m do
+							if p:IsA("Model") and p:FindFirstChildOfClass("Humanoid") then inRig = true break end
+							p = p.Parent
+						end
+						if not inRig then table.insert(blockers, h:GetFullName()) end
+					end
+					check(label .. " walking lane into the cafe is free", #blockers == 0, #blockers .. " blocking: " .. table.concat(blockers, ", ", 1, math.min(#blockers, 4)))
+					-- Sign legibility (added in review): the arcade roof once hid the fascia letters from the street. From an
+					-- eye-level point on road H's walkway (124, 8, -160) a ray to each Neon letter's centre must reach that letter
+					-- first (Guide and InfoPanel are ignored); at least 80% of the letters must pass.
+					local vp = RaycastParams.new()
+					vp.FilterType = Enum.RaycastFilterType.Include
+					local incl = {}
+					for _, c in ipairs(m:GetChildren()) do
+						if c.Name ~= "Guide" and c.Name ~= "InfoPanel" then table.insert(incl, c) end
+					end
+					vp.FilterDescendantsInstances = incl
+					local eye = Vector3.new(124, 8, -160)
+					local letters, seen = 0, 0
+					for _, d in ipairs(m:GetDescendants()) do
+						if d.Name == "NeonLetter" and d:IsA("BasePart") then
+							letters += 1
+							local r = workspace:Raycast(eye, d.Position - eye, vp)
+							if r and r.Instance == d then seen += 1 end
+						end
+					end
+					check(label .. " sign letters are visible from the street", letters >= 20 and seen >= letters * 0.8,
+						seen .. " of " .. letters .. " letters seen from the street")
 				end
 			else
 				check(label .. " Block present", m:FindFirstChild("Block") ~= nil and m.Block:IsA("BasePart"))
