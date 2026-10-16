@@ -26,7 +26,7 @@ local function xzDist(a, b)
 end
 
 -- Sites whose real builder has run (the rest are still placeholder Blocks).
-local BUILT = { [1] = true, [2] = true, [5] = true, [6] = true }
+local BUILT = { [1] = true, [2] = true, [3] = true, [5] = true, [6] = true }
 
 local sites = workspace:FindFirstChild("Sites")
 check("Workspace.Sites exists", sites ~= nil)
@@ -91,6 +91,39 @@ if sites then
 						hall and band and (band.Position.X .. " vs " .. hall.Position.X) or "parts missing")
 					check(label .. " balcony is at the north end", hall ~= nil and deck ~= nil and deck.Position.Z < hall.Position.Z - 25,
 						hall and deck and (deck.Position.Z .. " vs " .. hall.Position.Z) or "parts missing")
+				elseif s.id == 3 then
+					-- Orientation + walkability guards (Slice 07): the pivot is yawed to W, so a build that used it as its origin is
+					-- rotated yet passes the symmetric bounds check. Anchors are ONE uniquely named BasePart each. The awning is on
+					-- the west frontage, the counter is inside and behind it, and the parking sign is at the south (+Z) end.
+					-- The interior is required, so the lane guard sweeps a person-sized box (4 wide, y 2..8) along the aisle
+					-- (z 140) from the forecourt (x 160) through the open front to just short of the counter (x 201): any
+					-- colliding non-rig part of the site in it fails. On the placeholder it is red because the Block fills it.
+					local function anchor(name)
+						local p = m:FindFirstChild(name, true)
+						return (p ~= nil and p:IsA("BasePart")) and p or nil
+					end
+					local body, awning = anchor("LomiBody"), anchor("AwningFascia")
+					local counter, sign = anchor("CounterTop"), anchor("ParkingSign")
+					check(label .. " awning is on the west frontage", body ~= nil and awning ~= nil and awning.Position.X < body.Position.X - 10,
+						body and awning and (awning.Position.X .. " vs " .. body.Position.X) or "parts missing")
+					check(label .. " counter is inside, behind the awning", awning ~= nil and counter ~= nil and counter.Position.X > awning.Position.X + 15,
+						awning and counter and (counter.Position.X .. " vs " .. awning.Position.X) or "parts missing")
+					check(label .. " parking sign is at the south end", body ~= nil and sign ~= nil and sign.Position.Z > body.Position.Z + 10,
+						body and sign and (sign.Position.Z .. " vs " .. body.Position.Z) or "parts missing")
+					local lp = OverlapParams.new()
+					lp.FilterType = Enum.RaycastFilterType.Include
+					lp.FilterDescendantsInstances = { m }
+					lp.RespectCanCollide = true
+					local blockers = {}
+					for _, h in ipairs(workspace:GetPartBoundsInBox(CFrame.new(180.5, 5, 140), Vector3.new(41, 6, 4), lp)) do
+						local inRig, p = false, h.Parent
+						while p and p ~= m do
+							if p:IsA("Model") and p:FindFirstChildOfClass("Humanoid") then inRig = true break end
+							p = p.Parent
+						end
+						if not inRig then table.insert(blockers, h:GetFullName()) end
+					end
+					check(label .. " walking lane into the shop is free", #blockers == 0, #blockers .. " blocking: " .. table.concat(blockers, ", ", 1, math.min(#blockers, 4)))
 				end
 			else
 				check(label .. " Block present", m:FindFirstChild("Block") ~= nil and m.Block:IsA("BasePart"))
