@@ -99,6 +99,9 @@ local PAVED = {
 	{ x0 = 472, x1 = 592, z0 = -724, z1 = -604 },
 	{ x0 = 424, x1 = 612, z0 = -632, z1 = -548 },
 	{ x0 = 636, x1 = 708, z0 = -752, z1 = -612 },
+	-- The Market (Slice 06): hall, stall yard and aisle (x -276..-128, z 80..240, the footprint's z edges). x1 -128 stops at the
+	-- west edge of road F's asphalt cells (x -128..-120). Keep in step with builders/site02.luau.
+	{ x0 = -276, x1 = -128, z0 = 80, z1 = 240 },
 }
 local function buildPlazaGround()
 	for _, r in ipairs(PAVED) do

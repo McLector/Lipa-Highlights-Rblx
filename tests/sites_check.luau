@@ -26,7 +26,7 @@ local function xzDist(a, b)
 end
 
 -- Sites whose real builder has run (the rest are still placeholder Blocks).
-local BUILT = { [1] = true, [5] = true, [6] = true }
+local BUILT = { [1] = true, [2] = true, [5] = true, [6] = true }
 
 local sites = workspace:FindFirstChild("Sites")
 check("Workspace.Sites exists", sites ~= nil)
@@ -74,6 +74,23 @@ if sites then
 						body and turf and (turf.Position.X .. " vs " .. body.Position.X) or "parts missing")
 					check(label .. " stand is south of the pitch", turf ~= nil and tiers ~= nil and tiers.Position.Z > turf.Position.Z + 30,
 						turf and tiers and (tiers.Position.Z .. " vs " .. turf.Position.Z) or "parts missing")
+				elseif s.id == 2 then
+					-- Orientation guards (Slice 06): the pivot is yawed to E, so a build that used the pivot as its origin is
+					-- rotated yet still passes the symmetric bounds check. Anchors are ONE uniquely named BasePart each (no
+					-- container may share these names). The name band is on the east frontage, the yard lies east of the hall,
+					-- and the balcony deck is at the hall's north (-Z) end, which a mirrored build would put in the south.
+					local function anchor(name)
+						local p = m:FindFirstChild(name, true)
+						return (p ~= nil and p:IsA("BasePart")) and p or nil
+					end
+					local hall, yard = anchor("HallBody"), anchor("YardSlab")
+					local band, deck = anchor("NameBand"), anchor("BalconyDeck")
+					check(label .. " yard is east of the hall", hall ~= nil and yard ~= nil and yard.Position.X > hall.Position.X + 30,
+						hall and yard and (yard.Position.X .. " vs " .. hall.Position.X) or "parts missing")
+					check(label .. " name band is on the east frontage", hall ~= nil and band ~= nil and band.Position.X > hall.Position.X + 10,
+						hall and band and (band.Position.X .. " vs " .. hall.Position.X) or "parts missing")
+					check(label .. " balcony is at the north end", hall ~= nil and deck ~= nil and deck.Position.Z < hall.Position.Z - 25,
+						hall and deck and (deck.Position.Z .. " vs " .. hall.Position.Z) or "parts missing")
 				end
 			else
 				check(label .. " Block present", m:FindFirstChild("Block") ~= nil and m.Block:IsA("BasePart"))
