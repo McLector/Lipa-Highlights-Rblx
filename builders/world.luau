@@ -162,6 +162,94 @@ local function buildSlope()
 	task.wait()
 end
 
+-- Mount Malarayat Golf & Country Club (Slice 10). Runs AFTER buildSlope(): it reshapes and repaints the slope. Keep in step with
+-- briefs/site08.md and tests/world_check.luau. The slope is an exact plane, surface y = 0.1 * (x - 360) - 0.2 for x 380..756.
+-- Measured 2026-10-16: an Air cut whose bottom is at y=18 leaves a surface of 20.0 (about 20.1 in the sky scratch test); a Water fill
+-- topping at T has its surface at exactly T; a wedge ramp reaches its top height within about 0.5 stud.
+local MALARAYAT = {
+	-- Road D's asphalt stops at z 536 but the slope wedge starts at z 540 with a vertical wall 6..9 high, so the road never
+	-- reached the site. A Grass wedge ramp (x 440..460, rising toward +z from the floor at z 500 to about 9 at z 548) joins them.
+	ramp = { x0 = 440, x1 = 460, z0 = 500, z1 = 548, bottom = -2, top = 8 },
+	-- Clubhouse + forecourt pad: CUT ONLY (no fill), flat at 20.0 for x >= 572. An Air cut only leaves a flat 20.0 where the original
+	-- ground is at least about 21 (measured: a cut from x 556 left 18.0 and 19.3 in the first two columns, a trench), so the cut
+	-- starts at x 572 and the natural slope (19.4..20.8) meets it. The paint below still starts at 556.
+	pad = { x0 = 572, x1 = 672, z0 = 704, z1 = 844, cutBottom = 18, cutTop = 44 },
+	-- Pond (two overlapping rectangles, a kidney shape): bed cut to y 0, sand bed, water surface y 5.5. The rim is the original
+	-- ground (7.4 at the west bank, rising east), so the freeboard is at least 1.9 everywhere.
+	ponds = { { x0 = 440, x1 = 488, z0 = 772, z1 = 812 }, { x0 = 452, x1 = 496, z0 = 808, z1 = 848 } },
+	waterTop = 5.5,
+	island = { x0 = 456, x1 = 476, z0 = 784, z1 = 800, top = 7 }, -- Grass fill from y 0: top 5 -> surface 6.0 (the water's cell wins), top 7 -> 9.0 (measured), a mound 3.5 above the water (5.5)
+	paint = {
+		-- { material, x0, x1, z0, z1 }, 4-aligned; the y range is derived from the slope (see paintSlope)
+		{ Enum.Material.Pavement, 516, 580, 668, 724 }, -- Guide plaza
+		{ Enum.Material.Pavement, 556, 672, 704, 844 }, -- clubhouse pad, forecourt, drive-through
+		{ Enum.Material.Asphalt, 444, 456, 548, 704 }, -- drive south from the ramp
+		{ Enum.Material.Asphalt, 456, 520, 692, 704 }, -- drive east to the plaza
+		{ Enum.Material.LeafyGrass, 420, 432, 784, 800 }, -- hole 1 tee (west bank)
+		{ Enum.Material.LeafyGrass, 572, 588, 632, 648 }, -- hole 2 tee
+		{ Enum.Material.LeafyGrass, 712, 736, 608, 632 }, -- hole 2 green
+		{ Enum.Material.LeafyGrass, 380, 396, 580, 596 }, -- hole 3 tee
+		{ Enum.Material.LeafyGrass, 388, 412, 704, 728 }, -- hole 3 green
+		{ Enum.Material.Sand, 700, 712, 636, 648 }, -- hole 2 bunkers
+		{ Enum.Material.Sand, 736, 748, 604, 616 },
+		{ Enum.Material.Sand, 376, 388, 696, 708 }, -- hole 3 bunkers
+		{ Enum.Material.Sand, 412, 424, 716, 728 },
+	},
+}
+
+local function slopeSurface(x)
+	return math.max(0, 0.1 * (x - 360) - 0.2)
+end
+
+-- ReplaceMaterial takes a 4-aligned Region3; the y range spans the slope under the region plus one cell each way.
+local function paintSlope(material, x0, x1, z0, z1)
+	local gLo, gHi = slopeSurface(math.min(x0, x1)), slopeSurface(math.max(x0, x1))
+	local lo = math.floor(gLo / 4) * 4 - 4
+	local hi = math.ceil(gHi / 4) * 4 + 4
+	T:ReplaceMaterial(Region3.new(Vector3.new(x0, lo, z0), Vector3.new(x1, hi, z1)), 4, Enum.Material.Grass, material)
+end
+
+local function buildMalarayatGround()
+	local r = MALARAYAT.ramp
+	T:FillWedge(
+		CFrame.new((r.x0 + r.x1) / 2, (r.bottom + r.top) / 2, (r.z0 + r.z1) / 2),
+		Vector3.new(r.x1 - r.x0, r.top - r.bottom, r.z1 - r.z0),
+		Enum.Material.Grass
+	)
+	-- the ramp covers Road D's last asphalt cells (z 500..536): lay asphalt back over its whole length (surface 0..9)
+	T:ReplaceMaterial(Region3.new(Vector3.new(444, -4, 500), Vector3.new(456, 16, 548)), 4, Enum.Material.Grass, Enum.Material.Asphalt)
+	task.wait()
+
+	local p = MALARAYAT.pad
+	T:FillBlock(
+		CFrame.new((p.x0 + p.x1) / 2, (p.cutBottom + p.cutTop) / 2, (p.z0 + p.z1) / 2),
+		Vector3.new(p.x1 - p.x0, p.cutTop - p.cutBottom, p.z1 - p.z0),
+		Enum.Material.Air
+	)
+	task.wait()
+
+	-- pond: all cuts first, then the sand bed, then the water, so an overlap is never wiped by a later cut
+	for _, b in ipairs(MALARAYAT.ponds) do
+		T:FillBlock(CFrame.new((b.x0 + b.x1) / 2, 12, (b.z0 + b.z1) / 2), Vector3.new(b.x1 - b.x0, 24, b.z1 - b.z0), Enum.Material.Air)
+	end
+	for _, b in ipairs(MALARAYAT.ponds) do
+		T:FillBlock(CFrame.new((b.x0 + b.x1) / 2, -2, (b.z0 + b.z1) / 2), Vector3.new(b.x1 - b.x0, 4, b.z1 - b.z0), Enum.Material.Sand)
+	end
+	local wt = MALARAYAT.waterTop
+	for _, b in ipairs(MALARAYAT.ponds) do
+		T:FillBlock(CFrame.new((b.x0 + b.x1) / 2, (2 + wt) / 2, (b.z0 + b.z1) / 2), Vector3.new(b.x1 - b.x0, wt - 2, b.z1 - b.z0), Enum.Material.Water)
+	end
+	local i = MALARAYAT.island
+	T:FillBlock(CFrame.new((i.x0 + i.x1) / 2, (0 + i.top) / 2, (i.z0 + i.z1) / 2), Vector3.new(i.x1 - i.x0, i.top, i.z1 - i.z0), Enum.Material.Grass)
+	T:ReplaceMaterial(Region3.new(Vector3.new(i.x0, 0, i.z0), Vector3.new(i.x1, 12, i.z1)), 4, Enum.Material.Grass, Enum.Material.LeafyGrass)
+	task.wait()
+
+	for _, q in ipairs(MALARAYAT.paint) do
+		paintSlope(q[1], q[2], q[3], q[4], q[5])
+	end
+	task.wait()
+end
+
 local function part(parent, name, size, cframe, props)
 	local p = Instance.new("Part")
 	p.Name = name
@@ -224,6 +312,7 @@ buildLagoons()
 buildRoads()
 buildPlazaGround()
 buildSlope()
+buildMalarayatGround()
 buildWorldModels()
 placeSpawn()
 game.Lighting.ClockTime = 15.5

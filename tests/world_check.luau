@@ -342,6 +342,80 @@ do
 	check("Farm paving is Pavement, the lagoon is Water, and neither spills", #problems == 0, table.concat(problems, "; "))
 end
 
+-- Mount Malarayat ground (Slice 10): world.luau cuts a flat clubhouse pad (surface 20.0), grades a ramp from Road D up
+-- the slope's north wall, carves a pond (water surface 5.5) with an island green, and repaints plaza / pad / drive / tees /
+-- greens / bunkers. The slope is sloped, so a cell's material is the TOP occupied voxel of its column (ReadVoxels, exact), not
+-- the y -4..0 cell the flat sites use. Controls prove the paint, the cut and the water stay inside their regions and leave the
+-- untouched slope an exact plane (y = 0.1 * (x - 360) - 0.2).
+do
+	local function topCell(x, z)
+		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
+		-- ReadVoxels arrays are indexed [x][y][z]; this column is one cell wide, so x and z are always 1
+		local mats, occ = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 48, fz + 4)), 4)
+		for yi = #mats[1], 1, -1 do
+			if occ[1][yi][1] > 0.01 and mats[1][yi][1] ~= Enum.Material.Air then return mats[1][yi][1] end
+		end
+		return Enum.Material.Air
+	end
+	local function plane(x) return 0.1 * (x - 360) - 0.2 end
+	local M = Enum.Material
+	local problems = {}
+	local function expect(list, mat, label)
+		for _, p in ipairs(list) do
+			local m = topCell(p[1], p[2])
+			if m ~= mat then table.insert(problems, string.format("%s cell (%d,%d) is %s, expected %s", label, p[1], p[2], tostring(m), tostring(mat))) end
+		end
+	end
+	expect({ { 518, 670 }, { 578, 722 }, { 548, 696 }, { 518, 722 }, { 578, 670 }, -- plaza corners and middle
+		{ 558, 706 }, { 670, 842 }, { 558, 842 }, { 670, 706 }, { 614, 774 }, { 600, 740 } }, M.Pavement, "paved")
+	expect({ { 450, 504 }, { 450, 520 }, { 450, 544 }, { 450, 552 }, { 450, 620 }, { 450, 700 }, { 446, 700 }, { 470, 698 }, { 514, 698 } }, M.Asphalt, "asphalt")
+	expect({ { 444, 776 }, { 484, 776 }, { 482, 806 }, { 456, 812 }, { 492, 844 }, { 474, 830 }, { 462, 776 } }, M.Water, "pond")
+	expect({ { 466, 792 }, { 458, 786 }, { 474, 798 }, { 422, 786 }, { 430, 798 }, { 574, 634 }, { 586, 646 }, { 714, 610 }, { 734, 630 },
+		{ 382, 582 }, { 394, 594 }, { 390, 706 }, { 410, 726 } }, M.LeafyGrass, "island / tee / green")
+	expect({ { 702, 638 }, { 710, 646 }, { 738, 606 }, { 746, 614 }, { 378, 698 }, { 386, 706 }, { 414, 718 }, { 422, 726 } }, M.Sand, "bunker")
+	-- controls: Grass just outside each region (and Road D's untouched asphalt south of the ramp start)
+	expect({ { 442, 520 }, { 458, 520 }, { 462, 520 }, { 438, 560 }, { 460, 620 }, { 470, 688 }, { 470, 708 }, { 440, 704 },
+		{ 512, 684 }, { 584, 700 }, { 548, 664 }, { 548, 728 }, { 552, 740 }, { 676, 740 }, { 614, 700 }, { 614, 848 },
+		{ 436, 792 }, { 500, 828 }, { 466, 768 }, { 474, 852 }, { 448, 820 }, { 492, 792 }, { 416, 792 }, { 570, 640 },
+		{ 592, 640 }, { 708, 620 }, { 740, 620 }, { 372, 588 }, { 400, 600 }, { 400, 700 }, { 400, 732 }, { 698, 640 },
+		{ 750, 610 }, { 374, 702 }, { 426, 722 } }, M.Grass, "control")
+	expect({ { 450, 496 } }, M.Asphalt, "control")
+	check("Malarayat paint is in place and stays inside its regions", #problems == 0, #problems .. " wrong: " .. table.concat(problems, "; ", 1, math.min(#problems, 6)))
+
+	-- heights by raycast (the Sites folder is excluded by ground())
+	local hp = {}
+	local function nearly(label, x, z, want, tol)
+		local y = ground(x, z)
+		if y == nil or math.abs(y - want) > tol then table.insert(hp, string.format("%s (%d,%d) y=%s want %.1f+-%.1f", label, x, z, tostring(y), want, tol)) end
+	end
+	-- interior samples only: within about 2 studs of the cut wall the terrain mesh is smoothed into the wall
+	for _, p in ipairs({ { 584, 712 }, { 614, 774 }, { 662, 836 }, { 584, 836 }, { 662, 712 }, { 640, 760 } }) do nearly("pad", p[1], p[2], 20.0, 0.5) end
+	for _, p in ipairs({ { 562, 720 }, { 562, 800 }, { 566, 760 } }) do nearly("natural strip west of the cut", p[1], p[2], 20.0, 1.2) end
+	nearly("pond water", 470, 776, 5.5, 0.4)
+	nearly("pond water B", 474, 830, 5.5, 0.4)
+	nearly("island", 466, 792, 9.0, 0.5) -- fill top 7 measures 9.0 (4-stud cells): a mound 3.5 above the water
+	for _, p in ipairs({ { 436, 792 }, { 436, 776 }, { 466, 768 }, { 474, 852 }, { 500, 828 }, { 492, 792 } }) do
+		local y = ground(p[1], p[2])
+		if y == nil or y < 7.0 then table.insert(hp, string.format("rim (%d,%d) y=%s is under 1.5 above the water", p[1], p[2], tostring(y))) end
+	end
+	for _, p in ipairs({ { 600, 600 }, { 700, 800 }, { 400, 650 }, { 740, 700 }, { 680, 780 }, { 500, 880 } }) do
+		nearly("untouched slope", p[1], p[2], p[1] < 756 and plane(p[1]) or 38.5, 0.6)
+	end
+	-- the ramp climbs from the floor to the slope, never a step over 2.5 between 4-stud samples, and meets the ground at z 552
+	local prev, worst = nil, 0
+	for z = 504, 552, 4 do
+		local y = ground(450, z)
+		if y == nil then table.insert(hp, "ramp (450," .. z .. ") has no terrain") else
+			if prev then worst = math.max(worst, math.abs(y - prev)) end
+			prev = y
+		end
+	end
+	local yTop = ground(450, 552)
+	if worst > 2.5 then table.insert(hp, "ramp has a step of " .. worst) end
+	if yTop == nil or math.abs(yTop - plane(450)) > 1.0 then table.insert(hp, "ramp does not meet the slope at z 552: " .. tostring(yTop)) end
+	check("Malarayat surfaces: pad flat, pond water level and rim, island, ramp, untouched slope", #hp == 0, table.concat(hp, "; ", 1, math.min(#hp, 6)))
+end
+
 -- Baseplate removal is only required once the terrain checks above are green.
 if REQUIRE_BASEPLATE_REMOVED then
 	check("Baseplate removed", workspace:FindFirstChild("Baseplate") == nil)
