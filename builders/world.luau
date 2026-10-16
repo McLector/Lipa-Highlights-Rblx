@@ -14,7 +14,9 @@ local ROADS = {
 	{ name = "B_to_Outlets", w = 12, joinStart = true, pts = { { 0, -460 }, { 430, -460 }, { 430, -550 } } },
 	{ name = "C_to_Farm", w = 12, pts = { { 120, 0 }, { 450, 0 }, { 450, 240 }, { 570, 240 } } },
 	{ name = "D_to_Malarayat", w = 12, joinStart = true, pts = { { 450, 240 }, { 450, 560 } } },
-	{ name = "E_to_Tagbakin", w = 12, pts = { { 0, 100 }, { 0, 350 }, { -480, 350 }, { -480, 450 } } },
+	-- Slice 11: Road E used to stop at (-480, 450), the footprint's NE corner, 127 studs short of the Guide. It now runs on south to
+	-- z 526 and west to x -548, the east edge of the Tagbakin Guide plaza (PAVED below). Keep in step with briefs/site09.md.
+	{ name = "E_to_Tagbakin", w = 12, pts = { { 0, 100 }, { 0, 350 }, { -480, 350 }, { -480, 526 }, { -548, 526 } } },
 	{ name = "F_to_Market", w = 8, pts = { { -125, 70 }, { -125, 160 } } },
 	{ name = "G_to_Lomi", w = 8, pts = { { 125, 100 }, { 125, 140 } } },
 	{ name = "H_to_Cafe", w = 8, pts = { { 0, -100 }, { 0, -160 }, { 110, -160 } } },
@@ -133,6 +135,43 @@ local PAVED = {
 	{ x0 = 700, x1 = 796, z0 = 204, z1 = 276 }, -- P3 east walk, pool, terrace, villa slab
 	{ x0 = 692, x1 = 708, z0 = 260, z1 = 300 }, -- P4 path south to the lagoon
 	{ x0 = 708, x1 = 752, z0 = 284, z1 = 300 }, -- P5 shore apron and the land end of the deck
+	-- Tagbakin (Slice 11): the Guide plaza under the Guide, InfoPanel, JeepStop and jeepney (the JeepStop pad is 0.4 thick and would
+	-- vanish under the grass). x1 -548 stops at the west end of Road E's asphalt. Keep in step with briefs/site09.md.
+	{ x0 = -604, x1 = -548, z0 = 508, z1 = 564 },
+	-- Tagbakin quay (Slice 11, second pass): the terrace slab (88 x 52, rotated 45 degrees) and the seven promenade strips are parts with
+	-- a top at y 1.2, but grass blades still poke through them. These 30 stair-stepped 4-aligned rectangles cover every 4-stud cell whose
+	-- centre lies within 1 stud of a slab (generated from the frame ORIGIN (-650, 588), see briefs/site09.md). Only Grass is converted, so
+	-- the lake water is untouched. Keep in step with builders/site09.luau.
+	{ x0 = -668, x1 = -660, z0 = 540, z1 = 544 },
+	{ x0 = -672, x1 = -656, z0 = 544, z1 = 548 },
+	{ x0 = -676, x1 = -652, z0 = 548, z1 = 552 },
+	{ x0 = -680, x1 = -648, z0 = 552, z1 = 556 },
+	{ x0 = -684, x1 = -644, z0 = 556, z1 = 560 },
+	{ x0 = -688, x1 = -640, z0 = 560, z1 = 564 },
+	{ x0 = -720, x1 = -716, z0 = 564, z1 = 568 },
+	{ x0 = -692, x1 = -636, z0 = 564, z1 = 568 },
+	{ x0 = -720, x1 = -708, z0 = 568, z1 = 572 },
+	{ x0 = -696, x1 = -632, z0 = 568, z1 = 572 },
+	{ x0 = -724, x1 = -628, z0 = 572, z1 = 576 },
+	{ x0 = -716, x1 = -624, z0 = 576, z1 = 580 },
+	{ x0 = -708, x1 = -620, z0 = 580, z1 = 584 },
+	{ x0 = -704, x1 = -616, z0 = 584, z1 = 588 },
+	{ x0 = -696, x1 = -612, z0 = 588, z1 = 592 },
+	{ x0 = -692, x1 = -608, z0 = 592, z1 = 596 },
+	{ x0 = -688, x1 = -604, z0 = 596, z1 = 600 },
+	{ x0 = -684, x1 = -600, z0 = 600, z1 = 604 },
+	{ x0 = -676, x1 = -604, z0 = 604, z1 = 608 },
+	{ x0 = -672, x1 = -608, z0 = 608, z1 = 612 },
+	{ x0 = -668, x1 = -612, z0 = 612, z1 = 616 },
+	{ x0 = -664, x1 = -616, z0 = 616, z1 = 620 },
+	{ x0 = -660, x1 = -620, z0 = 620, z1 = 624 },
+	{ x0 = -656, x1 = -624, z0 = 624, z1 = 628 },
+	{ x0 = -652, x1 = -628, z0 = 628, z1 = 632 },
+	{ x0 = -648, x1 = -632, z0 = 632, z1 = 636 },
+	{ x0 = -644, x1 = -632, z0 = 636, z1 = 640 },
+	{ x0 = -644, x1 = -628, z0 = 640, z1 = 644 },
+	{ x0 = -640, x1 = -624, z0 = 644, z1 = 648 },
+	{ x0 = -636, x1 = -628, z0 = 648, z1 = 652 },
 }
 local function buildPlazaGround()
 	for _, r in ipairs(PAVED) do

@@ -416,6 +416,62 @@ do
 	check("Malarayat surfaces: pad flat, pond water level and rim, island, ramp, untouched slope", #hp == 0, table.concat(hp, "; ", 1, math.min(#hp, 6)))
 end
 
+-- Tagbakin ground (Slice 11): world.luau extends Road E's asphalt from its old end (-480, 450) south to z 532 and west along
+-- z 520..532 to x -548 (the Guide plaza), and repaints the Grass under the Guide plaza (x -604..-548, z 508..564) as Pavement,
+-- so the thin JeepStop pad shows. Same exact voxel read as the plaza check (cell = the y -4..0 voxel). The shore, the lake and
+-- the water are not touched: the water controls prove the lake edge did not move. Controls sit at least 2 cells away from the
+-- road's non-aligned x edges (-486 / -474), whose cells are partly filled.
+do
+	local function cellMaterial(x, z)
+		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
+		local mats = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 0, fz + 4)), 4)
+		return mats[1][1][1]
+	end
+	local M = Enum.Material
+	local problems = {}
+	local function expect(list, mat, label)
+		for _, p in ipairs(list) do
+			local m = cellMaterial(p[1], p[2])
+			if m ~= mat then table.insert(problems, string.format("%s cell (%d,%d) is %s, expected %s", label, p[1], p[2], tostring(m), tostring(mat))) end
+		end
+	end
+	expect({ { -602, 510 }, { -550, 510 }, { -602, 562 }, { -550, 562 }, { -578, 536 }, { -580, 530 }, { -566, 542 }, { -556, 554 },
+		{ -592, 526 }, { -550, 526 } }, M.Pavement, "plaza")
+	expect({ { -480, 446 }, { -480, 454 }, { -480, 480 }, { -480, 510 }, { -480, 528 }, { -500, 526 }, { -520, 526 }, { -546, 526 } }, M.Asphalt, "road")
+	expect({ { -492, 480 }, { -466, 480 }, { -500, 512 }, { -500, 540 }, { -480, 538 }, { -470, 526 }, { -608, 536 }, { -578, 504 },
+		{ -578, 568 }, { -544, 546 }, { -544, 510 } }, M.Grass, "control")
+	expect({ { -706, 610 }, { -700, 640 }, { -716, 590 } }, M.Water, "lake")
+	check("Tagbakin plaza is paved, Road E reaches it, and nothing spills", #problems == 0,
+		#problems .. " wrong: " .. table.concat(problems, "; ", 1, math.min(#problems, 6)))
+end
+
+-- Tagbakin quay paving (Slice 11, second terrain pass): the terrace and the promenade strips are parts with a top at y 1.2, but
+-- the terrain's grass blades still poke through them, so world.luau repaints the Grass under them as Pavement (QUAY, 30
+-- stair-stepped 4-aligned rectangles covering the rotated slabs). Interior cells are well inside the slabs; the controls are
+-- Grass cells just outside (9..16 studs from the slab edge) and the lake water must be untouched.
+do
+	local function cellMaterial(x, z)
+		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
+		local mats = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 0, fz + 4)), 4)
+		return mats[1][1][1]
+	end
+	local M = Enum.Material
+	local problems = {}
+	local function expect(list, mat, label)
+		for _, p in ipairs(list) do
+			local m = cellMaterial(p[1], p[2])
+			if m ~= mat then table.insert(problems, string.format("%s cell (%d,%d) is %s, expected %s", label, p[1], p[2], tostring(m), tostring(mat))) end
+		end
+	end
+	expect({ { -666, 554 }, { -674, 566 }, { -658, 570 }, { -650, 574 }, { -650, 582 }, { -650, 590 }, { -650, 598 }, { -650, 606 },
+		{ -642, 610 }, { -626, 614 }, { -706, 578 }, { -638, 628 }, { -630, 646 }, { -690, 582 } }, M.Pavement, "quay")
+	expect({ { -666, 522 }, { -670, 530 }, { -678, 538 }, { -690, 546 }, { -638, 550 }, { -634, 554 }, { -626, 558 }, { -614, 570 },
+		{ -602, 586 }, { -702, 548 } }, M.Grass, "control")
+	expect({ { -706, 610 }, { -716, 590 }, { -700, 640 } }, M.Water, "lake")
+	check("Tagbakin terrace and promenade are paved underneath and the paint stays near them", #problems == 0,
+		#problems .. " wrong: " .. table.concat(problems, "; ", 1, math.min(#problems, 6)))
+end
+
 -- Baseplate removal is only required once the terrain checks above are green.
 if REQUIRE_BASEPLATE_REMOVED then
 	check("Baseplate removed", workspace:FindFirstChild("Baseplate") == nil)

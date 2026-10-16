@@ -26,7 +26,7 @@ local function xzDist(a, b)
 end
 
 -- Sites whose real builder has run (the rest are still placeholder Blocks).
-local BUILT = { [1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = true, [8] = true }
+local BUILT = { [1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = true, [8] = true, [9] = true }
 
 local sites = workspace:FindFirstChild("Sites")
 check("Workspace.Sites exists", sites ~= nil)
@@ -435,6 +435,218 @@ if sites then
 						sGuideR .. " of " .. #rails .. " rails seen from the Guide")
 					check(label .. " clubhouse windows are visible from the road", #windows >= 10 and sRoadW >= #windows * 0.8,
 						sRoadW .. " of " .. #windows .. " windows seen from the road")
+					elseif s.id == 9 then
+						-- Orientation, walkability, keep-clear and sight-line guards (Slice 11): the pivot is yawed NE and the shore runs
+						-- diagonally, so a build that used the pivot as its origin is rotated yet passes the symmetric bounds check. Anchors
+						-- are ONE uniquely named BasePart each, searched through the whole site. Local frame (briefs/site09.md): ORIGIN
+						-- (-650, 0, 588), local +X = SE, local +Z = SW (the lake and the facade). The building stands SW of the Guide with
+						-- its windows and dock on the lake side, pavilion L is NW of pavilion R (a mirrored build swaps them), the rear door
+						-- faces the Guide, the dock tip and the banca are over Water cells, and every seawall segment straddles the water
+						-- edge. The lanes (rear approach, both flanks, promenade, dock) are swept with person-sized boxes (4 wide, y 2..9)
+						-- and the walking surface must never step by more than 1.3. The kept Guide / InfoPanel / JeepStop / jeepney are
+						-- excluded from the keep-clear and sight-line queries. Taal_Volcano is CanQuery=false, so the view guard asserts that
+						-- no built part blocks rays aimed at it.
+						local function anchor(name)
+							local p = m:FindFirstChild(name, true)
+							return (p ~= nil and p:IsA("BasePart")) and p or nil
+						end
+						local function named(name)
+							local list = {}
+							for _, d in ipairs(m:GetDescendants()) do
+								if d.Name == name and d:IsA("BasePart") then table.insert(list, d) end
+							end
+							return list
+						end
+						local S9 = 0.70711
+						local function LW(lx, lz) return Vector3.new(-650 + S9 * (lx - lz), 0, 588 + S9 * (lx + lz)) end
+						local SW, SE = SiteData.facingVector("SW"), SiteData.facingVector("SE")
+						local guidePos = SiteData.guidePos(9)
+						local function off(a, b) return Vector3.new(a.X - b.X, 0, a.Z - b.Z) end
+						-- True when the top occupied voxel of the 4-stud cell containing (x, z) is Water (ReadVoxels is [x][y][z]).
+						local function cellIsWater(x, z)
+							local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
+							local mats, occ = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 8, fz + 4)), 4)
+							for yi = #mats[1], 1, -1 do
+								if occ[1][yi][1] > 0.01 and mats[1][yi][1] ~= Enum.Material.Air then return mats[1][yi][1] == Enum.Material.Water end
+							end
+							return false
+						end
+						local body, deck = anchor("ShoreBody"), anchor("ShoreRoofDeck")
+						local roofL, roofR, rear = anchor("PavilionRoofL"), anchor("PavilionRoofR"), anchor("RearDoor")
+						local dockEnd, banca, board, kiosk = anchor("DockEnd"), anchor("BancaMain"), anchor("MapBoard"), anchor("KioskFloor")
+						local windows, wall = named("ShoreWindow"), named("SeawallSegment")
+						check(label .. " building is SW of the Guide", body ~= nil and off(body.Position, guidePos):Dot(SW) >= 60,
+							body and tostring(off(body.Position, guidePos):Dot(SW)) or "part missing")
+						local winFront = #windows >= 10 and body ~= nil
+						if winFront then
+							local sum = 0
+							for _, w in ipairs(windows) do sum += off(w.Position, body.Position):Dot(SW) end
+							winFront = sum / #windows >= 10
+						end
+						check(label .. " the windows are on the SW (lake) face", winFront, #windows .. " windows")
+						check(label .. " roof deck is high and over the building", body ~= nil and deck ~= nil and deck.Position.Y >= 22
+							and off(deck.Position, body.Position).Magnitude <= 10, deck and tostring(deck.Position) or "parts missing")
+						check(label .. " pavilion L is NW of pavilion R, both roofs high", roofL ~= nil and roofR ~= nil
+							and off(roofR.Position, roofL.Position):Dot(SE) >= 30 and roofL.Position.Y >= 26 and roofR.Position.Y >= 26,
+							roofL and roofR and (tostring(roofL.Position) .. " / " .. tostring(roofR.Position)) or "parts missing")
+						check(label .. " rear door faces the Guide (NE side)", body ~= nil and rear ~= nil and off(rear.Position, body.Position):Dot(SW) <= -10,
+							body and rear and tostring(off(rear.Position, body.Position):Dot(SW)) or "parts missing")
+						check(label .. " dock tip is over water, far SW, deck top 1.2", body ~= nil and dockEnd ~= nil and cellIsWater(dockEnd.Position.X, dockEnd.Position.Z)
+							and off(dockEnd.Position, body.Position):Dot(SW) >= 60 and math.abs(dockEnd.Position.Y + dockEnd.Size.Y / 2 - 1.2) <= 0.15,
+							dockEnd and tostring(dockEnd.Position) or "part missing")
+						local strays = {}
+						for _, w in ipairs(wall) do
+							if not (cellIsWater(w.Position.X + SW.X * 5, w.Position.Z + SW.Z * 5) and not cellIsWater(w.Position.X - SW.X * 5, w.Position.Z - SW.Z * 5)) then
+								table.insert(strays, string.format("(%.0f,%.0f)", w.Position.X, w.Position.Z))
+							end
+						end
+						check(label .. " seawall has 6+ segments and each straddles the water edge", #wall >= 6 and #strays == 0,
+							#wall .. " segments, off the shore: " .. table.concat(strays, " ", 1, math.min(#strays, 4)))
+						check(label .. " banca floats on water", banca ~= nil and cellIsWater(banca.Position.X, banca.Position.Z), banca and tostring(banca.Position) or "part missing")
+						local boardGui = board and board:FindFirstChildOfClass("SurfaceGui")
+						local boardText = boardGui and boardGui:FindFirstChildWhichIsA("TextLabel", true)
+						check(label .. " map board is near the Guide, with text", board ~= nil and off(board.Position, guidePos).Magnitude <= 45
+							and boardText ~= nil and #boardText.Text > 0, board and tostring(board.Position) or "part missing")
+						check(label .. " kiosk is SE of the building", body ~= nil and kiosk ~= nil and off(kiosk.Position, body.Position):Dot(SE) >= 30,
+							kiosk and tostring(kiosk.Position) or "part missing")
+						local fishing, bancas = m:FindFirstChild("FishingActivity"), m:FindFirstChild("Bancas")
+						local rigs = 0
+						for _, d in ipairs(fishing and fishing:GetDescendants() or {}) do
+							if d:IsA("Humanoid") then rigs += 1 end
+						end
+						check(label .. " two anglers and 3+ bancas", rigs >= 2 and bancas ~= nil and #bancas:GetChildren() >= 3,
+							rigs .. " anglers, " .. (bancas and #bancas:GetChildren() or 0) .. " bancas")
+
+						local function inRig(h)
+							local p = h.Parent
+							while p and p ~= m do
+								if p:IsA("Model") and p:FindFirstChildOfClass("Humanoid") then return true end
+								p = p.Parent
+							end
+							return false
+						end
+						local lp = OverlapParams.new()
+						lp.FilterType = Enum.RaycastFilterType.Include
+						lp.FilterDescendantsInstances = { m }
+						lp.RespectCanCollide = true
+						-- A lane is a polyline of world (x, z) points swept in segments of at most 16 studs: a 4-wide box, y 2..9.
+						local function laneBlockers(points)
+							local seen, blockers = {}, {}
+							for i = 1, #points - 1 do
+								local p1, p2 = points[i], points[i + 1]
+								local dir = p2 - p1
+								local n = math.max(1, math.ceil(dir.Magnitude / 16))
+								for k = 0, n - 1 do
+									local a, b = p1 + dir * (k / n), p1 + dir * ((k + 1) / n)
+									local mid = (a + b) / 2
+									local cf = CFrame.lookAt(Vector3.new(mid.X, 5.5, mid.Z), Vector3.new(mid.X + dir.X, 5.5, mid.Z + dir.Z))
+									for _, h in ipairs(workspace:GetPartBoundsInBox(cf, Vector3.new(4, 7, (b - a).Magnitude + 0.5), lp)) do
+										if not inRig(h) and not seen[h] then
+											seen[h] = true
+											table.insert(blockers, h:GetFullName())
+										end
+									end
+								end
+							end
+							return blockers
+						end
+						local function pts(list)
+							local out = {}
+							for _, q in ipairs(list) do table.insert(out, LW(q[1], q[2])) end
+							return out
+						end
+						-- Everything built except the kept Guide / InfoPanel / JeepStop / jeepney.
+						local kept = { Guide = true, InfoPanel = true, JeepStop = true, JeepSignPole = true, JeepSign = true, Jeepney = true }
+						local built = {}
+						for _, c in ipairs(m:GetChildren()) do
+							if not kept[c.Name] then table.insert(built, c) end
+						end
+						local lanes = {
+							{ "Guide to the rear door (b)", { { 8.5, -80 }, { 2, -26 } }, false },
+							{ "SE flank (c)", { { 2, -26 }, { 40, -27 }, { 40, 24 } }, false },
+							{ "NW flank (c')", { { 2, -26 }, { -40, -27 }, { -40, 24 } }, false },
+							{ "promenade (d)", { { -40, 24 }, { 0, 24 }, { 40, 24 } }, true },
+							{ "the dock (e)", { { 0, 24 }, { 0, 80 } }, true },
+						}
+						for _, lane in ipairs(lanes) do
+							local blockers = laneBlockers(pts(lane[2]))
+							check(label .. " walking lane " .. lane[1] .. " is free", #blockers == 0,
+								#blockers .. " blocking: " .. table.concat(blockers, ", ", 1, math.min(#blockers, 4)))
+						end
+						-- Walkability: sample the walking surface every 2 studs (terrain + built parts only); no step over 1.3, and the
+						-- promenade and the dock must be built surface (a missing plank would otherwise read as flat water).
+						local wp = RaycastParams.new()
+						wp.FilterType = Enum.RaycastFilterType.Include
+						local inc = { workspace.Terrain }
+						for _, c in ipairs(built) do table.insert(inc, c) end
+						wp.FilterDescendantsInstances = inc
+						for _, lane in ipairs({ lanes[2], lanes[3], lanes[4], lanes[5] }) do
+							local points = pts(lane[2])
+							local worst, prevY, gaps = 0, nil, 0
+							for i = 1, #points - 1 do
+								local a, b = points[i], points[i + 1]
+								local n = math.max(1, math.ceil((b - a).Magnitude / 2))
+								for k = 0, n do
+									local p = a + (b - a) * (k / n)
+									local r = workspace:Raycast(Vector3.new(p.X, 40, p.Z), Vector3.new(0, -80, 0), wp)
+									if r == nil or (lane[3] and r.Instance == workspace.Terrain) then
+										gaps += 1
+									elseif r then
+										if prevY then worst = math.max(worst, math.abs(r.Position.Y - prevY)) end
+										prevY = r.Position.Y
+									end
+								end
+							end
+							check(label .. " lane " .. lane[1] .. " is walkable (steps <= 1.3, surface built)", worst <= 1.3 and gaps == 0,
+								string.format("worst step %.2f, %d samples with no built surface", worst, gaps))
+						end
+
+						local kp = OverlapParams.new()
+						kp.FilterType = Enum.RaycastFilterType.Include
+						kp.FilterDescendantsInstances = built
+						for _, zone in ipairs({
+							{ "Guide box", CFrame.new(-578.8, 7, 528.8), Vector3.new(24, 12, 24) },
+							{ "InfoPanel front zone", CFrame.new(-585.9, 6, 518.9), Vector3.new(16, 10, 16) },
+							{ "JeepStop and landing box", CFrame.new(-558.6, 7.5, 549), Vector3.new(34, 13, 34) },
+						}) do
+							local hits = {}
+							for _, h in ipairs(workspace:GetPartBoundsInBox(zone[2], zone[3], kp)) do
+								if not inRig(h) then table.insert(hits, h:GetFullName()) end
+							end
+							check(label .. " keep-clear " .. zone[1] .. " is free", #hits == 0,
+								#hits .. " in the way: " .. table.concat(hits, ", ", 1, math.min(#hits, 4)))
+						end
+
+						-- Sight-lines: from eye-level points a ray to each target's centre must reach that part first.
+						local vp = RaycastParams.new()
+						vp.FilterType = Enum.RaycastFilterType.Include
+						vp.FilterDescendantsInstances = built
+						local function seenFrom(eye, targets)
+							local seenCount = 0
+							for _, t in ipairs(targets) do
+								local r = workspace:Raycast(eye, t.Position - eye, vp)
+								if r and r.Instance == t then seenCount += 1 end
+							end
+							return seenCount
+						end
+						local eyeDock, eyeGuide = Vector3.new(-703.7, 6.2, 641.7), Vector3.new(-583.0, 5.5, 533.0)
+						local sDock = seenFrom(eyeDock, windows)
+						check(label .. " shore windows are visible from the dock end", #windows >= 10 and sDock >= #windows * 0.8,
+							sDock .. " of " .. #windows .. " windows seen from the dock end")
+						-- The roof caps are hidden from a low eye by the building's own rear wall and the tier-1 roof edge, so the Guide sees
+						-- the two pavilion bodies (first hit on their NE faces) and the rear door.
+						local rearSeen = {}
+						for _, t in ipairs({ anchor("PavilionL"), anchor("PavilionR"), rear }) do table.insert(rearSeen, t) end
+						local sGuide = seenFrom(eyeGuide, rearSeen)
+						check(label .. " the pavilions and rear door are visible from the Guide", #rearSeen == 3 and sGuide == 3, sGuide .. " of " .. #rearSeen .. " seen from the Guide")
+						local volcano = workspace:FindFirstChild("World") and workspace.World:FindFirstChild("Backdrops") and workspace.World.Backdrops:FindFirstChild("Taal_Volcano")
+						local blocked = {}
+						for _, t in ipairs({ Vector3.new(-1130, 150, 1130), Vector3.new(-1018.2, 120, 1230), Vector3.new(-1241.8, 120, 1030) }) do
+							local r = workspace:Raycast(eyeDock, t - eyeDock, vp)
+							if r then table.insert(blocked, r.Instance:GetFullName()) end
+						end
+						check(label .. " the volcano view from the dock end is clear", volcano ~= nil and dockEnd ~= nil and #blocked == 0,
+							#blocked .. " blocked: " .. table.concat(blocked, ", ") .. (dockEnd == nil and " (no dock)" or ""))
 				end
 			else
 				check(label .. " Block present", m:FindFirstChild("Block") ~= nil and m.Block:IsA("BasePart"))
