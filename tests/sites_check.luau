@@ -26,7 +26,7 @@ local function xzDist(a, b)
 end
 
 -- Sites whose real builder has run (the rest are still placeholder Blocks).
-local BUILT = { [1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true }
+local BUILT = { [1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = true }
 
 local sites = workspace:FindFirstChild("Sites")
 check("Workspace.Sites exists", sites ~= nil)
@@ -182,6 +182,116 @@ if sites then
 					end
 					check(label .. " sign letters are visible from the street", letters >= 20 and seen >= letters * 0.8,
 						seen .. " of " .. letters .. " letters seen from the street")
+				elseif s.id == 7 then
+					-- Orientation, walkability, keep-clear and sight-line guards (Slice 09): the pivot is yawed to W, so a build that
+					-- used it as its origin is rotated yet passes the symmetric bounds check. Anchors are ONE uniquely named BasePart
+					-- each, searched through the whole site. The villa glass is on the west frontage (VillaBody is the back wall), the
+					-- pool lies west of the villa, the pavilion deck is south (+Z) of the pool, the path starts west of the Guide and
+					-- the wellness board stands east of it. The four lanes (entry path, plaza to pool, south to the lagoon, to the
+					-- deck) are swept with person-sized boxes (4 wide, y 2..9); any colliding non-rig part of the site fails. The
+					-- kept Guide / InfoPanel / JeepStop / jeepney are excluded from the keep-clear and sight-line queries.
+					local function anchor(name)
+						local p = m:FindFirstChild(name, true)
+						return (p ~= nil and p:IsA("BasePart")) and p or nil
+					end
+					local function named(name)
+						local list = {}
+						for _, d in ipairs(m:GetDescendants()) do
+							if d.Name == name and d:IsA("BasePart") then table.insert(list, d) end
+						end
+						return list
+					end
+					local body, roof, pool = anchor("VillaBody"), anchor("VillaRoof"), anchor("PoolWater")
+					local deck, pstart, board = anchor("PavilionDeck"), anchor("PathStart"), anchor("WellnessBoard")
+					local panes, thatch = named("VillaGlassPane"), named("PavilionThatch")
+					local guideX = SiteData.guidePos(7).X
+					local panesWest = body ~= nil and #panes >= 4
+					for _, pn in ipairs(panes) do
+						if body == nil or pn.Position.X >= body.Position.X - 15 then panesWest = false end
+					end
+					check(label .. " villa glass is on the west frontage", panesWest,
+						body and (#panes .. " panes, body x " .. body.Position.X) or "parts missing")
+					check(label .. " villa roof is above the glass", roof ~= nil and roof.Position.Y >= 13,
+						roof and tostring(roof.Position) or "part missing")
+					check(label .. " pool is west of the villa", body ~= nil and pool ~= nil and pool.Position.X < body.Position.X - 30,
+						body and pool and (pool.Position.X .. " vs " .. body.Position.X) or "parts missing")
+					check(label .. " pavilion deck is south of the pool", pool ~= nil and deck ~= nil and deck.Position.Z > pool.Position.Z + 30,
+						pool and deck and (deck.Position.Z .. " vs " .. pool.Position.Z) or "parts missing")
+					check(label .. " path starts west of the Guide", pstart ~= nil and pstart.Position.X < guideX - 60,
+						pstart and tostring(pstart.Position) or "part missing")
+					local boardGui = board and board:FindFirstChildOfClass("SurfaceGui")
+					local boardText = boardGui and boardGui:FindFirstChildWhichIsA("TextLabel", true)
+					check(label .. " wellness board is east of the Guide, with text", board ~= nil and board.Position.X > guideX + 20
+						and boardText ~= nil and #boardText.Text > 0, board and tostring(board.Position) or "part missing")
+
+					local function inRig(h)
+						local p = h.Parent
+						while p and p ~= m do
+							if p:IsA("Model") and p:FindFirstChildOfClass("Humanoid") then return true end
+							p = p.Parent
+						end
+						return false
+					end
+					local lp = OverlapParams.new()
+					lp.FilterType = Enum.RaycastFilterType.Include
+					lp.FilterDescendantsInstances = { m }
+					lp.RespectCanCollide = true
+					for _, lane in ipairs({
+						{ "entry path (a)", CFrame.new(615, 5.5, 240), Vector3.new(82, 7, 4) },
+						{ "plaza to pool (b)", CFrame.new(698, 5.5, 240), Vector3.new(28, 7, 4) },
+						{ "south to the lagoon (c)", CFrame.new(700, 5.5, 281), Vector3.new(4, 7, 38) },
+						{ "to the deck (d)", CFrame.new(718, 5.5, 292), Vector3.new(20, 7, 4) },
+					}) do
+						local blockers = {}
+						for _, h in ipairs(workspace:GetPartBoundsInBox(lane[2], lane[3], lp)) do
+							if not inRig(h) then table.insert(blockers, h:GetFullName()) end
+						end
+						check(label .. " walking lane " .. lane[1] .. " is free", #blockers == 0,
+							#blockers .. " blocking: " .. table.concat(blockers, ", ", 1, math.min(#blockers, 4)))
+					end
+
+					-- Everything built except the kept Guide / InfoPanel / JeepStop / jeepney.
+					local kept = { Guide = true, InfoPanel = true, JeepStop = true, JeepSignPole = true, JeepSign = true, Jeepney = true }
+					local built = {}
+					for _, c in ipairs(m:GetChildren()) do
+						if not kept[c.Name] then table.insert(built, c) end
+					end
+					local kp = OverlapParams.new()
+					kp.FilterType = Enum.RaycastFilterType.Include
+					kp.FilterDescendantsInstances = built
+					for _, zone in ipairs({
+						{ "Guide box", CFrame.new(670, 7.5, 240), Vector3.new(24, 13, 24) },
+						{ "InfoPanel front zone", CFrame.new(670, 5.5, 252), Vector3.new(12, 9, 12) },
+						{ "JeepStop and landing box", CFrame.new(670, 7.5, 211), Vector3.new(24, 13, 42) },
+					}) do
+						local hits = {}
+						for _, h in ipairs(workspace:GetPartBoundsInBox(zone[2], zone[3], kp)) do
+							if not inRig(h) then table.insert(hits, h:GetFullName()) end
+						end
+						check(label .. " keep-clear " .. zone[1] .. " is free", #hits == 0,
+							#hits .. " in the way: " .. table.concat(hits, ", ", 1, math.min(#hits, 4)))
+					end
+
+					-- Sight-lines: from eye-level points a ray to each target's centre must reach that part first.
+					local vp = RaycastParams.new()
+					vp.FilterType = Enum.RaycastFilterType.Include
+					vp.FilterDescendantsInstances = built
+					local function seenFrom(eye, targets)
+						local seen = 0
+						for _, t in ipairs(targets) do
+							local r = workspace:Raycast(eye, t.Position - eye, vp)
+							if r and r.Instance == t then seen += 1 end
+						end
+						return seen
+					end
+					local eyeGuide, eyeRoad = Vector3.new(664, 6, 234), Vector3.new(576, 6, 236)
+					local sGuide, sRoad, sThatch = seenFrom(eyeGuide, panes), seenFrom(eyeRoad, panes), seenFrom(eyeGuide, thatch)
+					check(label .. " villa glass is visible from the plaza", #panes >= 4 and sGuide >= #panes * 0.8,
+						sGuide .. " of " .. #panes .. " panes seen from the plaza")
+					check(label .. " villa glass is visible from the road mouth", #panes >= 4 and sRoad >= #panes * 0.8,
+						sRoad .. " of " .. #panes .. " panes seen from the road mouth")
+					check(label .. " pavilion thatch is visible from the plaza", #thatch >= 4 and sThatch >= #thatch * 0.8,
+						sThatch .. " of " .. #thatch .. " thatch tiers seen from the plaza")
 				end
 			else
 				check(label .. " Block present", m:FindFirstChild("Block") ~= nil and m.Block:IsA("BasePart"))

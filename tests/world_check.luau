@@ -296,6 +296,52 @@ do
 	check("Café paving is Pavement and the paint stays inside the region", #problems == 0, table.concat(problems, "; "))
 end
 
+-- Farm paving and lagoon (Slice 09): world.luau repaints the Grass under the Farm's path, plaza, pool terrace / villa slab, the
+-- path south and the deck apron as Pavement (regions P1..P5, see briefs/site07.md) and carves a rectangular lagoon of Water
+-- (x 700..800, z 300..352). Same exact voxel read as the plaza check. The controls prove the paint and the water stay inside
+-- their regions and leave road C's asphalt (cells ..572 at z 232..248) alone.
+do
+	local function cellMaterial(x, z)
+		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
+		local mats = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 0, fz + 4)), 4)
+		return mats[1][1][1]
+	end
+	local problems = {}
+	for _, p in ipairs({
+		{ 574, 234 }, { 650, 246 }, { 574, 246 }, { 650, 234 }, { 612, 240 }, -- P1 corners and middle
+		{ 654, 194 }, { 698, 258 }, { 654, 258 }, { 698, 194 }, { 670, 220 }, { 670, 240 }, -- P2 corners, JeepStop, Guide
+		{ 702, 206 }, { 794, 274 }, { 702, 274 }, { 794, 206 }, { 729, 240 }, { 780, 240 }, -- P3 corners, pool, villa
+		{ 694, 262 }, { 706, 298 }, { 694, 298 }, { 700, 280 }, -- P4 corners and middle
+		{ 710, 286 }, { 750, 298 }, { 710, 298 }, { 750, 286 }, { 730, 294 }, -- P5 corners and deck apron
+	}) do
+		local m = cellMaterial(p[1], p[2])
+		if m ~= Enum.Material.Pavement then
+			table.insert(problems, string.format("cell (%d,%d) is %s, expected Pavement", p[1], p[2], tostring(m)))
+		end
+	end
+	for _, p in ipairs({ { 702, 302 }, { 798, 350 }, { 702, 350 }, { 798, 302 }, { 750, 326 } }) do
+		local m = cellMaterial(p[1], p[2])
+		if m ~= Enum.Material.Water then
+			table.insert(problems, string.format("lagoon cell (%d,%d) is %s, expected Water", p[1], p[2], tostring(m)))
+		end
+	end
+	for _, c in ipairs({
+		{ 568, 240, Enum.Material.Asphalt }, { 570, 236, Enum.Material.Asphalt }, { 574, 228, Enum.Material.Grass },
+		{ 574, 252, Enum.Material.Grass }, { 612, 228, Enum.Material.Grass }, { 612, 252, Enum.Material.Grass },
+		{ 650, 190, Enum.Material.Grass }, { 698, 190, Enum.Material.Grass }, { 662, 262, Enum.Material.Grass },
+		{ 714, 202, Enum.Material.Grass }, { 798, 240, Enum.Material.Grass }, { 750, 278, Enum.Material.Grass },
+		{ 688, 280, Enum.Material.Grass }, { 712, 292, Enum.Material.Pavement }, { 754, 292, Enum.Material.Grass },
+		{ 750, 296, Enum.Material.Pavement }, { 760, 296, Enum.Material.Grass }, { 696, 326, Enum.Material.Grass },
+		{ 802, 326, Enum.Material.Grass }, { 750, 356, Enum.Material.Grass },
+	}) do
+		local m = cellMaterial(c[1], c[2])
+		if m ~= c[3] then
+			table.insert(problems, string.format("control cell (%d,%d) is %s, expected %s", c[1], c[2], tostring(m), tostring(c[3])))
+		end
+	end
+	check("Farm paving is Pavement, the lagoon is Water, and neither spills", #problems == 0, table.concat(problems, "; "))
+end
+
 -- Baseplate removal is only required once the terrain checks above are green.
 if REQUIRE_BASEPLATE_REMOVED then
 	check("Baseplate removed", workspace:FindFirstChild("Baseplate") == nil)

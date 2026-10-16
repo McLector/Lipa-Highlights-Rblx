@@ -27,6 +27,12 @@ local LAKES = {
 	{ x = -1130, z = 1130, r = 420 }, -- far water so the volcano island sits in the lake
 }
 
+-- The Farm's lagoon (Slice 09): a rectangular pool of water flush at y 0 (same carve / bed / fill pattern as the lakes, but
+-- shallow: y -12..0). Edges are multiples of 4. Keep in step with briefs/site07.md.
+local LAGOONS = {
+	{ x0 = 700, x1 = 800, z0 = 300, z1 = 352 },
+}
+
 local function clearAll()
 	T:Clear()
 	local old = workspace:FindFirstChild("World")
@@ -84,6 +90,17 @@ local function buildLakes()
 	end
 end
 
+local function buildLagoons()
+	for _, l in ipairs(LAGOONS) do
+		local cx, cz = (l.x0 + l.x1) / 2, (l.z0 + l.z1) / 2
+		local sx, sz = l.x1 - l.x0, l.z1 - l.z0
+		T:FillBlock(CFrame.new(cx, -6, cz), Vector3.new(sx, 12, sz), Enum.Material.Air) -- carve pit (y -12..0)
+		T:FillBlock(CFrame.new(cx, -10, cz), Vector3.new(sx, 4, sz), Enum.Material.Sand) -- bed (y -12..-8)
+		T:FillBlock(CFrame.new(cx, -4, cz), Vector3.new(sx, 8, sz), Enum.Material.Water) -- water (y -8..0)
+	end
+	task.wait()
+end
+
 -- Plaza Independencia ground. The plaza paving built by builders/site01.luau (PlazaPaving, x -100..100, z 6..100, plus
 -- the wing apron in front of it) is only 0.1 stud thick, so the terrain's grass blades would poke through it. Repaint the
 -- Grass under the plaza as Pavement. Keep this region in step with PlazaPaving in site01.luau.
@@ -108,6 +125,14 @@ local PAVED = {
 	-- Café de Lipa (Slice 08): terrace, unit floor and forecourt (x 112..212, z -200..-120, the footprint). x0 112 stops at the
 	-- east edge of road H's asphalt cells (x 96..112). Keep in step with builders/site04.luau.
 	{ x0 = 112, x1 = 212, z0 = -200, z1 = -120 },
+	-- The Farm at San Benito (Slice 09): entry path, arrival plaza, pool terrace and villa slab, the path south and the shore apron
+	-- of the lagoon deck. x0 572 of P1 stops at the east edge of road C's asphalt cells (x ..572). Regions overlap on purpose
+	-- (P3 and P4); ReplaceMaterial is idempotent. Keep in step with builders/site07.luau and briefs/site07.md.
+	{ x0 = 572, x1 = 652, z0 = 232, z1 = 248 }, -- P1 entry path
+	{ x0 = 652, x1 = 700, z0 = 192, z1 = 260 }, -- P2 arrival plaza
+	{ x0 = 700, x1 = 796, z0 = 204, z1 = 276 }, -- P3 east walk, pool, terrace, villa slab
+	{ x0 = 692, x1 = 708, z0 = 260, z1 = 300 }, -- P4 path south to the lagoon
+	{ x0 = 708, x1 = 752, z0 = 284, z1 = 300 }, -- P5 shore apron and the land end of the deck
 }
 local function buildPlazaGround()
 	for _, r in ipairs(PAVED) do
@@ -195,6 +220,7 @@ end
 clearAll()
 buildFloor()
 buildLakes()
+buildLagoons()
 buildRoads()
 buildPlazaGround()
 buildSlope()
