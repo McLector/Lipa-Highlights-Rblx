@@ -1,136 +1,108 @@
-# NPC Guide Dialogue Draft: Lipa City Landmarks
+# NPC Guide Dialogue: Lipa City Landmarks (APPROVED, Slice 12)
 
-Voice: plain, friendly student guide. Each site has four lines in order: (a) what the place is, (b) what it represents today, (c) one exterior art or architecture observation, (d) a "Look at..." prompt pointing at the model. Carmel has six lines so the founding, the 1948 reports, the 1951 finding and the 2015 developments each get their own line.
+Status: **approved 2026-10-17**. The user delegated the open decisions: names and details visible in the reference photos are taken as truth, and anything else was decided from the sources below. This text is loaded into `src/ReplicatedStorage/LipaShared/SiteData.luau` (`dialogue`, `panelText`) and into the in-world labels built by `builders/site05.luau`, `site06.luau` and `site09.luau`. If a line here changes, change SiteData and re-run `tests/SiteData_Test.luau`.
 
-Length rule: every spoken line is 220 characters or fewer, counted with Python len() including its verify tags.
+Voice: plain, friendly student guide. Each site has four lines in order: (a) what the place is, (b) what it represents today, (c) one art or architecture observation that describes what is **built on the model**, (d) a "Look at..." prompt pointing at the model. Carmel has six lines so the founding, the 1948 reports, the 1951 finding and the 2015 developments each get their own line.
 
-Verify tags: every proper name in a spoken line, and every date or claim not confirmed on a page I opened, carries the tag [VERIFY]. Lines are counted after tagging.
+Rules enforced by tests: every line is 220 bytes or fewer, **ASCII only** (the typewriter in GuideClient slices by byte, so accented letters would be cut mid-glyph), no tags or placeholders, no glamping claim anywhere, last line starts with "Look".
 
-Sources marked "search result, not opened" came from a web search summary only. The one page I opened and checked directly is the city barangay profiles page (lipa.gov.ph/barangay-profiles/). Photo credits are in site_credits.md.
+## What was checked, and how
 
----
+"Opened" means the page was fetched and the sentence read. "Snippet" means only a search summary was seen.
+
+| Claim | Status |
+|---|---|
+| Carmel founded 31 May 1946 | Opened: carmelitaniscalzi.com ("Founded on 31 May 1946") |
+| 1948 reports to Teresita Castillo | Opened: Wikipedia "Mary, Mediatrix of All Grace"; catholic.org (id 72779) |
+| 1951 finding by six Filipino bishops, 11 April 1951 | Opened: Wikipedia; catholic.org |
+| Holy See reaffirmed the negative judgment | Opened: catholic.org ("reiterated its negative judgement"); Wikipedia (decree overruled the archbishop) |
+| Arguelles declared "worthy of belief" (12 Sept 2015), later withdrew it | Opened: catholic.org; Wikipedia (retracted 1 June 2016) |
+| A December 2015 Vatican decree ordering commissions disbanded | **Not used.** Only a search snippet; no opened page supports it. |
+| "Papal approval of the 1951 finding is disputed" | **Not used.** The opened pages do not say so. |
+| Halang is "developed as one of the tourist spots in the city"; Tagbakin is a sitio of Halang; its waters "always teemed with" tawilis | Opened: lipa.gov.ph/barangay-profiles |
+| Glamping at Tagbakin | **Not on the city page**, and the photo notes say the shoreline building is not verified as glamping. Left out of every line and in-world sign. |
+| Mount Malarayat: name, Barangay Dagatan, Lipa City, golf, hotel, membership or booking | Opened: malarayat.com/contact |
+| The Farm at San Benito: Lipa, gardens, Big Lagoon, wellness activities, booking | Opened: marriott.com experiences page (villas are not mentioned there, so the line says "places to stay") |
+| Outlets renamed in 2025; the Aboitiz Pitch | Opened: aboitizeconomicestates.com (press release 4 March 2025, "officially rebranding as The Outlets @LIMA Estate") |
+| LIMA Estate spans Lipa and Malvar | Snippet (several Aboitiz-linked results) and `05_The_Outlets_LIMA/REFERENCE_NOTES.txt` |
+| Market name "Candido B. Lopez Memorial Public Market" | Read from the sign in `Market_Facade_2014.jpg` (checked again 2026-10-17). A web search found only "Lipa City Public Market". |
+| "cafedelipa" sign, Tibig/STAR branch | Read from `Cafe_de_Lipa_Tibig_STAR_Entrance_and_Outdoor_Seating_Night.jpg` (lowercase, lit yellow letters on a dark fascia) |
+| Lomi King sign, menu banner, parking sign | Read from `Lomi_King_Front_Oblique_2015.jpg` |
+| "% THE OUTLETS" slatted entrance sign | Read from `Outlets_Entrance_Sign.jpg` |
+| Plaza Independencia, Metropolitan Cathedral of San Sebastian | From the user's reference folder and details document. `lipa.gov.ph/city/` no longer carries a plaza description (it now shows a news item), so the plaza sentence stays general. |
+
+Pages that returned HTTP 403 and could not be opened: the Inquirer (`newsinfo.inquirer.net/1593317`), BusinessWorld (`bworldonline.com/?p=474580`), Esquire Philippines. Not opened and not relied on for any claim: Wikipedia "Lipa Cathedral", The Poor Traveler, PIA, Traveloka, Primer, Wikivoyage, Architizer, Outlook Traveller, Benjie Layug.
 
 ## 1. Plaza Independencia and Metropolitan Cathedral of San Sebastian
+- (a) Welcome to Plaza Independencia, the open square in front of the Metropolitan Cathedral of San Sebastian in Lipa.
+- (b) Today this plaza is where Lipa gathers for events and everyday socializing, and the cathedral anchors the city's religious life.
+- (c) The tower narrows tier by tier as it rises to a ribbed cupola. Paired pilasters repeat across the front, and cream walls sit against mauve-grey trim and red roofs.
+- (d) Look at the bell tower on the model and count its tiers. Then find the triangular pediment and the paired pilasters on the front.
 
-Folder: 04_Cathedral_and_Plaza. Photo sources: 04_Cathedral_and_Plaza/REFERENCE_NOTES.txt and SOURCES.csv (credits in site_credits.md)
-
-- (a) "Welcome to Plaza Independencia [VERIFY], the open square in front of the Metropolitan Cathedral of San Sebastian [VERIFY] in Lipa [VERIFY]."
-- (b) "Today this plaza is where Lipa [VERIFY] gathers for events and everyday socializing. The cathedral anchors religious life here [VERIFY]."
-- (c) "The curved stone wall rises under a projecting cornice. Below it, a small brick doorway sits under a triangular pediment, so the round mass meets a small, squared entry."
-- (d) "Look at the curved stone wall on the model. Find the half-round window and the brick doorway under its pediment."
-
-Sources (text, from the details document): City of Lipa profile (https://lipa.gov.ph/city/); Wikipedia, "Lipa Cathedral" (https://en.wikipedia.org/wiki/Lipa_Cathedral), search result, not opened; The Poor Traveler (https://thepoortraveler.net/?p=1436), search result, not opened
-Note: the sources disagree on the cathedral's architectural style (Neo-Renaissance in one infobox, Romanesque in several others). The dialogue names no style. The name and location of Plaza Independencia are not confirmed on any page I found.
-
----
+The earlier draft's (c)/(d) described the rear apse from an aerial photo, which a player in the plaza cannot see. The sources disagree on the cathedral's style, so no style is named.
 
 ## 2. Candido B. Lopez Memorial Public Market
+- (a) This is the Candido B. Lopez Memorial Public Market, the palengke in Lipa where people shop for produce, food, and daily needs.
+- (b) It shows everyday Lipa through food vendors, produce, coffee, and small businesses. The facade photo dates from 2014, so it may look different today.
+- (c) The long front repeats rounded arches along the ground floor, and the rows of windows above repeat the same rhythm. The building feels steady and orderly.
+- (d) Look at the arched openings along the front. Count how many repeat, and notice how the stairs break up the line.
 
-Folder: 03_Lipa_Public_Market. Photo sources: 03_Lipa_Public_Market/REFERENCE_NOTES.txt and SOURCES.csv (credits in site_credits.md)
-
-- (a) "This is the Candido B. Lopez Memorial Public Market [VERIFY], the palengke in Lipa [VERIFY] where people shop for produce, food, and daily needs."
-- (b) "It shows everyday Lipa [VERIFY] through food vendors, produce, coffee, and small businesses [VERIFY]. The facade photo dates from 2014, so it may look different today."
-- (c) "The long front repeats rounded arches along the ground floor, and the rows of windows above repeat the same rhythm. The building feels steady and orderly."
-- (d) "Look at the arched openings along the front. Count how many repeat, and notice how the stairs break up the line."
-
-Sources (text, from the details document): Wikivoyage, Lipa (https://en.wikivoyage.org/wiki/Lipa)
-Note: the name is read from the sign in the 2014 facade photo (credited in site_credits.md). The reference photos date from 2010 to 2014: facade 2014, street 2010, stalls 2011. The market name is not confirmed on a page I found.
-
----
+The reference photos date from 2010 to 2014. The in-world price boards are labelled as sample prices.
 
 ## 3. Lomi King
-
-Folder: 01_Lomi_Houses. Photo sources: 01_Lomi_Houses/REFERENCE_NOTES.txt and SOURCES.csv (credits in site_credits.md)
-
-- (a) "This is Lomi King [VERIFY], one of Lipa's [VERIFY] well-known lomi houses, where people sit down for a bowl of lomi and noodles."
-- (b) "Lomi is part of Lipa's [VERIFY] food culture, and eating a bowl together is a social way to share a meal [VERIFY]. The reference photo is from 2015, so the front may have changed."
-- (c) "The front is a bold orange sign band, with specials boards and lamps below. The bright colors pull the eye to the name before anything else."
-- (d) "Look at the sign band above the entrance on the model. Follow the menu boards down to the doorway."
-
-Sources (text, from the details document): PIA, Kape Lomi feature (https://mirror.pia.gov.ph/features/2022/10/25/kape-lomi-at-pasyalan-tampok-sa-probinsya-ng-batangas), search result, not opened; The Poor Traveler, "A whole lot of pancit at Lomi King" (https://www.thepoortraveler.net/2012/12/a-whole-lot-of-pancit-at-lomi-king-lipa-batangas/), search result, not opened; Primer, Lomi King (https://primer.com.ph/food/location/philippines/batangas/lomi-king-the-king-of-all-noodles-in-lipa-2/), photo source
-
----
+- (a) This is Lomi King, one of Lipa's lomi houses, where people sit down together for a hot bowl of lomi noodles.
+- (b) Lomi is part of Lipa's food culture, and sharing a bowl is a social way to eat together. The reference photo is from 2015, so the front may have changed.
+- (c) The front is a bold orange sign band, with a menu banner and globe lamps below. The bright colors pull the eye to the name before anything else.
+- (d) Look at the sign band above the entrance on the model. Follow the menu boards down to the doorway.
 
 ## 4. Cafe de Lipa (Tibig/STAR branch)
+- (a) This is Cafe de Lipa, a coffee shop linked to kapeng barako, the strong coffee Batangas is known for.
+- (b) Coffee links Lipa's farming past with today's cafe culture. This model shows the Tibig/STAR branch. The interior is a representative display, not a copy.
+- (c) The glass front glows warm against the dark fascia, and lit yellow letters spell the name above it, so the cafe looks inviting from the street.
+- (d) Look at the glass storefront on the model. Notice how the warm light spills out onto the outdoor seating.
 
-Folder: 02_Cafe_de_Lipa. Photo sources: 02_Cafe_de_Lipa/REFERENCE_NOTES.txt and SOURCES.csv (credits in site_credits.md)
-
-- (a) "This is Cafe de Lipa [VERIFY], a coffee shop linked to kapeng barako [VERIFY], the strong local coffee of Batangas [VERIFY]."
-- (b) "Coffee links Lipa's [VERIFY] farming past with today's cafe culture. This model shows the Tibig [VERIFY] or STAR [VERIFY] branch. The interior is a representative display, not a copy."
-- (c) "The night photo shows a glass front glowing warm against the dark street, with a lit yellow sign above it, so the cafe looks inviting from outside."
-- (d) "Look at the glass storefront on the model. Notice how the warm light spills out onto the outdoor seating."
-
-Sources (text, from the details document): Traveloka, Lipa coffee destination (https://www.traveloka.com/en-ph/explore/destination/start-the-day-by-enjoying-the-scent-of-coffee-while-strolling-around-to-enjoy-the-historical-stories-of-lipa-city/302025), search result, not opened; The Poor Traveler, Cafe de Lipa and kapeng barako (https://www.thepoortraveler.net/2012/04/cafe-de-lipa-kapeng-barako-batangas-history/), search result, not opened
-Note: the Tibig/STAR branch is not confirmed on any page I found. Only the Tibig/STAR entrance photo is used; the other two streetfront photos are not confirmed as the same branch.
-
----
+Only the Tibig/STAR photo is used; the other two streetfront photos are not confirmed as the same branch. The dialogue spells "Cafe" without the accent (byte slicing); the site name and InfoPanel keep "Café".
 
 ## 5. Monastery of Our Lady of Mount Carmel
+- (a) Hi, I'm a volunteer guide and a pilgrim, not a nun. This is the Monastery of Our Lady of Mount Carmel in Lipa, a Carmelite community founded on May 31, 1946.
+- (b1) In 1948, Teresita Castillo reported apparitions of Mary here. The reports drew pilgrims to Lipa, and local devotion grew around them.
+- (b2) In 1951, a commission of Filipino bishops found no supernatural character in the events. The Holy See has since reaffirmed that judgment.
+- (b3) In 2015, Archbishop Ramon Arguelles declared the events worthy of belief. The Holy See rejected that declaration, and he later withdrew it.
+- (c) The entry arch and the tall arched windows repeat in a steady rhythm, and the stepped top of the front wall gives the facade a clear shape.
+- (d) Look at the entry arch on the model. Find the arched windows above it and notice how they repeat the same shape.
 
-Folder: 09_Mount_Carmel_Monastery. Photo sources: 09_Mount_Carmel_Monastery/REFERENCE_NOTES.txt and SOURCES.csv (credits in site_credits.md)
+Panel text: "A Carmelite monastery founded on May 31, 1946, a place of prayer and pilgrimage in Lipa."
 
-- (a) "Hi, I'm a volunteer guide and a pilgrim, not a nun. This is the Monastery of Our Lady of Mount Carmel [VERIFY] in Lipa [VERIFY], a Carmelite [VERIFY] community founded on May 31, 1946 [VERIFY]."
-- (b1) "In 1948, reports of Marian [VERIFY] apparitions to Teresita Castillo [VERIFY] drew pilgrims to Lipa [VERIFY]. Local devotion grew around those reports [VERIFY]."
-- (b2) "In 1951, a Church commission of bishops found no supernatural basis for the events [VERIFY]. Whether the Pope approved that finding is still disputed [VERIFY]."
-- (b3) "In 2015, Archbishop Ramon Arguelles [VERIFY] called the apparitions worthy of belief [VERIFY]. A Vatican [VERIFY] decree that December ordered local commissions disbanded [VERIFY]."
-- (c) "The entry arch and the tall arched windows repeat in a steady rhythm, and the stepped top of the front wall gives the facade a clear shape."
-- (d) "Look at the entry arch on the model. Find the arched windows above it and notice how they repeat the same shape."
+In-world history panels (three, in the prayer garden): "1946 - Founding" / "Carmelite community founded on May 31, 1946."; "1948 - Reported apparitions" / "Teresita Castillo reported apparitions of Mary. The reports drew pilgrims to Lipa."; "1951 and 2015 - Church rulings" / "1951: bishops found no supernatural basis. 2015: Arguelles' declaration was rejected by the Holy See."
 
-Sources (text): Discalced Carmelites, "Lipa Carmel's 75th anniversary" (https://www.carmelitaniscalzi.com/en/2021/06/24/lipa-carmels-75th-anniversary-of-foundation-written-by-the-sisters-of-lipa/), search result, not opened; Inquirer Lifestyle, "Lipa Carmel marks 75th year" (https://lifestyle.inquirer.net/427451/sunlight-and-shadow-show-forth-his-glory-lipa-carmel-marks-75th-year/), search result, not opened; Inquirer, "Demetriou urges CBCP to hold new inquiry on 1948 Lipa apparitions" (https://newsinfo.inquirer.net/1593317/demetriou-urges-cbcp-to-hold-new-inquiry-on-1948-lipa-apparitions/amp), search result, not opened; BusinessWorld (https://www.bworldonline.com/?p=474580), search result, not opened; Catholic.org (https://www.catholic.org/news/international/asia/story.php?id=72779), search result, not opened
-Note: the 1951 finding, the 2015 statement and decree, and the disputed papal approval all come from search summaries of these pages. None has been opened in full. The lines state the claims as reported and leave the Church's position open.
+The shrine tablets read "THE TEN COMMANDMENTS", as in `Outdoor_Shrine_Structure.jpg`.
 
----
+## 6. The Outlets at LIMA Estate and Aboitiz Pitch
+- (a) This is The Outlets at LIMA Estate, an outdoor shopping street with a covered walkway, beside the Aboitiz Pitch. LIMA Estate spans Lipa and Malvar.
+- (b) It was called The Outlets at Lipa until it was renamed in 2025. It stands for modern shopping, dining, and an economy tied to growing industry.
+- (c) Warm orange timber cladding sits against white walls and dark glass. A deep overhang and canopy cast shade and run in a long horizontal line along the shops.
+- (d) Look at the orange shop block on the model. Follow the canopy along the covered walkway, then find the slatted sign by the road.
 
-## 6. The Outlets @LIMA Estate and Aboitiz Pitch
-
-Folder: 05_The_Outlets_LIMA. Photo sources: 05_The_Outlets_LIMA/REFERENCE_NOTES.txt and SOURCES.csv (credits in site_credits.md)
-
-- (a) "This is The Outlets @LIMA Estate [VERIFY], an outdoor shopping area with a covered walkway and an Aboitiz Pitch [VERIFY]. The estate spans Lipa [VERIFY] and Malvar [VERIFY]."
-- (b) "It was called The Outlets at Lipa until it was renamed in 2025 [VERIFY]. It stands for modern shopping, dining, and an economy tied to growing industry [VERIFY]."
-- (c) "Stacked square frames layer one inside another across the canopy, and a red lattice hangs beneath them, adding a warm pattern against the white and silver."
-- (d) "Look at the covered walkway on the model. Find where one block ends and the next begins."
-
-Sources (text, from the details document): Aboitiz Economic Estates, The Outlets at LIMA Estate (https://www.aboitizeconomicestates.com/outlets-at-lima-estate/), search result, not opened; Malaya Business Insight, 2 October 2025 (https://malaya.com.ph/weekly-features/property/lifestyle-strip-heightens-lima-estates-attractiveness), search result, not opened; Architizer, The Outlets at Lipa (https://architizer.com/projects/the-outlets-at-lipa/), photo source
-Note: the Malaya search summary reports the mall's rename to The Outlets @LIMA Estate. It does not confirm a new name for the Aboitiz Pitch, and the pitch's location in Lipa and Malvar comes from an older profile.
-
----
+The source press release writes "The Outlets @LIMA Estate"; the site name stays "The Outlets at LIMA Estate" (details document). In-world: estate model plinth "A small model of the estate. LIMA Estate spans Lipa and Malvar."; map panel footer "Schematic map, not to scale. The estate spans Lipa and Malvar." The pitch's own renaming is not confirmed.
 
 ## 7. The Farm at San Benito
+- (a) This is The Farm at San Benito, a wellness resort in Lipa with gardens, a lagoon, and places to stay.
+- (b) It represents Lipa's wellness tourism today, with gardens, dining, and organized activities like yoga. Visits involve a booking or paid services.
+- (c) A round thatched cone roof sits beside the straight-edged villa. Its curve and rough texture contrast with the flat, geometric walls, so each makes the other stand out.
+- (d) Look at the thatched pavilion on the model. Then follow the patterned path and notice where it leads your eye.
 
-Folder: 06_The_Farm_San_Benito. Photo sources: 06_The_Farm_San_Benito/REFERENCE_NOTES.txt and SOURCES.csv (credits in site_credits.md)
-
-- (a) "This is The Farm at San Benito [VERIFY], a resort in Lipa [VERIFY] with villas, gardens, and a lagoon [VERIFY]. Each villa is a separate building."
-- (b) "It represents Lipa's [VERIFY] wellness tourism today, with gardens, dining, and organized activities. Visits involve a booking or paid services [VERIFY]."
-- (c) "A thatched roof and a low, curved stone wall sit low in the garden. The building blends into the trees instead of standing above them."
-- (d) "Look at the thatched pavilion on the model. Follow the curved stone wall next to it and see where it leads the path."
-
-Sources (text, from the details document): Marriott, The Farm at San Benito (https://www.marriott.com/en-us/hotels/mnlfs-the-farm-at-san-benito-autograph-collection/experiences/), search result, not opened; Outlook Traveller, The Farm at San Benito (https://www.outlookindia.com/traveller/hotels/the-farm-at-san-benito-near-manila/), search result, not opened
-Note: listings give the barangay as Tipacan, while the source notes spell it Tipakan. The dialogue names no barangay.
-
----
+Listings give the barangay as Tipacan (Marriott) and Tipakan (the details document); no line names a barangay.
 
 ## 8. Mount Malarayat Golf and Country Club
-
-Folder: 07_Mount_Malarayat. Photo sources: 07_Mount_Malarayat/REFERENCE_NOTES.txt and SOURCES.csv (credits in site_credits.md)
-
-- (a) "This is Mount Malarayat [VERIFY] Golf and Country Club [VERIFY], in Barangay Dagatan [VERIFY] of Lipa [VERIFY]. It has a golf course and a view of the mountains."
-- (b) "Today Mount Malarayat [VERIFY] is a place for golf, stays, and leisure. Access depends on membership or a booking [VERIFY]."
-- (c) "The clubhouse is a long, low building. Several connected red-tiled roofs step across the grounds, and the wide form keeps the landscape in view."
-- (d) "Look at the red roof sections on the clubhouse. Find where one roof meets the next and notice how the shapes repeat."
-
-Sources (text, from the details document): Mount Malarayat Golf and Country Club, contact page (https://malarayat.com/contact/), search result, not opened; Malarayat gallery (https://malarayat.com/gallerycat/amenities/), photo source; Benjie Layug, "Mt. Malarayat Golf & Country Club" (https://benjielayug.com/2006/04/29), search result, not opened
-Note: the clubhouse facilities come from older sources. The dialogue refers only to the clubhouse shown in the aerial photo.
-
----
+- (a) This is Mount Malarayat Golf and Country Club, in Barangay Dagatan, Lipa. It has a golf course with a view of the mountains.
+- (b) Today it is a place for golf, hotel stays, and leisure. Access depends on membership or a booking.
+- (c) One large hipped roof dominates the clubhouse. A smaller gabled entry and a lower side wing have roofs of their own, and the red-brown roofs stand out against the green lawn.
+- (d) Look at the big roof on the clubhouse model. Find the entry gable and the wing roof, then notice the repeated windows and columns below.
 
 ## 9. Tagbakin, Barangay Halang
+- (a) This is Tagbakin, a sitio in Barangay Halang, on Lipa's lakeside.
+- (b) The city calls Halang one of its developed tourist spots, and says the waters off Tagbakin have long teemed with tawilis, a well-known local fish.
+- (c) A long dock leads the eye across the water toward the volcano. Beside it, a grey building with stepped roofs and a row of windows stands against the curve of the shore.
+- (d) Look along the dock on the model and count the posts that repeat. Then find the volcano beyond the water and the windows on the lakeside building.
 
-Folder: 08_Tagbakin_Halang. Photo sources: 08_Tagbakin_Halang/REFERENCE_NOTES.txt and SOURCES.csv (credits in site_credits.md)
-
-- (a) "This is Tagbakin [VERIFY], a sitio in Barangay Halang [VERIFY], on Lipa's [VERIFY] lakeside."
-- (b) "The city describes Halang [VERIFY] as one of its tourist spots [VERIFY]. The shore has fishing and everyday village life [VERIFY]."
-- (c) "The shoreline building is a low block with a flat roof, set at the water's edge. Its plain pale roof stands out against the dense green trees behind it."
-- (d) "Look at the flat roof of the shoreline building on the model. Compare it to the trees behind it, and notice how the water frames it."
-
-Sources (text): City of Lipa, barangay profiles (https://lipa.gov.ph/barangay-profiles/), opened and checked; the page names Halang and the sitio Tagbakin and calls Halang a developed tourist spot. WOW Batangas, "Lipa City's hidden gem: Sitio Tagbakin, Halang" (https://www.wowbatangas.com/lipa-citys-hidden-gem-sitio-tagbakin-halang-lipa-city/), photo source
-Note: the city barangay profiles page does not mention glamping, so the dialogue does not mention it. The shoreline building is described only by its form.
+The shoreline building is described only by its form. The in-world map board reads "Tagbakin sits on the shore of Taal Lake in Barangay Halang, Lipa City. Halang is one of the city's developed tourist spots."

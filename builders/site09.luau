@@ -389,7 +389,7 @@ return function()
 		text(lake, "Volcano Island", 0.3, 0.5, 0.36, 0.1)
 		shape(lake, 0.84, 0.12, 0.06, 0.074, PIN_C, 0.5)
 		text(lake, "Tagbakin, Brgy. Halang", 0.42, 0.0, 0.52, 0.1)
-		text(bg, "Tagbakin sits on the shore of Taal Lake in Barangay Halang, Lipa City.\nThe city records a glamping development at Tagbakin.", 0.63, 0.17, 0.34, 0.6)
+		text(bg, "Tagbakin sits on the shore of Taal Lake in Barangay Halang, Lipa City.\nHalang is one of the city's developed tourist spots.", 0.63, 0.17, 0.34, 0.6)
 		text(bg, "Schematic map, not to scale.", 0.03, 0.9, 0.94, 0.08)
 	end
 	section(CFL, panel, buildMapPanel)

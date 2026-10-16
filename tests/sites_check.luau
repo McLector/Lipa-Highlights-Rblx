@@ -724,6 +724,20 @@ if sites then
 			check(label .. " all non-rig parts anchored", loose == 0, "unanchored: " .. loose)
 		end
 	end
+
+	-- Slice 12 content gate: no draft tags, placeholder wording or unsourced glamping claim may remain on any in-world text.
+	local bad = {}
+	for _, d in ipairs(sites:GetDescendants()) do
+		if d:IsA("TextLabel") or d:IsA("TextButton") then
+			local up = string.upper(d.Text)
+			if string.find(d.Text, "[", 1, true) or string.find(up, "VERIFY", 1, true)
+				or string.find(up, "CONTENT GATE", 1, true) or string.find(up, "GLAMP", 1, true) then
+				table.insert(bad, d:GetFullName() .. " = " .. string.gsub(d.Text, "\n", " / "))
+			end
+		end
+	end
+	check("no in-world text carries draft tags, placeholder wording or glamping", #bad == 0,
+		#bad .. " label(s): " .. table.concat(bad, "; ", 1, math.min(#bad, 4)))
 end
 
 return HttpService:JSONEncode(results)

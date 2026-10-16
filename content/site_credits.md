@@ -2,6 +2,9 @@
 
 Source pages come from SOURCES.csv in the Lipa_structure_Exterior_References folder. Each page is listed once per folder, in first-appearance order. Sites are sorted by site ID (1 to 9).
 
+## Credits board identity (student name, course, section)
+PENDING (user): not yet supplied as of Slice 12. The CreditsBoard is built in Slice 13 and needs these three values. Nothing here is invented.
+
 ## Site 1: Plaza Independencia and Metropolitan Cathedral of San Sebastian
 Folder: 04_Cathedral_and_Plaza
 Photos in folder: 32; unique source pages: 3

@@ -1,7 +1,8 @@
 -- Tests for ReplicatedStorage.LipaShared.SiteData.
 -- Contract source: structure_model_positioning.png + the approved plan (Market shifted to -230,160).
 return function(t)
-	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData)
+	-- :Clone() so an edited SiteData is never shadowed by the require cache of an earlier run in the same Studio session.
+	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 	local expect = t.expect
 
 	local FACINGS = { N = true, S = true, E = true, W = true, NE = true, NW = true, SE = true, SW = true }
@@ -186,5 +187,79 @@ return function(t)
 			expect.truthy(p.X >= x0 and p.X <= x1 and p.Z >= z0 and p.Z <= z1)
 		end
 		expect.equal(SiteData.jeepStopPos(2), nil)
+	end)
+
+	-- ---- Slice 12 content gate: the approved guide text ----
+
+	local function joined(s)
+		return table.concat(s.dialogue, "\n") .. "\n" .. s.panelText
+	end
+
+	-- The typewriter in GuideClient slices lines by byte, so a multibyte character would be cut mid-glyph.
+	t.test("dialogue lines are pure ASCII", function()
+		for _, s in ipairs(SiteData.sites) do
+			for i, line in ipairs(s.dialogue) do
+				for p = 1, #line do
+					expect.truthy(string.byte(line, p) <= 127)
+				end
+			end
+		end
+	end)
+
+	-- No draft tags or placeholders may reach the player.
+	t.test("no dialogue or panel text carries draft markers", function()
+		for _, s in ipairs(SiteData.sites) do
+			for _, line in ipairs(s.dialogue) do
+				expect.falsy(string.find(line, "[", 1, true))
+				expect.falsy(string.find(string.upper(line), "VERIFY", 1, true))
+				expect.falsy(string.find(string.upper(line), "PLACEHOLDER", 1, true))
+			end
+			expect.falsy(string.find(s.panelText, "[", 1, true))
+			expect.falsy(string.find(string.upper(s.panelText), "PLACEHOLDER", 1, true))
+		end
+	end)
+
+	-- Carmel gets six lines (founding, 1948, 1951, 2015 each on their own); every other guide gets four.
+	t.test("line counts are 6 for Carmel and 4 elsewhere", function()
+		for _, s in ipairs(SiteData.sites) do
+			expect.equal(#s.dialogue, s.id == 5 and 6 or 4)
+		end
+	end)
+
+	-- The last line of each guide points the player at the model.
+	t.test("every guide ends with a Look prompt", function()
+		for _, s in ipairs(SiteData.sites) do
+			expect.equal(string.sub(s.dialogue[#s.dialogue], 1, 4), "Look")
+		end
+	end)
+
+	-- Tagbakin: the shoreline building is described generically; glamping is not sourced anywhere we opened.
+	t.test("no text mentions glamping", function()
+		for _, s in ipairs(SiteData.sites) do
+			expect.falsy(string.find(string.lower(joined(s)), "glamp", 1, true))
+		end
+	end)
+
+	t.test("Cafe interior is labelled representative", function()
+		expect.truthy(string.find(joined(SiteData.byId(4)), "representative", 1, true))
+	end)
+
+	t.test("Market text notes the 2014 photo date", function()
+		expect.truthy(string.find(table.concat(SiteData.byId(2).dialogue, " "), "2014", 1, true))
+	end)
+
+	t.test("Carmel guide says she is not a nun and the founding date is exact", function()
+		local c = SiteData.byId(5)
+		expect.truthy(string.find(c.dialogue[1], "not a nun", 1, true))
+		expect.truthy(string.find(c.dialogue[1], "May 31, 1946", 1, true))
+		expect.truthy(string.find(c.panelText, "May 31, 1946", 1, true))
+	end)
+
+	-- Carmel's rulings stay as reported: 1951 finding and 2015 declaration each have their own line.
+	t.test("Carmel dialogue covers 1948, 1951 and 2015 in order", function()
+		local d = SiteData.byId(5).dialogue
+		expect.truthy(string.find(d[2], "1948", 1, true))
+		expect.truthy(string.find(d[3], "1951", 1, true))
+		expect.truthy(string.find(d[4], "2015", 1, true))
 	end)
 end

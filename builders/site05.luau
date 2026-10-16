@@ -371,16 +371,22 @@ return function()
 
 	local function buildHistoryPanels(ctx)
 		local titles = {
-			"1946 [VERIFY] - Founding",
-			"1948 [VERIFY] - Reported apparitions",
-			"1951 / 2015 [VERIFY] - Church rulings",
+			"1946 - Founding",
+			"1948 - Reported apparitions",
+			"1951 and 2015 - Church rulings",
+		}
+		-- Approved Slice 12 text (content/dialogue_draft.md); keep each body near 100 characters, the label is TextScaled.
+		local bodies = {
+			"Carmelite community founded on May 31, 1946.",
+			"Teresita Castillo reported apparitions of Mary. The reports drew pilgrims to Lipa.",
+			"1951: bishops found no supernatural basis. 2015: Arguelles' declaration was rejected by the Holy See.",
 		}
 		for i, z in ipairs({ 22, 34, 46 }) do
 			for _, dz in ipairs({ -4, 4 }) do
 				ctx:part("PanelPost", V(0.5, 2.6, 0.5), CF(97.5, 1.7, z + dz), STONE, METAL)
 			end
 			local board = ctx:part("HistoryPanel" .. i, V(0.4, 6, 10), CF(97.5, 6, z), PANEL, PLAS)
-			gui(board, Enum.NormalId.Left, titles[i], "[VERIFY] text added at the Slice 12 content gate", Color3.new(1, 1, 1), 30)
+			gui(board, Enum.NormalId.Left, titles[i], bodies[i], Color3.new(1, 1, 1), 30)
 		end
 	end
 

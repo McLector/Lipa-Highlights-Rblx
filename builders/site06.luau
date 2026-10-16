@@ -484,7 +484,7 @@ return function()
 	local function buildPedestal(ctx)
 		local x, z = -12, 31
 		local plinth = ctx:part("Plinth", V(8, 3.5, 8), CF(x, 2.15, z), WHITE, CONC)
-		gui(plinth, Enum.NormalId.Back, "LIMA ESTATE MODEL", "[VERIFY] detail added at the Slice 12 content gate", Color3.fromRGB(30, 36, 48), 40)
+		gui(plinth, Enum.NormalId.Back, "LIMA ESTATE MODEL", "A small model of the estate. LIMA Estate spans Lipa and Malvar.", Color3.fromRGB(30, 36, 48), 40)
 		ctx:part("ModelBase", V(7.4, 0.3, 7.4), CF(x, 4.05, z), DARK, PLAS)
 		ctx:part("ModelPitch", V(2.6, 0.15, 4.2), CF(x + 1.9, 4.28, z - 0.8), TURF, PLAS)
 		ctx:part("ModelShop", V(2.4, 1.6, 2), CF(x - 2, 5, z - 2), ORANGE, PLAS)
@@ -507,7 +507,7 @@ return function()
 		gui(right, Enum.NormalId.Back, "MALVAR", nil, Color3.new(1, 1, 1), 40)
 		ctx:part("PanelDivider", V(0.5, 6, 0.7), CF(cx, 8.2, z), WHITE, PLAS)
 		local foot = ctx:part("PanelFooter", V(22, 2, 0.5), CF(cx, 4.2, z), Color3.fromRGB(30, 36, 48), PLAS)
-		gui(foot, Enum.NormalId.Back, "[VERIFY] map and boundary detail added at the Slice 12 content gate", nil, Color3.new(1, 1, 1), 40)
+		gui(foot, Enum.NormalId.Back, "Schematic map, not to scale. The estate spans Lipa and Malvar.", nil, Color3.new(1, 1, 1), 40)
 	end
 
 	------------------------------------------------------------------ Build, then swap
