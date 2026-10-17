@@ -7,11 +7,12 @@ PENDING (user): not yet supplied as of Slice 12. The CreditsBoard is built in Sl
 
 ## Site 1: Plaza Independencia and Metropolitan Cathedral of San Sebastian
 Folder: 04_Cathedral_and_Plaza
-Photos in folder: 32; unique source pages: 3
+Photos in folder: 32 (plus 7 in rework_2026, see the attribution section at the end); unique source pages: 4
 
 - https://commons.wikimedia.org/wiki/Category:Lipa_Cathedral
 - https://lipacitybatangas.blogspot.com/2012/10/all-about-lipa-city-batangas.html
 - https://commons.wikimedia.org/wiki/Category:Aerial_photographs_of_Lipa_Cathedral
+- https://www.openstreetmap.org/way/249138738
 
 ## Site 2: Candido B. Lopez Memorial Public Market
 Folder: 03_Lipa_Public_Market
@@ -71,3 +72,19 @@ Folder: 08_Tagbakin_Halang
 Photos in folder: 9; unique source pages: 1
 
 - https://www.wowbatangas.com/lipa-citys-hidden-gem-sitio-tagbakin-halang-lipa-city/
+
+## Slice 14 rework: Cathedral and plaza reference attribution
+
+The Site 1 model was rebuilt from the photos below (Wikimedia Commons, downloaded at 2000 px width into `Lipa_structure_Exterior_References/04_Cathedral_and_Plaza/rework_2026/`, which is not in this repository) and from OpenStreetMap footprint data. The photos were used only as visual reference; no photo is used as a texture in the experience. Author, licence and page are as recorded by Commons on 2026-10-17.
+
+| Photo | Date | Author | Licence | Commons page |
+|---|---|---|---|---|
+| Lipa Poblacion, Lipa Cathedral, CM Recto Avenue drone | 2025-12-28 | Patrickroque01 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Lipa_Poblacion,_Lipa_Cathedral,_CM_Recto_Avenue_drone_(Lipa,_Batangas;_12-28-2025).jpg |
+| Lipa Poblacion, Lipa Cathedral, Public Market, CM Recto Avenue drone | 2025-12-28 | Patrickroque01 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Lipa_Poblacion,_Lipa_Cathedral,_Public_Market,_CM_Recto_Avenue_drone_(Lipa,_Batangas;_12-28-2025).jpg |
+| Lipa Cathedral 2024-03-27 | 2024-03-27 | LMP 2001 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Lipa_Cathedral_2024-03-27.jpg |
+| Lipa Cathedral Welcome Arch, Batangas, Apr 2024 | 2024-04-14 | Ralff Nestor Nacor | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Lipa_Cathedral_Welcome_Arch,_Batangas,_Apr_2024.jpg |
+| Lipa Cathedral facade 2023-04-05 | 2023-04-05 | LMP 2001 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Lipa_Cathedral_facade_2023-04-05.jpg |
+
+Building and compound footprints (cathedral building, religious compound, the park named "Plaza Independencia", streets): (c) OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright (cathedral building: https://www.openstreetmap.org/way/249138738). Data fetched via the Overpass API on 2026-10-17.
+
+Two further files were downloaded to the same folder but not examined and are not credited as sources: "Lipa Cathedral dome 2023-04-05" and "The Siege of Villa de Lipa Historical Marker, Batangas".

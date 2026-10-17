@@ -7,6 +7,7 @@ CreditsData.sites = {
 		"https://commons.wikimedia.org/wiki/Category:Lipa_Cathedral",
 		"https://lipacitybatangas.blogspot.com/2012/10/all-about-lipa-city-batangas.html",
 		"https://commons.wikimedia.org/wiki/Category:Aerial_photographs_of_Lipa_Cathedral",
+		"https://www.openstreetmap.org/way/249138738",
 	} },
 	{ id = 2, urls = {
 		"https://jeromedoe.blogspot.com/2014/04/sidetrip-candido-lopez-public-market-in.html",
