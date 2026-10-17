@@ -1,5 +1,6 @@
--- SiteData: the nine Lipa sites. Source of truth for layout (structure_model_positioning.png, Market shifted to -230),
--- categories (png legend), and display text. Dialogue is the approved Slice 12 text (content/dialogue_draft.md): ASCII only,
+-- SiteData: the nine Lipa sites. Source of truth for layout (structure_model_positioning.png), with ONE deliberate deviation made in
+-- Slice 14 at the user's request: the three town-core shops were pushed out from the Cathedral so the core is not crowded (Market
+-- -230 -> -330, Lomi King 180 -> 292, Cafe 160 -> 272; z unchanged; the image is not edited). Categories (png legend), and display text. Dialogue is the approved Slice 12 text (content/dialogue_draft.md): ASCII only,
 -- because GuideClient's typewriter slices lines by byte.
 -- World axes: North = -Z, East = +X. `size` is Vector2(X extent, Z extent) of the world-aligned footprint.
 local SiteData = {}
@@ -42,7 +43,7 @@ SiteData.sites = {
 		"Plaza Independencia and the Cathedral connect religious life, public gatherings and the city's historic center.",
 		{ "commons.wikimedia.org", "lipacitybatangas.blogspot.com" },
 		{ "PlazaPeople", "Benches", "Lamps", "Flagpole", "EventStage" }),
-	site(2, "Market", "Candido B. Lopez Memorial Public Market", "Eat", -230, 0, 160, "E", 200, 160, 3.0,
+	site(2, "Market", "Candido B. Lopez Memorial Public Market", "Eat", -330, 0, 160, "E", 200, 160, 3.0,
 		"Market Vendor",
 		{
 			"This is the Candido B. Lopez Memorial Public Market, the palengke in Lipa where people shop for produce, food, and daily needs.",
@@ -53,7 +54,7 @@ SiteData.sites = {
 		"The public market shows everyday Lipa through food vendors, produce, coffee, local delicacies and small businesses.",
 		{ "jeromedoe.blogspot.com", "www.flickr.com" },
 		{ "MarketStalls", "Baskets", "Produce", "PriceSigns", "VendorNPCs" }),
-	site(3, "Lomi", "Lomi King", "Eat", 180, 0, 140, "W", 100, 80, 3.5,
+	site(3, "Lomi", "Lomi King", "Eat", 292, 0, 140, "W", 100, 80, 3.5,
 		"Lomi Host",
 		{
 			"This is Lomi King, one of Lipa's lomi houses, where people sit down together for a hot bowl of lomi noodles.",
@@ -64,7 +65,7 @@ SiteData.sites = {
 		"Lomi remains a recognizable part of Lipa's food culture, and a lomihan is a place for eating together.",
 		{ "primer.com.ph" },
 		{ "Counter", "Tables", "LomiBowls", "Menu", "Utensils" }),
-	site(4, "Cafe", "Café de Lipa", "Eat", 160, 0, -160, "W", 100, 80, 3.5,
+	site(4, "Cafe", "Café de Lipa", "Eat", 272, 0, -160, "W", 100, 80, 3.5,
 		"Cafe Barista",
 		{
 			"This is Cafe de Lipa, a coffee shop linked to kapeng barako, the strong coffee Batangas is known for.",

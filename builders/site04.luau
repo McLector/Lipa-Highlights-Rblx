@@ -27,8 +27,10 @@ return function()
 	local site = sites and sites:FindFirstChild("Site04_Cafe")
 	assert(site, "site04: Workspace.Sites.Site04_Cafe not found (run builders/placeholders first)")
 	local pivotBefore = site:GetPivot()
-	local PX, PZ = pivotBefore.Position.X, pivotBefore.Position.Z
-	assert(math.abs(PX - 160) < 1e-3 and math.abs(PZ + 160) < 1e-3, "site04: pivot is not at (160, 0, -160)")
+	-- The builder's world coordinates are the Slice 08 ones (centre (160, -160)); Slice 14 moved the site to (272, -160). OX/OZ is the
+	-- ORIGINAL centre (L() subtracts it, so every part follows the pivot) and DX/DZ is the shift applied to the rigs, which use absolute coordinates.
+	local OX, OZ = 160, -160
+	local DX, DZ = pivotBefore.Position.X - OX, pivotBefore.Position.Z - OZ
 	local ORIGIN = CF(pivotBefore.Position)
 	local FR = ORIGIN * CFrame.fromMatrix(V(0, 0, 0), V(0, 0, 1), V(0, 1, 0), V(-1, 0, 0))
 
@@ -67,9 +69,9 @@ return function()
 	local SMOOTH, WOODM, METAL = Enum.Material.SmoothPlastic, Enum.Material.Wood, Enum.Material.Metal
 	local GLASS, NEON, FABRIC = Enum.Material.Glass, Enum.Material.Neon, Enum.Material.Fabric
 
-	-- World -> Cafe-local CFrame (no rotation): lx = z - PZ, ly = y, lz = PX - x.
+	-- World -> Cafe-local CFrame (no rotation): lx = z - OZ, ly = y, lz = OX - x (OX, OZ = the original centre; the pivot has moved since).
 	local function L(x, y, z)
-		return CF(z - PZ, y, PX - x)
+		return CF(z - OZ, y, OX - x)
 	end
 	-- Axis-aligned world box x0..x1, y0..y1, z0..z1. Local X carries the world Z extent, local Z the world X extent.
 	local function B(ctx, name, x0, x1, y0, y1, z0, z1, color, material)
@@ -382,7 +384,7 @@ return function()
 			hum.WalkSpeed = 0
 			rig.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 			rig:SetAttribute("SiteId", row.id)
-			rig:PivotTo(CF(s[1], groundAt(s[1], s[2]) + 3, s[2]) * ANG(0, s[3], 0))
+			rig:PivotTo(CF(s[1] + DX, groundAt(s[1] + DX, s[2] + DZ) + 3, s[2] + DZ) * ANG(0, s[3], 0))
 			hrp.Anchored = true
 			rig.Parent = folder
 		end

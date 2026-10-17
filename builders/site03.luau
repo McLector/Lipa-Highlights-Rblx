@@ -27,6 +27,9 @@ return function()
 	local pivotBefore = site:GetPivot()
 	local ORIGIN = CF(pivotBefore.Position)
 	local LK = ORIGIN * CFrame.fromMatrix(V(0, 0, 0), V(0, 0, 1), V(0, 1, 0), V(-1, 0, 0))
+	-- The builder's world coordinates are the Slice 07 ones (centre (180, 140)); Slice 14 moved the site to (292, 140). L() below subtracts
+	-- the ORIGINAL centre, so every part follows the pivot by itself; the rigs use absolute coordinates, so DX/DZ shifts them.
+	local DX, DZ = pivotBefore.Position.X - 180, pivotBefore.Position.Z - 140
 
 	local PART_BUDGET = 2500
 	local REPLACED = {
@@ -322,7 +325,7 @@ return function()
 			hum.WalkSpeed = 0
 			rig.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 			rig:SetAttribute("SiteId", row.id)
-			rig:PivotTo(CF(s[1], groundAt(s[1], s[2]) + 3, s[2]) * ANG(0, s[3], 0))
+			rig:PivotTo(CF(s[1] + DX, groundAt(s[1] + DX, s[2] + DZ) + 3, s[2] + DZ) * ANG(0, s[3], 0))
 			hrp.Anchored = true
 			rig.Parent = folder
 		end

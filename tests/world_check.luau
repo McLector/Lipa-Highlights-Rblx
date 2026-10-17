@@ -201,99 +201,70 @@ do
 	check("Outlets paving is Pavement and the paint stays inside the regions", #problems == 0, table.concat(problems, "; "))
 end
 
--- Market paving (Slice 06): world.luau repaints the Grass under the Market hall, stall yard and aisle (x -276..-128,
--- z 80..240) as Pavement, for the same reason as the plaza. The controls prove the paint stays inside the region and
--- leaves the asphalt of road F (x -128..-120) alone.
+-- Core shops (Slice 14): the Market, Lomi King and Cafe were pushed out from the Cathedral (Market x -230 -> -330, Lomi 180 -> 292,
+-- Cafe 160 -> 272). world.luau repaints the Grass under their halls / forecourts as Pavement and lays the new roads F, G and H
+-- (horizontal, branching off Roads E and A), so the old paving and the old roads must be gone. Same exact voxel read as the plaza check.
 do
 	local function cellMaterial(x, z)
 		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
 		local mats = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 0, fz + 4)), 4)
 		return mats[1][1][1]
 	end
-	local problems = {}
-	for _, p in ipairs({
-		{ -274, 82 }, { -130, 238 }, { -274, 238 }, { -130, 82 }, -- corners
-		{ -200, 160 }, { -250, 120 }, { -170, 200 }, -- middle, hall, yard
-	}) do
-		local m = cellMaterial(p[1], p[2])
-		if m ~= Enum.Material.Pavement then
-			table.insert(problems, string.format("cell (%d,%d) is %s, expected Pavement", p[1], p[2], tostring(m)))
+	local M = Enum.Material
+	local function block(name, inside, insideMat, controls)
+		local problems = {}
+		for _, p in ipairs(inside) do
+			local m = cellMaterial(p[1], p[2])
+			if m ~= (p[3] or insideMat) then table.insert(problems, string.format("cell (%d,%d) is %s, expected %s", p[1], p[2], tostring(m), tostring(p[3] or insideMat))) end
 		end
-	end
-	for _, c in ipairs({
-		{ -280, 160, Enum.Material.Grass }, { -200, 78, Enum.Material.Grass }, { -200, 242, Enum.Material.Grass },
-		{ -124, 164, Enum.Material.Grass }, { -126, 120, Enum.Material.Asphalt },
-	}) do
-		local m = cellMaterial(c[1], c[2])
-		if m ~= c[3] then
-			table.insert(problems, string.format("control cell (%d,%d) is %s, expected %s", c[1], c[2], tostring(m), tostring(c[3])))
+		for _, c in ipairs(controls) do
+			local m = cellMaterial(c[1], c[2])
+			if m ~= c[3] then table.insert(problems, string.format("control cell (%d,%d) is %s, expected %s", c[1], c[2], tostring(m), tostring(c[3]))) end
 		end
+		check(name, #problems == 0, table.concat(problems, "; ", 1, math.min(#problems, 6)))
 	end
-	check("Market paving is Pavement and the paint stays inside the region", #problems == 0, table.concat(problems, "; "))
-end
 
--- Lomi paving (Slice 07): world.luau repaints the Grass under the Lomi King shophouse, forecourt and driveway (x 128..228,
--- z 100..180) as Pavement, for the same reason as the plaza. The controls prove the paint stays inside the region and leaves
--- the asphalt of road G (x 120..128, z 100..140) alone.
-do
-	local function cellMaterial(x, z)
-		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
-		local mats = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 0, fz + 4)), 4)
-		return mats[1][1][1]
-	end
-	local problems = {}
-	for _, p in ipairs({
-		{ 130, 102 }, { 226, 178 }, { 130, 178 }, { 226, 102 }, -- corners
-		{ 150, 140 }, { 194, 140 }, -- Guide, shop floor
-	}) do
-		local m = cellMaterial(p[1], p[2])
-		if m ~= Enum.Material.Pavement then
-			table.insert(problems, string.format("cell (%d,%d) is %s, expected Pavement", p[1], p[2], tostring(m)))
-		end
-	end
-	for _, c in ipairs({
-		{ 126, 120, Enum.Material.Asphalt }, { 126, 150, Enum.Material.Grass }, { 232, 140, Enum.Material.Grass },
-		{ 180, 98, Enum.Material.Grass }, { 180, 182, Enum.Material.Grass },
-	}) do
-		local m = cellMaterial(c[1], c[2])
-		if m ~= c[3] then
-			table.insert(problems, string.format("control cell (%d,%d) is %s, expected %s", c[1], c[2], tostring(m), tostring(c[3])))
-		end
-	end
-	check("Lomi paving is Pavement and the paint stays inside the region", #problems == 0, table.concat(problems, "; "))
-end
+	-- Market paving (Slice 06, moved by Slice 14): hall, stall yard and aisle (x -376..-228, z 80..240). x1 -228 is where road F's
+	-- asphalt (z 156..164, x -228..0) ends.
+	block("Market paving is Pavement and the paint stays inside the region", {
+		{ -374, 82 }, { -230, 238 }, { -374, 238 }, { -230, 82 }, -- corners
+		{ -300, 160 }, { -350, 120 }, { -270, 200 }, -- middle, hall, yard
+	}, M.Pavement, {
+		{ -380, 160, M.Grass }, { -300, 78, M.Grass }, { -300, 242, M.Grass }, { -224, 170, M.Grass }, { -224, 160, M.Asphalt },
+	})
 
--- Café paving (Slice 08): world.luau repaints the Grass under the Café terrace, unit floor and forecourt (x 112..212,
--- z -200..-120) as Pavement, for the same reason as the plaza. The controls prove the paint stays inside the region and
--- leaves the asphalt of road H's mouth (x 96..112, z -164..-156) alone, including the grass verge beside the mouth.
-do
-	local function cellMaterial(x, z)
-		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
-		local mats = workspace.Terrain:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 0, fz + 4)), 4)
-		return mats[1][1][1]
-	end
-	local problems = {}
-	for _, p in ipairs({
-		{ 114, -198 }, { 210, -198 }, { 114, -122 }, { 210, -122 }, -- corners
-		{ 114, -160 }, -- first paved cell east of the road mouth
-		{ 130, -160 }, { 184, -160 }, -- Guide, shop floor
-	}) do
-		local m = cellMaterial(p[1], p[2])
-		if m ~= Enum.Material.Pavement then
-			table.insert(problems, string.format("cell (%d,%d) is %s, expected Pavement", p[1], p[2], tostring(m)))
-		end
-	end
-	for _, c in ipairs({
-		{ 110, -160, Enum.Material.Asphalt }, { 106, -160, Enum.Material.Asphalt }, { 110, -180, Enum.Material.Grass },
-		{ 110, -140, Enum.Material.Grass }, { 214, -160, Enum.Material.Grass }, { 160, -204, Enum.Material.Grass },
-		{ 160, -116, Enum.Material.Grass },
-	}) do
-		local m = cellMaterial(c[1], c[2])
-		if m ~= c[3] then
-			table.insert(problems, string.format("control cell (%d,%d) is %s, expected %s", c[1], c[2], tostring(m), tostring(c[3])))
-		end
-	end
-	check("Café paving is Pavement and the paint stays inside the region", #problems == 0, table.concat(problems, "; "))
+	-- Lomi paving (Slice 07, moved by Slice 14): shophouse floor, forecourt and driveway (x 240..340, z 100..180). x0 240 is where
+	-- road G's asphalt (z 136..144, x 0..240) ends.
+	block("Lomi paving is Pavement and the paint stays inside the region", {
+		{ 242, 102 }, { 338, 178 }, { 242, 178 }, { 338, 102 }, -- corners
+		{ 262, 140 }, { 306, 140 }, -- Guide, shop floor
+	}, M.Pavement, {
+		{ 236, 140, M.Asphalt }, { 236, 160, M.Grass }, { 344, 140, M.Grass }, { 292, 98, M.Grass }, { 292, 182, M.Grass },
+	})
+
+	-- Cafe paving (Slice 08, moved by Slice 14): terrace, unit floor and forecourt (x 224..324, z -200..-120). x0 224 is where road H's
+	-- asphalt (z -164..-156, x 0..224) ends.
+	block("Cafe paving is Pavement and the paint stays inside the region", {
+		{ 226, -198 }, { 322, -198 }, { 226, -122 }, { 322, -122 }, -- corners
+		{ 226, -160 }, -- first paved cell east of the road end
+		{ 242, -160 }, { 296, -160 }, -- Guide, shop floor
+	}, M.Pavement, {
+		{ 222, -160, M.Asphalt }, { 218, -160, M.Asphalt }, { 222, -180, M.Grass }, { 222, -140, M.Grass },
+		{ 326, -160, M.Grass }, { 272, -204, M.Grass }, { 272, -116, M.Grass },
+	})
+
+	-- The new roads (width 8): F along z 160 to the Market (from Road E, x 0), G along z 140 to Lomi, H along z -160 to the Cafe (from Road A).
+	block("roads F, G and H are asphalt along their centre lines", {
+		{ -120, 160 }, { -200, 160 }, { 120, 140 }, { 200, 140 }, { 120, -160 }, { 200, -160 },
+	}, M.Asphalt, {})
+
+	-- The old positions are cleared: the corners of the old Market, Lomi and Cafe paving and the old road F / G spurs are Grass again.
+	block("the old Market, Lomi and Cafe spots are Grass again (old paving and old roads F/G are gone)", {
+		{ -130, 238 }, { -130, 82 }, { -180, 200 }, -- old Market region (the part not inside the new one)
+		{ 130, 102 }, { 130, 178 }, { 180, 178 }, -- old Lomi region
+		{ 114, -198 }, { 210, -198 }, { 160, -122 }, -- old Cafe region
+		{ -125, 110 }, { 125, 120 }, -- old road F and G spurs (vertical at x -125 / 125)
+	}, M.Grass, {})
 end
 
 -- Farm paving and lagoon (Slice 09): world.luau repaints the Grass under the Farm's path, plaza, pool terrace / villa slab, the

@@ -96,7 +96,7 @@ if sites then
 					-- rotated yet passes the symmetric bounds check. Anchors are ONE uniquely named BasePart each. The awning is on
 					-- the west frontage, the counter is inside and behind it, and the parking sign is at the south (+Z) end.
 					-- The interior is required, so the lane guard sweeps a person-sized box (4 wide, y 2..8) along the aisle
-					-- (z 140) from the forecourt (x 160) through the open front to just short of the counter (x 201): any
+					-- (z 140) from the forecourt (x 272) through the open front to just short of the counter (x 313): any
 					-- colliding non-rig part of the site in it fails. On the placeholder it is red because the Block fills it.
 					local function anchor(name)
 						local p = m:FindFirstChild(name, true)
@@ -115,7 +115,7 @@ if sites then
 					lp.FilterDescendantsInstances = { m }
 					lp.RespectCanCollide = true
 					local blockers = {}
-					for _, h in ipairs(workspace:GetPartBoundsInBox(CFrame.new(180.5, 5, 140), Vector3.new(41, 6, 4), lp)) do
+					for _, h in ipairs(workspace:GetPartBoundsInBox(CFrame.new(292.5, 5, 140), Vector3.new(41, 6, 4), lp)) do
 						local inRig, p = false, h.Parent
 						while p and p ~= m do
 							if p:IsA("Model") and p:FindFirstChildOfClass("Humanoid") then inRig = true break end
@@ -128,9 +128,9 @@ if sites then
 					-- Orientation + walkability guards (Slice 08): the pivot is yawed to W, so a build that used it as its origin is
 					-- rotated yet passes the symmetric bounds check. Anchors are ONE uniquely named BasePart each. The sign fascia is
 					-- on the west frontage, the coffee bar is inside and behind it, the arcade roof is in front (west) of the fascia,
-					-- and the representative-interior sign is inside the unit (x 164..204, z -186..-134). The interior is required,
-					-- so the lane guard sweeps a person-sized box (4 wide, y 2..8) along the lane (z -160) from the terrace (x 144)
-					-- through the door to just short of the bar (x 185): any colliding non-rig part of the site in it fails. On the
+					-- and the representative-interior sign is inside the unit (x 276..316, z -186..-134). The interior is required,
+					-- so the lane guard sweeps a person-sized box (4 wide, y 2..8) along the lane (z -160) from the terrace (x 256)
+					-- through the door to just short of the bar (x 297): any colliding non-rig part of the site in it fails. On the
 					-- placeholder it is red because the Block fills it.
 					local function anchor(name)
 						local p = m:FindFirstChild(name, true)
@@ -144,7 +144,7 @@ if sites then
 						fascia and bar and (bar.Position.X .. " vs " .. fascia.Position.X) or "parts missing")
 					check(label .. " arcade roof is in front of the fascia", fascia ~= nil and roof ~= nil and roof.Position.X < fascia.Position.X - 5,
 						fascia and roof and (roof.Position.X .. " vs " .. fascia.Position.X) or "parts missing")
-					check(label .. " representative sign is inside the unit", note ~= nil and note.Position.X > 164 and note.Position.X < 204
+					check(label .. " representative sign is inside the unit", note ~= nil and note.Position.X > 276 and note.Position.X < 316
 						and note.Position.Z > -186 and note.Position.Z < -134,
 						note and tostring(note.Position) or "part missing")
 					local lp = OverlapParams.new()
@@ -152,7 +152,7 @@ if sites then
 					lp.FilterDescendantsInstances = { m }
 					lp.RespectCanCollide = true
 					local blockers = {}
-					for _, h in ipairs(workspace:GetPartBoundsInBox(CFrame.new(164.5, 5, -160), Vector3.new(41, 6, 4), lp)) do
+					for _, h in ipairs(workspace:GetPartBoundsInBox(CFrame.new(276.5, 5, -160), Vector3.new(41, 6, 4), lp)) do
 						local inRig, p = false, h.Parent
 						while p and p ~= m do
 							if p:IsA("Model") and p:FindFirstChildOfClass("Humanoid") then inRig = true break end
@@ -162,7 +162,7 @@ if sites then
 					end
 					check(label .. " walking lane into the cafe is free", #blockers == 0, #blockers .. " blocking: " .. table.concat(blockers, ", ", 1, math.min(#blockers, 4)))
 					-- Sign legibility (added in review): the arcade roof once hid the fascia letters from the street. From an
-					-- eye-level point on road H's walkway (124, 8, -160) a ray to each Neon letter's centre must reach that letter
+					-- eye-level point on road H's walkway (236, 8, -160) a ray to each Neon letter's centre must reach that letter
 					-- first (Guide and InfoPanel are ignored); at least 80% of the letters must pass.
 					local vp = RaycastParams.new()
 					vp.FilterType = Enum.RaycastFilterType.Include
@@ -171,7 +171,7 @@ if sites then
 						if c.Name ~= "Guide" and c.Name ~= "InfoPanel" then table.insert(incl, c) end
 					end
 					vp.FilterDescendantsInstances = incl
-					local eye = Vector3.new(124, 8, -160)
+					local eye = Vector3.new(236, 8, -160)
 					local letters, seen = 0, 0
 					for _, d in ipairs(m:GetDescendants()) do
 						if d.Name == "NeonLetter" and d:IsA("BasePart") then

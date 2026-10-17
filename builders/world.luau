@@ -17,9 +17,11 @@ local ROADS = {
 	-- Slice 11: Road E used to stop at (-480, 450), the footprint's NE corner, 127 studs short of the Guide. It now runs on south to
 	-- z 526 and west to x -548, the east edge of the Tagbakin Guide plaza (PAVED below). Keep in step with briefs/site09.md.
 	{ name = "E_to_Tagbakin", w = 12, pts = { { 0, 100 }, { 0, 350 }, { -480, 350 }, { -480, 526 }, { -548, 526 } } },
-	{ name = "F_to_Market", w = 8, pts = { { -125, 70 }, { -125, 160 } } },
-	{ name = "G_to_Lomi", w = 8, pts = { { 125, 100 }, { 125, 140 } } },
-	{ name = "H_to_Cafe", w = 8, pts = { { 0, -100 }, { 0, -160 }, { 110, -160 } } },
+	-- Slice 14: the three core shops were pushed out from the Cathedral (Market -330, Lomi 292, Cafe 272). F, G and H are now straight
+	-- spurs off Road E (x 0, z 160 and 140) and Road A (x 0, z -160) that end exactly where each shop's paving begins (see PAVED).
+	{ name = "F_to_Market", w = 8, joinStart = true, pts = { { 0, 160 }, { -228, 160 } } },
+	{ name = "G_to_Lomi", w = 8, joinStart = true, pts = { { 0, 140 }, { 240, 140 } } },
+	{ name = "H_to_Cafe", w = 8, joinStart = true, pts = { { 0, -160 }, { 224, -160 } } },
 }
 
 -- Lake in the SW (Tagbakin shore). Pit is carved, sand bed laid, then water filled flush to y=0.
@@ -103,9 +105,10 @@ local function buildLagoons()
 	task.wait()
 end
 
--- Plaza Independencia ground. The plaza paving built by builders/site01.luau (PlazaPaving, x -100..100, z 6..100, plus
--- the wing apron in front of it) is only 0.1 stud thick, so the terrain's grass blades would poke through it. Repaint the
--- Grass under the plaza as Pavement. Keep this region in step with PlazaPaving in site01.luau.
+-- Plaza Independencia ground. The lower plaza paving built by builders/site01.luau (ForecourtPaving, x -100..100, z 48..100) is only
+-- 0.1 stud thick, so the terrain's grass blades would poke through it. The church compound north of z 48 stands on a 5-stud podium
+-- that hides the terrain, so the region stays x -100..100, z 0..100 (harmless under the podium). Repaint the Grass under the plaza as
+-- Pavement. Keep this region in step with ForecourtPaving in site01.luau.
 -- ReplaceMaterial takes a Region3 in studs, aligned to the 4-stud grid, with resolution exactly 4 (docs). Only Grass is
 -- converted, so the asphalt road mouth at (0,100..) is untouched; the terrain surface height does not change.
 -- Carmel forecourt (Slice 04): same treatment under the monastery's paved forecourt. Keep this region in step with the
@@ -118,15 +121,15 @@ local PAVED = {
 	{ x0 = 472, x1 = 592, z0 = -724, z1 = -604 },
 	{ x0 = 424, x1 = 612, z0 = -632, z1 = -548 },
 	{ x0 = 636, x1 = 708, z0 = -752, z1 = -612 },
-	-- The Market (Slice 06): hall, stall yard and aisle (x -276..-128, z 80..240, the footprint's z edges). x1 -128 stops at the
-	-- west edge of road F's asphalt cells (x -128..-120). Keep in step with builders/site02.luau.
-	{ x0 = -276, x1 = -128, z0 = 80, z1 = 240 },
-	-- Lomi King (Slice 07): shophouse floor, front step, forecourt and driveway (x 128..228, z 100..180, the footprint). x0 128
-	-- stops at the east edge of road G's asphalt cells (x 120..128). Keep in step with builders/site03.luau.
-	{ x0 = 128, x1 = 228, z0 = 100, z1 = 180 },
-	-- Café de Lipa (Slice 08): terrace, unit floor and forecourt (x 112..212, z -200..-120, the footprint). x0 112 stops at the
-	-- east edge of road H's asphalt cells (x 96..112). Keep in step with builders/site04.luau.
-	{ x0 = 112, x1 = 212, z0 = -200, z1 = -120 },
+	-- The Market (Slice 06): hall, stall yard and aisle (x -376..-228 after Slice 14, z 80..240, the footprint's z edges). x1 -228 stops at the
+	-- end of road F's asphalt (x -228..0, z 156..164). Keep in step with builders/site02.luau.
+	{ x0 = -376, x1 = -228, z0 = 80, z1 = 240 },
+	-- Lomi King (Slice 07): shophouse floor, front step, forecourt and driveway (x 240..340 after Slice 14, z 100..180, the footprint). x0 240
+	-- stops at the end of road G's asphalt (x 0..240, z 136..144). Keep in step with builders/site03.luau.
+	{ x0 = 240, x1 = 340, z0 = 100, z1 = 180 },
+	-- Café de Lipa (Slice 08): terrace, unit floor and forecourt (x 224..324 after Slice 14, z -200..-120, the footprint). x0 224 stops at the
+	-- end of road H's asphalt (x 0..224, z -164..-156). Keep in step with builders/site04.luau.
+	{ x0 = 224, x1 = 324, z0 = -200, z1 = -120 },
 	-- The Farm at San Benito (Slice 09): entry path, arrival plaza, pool terrace and villa slab, the path south and the shore apron
 	-- of the lagoon deck. x0 572 of P1 stops at the east edge of road C's asphalt cells (x ..572). Regions overlap on purpose
 	-- (P3 and P4); ReplaceMaterial is idempotent. Keep in step with builders/site07.luau and briefs/site07.md.

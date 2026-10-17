@@ -42,11 +42,12 @@ return function(t)
 		end
 	end)
 
-	-- Positions and facings straight from the layout table (Market shifted to -230).
+	-- Positions and facings from the layout table, except the three core shops, which Slice 14 pushed out from the Cathedral
+	-- (Market -230 -> -330, Lomi 180 -> 292, Cafe 160 -> 272; the user's call after seeing the town core crowded).
 	t.test("positions and facings match the layout", function()
 		local expected = {
-			[1] = { 0, 0, "S" }, [2] = { -230, 160, "E" }, [3] = { 180, 140, "W" },
-			[4] = { 160, -160, "W" }, [5] = { -300, -600, "S" }, [6] = { 550, -650, "SW" },
+			[1] = { 0, 0, "S" }, [2] = { -330, 160, "E" }, [3] = { 292, 140, "W" },
+			[4] = { 272, -160, "W" }, [5] = { -300, -600, "S" }, [6] = { 550, -650, "SW" },
 			[7] = { 700, 240, "W" }, [8] = { 560, 720, "NW" }, [9] = { -600, 550, "NE" },
 		}
 		for id, e in pairs(expected) do
@@ -123,11 +124,25 @@ return function(t)
 		end
 	end)
 
-	-- The Market moved from -220 to -230 to clear the Cathedral footprint.
-	t.test("market sits at -230,160", function()
+	-- The Market moved from -220 to -230 (Slice 06) and then to -330 (Slice 14) to give the town core room.
+	t.test("market sits at -330,160", function()
 		local m = SiteData.byId(2)
-		expect.equal(m.pos.X, -230)
+		expect.equal(m.pos.X, -330)
 		expect.equal(m.pos.Z, 160)
+	end)
+
+	-- Slice 14: the Market, Lomi King and Cafe were 10-20 studs from the Cathedral compound, which looked crowded. The town core
+	-- keeps at least 100 studs of clear space between any two of the four footprints.
+	t.test("core shops keep 100+ studs from the Cathedral footprint and from each other", function()
+		local core = { 1, 2, 3, 4 }
+		for i = 1, #core do
+			for j = i + 1, #core do
+				local a0, a1, az0, az1 = footprint(SiteData.byId(core[i]))
+				local b0, b1, bz0, bz1 = footprint(SiteData.byId(core[j]))
+				local gap = math.max(b0 - a1, a0 - b1, bz0 - az1, az0 - bz1)
+				expect.truthy(gap >= 100)
+			end
+		end
 	end)
 
 	-- Facing must be one of the eight compass values.
