@@ -669,8 +669,11 @@ if sites then
 					local target = SiteData.guidePos(s.id)
 					check(label .. " Guide XZ at guidePos", xzDist(gHrp.Position, target) <= 1, tostring(gHrp.Position))
 					local gy = ground(gHrp.Position.X, gHrp.Position.Z)
-					check(label .. " Guide stands on terrain", gy ~= nil and gHrp.Position.Y - gy >= 2 and gHrp.Position.Y - gy <= 5,
-						"hrpY=" .. gHrp.Position.Y .. " groundY=" .. tostring(gy))
+					-- A site may stand its props on a raised level (Site 1, Slice 14: the forecourt podium); the builder records the
+					-- lift as the Site01Raise attribute, so the Guide must still stand 2..5 studs above terrain PLUS that lift.
+					local lift = guide:GetAttribute("Site01Raise") or 0
+					check(label .. " Guide stands on terrain (or on its recorded raised level)", gy ~= nil and gHrp.Position.Y - gy - lift >= 2 and gHrp.Position.Y - gy - lift <= 5,
+						"hrpY=" .. gHrp.Position.Y .. " groundY=" .. tostring(gy) .. " lift=" .. lift)
 					local prompt = gHrp:FindFirstChild("GuidePrompt")
 					check(label .. " GuidePrompt", prompt ~= nil and prompt:IsA("ProximityPrompt")
 						and prompt.RequiresLineOfSight == false and prompt.HoldDuration == 0

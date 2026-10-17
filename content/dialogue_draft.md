@@ -34,12 +34,14 @@ Rules enforced by tests: every line is 220 bytes or fewer, **ASCII only** (the t
 Pages that returned HTTP 403 and could not be opened: the Inquirer (`newsinfo.inquirer.net/1593317`), BusinessWorld (`bworldonline.com/?p=474580`), Esquire Philippines. Not opened and not relied on for any claim: Wikipedia "Lipa Cathedral", The Poor Traveler, PIA, Traveloka, Primer, Wikivoyage, Architizer, Outlook Traveller, Benjie Layug.
 
 ## 1. Plaza Independencia and Metropolitan Cathedral of San Sebastian
-- (a) Welcome to Plaza Independencia, the open square in front of the Metropolitan Cathedral of San Sebastian in Lipa.
-- (b) Today this plaza is where Lipa gathers for events and everyday socializing, and the cathedral anchors the city's religious life.
-- (c) The tower narrows tier by tier as it rises to a ribbed cupola. Paired pilasters repeat across the front, and cream walls sit against mauve-grey trim and red roofs.
-- (d) Look at the bell tower on the model and count its tiers. Then find the triangular pediment and the paired pilasters on the front.
+- (a) Welcome to the Metropolitan Cathedral of San Sebastian in Lipa. Down the steps from this forecourt is Plaza Independencia, the city's open square.
+- (b) Today the plaza is where Lipa gathers for events and everyday socializing, and the cathedral anchors the city's religious life.
+- (c) The tower narrows tier by tier as it rises to a ribbed cupola. Paired columns repeat across the front, and warm yellow walls sit against mauve-grey trim and red roofs.
+- (d) Look at the bell tower on the model and count its tiers. Then find the triangular pediment and the paired columns on the front.
 
 The earlier draft's (c)/(d) described the rear apse from an aerial photo, which a player in the plaza cannot see. The sources disagree on the cathedral's style, so no style is named.
+
+Revised in Slice 14 (the user left the wording to the assistant) after the model was rebuilt from 2023-2025 photos: the facade has paired round columns, not pilasters; the walls are butter yellow, not cream; and the guide stands on the forecourt above Plaza Independencia, which is down a flight of steps (28 Dec 2025 drone photos). No new facts were added.
 
 ## 2. Candido B. Lopez Memorial Public Market
 - (a) This is the Candido B. Lopez Memorial Public Market, the palengke in Lipa where people shop for produce, food, and daily needs.

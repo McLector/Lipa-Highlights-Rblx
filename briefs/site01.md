@@ -116,3 +116,22 @@ Plaza Independencia is not an empty slab. Reading P1/P2 (Dec 2025) from the faca
 - **Rescale the church to its true proportions** (facade 72 studs, transept 96, tower and dome re-proportioned to the photos) at massScale 2.0, and **drop nave bays** so the length (~52 m shown of 85 m real) fits z -100..+10.
 - **Rebuild the plaza** in the real order within z +10..+100: church steps, then a compressed forecourt (monument, yellow bay lines, a few parked-vehicle props), then the stepped amphitheatre with a central stage, hedged gardens and palms on one flank, a perimeter fence, and the two enclosing buildings as simple massing.
 - **Terrain:** the plaza is already repainted Pavement (x +-100, z 0..100). If the gardens and amphitheatre need grass/pavement changes, I would patch only those cells (and mirror it into `world.luau`), not re-run the whole world. I will ask before touching terrain.
+
+---
+
+# Revision 2 (2026-10-17): the plaza has two levels (user correction, confirmed on a crop of the 28 Dec 2025 drone photo)
+
+The first rework treated the plaza as one flat slab with an amphitheatre. The user pointed out, and a close crop of `02_..._CM_Recto_Avenue_drone_..._12-28-2025_.jpg` confirms, that the real layout is:
+
+1. **A wide car-park forecourt directly in front of the cathedral** (grey asphalt, painted bays, many parked cars on the west side, a small monument on the church axis, parked tricycles near the wall).
+2. **A retaining wall across the forecourt's south edge with two long flights of steps going DOWN** to a central landing (the round-roofed gazebo that carries the seasonal tree) and on to the lower plaza.
+3. **The lower Plaza Independencia**: a paved plaza below the wall with parked vans on the west, a big grey-brown gabled pavilion with palms in front, a light open slab with market tents on the east, a long arcaded cream building on the west, and a white balustrade fence along the street.
+4. The **hedged garden** east of the forecourt, on the upper level.
+
+## How it is built (builders/site01.luau, `RAISE = 5`)
+- A **Podium** (x +-120, z -100..56, 5 studs high) carries the church, wing, forecourt and garden; its south face (z 56) is the retaining wall. Every upper component is built with an origin raised by 5, so all local coordinates are unchanged.
+- **StageLanding** (x +-18, z 56..64, top 5) with the gazebo roof and the "PUBLIC EVENTS" fascia facing the lower plaza; **StairsL / StairsR**: 4 treads each, risers of exactly 1 stud (5 -> 4 -> 3 -> 2 -> 1 -> ground), x 18..62 on each side; **Parapet** caps the wall beyond the stairs.
+- The kept props (Guide, InfoPanel, JeepStop, sign, jeepney) are raised by 5 (the `Site01Raise` attribute makes the move idempotent). The spawn stays on the lower plaza at (0, 70), looking north up the steps at the church.
+- Terrain is untouched: the lower plaza sits on the existing repainted Pavement (z 56..100); the podium hides the rest.
+- Player-facing consequence: the door is hidden behind the wall from the spawn (the church rises above it), so a visitor climbs the steps to reach the Guide.
+- Simplifications: the seasonal Christmas tree and the signage letters on the wall are not modelled; the real stairs are longer and terraced; the forecourt is about half its real depth; the pavilion is one gabled hall, not the real cross-gabled roof.

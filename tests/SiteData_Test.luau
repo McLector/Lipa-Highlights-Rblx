@@ -248,6 +248,19 @@ return function(t)
 		expect.truthy(string.find(table.concat(SiteData.byId(2).dialogue, " "), "2014", 1, true))
 	end)
 
+	-- Slice 14: the Cathedral model has paired round columns (not pilasters), butter-yellow walls, and the guide stands on the
+	-- forecourt above Plaza Independencia, down a flight of steps.
+	t.test("Cathedral dialogue describes the reworked model: columns, yellow walls, the steps down to the plaza", function()
+		local c = SiteData.byId(1)
+		local text = table.concat(c.dialogue, " ")
+		expect.truthy(string.find(text, "columns", 1, true))
+		expect.falsy(string.find(string.lower(text), "pilaster", 1, true))
+		expect.falsy(string.find(text, "cream walls", 1, true))
+		expect.truthy(string.find(text, "yellow", 1, true))
+		expect.truthy(string.find(c.dialogue[1], "steps", 1, true))
+		expect.truthy(string.find(c.dialogue[1], "Plaza Independencia", 1, true))
+	end)
+
 	t.test("Carmel guide says she is not a nun and the founding date is exact", function()
 		local c = SiteData.byId(5)
 		expect.truthy(string.find(c.dialogue[1], "not a nun", 1, true))

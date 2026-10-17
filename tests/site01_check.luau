@@ -1,9 +1,14 @@
--- site01_check: the Slice 14 fidelity spec for Site 01 (Cathedral + Plaza Independencia), written BEFORE the rework.
+-- site01_check: the Slice 14 fidelity spec for Site 01 (Cathedral + Plaza Independencia), written BEFORE each rework pass.
 -- Studio copy: ServerStorage.Checks.site01_check. Run in Edit via execute_luau:
 --   require(game.ServerStorage.Checks.site01_check:Clone())      -- returns JSON {passed, failed, failures}
 -- Every number below comes from briefs/site01.md "Slice 14 rework" (OSM footprints + the 2023-2025 photos), converted at
 -- massScale 2.0 (2 studs per metre). Anchors are ONE uniquely named BasePart each, searched through the whole site.
+-- Two levels (Dec 2025 drone photos): the church, its wing, the car-park forecourt and the hedged garden stand on a podium
+-- RAISE studs above the ground; a retaining wall with two flights of steps and a central landing drops to the lower Plaza
+-- Independencia at ground level (y 0), where the spawn, the pavilion, the vans and the CreditsBoard are.
 local HttpService = game:GetService("HttpService")
+local RAISE = 5 -- podium top (upper level), studs above the ground; must equal builders/site01.luau RAISE
+local WALL_Z = 56 -- the podium's south face, the retaining wall
 
 local results = { passed = 0, failed = 0, failures = {} }
 local function check(name, cond, detail)
@@ -28,10 +33,17 @@ local function anchor(name)
 	end
 	return nil
 end
-local function countNamed(name, className)
-	local n = 0
+local function allNamed(name)
+	local list = {}
 	for _, d in ipairs(site:GetDescendants()) do
-		if d.Name == name and d:IsA("BasePart") and (className == nil or d.Shape == className) then n += 1 end
+		if d.Name == name and d:IsA("BasePart") then table.insert(list, d) end
+	end
+	return list
+end
+local function countNamed(name, shape)
+	local n = 0
+	for _, d in ipairs(allNamed(name)) do
+		if shape == nil or d.Shape == shape then n += 1 end
 	end
 	return n
 end
@@ -44,6 +56,7 @@ local function isRig(inst)
 	return false
 end
 local function fmt(v) return v and string.format("%.1f", v) or "nil" end
+local function topY(p) return p.Position.Y + p.Size.Y / 2 end
 
 ------------------------------------------------------------------ Proportions (OSM + P3)
 local facade, tower = anchor("FacadeWall"), anchor("TowerBody")
@@ -59,7 +72,7 @@ check("Apse back reaches z <= -94 (the church uses the footprint depth)", apse ~
 local naveRoof = anchor("NaveRoof")
 local towerCross, belfryCross = anchor("TowerCrossV"), anchor("BelfryCrossV")
 if towerCross and belfryCross then
-	local ratio = (towerCross.Position.Y + towerCross.Size.Y / 2) / (belfryCross.Position.Y + belfryCross.Size.Y / 2)
+	local ratio = (topY(towerCross) - RAISE) / (topY(belfryCross) - RAISE)
 	check("tower is 1.15-1.5x the facade apex (P3 photo ratio ~1.3-1.4)", ratio >= 1.15 and ratio <= 1.5, fmt(ratio))
 else
 	check("tower is 1.15-1.5x the facade apex (P3 photo ratio ~1.3-1.4)", false, "TowerCrossV / BelfryCrossV missing")
@@ -94,9 +107,9 @@ end
 
 ------------------------------------------------------------------ Tower LED screen (P3/P4/P1: front face, above the base cornice)
 local screen = anchor("Screen")
-check("LED Screen is on the left tower, 8+ studs wide, centre y 20-32 (above the base cornice), facing +Z",
+check("LED Screen is on the left tower, 8+ studs wide, 20-32 studs above the podium (above the base cornice), facing +Z",
 	screen ~= nil and tower ~= nil and math.abs(screen.Position.X - tower.Position.X) < 8 and screen.Size.X >= 8
-		and screen.Position.Y >= 20 and screen.Position.Y <= 32 and screen.Position.Z > tower.Position.Z,
+		and screen.Position.Y - RAISE >= 20 and screen.Position.Y - RAISE <= 32 and screen.Position.Z > tower.Position.Z,
 	screen and string.format("x %s y %s size %s", fmt(screen.Position.X), fmt(screen.Position.Y), fmt(screen.Size.X)) or "missing")
 
 ------------------------------------------------------------------ Facade detail (P3/P4)
@@ -120,12 +133,46 @@ check("wing entrance carries the CATEDRAL sign", (function()
 	return false
 end)())
 
+------------------------------------------------------------------ Two levels: podium, retaining wall, stairs, landing (P1 crop: wall with stairs down to the plaza)
+local podium = anchor("Podium")
+check("Podium top is RAISE studs above the ground", podium ~= nil and math.abs(topY(podium) - RAISE) < 0.06, podium and fmt(topY(podium)) or "missing")
+check("Podium south face (the retaining wall) is at z 56", podium ~= nil and math.abs(podium.Position.Z + podium.Size.Z / 2 - WALL_Z) < 0.5,
+	podium and fmt(podium.Position.Z + podium.Size.Z / 2) or "missing")
+check("Podium carries the whole church: spans x +-120 and back to z <= -99", podium ~= nil and podium.Size.X >= 238 and podium.Position.Z - podium.Size.Z / 2 <= -99,
+	podium and string.format("x %s back %s", fmt(podium.Size.X), fmt(podium.Position.Z - podium.Size.Z / 2)) or "missing")
+local base = anchor("ColumnBase1")
+check("the facade stands on the podium, not the ground", base ~= nil and base.Position.Y - base.Size.Y / 2 >= RAISE - 0.06, base and fmt(base.Position.Y - base.Size.Y / 2) or "missing")
+local parapets = allNamed("Parapet")
+check("2+ parapet runs cap the retaining wall, on the upper level", #parapets >= 2 and (function()
+	for _, p in ipairs(parapets) do if p.Position.Y < RAISE then return false end end
+	return true
+end)(), tostring(#parapets))
+local landing = anchor("StageLanding")
+check("StageLanding is a platform on the wall axis at podium height", landing ~= nil and math.abs(landing.Position.X) < 2 and math.abs(topY(landing) - RAISE) < 0.06
+	and landing.Position.Z - landing.Size.Z / 2 >= WALL_Z - 0.6, landing and fmt(topY(landing)) or "missing")
+for _, side in ipairs({ "StairsL", "StairsR" }) do
+	local steps = allNamed(side)
+	table.sort(steps, function(a, b) return a.Position.Z < b.Position.Z end)
+	local okRisers, detail = #steps == 4, "steps " .. #steps
+	for i, s in ipairs(steps) do
+		if math.abs(topY(s) - (RAISE - i)) > 0.06 or s.Size.X < 30 then okRisers = false; detail = detail .. string.format(" [%d top %s w %s]", i, fmt(topY(s)), fmt(s.Size.X)) end
+	end
+	check(side .. ": 4 wide steps, each riser exactly 1 stud (5 -> 4 -> 3 -> 2 -> 1 -> ground)", okRisers, detail)
+end
+local stage = site:FindFirstChild("EventStage")
+check("EventStage is the landing gazebo: landing, 4 posts and a canopy above the podium", stage ~= nil and landing ~= nil and countNamed("StagePost") == 4
+	and anchor("StageCanopy") ~= nil and anchor("StageCanopy").Position.Y > RAISE + 9)
+for _, name in ipairs({ "Guide", "InfoPanel", "JeepStop" }) do
+	local inst = site:FindFirstChild(name)
+	local y = inst and (inst:IsA("Model") and inst:GetPivot().Position.Y or inst.Position.Y)
+	check(name .. " survived and stands on the upper level", inst ~= nil and y ~= nil and y >= RAISE, y and fmt(y) or "missing")
+end
+
 ------------------------------------------------------------------ Welcome Arch (P6)
 local arch = site:FindFirstChild("WelcomeArch")
 check("WelcomeArch is a direct child model with 12+ parts", arch ~= nil and arch:IsA("Model") and #arch:GetDescendants() >= 12)
 if arch then
-	local top, span = -math.huge, 0
-	local l, r = math.huge, -math.huge
+	local top, l, r = -math.huge, math.huge, -math.huge
 	for _, p in ipairs(arch:GetDescendants()) do
 		if p:IsA("BasePart") then
 			top = math.max(top, p.Position.Y + p.Size.Y / 2)
@@ -141,34 +188,52 @@ if arch then
 	check("arch has two stone gateposts", anchor("GatepostL") ~= nil and anchor("GatepostR") ~= nil)
 end
 
------------------------------------------------------------------- Plaza (P1/P2)
-check("ForecourtPaving exists", anchor("ForecourtPaving") ~= nil)
-check("St Sebastian Monument on a plinth", anchor("MonumentPlinth") ~= nil and site:FindFirstChild("Monument", true) ~= nil)
-check("16+ yellow parking-bay lines", countNamed("ParkingBayLine") >= 16, tostring(countNamed("ParkingBayLine")))
+------------------------------------------------------------------ Upper level: the car-park forecourt, monument, garden
+local apron = anchor("ApronPaving")
+check("ApronPaving (the wide parking forecourt) lies on the podium, z 10..56", apron ~= nil and apron.Position.Y >= RAISE and apron.Size.Z >= 40
+	and apron.Position.Z - apron.Size.Z / 2 <= 12 and apron.Position.Z + apron.Size.Z / 2 >= WALL_Z - 1,
+	apron and string.format("y %s z %s..%s", fmt(apron.Position.Y), fmt(apron.Position.Z - apron.Size.Z / 2), fmt(apron.Position.Z + apron.Size.Z / 2)) or "missing")
+check("St Sebastian Monument on a plinth, on the forecourt", anchor("MonumentPlinth") ~= nil and anchor("MonumentPlinth").Position.Y >= RAISE
+	and anchor("MonumentPlinth").Position.Z < WALL_Z and site:FindFirstChild("Monument", true) ~= nil)
+local bays, badBays = allNamed("ParkingBayLine"), 0
+for _, b in ipairs(bays) do if b.Position.Y < RAISE or b.Position.Z >= WALL_Z then badBays += 1 end end
+check("16+ yellow parking-bay lines, all on the forecourt", #bays >= 16 and badBays == 0, #bays .. " lines, " .. badBays .. " misplaced")
+local hedges, goodHedges = 0, 0
+for _, d in ipairs(allNamed("GardenHedge")) do
+	hedges += 1
+	if d.Position.X > 36 and d.Position.Y >= RAISE and d.Position.Z < WALL_Z then goodHedges += 1 end
+end
+check("hedged garden on the east of the forecourt (12+ GardenHedge parts, upper level, east of x 36)", hedges >= 12 and hedges == goodHedges, hedges .. " / " .. goodHedges)
+
+------------------------------------------------------------------ Parked vehicles: cars on the forecourt, vans on the lower plaza
 local vehicles = site:FindFirstChild("ParkedVehicles")
 check("ParkedVehicles folder has 8+ vehicles", vehicles ~= nil and #vehicles:GetChildren() >= 8, vehicles and tostring(#vehicles:GetChildren()) or "missing")
 if vehicles then
-	local worst = math.huge
+	local worst, upper, lower = math.huge, 0, 0
 	for _, v in ipairs(vehicles:GetChildren()) do
 		local body = v:FindFirstChild("VehicleBody", true)
-		if not body then worst = 0 else worst = math.min(worst, math.max(body.Size.X, body.Size.Z)) end
+		if not body then worst = 0 else
+			worst = math.min(worst, math.max(body.Size.X, body.Size.Z))
+			if body.Position.Y >= RAISE then upper += 1 else lower += 1 end
+		end
 	end
 	check("every vehicle body is >= 8 studs long (human-scale parts are never shrunk)", worst >= 8, fmt(worst))
+	check("6+ vehicles on the upper forecourt and 4+ vans on the lower plaza", upper >= 6 and lower >= 4, upper .. " upper, " .. lower .. " lower")
 end
-local stage = site:FindFirstChild("EventStage")
-check("EventStage is the amphitheatre: dais + 6 steps each side", stage ~= nil and anchor("AmphiDais") ~= nil
-	and countNamed("AmphiStepL") == 6 and countNamed("AmphiStepR") == 6, "L " .. countNamed("AmphiStepL") .. " R " .. countNamed("AmphiStepR"))
-local hedges, eastHedges = 0, 0
-for _, d in ipairs(site:GetDescendants()) do
-	if d:IsA("BasePart") and d.Name == "GardenHedge" then
-		hedges += 1
-		if d.Position.X > 36 then eastHedges += 1 end
-	end
-end
-check("hedged garden on the east flank (12+ GardenHedge parts, all east of x 36)", hedges >= 12 and hedges == eastHedges, hedges .. " / " .. eastHedges)
+
+------------------------------------------------------------------ Lower plaza (P1: paved plaza below the wall, the gabled pavilion, palms, fence)
+local paving = anchor("ForecourtPaving")
+check("lower plaza paving (ForecourtPaving) is at ground level and spans z 56..100", paving ~= nil and paving.Position.Y <= 0.6
+	and math.abs(paving.Position.Z - paving.Size.Z / 2 - WALL_Z) < 1 and paving.Position.Z + paving.Size.Z / 2 >= 99,
+	paving and string.format("y %s z %s..%s", fmt(paving.Position.Y), fmt(paving.Position.Z - paving.Size.Z / 2), fmt(paving.Position.Z + paving.Size.Z / 2)) or "missing")
+local pavilion = anchor("CivicBuildingS")
+check("gabled pavilion (CivicBuildingS) stands on the lower plaza: z >= 70, 36+ studs wide, ground level",
+	pavilion ~= nil and pavilion.Position.Z >= 70 and pavilion.Size.X >= 36 and pavilion.Position.Y - pavilion.Size.Y / 2 < 0.6,
+	pavilion and string.format("z %s w %s", fmt(pavilion.Position.Z), fmt(pavilion.Size.X)) or "missing")
+check("long arcaded building on the lower plaza's west side (LongBuildingW)", anchor("LongBuildingW") ~= nil and anchor("LongBuildingW").Position.X < -80
+	and anchor("LongBuildingW").Position.Z > WALL_Z)
 check("12+ palm trunks", countNamed("PalmTrunk1") >= 12, tostring(countNamed("PalmTrunk1")))
-check("long arcaded building on the plaza's west side (LongBuildingW)", anchor("LongBuildingW") ~= nil and anchor("LongBuildingW").Position.X < -80)
-check("gabled civic building at the south end (CivicBuildingS)", anchor("CivicBuildingS") ~= nil and anchor("CivicBuildingS").Position.Z > 85)
+check("3+ plaza tents on the lower plaza", countNamed("PlazaTent") >= 3, tostring(countNamed("PlazaTent")))
 check("perimeter fence with 20+ posts", countNamed("FencePost") >= 20, tostring(countNamed("FencePost")))
 
 ------------------------------------------------------------------ Keep-clear zones and the terrain rule
@@ -192,14 +257,12 @@ for _, p in ipairs(site:GetDescendants()) do
 	if p:IsA("BasePart") and not isRig(p) and p.Size.Y <= 0.5 and p.Position.Y <= 0.6 and p.Parent.Name ~= "JeepStop" then
 		local x0, x1 = p.Position.X - p.Size.X / 2, p.Position.X + p.Size.X / 2
 		local z0, z1 = p.Position.Z - p.Size.Z / 2, p.Position.Z + p.Size.Z / 2
-		if p.Size.X > 3 and p.Size.Z > 3 and (x0 < -100.7 or x1 > 100.7 or z0 < -0.1 or z1 > 100.7) then
+		if p.Size.X > 3 and p.Size.Z > 3 and (x0 < -100.7 or x1 > 100.7 or z0 < WALL_Z - 0.6 or z1 > 100.7) then
 			table.insert(stray, string.format("%s x[%.0f,%.0f] z[%.0f,%.0f]", p.Name, x0, x1, z0, z1))
 		end
 	end
 end
-check("flat ground parts stay inside the repainted Pavement (x +-100, z 0..100)", #stray == 0, table.concat(stray, "; ", 1, math.min(#stray, 3)))
-for _, name in ipairs({ "Guide", "InfoPanel", "JeepStop" }) do
-	check(name .. " survived the rework", site:FindFirstChild(name) ~= nil)
-end
+check("flat ground-level parts lie on the lower plaza only (x +-100, z 56..100: the repainted Pavement; the podium covers the rest)", #stray == 0,
+	table.concat(stray, "; ", 1, math.min(#stray, 3)))
 
 return HttpService:JSONEncode(results)
