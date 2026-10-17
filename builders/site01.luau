@@ -9,7 +9,8 @@
 -- The terrain under the plaza is repainted as Pavement by builders/world.luau, which owns terrain. Flat ground parts here
 -- must stay inside that region: x -100..100, z 0..100 (tests/site01_check.luau enforces it). The rework needed no terrain write:
 -- the church, wing, forecourt and garden stand on a podium RAISE (5) studs above the ground (P1: the forecourt is higher than
--- Plaza Independencia); the retaining wall at z 56 drops to the lower plaza through two flights of 1-stud risers and a landing.
+-- Plaza Independencia); the retaining wall at z 48 drops to the lower plaza through two flights of 1-stud risers either side of a
+-- fountain and statue (ground photo, pass 4: terracotta paving, round pergola garden, vaulted covered court, shade tree, kiosks).
 -- Brief: briefs/site01.md. Period: the Dec 2025 scheme (cream-white domes) over the 2023-24 ground photos (butter walls).
 -- World axes: x east, z south (+Z is the facade side), y up; the site pivot is at the origin, and everything is placed in
 -- world coordinates. massScale 2.0 (2 studs per metre): the church is at true proportions across the front (facade 42,
@@ -69,6 +70,15 @@ return function()
 	local IRON = Color3.fromRGB(226, 226, 222)
 	local SCREEN_BLACK = Color3.fromRGB(20, 22, 26)
 	local LOUVRE = Color3.fromRGB(196, 204, 196)
+	-- Plaza Independencia from the ground photo: terracotta paving, salmon walls, orange kiosk roofs, a pale vaulted roof.
+	local TERRACOTTA = Color3.fromRGB(205, 142, 116)
+	local PAVING_CREAM = Color3.fromRGB(226, 200, 170)
+	local SALMON = Color3.fromRGB(214, 150, 128)
+	local KIOSK_ROOF = Color3.fromRGB(222, 120, 50)
+	local VAULT = Color3.fromRGB(236, 230, 210)
+	local SOIL = Color3.fromRGB(96, 66, 50)
+	local WATER = Color3.fromRGB(96, 156, 196)
+	local FLOWERS = { Color3.fromRGB(214, 56, 64), Color3.fromRGB(236, 130, 160), Color3.fromRGB(240, 150, 50), Color3.fromRGB(240, 220, 90) }
 	local CONC, PLAS = Enum.Material.Concrete, Enum.Material.SmoothPlastic
 	local METAL, WOOD = Enum.Material.Metal, Enum.Material.Wood
 	local PLASTER = Enum.Material.Plaster -- matte: SmoothPlastic mirrors the blue sky and turns the white domes lavender
@@ -485,26 +495,67 @@ return function()
 	end
 
 	------------------------------------------------------------------ Lower level (ground): Plaza Independencia below the wall
-	local PALMS_LOW = { { 44, 92 }, { 54, 92 }, { 64, 92 }, { 74, 92 }, { 84, 92 }, { 94, 92 }, { -44, 92 }, { -58, 92 }, { -72, 92 }, { -84, 92 } }
-	local TENTS = { { 86, 76, WHITE }, { 94, 76, Color3.fromRGB(60, 100, 170) }, { 86, 86, WHITE }, { 94, 86, Color3.fromRGB(60, 100, 170) } }
+	-- The two palms nearest the pergola ring (x -44, -58) are gone: they stood on its south edge.
+	local PALMS_LOW = { { 44, 92 }, { 54, 92 }, { 64, 92 }, { 74, 92 }, { 84, 92 }, { 94, 92 }, { -72, 92 }, { -84, 92 } }
+	local RING_X, RING_Z, RING_R = -52, 80, 12 -- the round raised pergola garden (ground photo), west of the open centre
 	local function buildPlazaLower(ctx)
-		ctx:part("ForecourtPaving", V(200, 0.1, 100 - WALL_Z), CF(0, 0, (WALL_Z + 100) / 2), STONE, CONC) -- z 48..100: the repainted Pavement (x +-100, z 0..100)
+		ctx:part("ForecourtPaving", V(200, 0.1, 100 - WALL_Z), CF(0, 0, (WALL_Z + 100) / 2), TERRACOTTA, CONC) -- z 48..100: the repainted Pavement (x +-100, z 0..100)
+		-- Two cream inlay bands across the plaza (0.03 above the paving so they never z-fight): one at the foot of the seating, one before the road mouth.
+		ctx:part("PavingInlay", V(199, 0.06, 1.2), CF(0, 0.08, 63.4), PAVING_CREAM, CONC)
+		ctx:part("PavingInlay", V(199, 0.06, 1.2), CF(0, 0.08, 89), PAVING_CREAM, CONC)
 		-- Kerb (0.3 high) round the lower plaza. The south kerb leaves a gap at x +-8 for the E_to_Tagbakin road mouth at (0,100).
 		ctx:part("KerbWest", V(0.6, 0.3, 100 - WALL_Z), CF(-100.3, 0.15, (WALL_Z + 100) / 2), STONE_LIGHT, CONC)
 		ctx:part("KerbEast", V(0.6, 0.3, 100 - WALL_Z), CF(100.3, 0.15, (WALL_Z + 100) / 2), STONE_LIGHT, CONC)
 		ctx:part("KerbSouthW", V(92, 0.3, 0.6), CF(-54, 0.15, 100.3), STONE_LIGHT, CONC)
 		ctx:part("KerbSouthE", V(92, 0.3, 0.6), CF(54, 0.15, 100.3), STONE_LIGHT, CONC)
-		-- The open light slab on the east (P1) and the market tents on it.
-		ctx:part("PlazaSlab", V(20, 0.06, 24), CF(88, 0.13, 81), STONE_LIGHT, CONC)
-		for _, t in ipairs(TENTS) do
-			ctx:part("PlazaTent", V(6, 0.3, 6), CF(t[1], 9.3, t[2]), t[3], PLAS)
-			for _, dx in ipairs({ -2.7, 2.7 }) do
-				for _, dz in ipairs({ -2.7, 2.7 }) do
-					ctx:part("TentPost", V(0.3, 9, 0.3), CF(t[1] + dx, 4.5, t[2] + dz), WHITE, METAL)
-				end
+		-- The ground photo shows an open paved plaza: no market tents, no light slab, no vans (see VEHICLES).
+		for i, p in ipairs(PALMS_LOW) do palm(ctx, i + 20, p[1], p[2]) end
+		-- The round raised garden: a salmon drum with a lawn disc, shrubs and flowers, and a half-ring of white pergola columns on the south side.
+		local bedH = 1.6
+		post(ctx, "PergolaRing", RING_R * 2, bedH, RING_X, 0, RING_Z, SALMON, CONC)
+		post(ctx, "RingLawn", RING_R * 2 - 2.6, 0.2, RING_X, bedH, RING_Z, LAWN, Enum.Material.Grass)
+		for k = 1, 9 do
+			local a = k * 2 * PI / 9 + 0.4
+			local rr = (k % 2 == 0) and 5 or 8
+			local sx, sz = RING_X + rr * math.cos(a), RING_Z + rr * math.sin(a)
+			ctx:ball("RingShrub", 2.6, CF(sx, bedH + 1.5, sz), HEDGE, Enum.Material.Grass)
+			ctx:ball("RingBloom", 1.3, CF(sx + 0.6, bedH + 2.5, sz - 0.4), FLOWERS[k % #FLOWERS + 1], PLAS)
+		end
+		local PR, PH = RING_R - 1.8, 9 -- column radius and height
+		local cols = {}
+		for k = 0, 6 do
+			local a = math.rad(15 + k * 25) -- 15..165 degrees: all on the south side (z > the ring centre)
+			local cx, cz = RING_X + PR * math.cos(a), RING_Z + PR * math.sin(a)
+			cols[k + 1] = V(cx, bedH + PH, cz)
+			post(ctx, "PergolaColumn", 0.9, PH, cx, bedH, cz, WHITE, CONC)
+			local centre = V(RING_X, bedH + PH, RING_Z)
+			local dir = (centre - cols[k + 1]).Unit
+			ctx:part("PergolaRafter", V(0.5, 0.5, 4), CFrame.lookAt(cols[k + 1] + dir * 2, cols[k + 1] + dir * 3), WHITE, WOOD)
+		end
+		for k = 1, 6 do
+			local p0, p1 = cols[k] + V(0, 0.3, 0), cols[k + 1] + V(0, 0.3, 0)
+			ctx:part("PergolaBeam", V(0.8, 0.6, (p1 - p0).Magnitude + 0.6), CFrame.lookAt((p0 + p1) / 2, p1), WHITE, CONC)
+		end
+		-- Low salmon planter walls with shrubs along the south fence, leaving the CreditsBoard strip (|x| < 31) clear.
+		for _, s in ipairs({ -1, 1 }) do
+			ctx:part("PlanterWall", V(62, 1.4, 1.2), CF(s * 65, 0.7, 96.4), SALMON, CONC)
+			for i = 0, 9 do
+				local sx = s * (36 + i * 6)
+				ctx:ball("PlanterShrub", 2.2, CF(sx, 2.3, 96.4), HEDGE, Enum.Material.Grass)
+				if i % 3 == 0 then ctx:ball("PlanterBloom", 1.1, CF(sx + 0.5, 3.4, 96.4), FLOWERS[(i + (s > 0 and 1 or 3)) % #FLOWERS + 1], PLAS) end
 			end
 		end
-		for i, p in ipairs(PALMS_LOW) do palm(ctx, i + 20, p[1], p[2]) end
+		-- Flower beds along the long west building's plaza face, and in front of the covered court.
+		local beds = { { -83.5, 58, 3.4, 9 }, { -83.5, 68, 3.4, 9 }, { -83.5, 78, 3.4, 9 }, { -83.5, 88, 3.4, 9 }, { 52, 90.4, 20, 2 }, { 70, 90.4, 14, 2 } }
+		for bi, b in ipairs(beds) do
+			ctx:part("FlowerBed", V(b[3], 0.4, b[4]), CF(b[1], 0.2, b[2]), SOIL, Enum.Material.Ground)
+			local n = math.max(3, math.floor(math.max(b[3], b[4]) / 2.4))
+			for i = 1, n do
+				local t = (i - 0.5) / n - 0.5
+				local bx, bz = b[1] + (b[3] > b[4] and t * (b[3] - 1.2) or 0), b[2] + (b[4] >= b[3] and t * (b[4] - 1.2) or 0)
+				ctx:ball("BedBloom", 1.2, CF(bx, 0.9, bz), FLOWERS[(i + bi) % #FLOWERS + 1], PLAS)
+			end
+		end
 		-- Lamps on the lower plaza.
 		for _, s in ipairs({ { -46, 66 }, { 46, 66 }, { -80, 66 }, { 90, 66 } }) do
 			post(ctx, "LampBase", 1.8, 1.2, s[1], 0, s[2], LAMP_METAL, METAL)
@@ -566,22 +617,31 @@ return function()
 			ctx:part("LongRoof", V(rlen, 0.6, len + 2), CF(bx + s * run / 2, 24.6 + rise / 2, zc) * ANG(0, 0, -s * th), ROOF_DARK, ROOFMAT)
 		end
 		ctx:part("LongRidge", V(1, 0.9, len + 2), CF(bx, 28.7, zc), TRIM, CONC)
-		-- The pavilion (P1): a low hall under a big grey-brown gabled roof, with palms in front. x 36..78, z 72..88, off the open centre.
+		-- The covered court (ground photo: a big curved roof on posts, open at the sides). x 36..78, z 72..88, off the open centre.
+		-- A barrel vault whose axis runs along X: nine panels tangent to a circle of radius VR, springing from the post tops at y 9.8.
 		local cx, cz = 57, 80
-		ctx:part("CivicBuildingS", V(42, 8, 16), CF(cx, 4, cz), WALL_PALE, CONC)
-		ctx:part("CivicEave", V(44, 0.8, 18), CF(cx, 8.4, cz), TRIM, CONC)
-		for i = 1, 5 do
-			arched(ctx, "CivicWin", V(cx - 21 + i * 7, 1.5, cz - 8), PI, 3.2, 5.4)
+		local VR, SPRING = 9.2, 9.8
+		local vy = SPRING - VR * math.cos(math.rad(60)) -- the circle's centre height, so the +-60 degree panels meet the posts
+		ctx:part("CoveredCourt", V(42, 0.3, 16), CF(cx, 0.15, cz), STONE_LIGHT, CONC)
+		for i = 0, 5 do
+			for _, pz in ipairs({ cz - 7.2, cz + 7.2 }) do
+				post(ctx, "CourtPost", 1, SPRING - 0.3, cx - 19.5 + i * 7.8, 0.3, pz, WHITE, CONC)
+			end
 		end
-		local prun, prise = 9.4, 6.6
-		local plen = math.sqrt(prun * prun + prise * prise)
-		local pth = math.atan(prise / prun)
-		for _, s in ipairs({ -1, 1 }) do
-			ctx:part("CivicRoof", V(44, 0.6, plen), CF(cx, 8.8 + prise / 2, cz + s * prun / 2) * ANG(-s * pth, 0, 0), PAVROOF, ROOFMAT)
+		for _, pz in ipairs({ cz - 7.2, cz + 7.2 }) do
+			ctx:part("CourtBeam", V(42, 0.7, 0.9), CF(cx, SPRING + 0.1, pz), TRIM, CONC)
 		end
-		ctx:part("CivicRidge", V(44, 0.8, 0.9), CF(cx, 8.8 + prise + 0.2, cz), TRIM, CONC)
-		ctx:gable("CivicGableW", 16.4, prise, 0.8, CF(cx - 22, 8.4, cz) * ANG(0, PI / 2, 0), WALL_PALE, CONC)
-		ctx:gable("CivicGableE", 16.4, prise, 0.8, CF(cx + 22, 8.4, cz) * ANG(0, PI / 2, 0), WALL_PALE, CONC)
+		for k = -4, 4 do
+			local a = math.rad(k * 15)
+			ctx:part("VaultPanel", V(42.4, 0.5, 2.9), CF(cx, vy + VR * math.cos(a), cz + VR * math.sin(a)) * ANG(a, 0, 0), VAULT, PLASTER)
+		end
+		ctx:part("VaultRidge", V(42.6, 0.8, 1.2), CF(cx, vy + VR + 0.3, cz), TRIM, CONC)
+		-- The big shade tree beside the court (ground photo), west of it and clear of the open centre: the canopy bottoms stay above y 12.
+		local tx, tz = 35, 66
+		post(ctx, "ShadeTreeTrunk", 2.2, 12, tx, 0, tz, TRUNK, WOOD)
+		for _, c in ipairs({ { 0, 18, 0, 11 }, { 4, 17.5, -2, 9 }, { -4, 17.5, 2, 9 }, { 0, 17.5, 3.5, 8 }, { -2, 18.5, -4.5, 9 } }) do
+			ctx:ball("ShadeTreeCanopy", c[4], CF(tx + c[1], c[2], tz + c[3]), GREEN, Enum.Material.Grass)
+		end
 	end
 
 	------------------------------------------------------------------ Welcome Arch (P6): wrought-iron arch on stone gateposts, at the road mouth
@@ -659,43 +719,62 @@ return function()
 		ctx:part("FlagRed", V(0.2, 2.2, 9), CF(px, 23, pz + 4.85), Color3.fromRGB(206, 17, 38), PLAS)
 	end
 
-	------------------------------------------------------------------ EventStage = the stage landing, the seating tiers beside it, and the side stairs (P1)
+	------------------------------------------------------------------ EventStage = the fountain, the two flights and seating beside it, the kiosks, and the side stairs (ground photo)
 	local function buildStage(ctx)
-		-- World coordinates (ground origin). The stage landing (x +-28, z 48..60, about 0.8 of the church frontage) is a solid block at podium
-		-- height on the wall axis; the gazebo roof on it faces the lower plaza. Seating tiers either side: 4 tiers of 3-stud treads with risers
-		-- of exactly 1 stud (the east side is the longer one in the photo). Side stairs at both podium ends give street access (Roads A, C).
-		ctx:part("StageLanding", V(56, RAISE, 12), CF(0, RAISE / 2, WALL_Z + 6), STONE, CONC)
+		-- World coordinates (ground origin). The ground photo shows a stepped fountain with a statue on the axis of the stairs, a flight of
+		-- steps either side of it, and a small kiosk each side at the top. Seating tiers run on from the flights: 4 tiers of 3-stud treads
+		-- with risers of exactly 1 stud (the east side is the longer one in the photo). Side stairs at both podium ends give street access
+		-- (Roads A, C). The folder keeps the name EventStage because SiteData lists it.
+		local fz = WALL_Z + 7 -- the fountain's centre z: its 14-stud basin spans z 48..62
+		-- The water is a translucent disc that sits 0.2 above each rim; it neither collides nor answers queries, so it never blocks a walk or a keep-clear box.
+		local function water(diameter, baseY)
+			local w = post(ctx, "FountainWater", diameter, 0.2, 0, baseY, fz, WATER, Enum.Material.Glass)
+			w.Transparency, w.CanCollide, w.CanQuery, w.CanTouch = 0.35, false, false, false
+		end
+		post(ctx, "FountainBasin", 14, 1.6, 0, 0, fz, STONE_LIGHT, CONC)
+		water(12.6, 1.6)
+		post(ctx, "FountainColumn", 3.2, 3.6, 0, 1.8, fz, STONE_LIGHT, CONC)
+		post(ctx, "FountainBasinUpper", 8.4, 0.9, 0, 5.4, fz, STONE_LIGHT, CONC)
+		water(7.2, 6.3)
+		post(ctx, "FountainColumn", 1.6, 2.6, 0, 6.5, fz, STONE_LIGHT, CONC)
+		ctx:part("FountainPlinth", V(2.6, 1.0, 2.6), CF(0, 9.6, fz), STONE_DARK, CONC)
+		ctx:part("FountainStatue", V(1.4, 3.6, 1.0), CF(0, 11.9, fz), WHITE, CONC)
+		ctx:ball("FountainStatueHead", 1.3, CF(0, 14.3, fz), WHITE, CONC)
+		for k = 1, 4 do
+			local z = WALL_Z + 2 * (k - 1) + 1
+			ctx:part("StairFlightL", V(14, RAISE - k, 2), CF(-15, (RAISE - k) / 2, z), STONE, CONC)
+			ctx:part("StairFlightR", V(14, RAISE - k, 2), CF(15, (RAISE - k) / 2, z), STONE, CONC)
+		end
 		for k = 1, 4 do
 			local z = WALL_Z + 3 * (k - 1) + 1.5
-			ctx:part("BleacherL", V(48, RAISE - k, 3), CF(-52, (RAISE - k) / 2, z), BLEACH, CONC)
-			ctx:part("BleacherR", V(70, RAISE - k, 3), CF(63, (RAISE - k) / 2, z), BLEACH, CONC)
+			ctx:part("BleacherL", V(54, RAISE - k, 3), CF(-49, (RAISE - k) / 2, z), BLEACH, CONC)
+			ctx:part("BleacherR", V(76, RAISE - k, 3), CF(60, (RAISE - k) / 2, z), BLEACH, CONC)
+		end
+		-- The kiosks: a round cream body, a counter window facing the plaza and a stepped orange roof, at the top of the steps (podium level).
+		for _, s in ipairs({ -1, 1 }) do
+			local kx, kz = s * 32, WALL_Z - 4
+			post(ctx, "KioskBody", 5, 4, kx, RAISE, kz, WALL_PALE, PLASTER)
+			ctx:part("KioskWindow", V(2.8, 1.6, 0.3), CF(kx, RAISE + 2.4, kz + 2.5), GLASS, Enum.Material.Glass)
+			post(ctx, "KioskRoof", 6.4, 0.5, kx, RAISE + 4, kz, KIOSK_ROOF, ROOFMAT)
+			post(ctx, "KioskRoof", 5.0, 0.5, kx, RAISE + 4.5, kz, KIOSK_ROOF, ROOFMAT)
+			post(ctx, "KioskRoof", 3.4, 0.5, kx, RAISE + 5, kz, KIOSK_ROOF, ROOFMAT)
+			post(ctx, "KioskRoof", 1.6, 0.8, kx, RAISE + 5.5, kz, KIOSK_ROOF, ROOFMAT)
+			ctx:ball("KioskFinial", 0.9, CF(kx, RAISE + 6.5, kz), YELLOW, METAL)
 		end
 		for k = 1, 4 do
 			local x = 120 + 2 * (k - 1) + 1
 			ctx:part("SideStairsE", V(2, RAISE - k, 12), CF(x, (RAISE - k) / 2, 26), STONE, CONC)
 			ctx:part("SideStairsW", V(2, RAISE - k, 12), CF(-x, (RAISE - k) / 2, 26), STONE, CONC)
 		end
-		for _, px in ipairs({ -17, 17 }) do
-			for _, pz in ipairs({ WALL_Z + 1.5, WALL_Z + 10.5 }) do
-				ctx:part("StagePost", V(0.8, 9.5, 0.8), CF(px, RAISE + 4.75, pz), LAMP_METAL, METAL)
-			end
-		end
-		ctx:part("StageCanopy", V(38, 0.6, 12), CF(0, RAISE + 9.8, WALL_Z + 6), ROOF, ROOFMAT)
-		local fascia = ctx:part("StageFascia", V(38, 2.2, 0.5), CF(0, RAISE + 8.4, WALL_Z + 12), TRIM, CONC)
-		label(fascia, Enum.NormalId.Back, "PUBLIC EVENTS", Color3.new(1, 1, 1), 30) -- readable from the lower plaza (the spawn)
 	end
 
-	------------------------------------------------------------------ Parked vehicles (P1/P2): cars on the forecourt, vans on the lower plaza; each its own Model
+	------------------------------------------------------------------ Parked vehicles (P1/P2): cars on the forecourt; the lower plaza is open (the vans went with the pergola garden); each its own Model
 	local VEHICLES = {
 		-- x, z, yaw (0 = nose south), body colour, upper level?
 		{ -89, 19, 0, Color3.fromRGB(236, 236, 232), true }, { -83, 19, 0, Color3.fromRGB(150, 156, 164), true },
 		{ -71, 19, 0, Color3.fromRGB(180, 50, 46), true }, { -65, 19, 0, Color3.fromRGB(236, 236, 232), true },
 		{ -89, 41, PI, Color3.fromRGB(40, 60, 110), true }, { -77, 41, PI, Color3.fromRGB(236, 236, 232), true },
 		{ -65, 41, PI, Color3.fromRGB(210, 190, 90), true }, { -53, 41, PI, Color3.fromRGB(150, 156, 164), true },
-		{ -80, 72, PI, Color3.fromRGB(236, 236, 232), false }, { -74, 72, PI, Color3.fromRGB(236, 236, 232), false },
-		{ -68, 72, PI, Color3.fromRGB(150, 156, 164), false }, { -62, 72, PI, Color3.fromRGB(236, 236, 232), false },
-		{ -56, 72, PI, Color3.fromRGB(60, 110, 70), false }, { -74, 84, PI, Color3.fromRGB(236, 236, 232), false },
-		{ -62, 84, PI, Color3.fromRGB(180, 50, 46), false },
 	}
 	local function buildVehicles()
 		local folder = Instance.new("Folder")

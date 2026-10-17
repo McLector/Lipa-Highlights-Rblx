@@ -140,6 +140,10 @@ The first rework treated the plaza as one flat slab with an amphitheatre. The us
 
 # Revision 3 (2026-10-17): stage, seating and a wide lower plaza (user: "revisit the scale")
 
+> Superseded in part by Revision 4 (below): the gazebo stage (`StageLanding`, `StagePost`, `StageCanopy`, `StageFascia`), the gabled pavilion
+> (`CivicBuildingS`), the market tents and slab and the lower-plaza vans are gone. The seating, the side stairs, the scale decision and the
+> walkability review still stand.
+
 User feedback on Revision 2: the real Plaza Independencia is a **wide open space with seating around the stairs and a stage**. In the drone crop the terraced tiers either side of the gazebo landing are seating, the landing is the stage, and the lower plaza is deeper than the forecourt. Revision 2 had a 36-stud landing, 4-step stairs and the pavilion in the middle of the plaza.
 
 Scale decision: the footprint (240 x 200 studs) and massScale 2.0 are fixed, and human-scale parts are never shrunk, so the **forecourt is shortened (46 -> 38 studs) and the wall moves from z 56 to z 48** to give the room to the stage, the seating and the open plaza. The real lower plaza is still about 1.6x the forecourt, so this remains a compression.
@@ -150,3 +154,32 @@ Scale decision: the footprint (240 x 200 studs) and massScale 2.0 are fixed, and
 - **Open lower plaza**: the pavilion moved east (x 36..78), the centre x -34..30, z 64..88 stays clear (the spawn, the Guide's approach and the CreditsBoard strip too); vans on the west, tents and a light slab on the east.
 - **Forecourt** (z 10..48): garden, parking bays, monument, benches and lamps re-fitted to the shorter depth.
 - **Walkability (design review)**: the podium's wall would have left Roads A and C dead-ending, so `SideStairsW` / `SideStairsE` (4 steps of 1 stud, 12 wide, z 20..32) give street-level access, and the east fence leaves a 22-stud opening toward Road C. `tests/routes_check.luau` proves it with PathfindingService (no jumping): Road C to the Guide is 156 studs with the side stairs and 180 without, Road A 383 / 407. Players could already reach the forecourt by the seating, so the stairs are a convenience of about 24 studs, not a fix for an unreachable area.
+
+---
+
+# Revision 4 (2026-10-17): Plaza Independencia from the user's ground photo
+
+The user supplied a ground-level photo of the plaza taken from a raised street corner (it carries a campaign watermark, so its source and licence must be settled with the user before it goes into `CreditsData`; nothing from it is copied or textured). It shows what sits below the car park, and it overrides the drone-photo reading of Revision 3 where they differ. Decisions (user): a **fountain and statue** replace the gazebo stage at the centre of the stairs; the pavilion gets a **curved roof**; the **vans and tents go**.
+
+## What the photo shows, and what is built
+| Photo | Built (`builders/site01.luau`) |
+|---|---|
+| Warm terracotta paving with cream bands | `ForecourtPaving` is terracotta (205, 142, 116); two `PavingInlay` bands (z 63.4 and z 89) |
+| Stepped fountain with a statue on the axis of the stairs, two orange-roofed kiosks | `FountainBasin` (14 across, ground), `FountainBasinUpper`, two translucent non-colliding `FountainWater` discs, columns, `FountainPlinth`, block-figure `FountainStatue` (top y 13.6) and head; two `KioskBody` (round, x +-32, z 44, on the podium) with four orange stepped `KioskRoof` discs each |
+| Terraced steps up to the church level | `StairFlightL/R` (x +-8..22, 4 treads of 2 studs, tops 4 / 3 / 2 / 1, then a 1-stud drop to the ground); `BleacherL/R` now run on from the flights (x -76..-22 and 22..98) |
+| Round raised garden with a half-ring of white pergola columns, shrubs and flowers | `PergolaRing` (24 across, 1.6 high, salmon) at (-52, 80) with `RingLawn`, `RingShrub` / `RingBloom`, 7 `PergolaColumn` on the south side, 6 `PergolaBeam`, 7 `PergolaRafter` |
+| Large curved pavilion roof with a big shade tree beside it | `CoveredCourt` (x 36..78, z 72..88): 12 `CourtPost`, 2 `CourtBeam`, a barrel vault of nine `VaultPanel` (radius 9.2, +-60 degrees, axis along X) and a `VaultRidge`; `ShadeTree` (`ShadeTreeTrunk` at (35, 66), five `ShadeTreeCanopy` balls with bottoms above y 12.5) |
+| Low salmon planter walls with shrubs along the street; flower beds | two `PlanterWall` runs (|x| 34..96, z 96.4, leaving the CreditsBoard strip clear) with shrubs; six `FlowerBed` (four along the long west building, two before the court) |
+
+Removed: the `StageLanding` gazebo and its fascia, `CivicBuildingS` and its roof, `PlazaTent` / `TentPost` / `PlazaSlab`, all seven lower-plaza vans (the eight forecourt cars stay), and the two west palms that stood on the pergola ring's edge.
+
+Kept exactly: `RAISE = 5`, `WALL_Z = 48`, the footprint, the forecourt and church, the Welcome Arch, the spawn (0, 70), the CreditsBoard strip, the open centre (x -34..30, z 64..88), the east fence opening toward Road C, the side stairs.
+
+## Approximated
+- The street-corner steps in the photo are not built: the lower plaza stays level with the street so the routes and the spawn are unchanged.
+- The statue is a block figure and the water is a static translucent disc (no particles).
+- The kiosks are round, not six-sided; the vault has no end arches or ribs.
+- Names of the fountain, kiosks and court are not known: describe them generically in dialogue.
+
+## Pitfall recorded
+In Studio a stray drag moved the whole Site01 model by (-57.5, 0.2, 20.3) during this pass. It surfaced only as a dozen unrelated `site01_check` failures. `site01_check` now fails first on "site pivot is at the SiteData pos (0, 0, 0), facing +Z".

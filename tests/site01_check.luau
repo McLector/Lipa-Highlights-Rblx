@@ -4,8 +4,10 @@
 -- Every number below comes from briefs/site01.md "Slice 14 rework" (OSM footprints + the 2023-2025 photos), converted at
 -- massScale 2.0 (2 studs per metre). Anchors are ONE uniquely named BasePart each, searched through the whole site.
 -- Two levels (Dec 2025 drone photos): the church, its wing, the car-park forecourt and the hedged garden stand on a podium
--- RAISE studs above the ground; a retaining wall with two flights of steps and a central landing drops to the lower Plaza
--- Independencia at ground level (y 0), where the spawn, the pavilion, the vans and the CreditsBoard are.
+-- RAISE studs above the ground; a retaining wall with two flights of steps either side of a central fountain drops to the lower
+-- Plaza Independencia at ground level (y 0), where the spawn, the covered court, the pergola garden and the CreditsBoard are.
+-- Pass 4 (ground photo of the plaza): terracotta paving, fountain + statue on the axis with a kiosk each side at the top of the
+-- steps, a round pergola garden, a vaulted covered court with a shade tree; no market tents and no vans on the lower plaza.
 local HttpService = game:GetService("HttpService")
 local RAISE = 5 -- podium top (upper level), studs above the ground; must equal builders/site01.luau RAISE
 local WALL_Z = 48 -- the podium's south face, the retaining wall
@@ -24,6 +26,13 @@ local site = workspace:FindFirstChild("Sites") and workspace.Sites:FindFirstChil
 check("Site01_Cathedral exists", site ~= nil)
 if not site then
 	return HttpService:JSONEncode(results)
+end
+-- Every coordinate below is site-local = world, so the pivot must sit at the SiteData pos (0, 0, 0) facing +Z. A stray drag in
+-- Studio once moved the whole site by (-57.5, 20.3) and showed up only as a dozen unrelated failures.
+do
+	local pv = site:GetPivot()
+	check("site pivot is at the SiteData pos (0, 0, 0), facing +Z", pv.Position.Magnitude < 0.01 and pv.LookVector:Dot(Vector3.new(0, 0, 1)) > 0.9999,
+		string.format("(%.2f, %.2f, %.2f) look %s", pv.X, pv.Y, pv.Z, tostring(pv.LookVector)))
 end
 
 local function anchor(name)
@@ -147,23 +156,46 @@ check("2+ parapet runs cap the retaining wall, on the upper level", #parapets >=
 	for _, p in ipairs(parapets) do if p.Position.Y < RAISE then return false end end
 	return true
 end)(), tostring(#parapets))
-local landing = anchor("StageLanding")
-check("StageLanding is a wide stage (50+ studs, 10+ deep) on the wall axis at podium height", landing ~= nil and math.abs(landing.Position.X) < 2 and math.abs(topY(landing) - RAISE) < 0.06
-	and landing.Size.X >= 50 and landing.Size.Z >= 10 and landing.Position.Z - landing.Size.Z / 2 >= WALL_Z - 0.6,
-	landing and string.format("top %s w %s d %s", fmt(topY(landing)), fmt(landing.Size.X), fmt(landing.Size.Z)) or "missing")
--- The terraced seating beside the stage (P1 crop: long wooden tiers either side of the stage, reading as seats): 4 tiers each,
--- 3+ studs deep so a person can sit or stand on them, risers of exactly 1 stud. The east side is the longer one in the photo.
-for _, spec in ipairs({ { "BleacherL", 40 }, { "BleacherR", 60 } }) do
+-- The fountain and statue on the wall axis (ground photo: a stepped fountain with a statue at the centre of the stairs). The basins
+-- are Roblox cylinders rolled upright (Size = height, diameter, diameter); the water is non-colliding so it never blocks a query.
+local basin, statue = anchor("FountainBasin"), anchor("FountainStatue")
+check("FountainBasin stands on the lower plaza on the wall axis (|x| < 2, z 48..64), at ground level, 12+ studs across",
+	basin ~= nil and math.abs(basin.Position.X) < 2 and basin.Position.Z - basin.Size.Y / 2 >= WALL_Z - 0.6 and basin.Position.Z + basin.Size.Y / 2 <= 64
+		and basin.Position.Y - basin.Size.X / 2 < 0.6 and basin.Size.Y >= 12,
+	basin and string.format("x %s z %s d %s", fmt(basin.Position.X), fmt(basin.Position.Z), fmt(basin.Size.Y)) or "missing")
+local waters, wetBad = allNamed("FountainWater"), 0
+for _, w in ipairs(waters) do if w.CanCollide or w.CanQuery or w.Transparency < 0.1 or w.Transparency > 0.6 then wetBad += 1 end end
+check("fountain has 2+ FountainWater surfaces, translucent and non-colliding", #waters >= 2 and wetBad == 0, #waters .. " parts, " .. wetBad .. " wrong")
+check("FountainStatue is on the axis and tops out at y >= 12 (reads from the spawn)", statue ~= nil and math.abs(statue.Position.X) < 2 and topY(statue) >= 12,
+	statue and string.format("x %s top %s", fmt(statue.Position.X), fmt(topY(statue))) or "missing")
+-- Two flights of steps down to the plaza, either side of the fountain: 4 treads each with tops 4, 3, 2, 1 (then a 1-stud drop to the
+-- ground), 2 studs deep, 12+ wide, so every riser is exactly 1 stud and a plain walk from the plaza reaches the Guide.
+for _, spec in ipairs({ { "StairFlightL", -1 }, { "StairFlightR", 1 } }) do
+	local steps = allNamed(spec[1])
+	table.sort(steps, function(a, b) return a.Position.Z < b.Position.Z end)
+	local okSteps, detail = #steps == 4, "treads " .. #steps
+	for i, s in ipairs(steps) do
+		if math.abs(topY(s) - (RAISE - i)) > 0.06 or s.Size.X < 12 or s.Size.Z < 1.9 or s.Position.X * spec[2] < 8 or s.Position.Z - s.Size.Z / 2 < WALL_Z - 0.6 then
+			okSteps = false
+			detail = detail .. string.format(" [%d top %s w %s d %s x %s]", i, fmt(topY(s)), fmt(s.Size.X), fmt(s.Size.Z), fmt(s.Position.X))
+		end
+	end
+	check(spec[1] .. ": 4 treads, each riser exactly 1 stud, 12+ wide, 2+ deep, beside the fountain (5 -> 4 -> 3 -> 2 -> 1 -> ground)", okSteps, detail)
+end
+-- The terraced seating beside the stairs (P1 crop: long wooden tiers either side, reading as seats): 4 tiers each, 3+ studs deep so a
+-- person can sit or stand on them, risers of exactly 1 stud. The east side is the longer one in the photo. Each ends at the flights.
+for _, spec in ipairs({ { "BleacherL", 50, -1 }, { "BleacherR", 70, 1 } }) do
 	local steps = allNamed(spec[1])
 	table.sort(steps, function(a, b) return a.Position.Z < b.Position.Z end)
 	local okRisers, detail = #steps == 4, "tiers " .. #steps
 	for i, s in ipairs(steps) do
-		if math.abs(topY(s) - (RAISE - i)) > 0.06 or s.Size.X < spec[2] or s.Size.Z < 2.9 then
+		local inner = spec[3] < 0 and (s.Position.X + s.Size.X / 2) or (s.Position.X - s.Size.X / 2) -- the edge toward the flight
+		if math.abs(topY(s) - (RAISE - i)) > 0.06 or s.Size.X < spec[2] or s.Size.Z < 2.9 or inner * spec[3] < 21 or inner * spec[3] > 23 then
 			okRisers = false
-			detail = detail .. string.format(" [%d top %s w %s d %s]", i, fmt(topY(s)), fmt(s.Size.X), fmt(s.Size.Z))
+			detail = detail .. string.format(" [%d top %s w %s d %s inner %s]", i, fmt(topY(s)), fmt(s.Size.X), fmt(s.Size.Z), fmt(inner))
 		end
 	end
-	check(spec[1] .. ": 4 seating tiers, " .. spec[2] .. "+ studs long and 3+ deep, each riser exactly 1 stud (5 -> 4 -> 3 -> 2 -> 1 -> ground)", okRisers, detail)
+	check(spec[1] .. ": 4 seating tiers, " .. spec[2] .. "+ studs long and 3+ deep, each riser exactly 1 stud, inner edge at |x| 21..23 (the flight)", okRisers, detail)
 end
 -- Street-level access (review finding: Roads A and C end at the podium edge, so the forecourt needs side stairs, not only the front seating).
 for _, name in ipairs({ "SideStairsW", "SideStairsE" }) do
@@ -186,9 +218,37 @@ for _, p in ipairs(allNamed("FenceRail")) do
 	if p.Position.X > 98 and p.Position.Z - p.Size.Z / 2 < 68 and p.Position.Z + p.Size.Z / 2 > WALL_Z then table.insert(fenceBlocks, "rail z" .. fmt(p.Position.Z)) end
 end
 check("the east fence leaves the lower plaza open toward Road C (nothing at x 99 between z 48 and 68)", #fenceBlocks == 0, table.concat(fenceBlocks, ", "))
-local stage = site:FindFirstChild("EventStage")
-check("EventStage is the landing gazebo: landing, 4 posts and a canopy above the podium", stage ~= nil and landing ~= nil and countNamed("StagePost") == 4
-	and anchor("StageCanopy") ~= nil and anchor("StageCanopy").Position.Y > RAISE + 9)
+local stage = site:FindFirstChild("EventStage") -- the folder name is fixed by SiteData; it now holds the fountain, flights, seating and kiosks
+check("EventStage folder holds the fountain, both flights and the seating (the old gazebo stage is gone)", stage ~= nil and basin ~= nil and basin:IsDescendantOf(stage)
+	and anchor("StairFlightL"):IsDescendantOf(stage) and anchor("BleacherL"):IsDescendantOf(stage)
+	and anchor("StageLanding") == nil and anchor("StageCanopy") == nil and anchor("StageFascia") == nil and countNamed("StagePost") == 0)
+-- Two small kiosks with orange stepped roofs at the top of the steps, on the podium, clear of every kept prop and of each other.
+local kiosks, kioskBad = allNamed("KioskBody"), {}
+for _, k in ipairs(kiosks) do
+	local r = k.Size.Y / 2 + 0.6 -- the body is a rolled cylinder; the roof overhangs by 0.6
+	if k.Position.Y - k.Size.X / 2 < RAISE - 0.06 then table.insert(kioskBad, "below the podium top") end
+	if math.abs(k.Position.X) < 25 or math.abs(k.Position.X) > 45 or k.Position.Z + r > WALL_Z - 0.4 or k.Position.Z < 36 then
+		table.insert(kioskBad, string.format("misplaced (%s, %s)", fmt(k.Position.X), fmt(k.Position.Z)))
+	end
+	for _, name in ipairs({ "Guide", "InfoPanel", "JeepStop", "JeepSignPole", "JeepSign", "Jeepney" }) do
+		local inst = site:FindFirstChild(name)
+		if inst then
+			local cf, size
+			if inst:IsA("Model") then cf, size = inst:GetBoundingBox() else cf, size = inst.CFrame, inst.Size end
+			local ext = math.max(size.X, size.Z) / 2 -- generous: the larger half-extent works for any yaw
+			local dx, dz = math.max(0, math.abs(k.Position.X - cf.X) - ext), math.max(0, math.abs(k.Position.Z - cf.Z) - ext)
+			if math.sqrt(dx * dx + dz * dz) < r + 1 then table.insert(kioskBad, "touches " .. name) end
+		end
+	end
+end
+local roofs, orange = allNamed("KioskRoof"), 0
+for _, p in ipairs(roofs) do
+	local c = p.Color
+	if c.R * 255 >= 200 and c.G * 255 >= 90 and c.G * 255 <= 150 and c.B * 255 <= 80 then orange += 1 end
+end
+check("2 kiosks (KioskBody) stand on the podium either side of the steps (|x| 25..45, z 36..48), clear of the Guide, InfoPanel and Jeepney",
+	#kiosks == 2 and #kioskBad == 0 and kiosks[1].Position.X * kiosks[2].Position.X < 0, #kiosks .. " kiosks; " .. table.concat(kioskBad, "; "))
+check("kiosk roofs are orange and stepped (4+ orange KioskRoof discs per kiosk)", #roofs >= 8 and orange == #roofs, #roofs .. " roof parts, " .. orange .. " orange")
 for _, name in ipairs({ "Guide", "InfoPanel", "JeepStop" }) do
 	local inst = site:FindFirstChild(name)
 	local y = inst and (inst:IsA("Model") and inst:GetPivot().Position.Y or inst.Position.Y)
@@ -245,7 +305,7 @@ if vehicles then
 		end
 	end
 	check("every vehicle body is >= 8 studs long (human-scale parts are never shrunk)", worst >= 8, fmt(worst))
-	check("6+ vehicles on the upper forecourt and 4+ vans on the lower plaza", upper >= 6 and lower >= 4, upper .. " upper, " .. lower .. " lower")
+	check("8+ cars on the upper forecourt and NO vans on the lower plaza (the ground photo shows an open paved plaza)", upper >= 8 and lower == 0, upper .. " upper, " .. lower .. " lower")
 end
 
 ------------------------------------------------------------------ Lower plaza (P1: paved plaza below the wall, the gabled pavilion, palms, fence)
@@ -253,14 +313,53 @@ local paving = anchor("ForecourtPaving")
 check("lower plaza paving (ForecourtPaving) is at ground level and spans z 48..100", paving ~= nil and paving.Position.Y <= 0.6
 	and math.abs(paving.Position.Z - paving.Size.Z / 2 - WALL_Z) < 1 and paving.Position.Z + paving.Size.Z / 2 >= 99,
 	paving and string.format("y %s z %s..%s", fmt(paving.Position.Y), fmt(paving.Position.Z - paving.Size.Z / 2), fmt(paving.Position.Z + paving.Size.Z / 2)) or "missing")
-local pavilion = anchor("CivicBuildingS")
-check("gabled pavilion (CivicBuildingS) stands on the lower plaza: z >= 70, 36+ studs wide, ground level",
-	pavilion ~= nil and pavilion.Position.Z >= 70 and pavilion.Size.X >= 36 and pavilion.Position.Y - pavilion.Size.Y / 2 < 0.6,
-	pavilion and string.format("z %s w %s", fmt(pavilion.Position.Z), fmt(pavilion.Size.X)) or "missing")
+local pr, prCol = paving, paving and paving.Color
+check("lower paving is terracotta, as in the ground photo (R >= 180, R - B >= 60)", pr ~= nil and prCol.R * 255 >= 180 and (prCol.R - prCol.B) * 255 >= 60, prCol and tostring(prCol) or "missing")
+-- The covered court (ground photo: a big curved roof on posts): a barrel vault of angled panels, NOT a gabled hall.
+local court = anchor("CoveredCourt")
+check("CoveredCourt stands on the lower plaza: z >= 70, 36+ studs wide, ground level, x >= 34 (east of the open centre)",
+	court ~= nil and court.Position.Z >= 70 and court.Size.X >= 36 and court.Position.Y - court.Size.Y / 2 < 0.6 and court.Position.X - court.Size.X / 2 >= 34,
+	court and string.format("x %s z %s w %s", fmt(court.Position.X), fmt(court.Position.Z), fmt(court.Size.X)) or "missing")
+local vault, tilts = allNamed("VaultPanel"), {}
+for _, p in ipairs(vault) do
+	local rx = p.CFrame:ToEulerAnglesXYZ()
+	tilts[math.floor(math.deg(rx) / 5 + 0.5)] = true
+end
+local nTilts = 0
+for _ in pairs(tilts) do nTilts += 1 end
+check("the court roof is a curved vault: 7+ VaultPanel parts at 5+ distinct tilts, each 36+ studs long", #vault >= 7 and nTilts >= 5 and (function()
+	for _, p in ipairs(vault) do if p.Size.X < 36 then return false end end
+	return true
+end)(), #vault .. " panels, " .. nTilts .. " tilts")
+check("no gabled CivicBuildingS / CivicRoof left (the gabled hall is replaced by the vault)", anchor("CivicBuildingS") == nil and anchor("CivicRoof") == nil)
+local trunk = anchor("ShadeTreeTrunk")
+check("ShadeTree: a trunk at x 31..60, z 60..70 (clear of the open centre and the court) with 4+ canopy balls whose bottoms are above y 11.5",
+	trunk ~= nil and trunk.Position.X >= 31 and trunk.Position.X <= 60 and trunk.Position.Z >= 60 and trunk.Position.Z <= 70 and countNamed("ShadeTreeCanopy") >= 4 and (function()
+		for _, c in ipairs(allNamed("ShadeTreeCanopy")) do if c.Position.Y - c.Size.Y / 2 < 11.5 then return false end end
+		return true
+	end)(), trunk and string.format("trunk (%s, %s), canopies %d", fmt(trunk.Position.X), fmt(trunk.Position.Z), countNamed("ShadeTreeCanopy")) or "missing")
+-- The round raised pergola garden (ground photo: a pink-walled ring with shrubs and a half-ring of white pergola columns).
+local ring = anchor("PergolaRing")
+check("PergolaRing is a raised round bed at ground level, 18+ studs across, on the lower plaza west of the open centre",
+	ring ~= nil and ring.Position.Y - ring.Size.X / 2 < 0.6 and ring.Size.Y >= 18 and ring.Position.X + ring.Size.Y / 2 <= -34 and ring.Position.Z - ring.Size.Y / 2 >= WALL_Z + 6,
+	ring and string.format("x %s z %s d %s", fmt(ring.Position.X), fmt(ring.Position.Z), fmt(ring.Size.Y)) or "missing")
+check("pergola: 6+ white PergolaColumn posts on the ring's south side (z > ring centre), 6+ PergolaBeam and 4+ shrubs", ring ~= nil and countNamed("PergolaColumn") >= 6
+	and countNamed("PergolaBeam") >= 6 and countNamed("RingShrub") >= 4 and (function()
+		for _, c in ipairs(allNamed("PergolaColumn")) do if c.Position.Z <= ring.Position.Z then return false end end
+		return true
+	end)(), tostring(countNamed("PergolaColumn")) .. " columns")
+check("2+ PlanterWall runs along the south fence, none inside the CreditsBoard strip (|x| < 31)", countNamed("PlanterWall") >= 2 and (function()
+	for _, p in ipairs(allNamed("PlanterWall")) do
+		if p.Position.X - p.Size.X / 2 < 31 and p.Position.X + p.Size.X / 2 > -31 then return false end
+	end
+	return true
+end)(), tostring(countNamed("PlanterWall")))
+check("4+ flower beds on the lower plaza", countNamed("FlowerBed") >= 4, tostring(countNamed("FlowerBed")))
 check("long arcaded building on the lower plaza's west side (LongBuildingW)", anchor("LongBuildingW") ~= nil and anchor("LongBuildingW").Position.X < -80
 	and anchor("LongBuildingW").Position.Z > WALL_Z)
 check("12+ palm trunks", countNamed("PalmTrunk1") >= 12, tostring(countNamed("PalmTrunk1")))
-check("3+ plaza tents on the lower plaza", countNamed("PlazaTent") >= 3, tostring(countNamed("PlazaTent")))
+check("no market tents or slab on the lower plaza (the ground photo shows an open paved plaza)", countNamed("PlazaTent") == 0 and countNamed("TentPost") == 0 and countNamed("PlazaSlab") == 0,
+	countNamed("PlazaTent") .. " tents")
 check("perimeter fence with 20+ posts", countNamed("FencePost") >= 20, tostring(countNamed("FencePost")))
 
 ------------------------------------------------------------------ Keep-clear zones and the terrain rule
@@ -281,6 +380,21 @@ local boardHits = blockers(CFrame.new(0, 8, 94.5), Vector3.new(60, 14, 8))
 check("the CreditsBoard strip (x +-30, z 90..98) is clear of Site01 geometry", #boardHits == 0, table.concat(boardHits, ", ", 1, math.min(#boardHits, 4)))
 local centreHits = blockers(CFrame.new(-2, 6, 76), Vector3.new(64, 10, 24))
 check("the lower plaza has a wide open centre (x -34..30, z 64..88 clear of Site01 geometry)", #centreHits == 0, table.concat(centreHits, ", ", 1, math.min(#centreHits, 4)))
+-- Upper-level keep-clear: nothing the builder made may stand where a visitor meets the Guide or reads the InfoPanel.
+local keptNames = { Guide = true, InfoPanel = true, JeepStop = true, JeepSignPole = true, JeepSign = true, Jeepney = true }
+local function builtBlockers(cf, size)
+	local names = {}
+	for _, p in ipairs(workspace:GetPartBoundsInBox(cf, size, overlap)) do
+		local top = p
+		while top.Parent and top.Parent ~= site do top = top.Parent end
+		if not keptNames[top.Name] and not isRig(p) and p.Size.Y > 0.5 then table.insert(names, (p:GetFullName():gsub("^Workspace%.Sites%.Site01_Cathedral%.", ""))) end
+	end
+	return names
+end
+-- (y starts 0.5 above the podium top so the podium itself is not a hit; the InfoPanel zone is not checked here because the
+-- original lamp row at x 14 stands in front of it by design, and the kiosk clearance above already guards the new geometry.)
+local guideHits = builtBlockers(CFrame.new(0, RAISE + 4.5, 30), Vector3.new(8, 7, 8))
+check("the Guide's 8x8 stand zone on the forecourt (0, 30) is free of built geometry", #guideHits == 0, table.concat(guideHits, ", ", 1, math.min(#guideHits, 4)))
 local lowerBenches = 0
 for _, b in ipairs(allNamed("BenchSeat")) do if b.Position.Y < RAISE then lowerBenches += 1 end end
 check("5+ benches at the foot of the seating tiers on the lower plaza", lowerBenches >= 5, tostring(lowerBenches))
