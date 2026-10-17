@@ -33,7 +33,7 @@ return function()
 
 	local PART_BUDGET = 2500
 	local RAISE = 5 -- the upper level (podium top) above the ground; tests/site01_check.luau pins the same number
-	local WALL_Z = 56 -- the retaining wall: the podium's south face
+	local WALL_Z = 48 -- the retaining wall: the podium's south face
 	local UPPER = CF(0, RAISE, 0) -- origin of every component that stands on the podium
 	local REPLACED = {
 		Block = true, Structure = true, Plaza = true, PlazaBuildings = true, PlazaPeople = true, ParkedVehicles = true,
@@ -49,6 +49,7 @@ return function()
 	local ROOF_RIB = Color3.fromRGB(214, 76, 64)
 	local ROOF_DARK = Color3.fromRGB(112, 56, 48)
 	local PAVROOF = Color3.fromRGB(92, 84, 78)
+	local BLEACH = Color3.fromRGB(150, 128, 106)
 	local HEDGE = Color3.fromRGB(52, 110, 56)
 	local LAWN = Color3.fromRGB(88, 142, 72)
 	local DOME = Color3.fromRGB(248, 241, 218)
@@ -414,7 +415,7 @@ return function()
 		-- One raised platform, RAISE studs above the ground, carries the church, its wing, the car-park forecourt and the garden
 		-- (P1: the forecourt is higher than Plaza Independencia). Its south face (z 56) is the retaining wall; the terrain and the
 		-- repainted Pavement are not touched (the podium simply hides them north of z 56).
-		ctx:part("Podium", V(240, RAISE, 156), CF(0, RAISE / 2, WALL_Z - 78), STONE, CONC)
+		ctx:part("Podium", V(240, RAISE, WALL_Z + 100), CF(0, RAISE / 2, (WALL_Z - 100) / 2), STONE, CONC)
 		ctx:part("PodiumCornice", V(240.8, 0.6, 1.0), CF(0, RAISE - 0.3, WALL_Z), STONE_LIGHT, CONC)
 		ctx:part("PodiumPlinth", V(240.8, 0.8, 1.0), CF(0, 0.4, WALL_Z + 0.1), STONE_DARK, CONC)
 	end
@@ -434,15 +435,15 @@ return function()
 	end
 
 	------------------------------------------------------------------ Upper level (origin raised): the wide car-park forecourt, monument, garden
-	local PALMS_UP = { { 68, 13 }, { 68, 53 }, { 42, 33 }, { 96, 33 }, { -34, 16 }, { 34, 16 } }
-	local GARDEN_BEDS = { { 40, 14 }, { 72, 14 }, { 40, 34 }, { 72, 34 } } -- x, z of each bed's NW corner; 24 x 18 studs
+	local PALMS_UP = { { 68, 13 }, { 68, 46 }, { 42, 30 }, { 96, 30 }, { -34, 16 }, { 34, 16 } }
+	local GARDEN_BEDS = { { 40, 14 }, { 72, 14 }, { 40, 31 }, { 72, 31 } } -- x, z of each bed's NW corner; 24 x 15 studs
 	local function buildPlazaUpper(ctx)
 		-- local y 0 is the podium top. The forecourt is asphalt grey with painted bays (P1), a light walkway on the church axis.
-		ctx:part("ApronPaving", V(200, 0.1, 46), CF(0, 0.05, 33), Color3.fromRGB(104, 106, 112), CONC) -- z 10..56
-		ctx:part("Walkway", V(14, 0.06, 46), CF(0, 0.13, 33), STONE_LIGHT, CONC)
-		-- Parapet caps the retaining wall on both sides of the stairs and the landing (x +-62 and beyond).
-		ctx:part("Parapet", V(58, 1.4, 1.6), CF(-91, 0.7, WALL_Z - 0.8), STONE_LIGHT, CONC)
-		ctx:part("Parapet", V(58, 1.4, 1.6), CF(91, 0.7, WALL_Z - 0.8), STONE_LIGHT, CONC)
+		ctx:part("ApronPaving", V(200, 0.1, WALL_Z - 10), CF(0, 0.05, (WALL_Z + 10) / 2), Color3.fromRGB(104, 106, 112), CONC) -- z 10..48
+		ctx:part("Walkway", V(14, 0.06, WALL_Z - 10), CF(0, 0.13, (WALL_Z + 10) / 2), STONE_LIGHT, CONC)
+		-- Parapet caps the retaining wall beyond the seating tiers (x < -76 and x > 98).
+		ctx:part("Parapet", V(44, 1.4, 1.6), CF(-98, 0.7, WALL_Z - 0.8), STONE_LIGHT, CONC)
+		ctx:part("Parapet", V(22, 1.4, 1.6), CF(109, 0.7, WALL_Z - 0.8), STONE_LIGHT, CONC)
 		-- Hedges flanking the tower front and the wing front (gap x 44..61 for the pavilion's steps).
 		ctx:part("HedgeTowerW", V(8, 1.8, 2), CF(-43, 0.95, 9), HEDGE, Enum.Material.Grass)
 		ctx:part("HedgeTowerE", V(8, 1.8, 2), CF(-25, 0.95, 9), HEDGE, Enum.Material.Grass)
@@ -456,7 +457,7 @@ return function()
 		end
 		ctx:part("ParkingAisleLine", V(48, 0.1, 0.3), CF(-68, 0.15, 30), YELLOW, PLAS)
 		for k = 0, 5 do
-			ctx:part("ApronMarking", V(0.4, 0.1, 7), CF(14 + k * 5, 0.15, 46) * ANG(0, 0.6, 0), YELLOW, PLAS)
+			ctx:part("ApronMarking", V(0.4, 0.1, 7), CF(14 + k * 5, 0.15, 38) * ANG(0, 0.6, 0), YELLOW, PLAS)
 		end
 		-- The saint's monument on a plinth, off the walkway.
 		local mx, mz = -10, 40
@@ -465,12 +466,12 @@ return function()
 		ctx:part("MonumentCap", V(4.2, 0.6, 4.2), CF(mx, 6.7, mz), STONE_DARK, CONC)
 		ctx:part("MonumentStatue", V(1.4, 3.6, 1.0), CF(mx, 8.8, mz), WHITE, CONC)
 		ctx:ball("MonumentHead", 1.3, CF(mx, 11.3, mz), WHITE, CONC)
-		-- Hedged garden (east of the forecourt): a lawn slab, four hedged beds, a path cross at x 68 / z 33.
-		ctx:part("GardenLawn", V(62, 0.12, 42), CF(68, 0.06, 31), LAWN, Enum.Material.Grass)
-		ctx:part("GardenPathNS", V(8, 0.14, 42), CF(68, 0.07, 31), STONE_LIGHT, CONC)
-		ctx:part("GardenPathEW", V(62, 0.14, 4), CF(68, 0.07, 33), STONE_LIGHT, CONC)
+		-- Hedged garden (east of the forecourt): a lawn slab, four hedged beds, a path cross at x 68 / z 30.
+		ctx:part("GardenLawn", V(62, 0.12, 36), CF(68, 0.06, 30), LAWN, Enum.Material.Grass)
+		ctx:part("GardenPathNS", V(8, 0.14, 36), CF(68, 0.07, 30), STONE_LIGHT, CONC)
+		ctx:part("GardenPathEW", V(62, 0.14, 4), CF(68, 0.07, 30), STONE_LIGHT, CONC)
 		for _, b in ipairs(GARDEN_BEDS) do
-			local bx, bz, bw, bd = b[1], b[2], 24, 18
+			local bx, bz, bw, bd = b[1], b[2], 24, 15
 			ctx:part("GardenHedge", V(bw, 1.8, 1.6), CF(bx + bw / 2, 0.9, bz), HEDGE, Enum.Material.Grass)
 			ctx:part("GardenHedge", V(bw, 1.8, 1.6), CF(bx + bw / 2, 0.9, bz + bd), HEDGE, Enum.Material.Grass)
 			ctx:part("GardenHedge", V(1.6, 1.8, bd), CF(bx, 0.9, bz + bd / 2), HEDGE, Enum.Material.Grass)
@@ -484,17 +485,17 @@ return function()
 	end
 
 	------------------------------------------------------------------ Lower level (ground): Plaza Independencia below the wall
-	local PALMS_LOW = { { 34, 92 }, { 44, 92 }, { 54, 92 }, { 64, 92 }, { 76, 92 }, { 88, 92 }, { -44, 92 }, { -58, 92 }, { -72, 92 }, { -84, 92 } }
-	local TENTS = { { 72, 76, WHITE }, { 80, 76, Color3.fromRGB(60, 100, 170) }, { 88, 76, WHITE }, { 76, 85, Color3.fromRGB(60, 100, 170) } }
+	local PALMS_LOW = { { 44, 92 }, { 54, 92 }, { 64, 92 }, { 74, 92 }, { 84, 92 }, { 94, 92 }, { -44, 92 }, { -58, 92 }, { -72, 92 }, { -84, 92 } }
+	local TENTS = { { 86, 76, WHITE }, { 94, 76, Color3.fromRGB(60, 100, 170) }, { 86, 86, WHITE }, { 94, 86, Color3.fromRGB(60, 100, 170) } }
 	local function buildPlazaLower(ctx)
-		ctx:part("ForecourtPaving", V(200, 0.1, 44), CF(0, 0, 78), STONE, CONC) -- z 56..100: the repainted Pavement (x +-100, z 0..100)
+		ctx:part("ForecourtPaving", V(200, 0.1, 100 - WALL_Z), CF(0, 0, (WALL_Z + 100) / 2), STONE, CONC) -- z 48..100: the repainted Pavement (x +-100, z 0..100)
 		-- Kerb (0.3 high) round the lower plaza. The south kerb leaves a gap at x +-8 for the E_to_Tagbakin road mouth at (0,100).
-		ctx:part("KerbWest", V(0.6, 0.3, 44), CF(-100.3, 0.15, 78), STONE_LIGHT, CONC)
-		ctx:part("KerbEast", V(0.6, 0.3, 44), CF(100.3, 0.15, 78), STONE_LIGHT, CONC)
+		ctx:part("KerbWest", V(0.6, 0.3, 100 - WALL_Z), CF(-100.3, 0.15, (WALL_Z + 100) / 2), STONE_LIGHT, CONC)
+		ctx:part("KerbEast", V(0.6, 0.3, 100 - WALL_Z), CF(100.3, 0.15, (WALL_Z + 100) / 2), STONE_LIGHT, CONC)
 		ctx:part("KerbSouthW", V(92, 0.3, 0.6), CF(-54, 0.15, 100.3), STONE_LIGHT, CONC)
 		ctx:part("KerbSouthE", V(92, 0.3, 0.6), CF(54, 0.15, 100.3), STONE_LIGHT, CONC)
 		-- The open light slab on the east (P1) and the market tents on it.
-		ctx:part("PlazaSlab", V(32, 0.06, 22), CF(80, 0.13, 80), STONE_LIGHT, CONC)
+		ctx:part("PlazaSlab", V(20, 0.06, 24), CF(88, 0.13, 81), STONE_LIGHT, CONC)
 		for _, t in ipairs(TENTS) do
 			ctx:part("PlazaTent", V(6, 0.3, 6), CF(t[1], 9.3, t[2]), t[3], PLAS)
 			for _, dx in ipairs({ -2.7, 2.7 }) do
@@ -511,7 +512,14 @@ return function()
 			post(ctx, "LampCollar", 1.6, 0.5, s[1], 11.2, s[2], LAMP_METAL, METAL)
 			ctx:ball("LampGlobe", 2.2, CF(s[1], 12.6, s[2]), LAMP_GLOW, Enum.Material.Neon)
 		end
-		-- White perimeter fence (P1): the south side with the road-mouth gap at x +-8, and the east side.
+		-- Benches at the foot of the seating tiers, facing the stage (north).
+		for _, s in ipairs({ { -44, 63 }, { -60, 63 }, { 50, 63 }, { 66, 63 }, { 82, 63 } }) do
+			ctx:part("BenchSeat", V(6, 0.5, 2), CF(s[1], 1.75, s[2]), TIMBER, WOOD)
+			ctx:part("BenchBack", V(6, 2, 0.4), CF(s[1], 3, s[2] + 0.9), TIMBER, WOOD)
+			ctx:part("BenchLegL", V(0.5, 1.5, 1.8), CF(s[1] - 2.5, 0.75, s[2]), LAMP_METAL, METAL)
+			ctx:part("BenchLegR", V(0.5, 1.5, 1.8), CF(s[1] + 2.5, 0.75, s[2]), LAMP_METAL, METAL)
+		end
+		-- White perimeter fence (P1): the south side with the road-mouth gap at x +-8, and the east side (z 70..99: it leaves the plaza open toward Road C).
 		local function fenceRun(x0, z0, x1, z1)
 			local len = (V(x1, 0, z1) - V(x0, 0, z0)).Magnitude
 			local n = math.max(1, math.floor(len / 6))
@@ -531,13 +539,13 @@ return function()
 		end
 		fenceRun(-96, 99.4, -10, 99.4)
 		fenceRun(10, 99.4, 96, 99.4)
-		fenceRun(99.4, 60, 99.4, 99)
+		fenceRun(99.4, 70, 99.4, 99)
 	end
 
 	------------------------------------------------------------------ Lower-plaza buildings (P1: long cream arcade on the west, the big gabled pavilion)
 	local function buildPlazaBuildings(ctx)
-		-- West: a long two-storey cream building with arched windows facing the plaza, a maroon hip roof (z 58..98).
-		local bx, z0, z1, bays = -92, 58, 98, 5
+		-- West: a long two-storey cream building with arched windows facing the plaza, a maroon hip roof (z 52..98).
+		local bx, z0, z1, bays = -92, 52, 98, 6
 		local len, zc = z1 - z0, (z0 + z1) / 2
 		ctx:part("LongBuildingW", V(14, 24, len), CF(bx, 12, zc), WALL_PALE, CONC)
 		ctx:part("LongBuildingWBand", V(15, 1, len + 1), CF(bx, 12.5, zc), TRIM, CONC)
@@ -558,8 +566,8 @@ return function()
 			ctx:part("LongRoof", V(rlen, 0.6, len + 2), CF(bx + s * run / 2, 24.6 + rise / 2, zc) * ANG(0, 0, -s * th), ROOF_DARK, ROOFMAT)
 		end
 		ctx:part("LongRidge", V(1, 0.9, len + 2), CF(bx, 28.7, zc), TRIM, CONC)
-		-- The pavilion (P1): a low hall under a big grey-brown gabled roof, with palms in front. x 22..64, z 72..88.
-		local cx, cz = 43, 80
+		-- The pavilion (P1): a low hall under a big grey-brown gabled roof, with palms in front. x 36..78, z 72..88, off the open centre.
+		local cx, cz = 57, 80
 		ctx:part("CivicBuildingS", V(42, 8, 16), CF(cx, 4, cz), WALL_PALE, CONC)
 		ctx:part("CivicEave", V(44, 0.8, 18), CF(cx, 8.4, cz), TRIM, CONC)
 		for i = 1, 5 do
@@ -614,8 +622,8 @@ return function()
 	------------------------------------------------------------------ Benches, lamps, flagpole (upper level, origin raised)
 	local function buildBenches(ctx)
 		-- walkway benches, and benches on the garden path (facing each other across it)
-		local spots = { { -24, 40, -PI / 2 }, { -24, 50, -PI / 2 }, { 24, 40, PI / 2 }, { 24, 50, PI / 2 },
-			{ 65.5, 24, PI / 2 }, { 70.5, 24, -PI / 2 }, { 65.5, 44, PI / 2 }, { 70.5, 44, -PI / 2 } }
+		local spots = { { -24, 34, -PI / 2 }, { -24, 42, -PI / 2 }, { 24, 34, PI / 2 }, { 24, 42, PI / 2 },
+			{ 65.5, 22, PI / 2 }, { 70.5, 22, -PI / 2 }, { 65.5, 38, PI / 2 }, { 70.5, 38, -PI / 2 } }
 		for _, s in ipairs(spots) do
 			local cf = CF(s[1], 0, s[2]) * ANG(0, s[3], 0)
 			ctx:part("BenchSeat", V(6, 0.5, 2), cf * CF(0, 1.75, 0), TIMBER, WOOD)
@@ -627,11 +635,11 @@ return function()
 
 	local function buildLamps(ctx)
 		local spots = {}
-		for _, z in ipairs({ 14, 32, 50 }) do
+		for _, z in ipairs({ 14, 30, 44 }) do
 			table.insert(spots, { -14, z })
 			table.insert(spots, { 14, z })
 		end
-		for _, p in ipairs({ { 68, 20 }, { 68, 48 }, { 80, 33 }, { 92, 33 }, { -62, 30 } }) do
+		for _, p in ipairs({ { 68, 20 }, { 68, 42 }, { 80, 30 }, { 92, 30 }, { -62, 30 } }) do
 			table.insert(spots, p)
 		end
 		for _, s in ipairs(spots) do
@@ -643,7 +651,7 @@ return function()
 	end
 
 	local function buildFlagpole(ctx)
-		local px, pz = 68, 33 -- the garden's path crossing
+		local px, pz = 68, 30 -- the garden's path crossing
 		post(ctx, "FlagBase", 4, 0.8, px, 0, pz, STONE_DARK, CONC)
 		post(ctx, "FlagPole", 0.7, 26, px, 0.8, pz, LAMP_METAL, METAL)
 		ctx:ball("FlagFinial", 1.4, CF(px, 27.5, pz), Color3.fromRGB(230, 190, 70), METAL)
@@ -651,23 +659,29 @@ return function()
 		ctx:part("FlagRed", V(0.2, 2.2, 9), CF(px, 23, pz + 4.85), Color3.fromRGB(206, 17, 38), PLAS)
 	end
 
-	------------------------------------------------------------------ EventStage = the central landing and the two flights of steps (P1)
+	------------------------------------------------------------------ EventStage = the stage landing, the seating tiers beside it, and the side stairs (P1)
 	local function buildStage(ctx)
-		-- World coordinates (ground origin). The landing (x +-18, z 56..64) is a solid block at podium height on the wall axis; the
-		-- gazebo roof on it faces the lower plaza. Two flights of 4 wide steps (risers of exactly 1 stud) go down on each side.
-		ctx:part("StageLanding", V(36, RAISE, 8), CF(0, RAISE / 2, WALL_Z + 4), STONE, CONC)
+		-- World coordinates (ground origin). The stage landing (x +-28, z 48..60, about 0.8 of the church frontage) is a solid block at podium
+		-- height on the wall axis; the gazebo roof on it faces the lower plaza. Seating tiers either side: 4 tiers of 3-stud treads with risers
+		-- of exactly 1 stud (the east side is the longer one in the photo). Side stairs at both podium ends give street access (Roads A, C).
+		ctx:part("StageLanding", V(56, RAISE, 12), CF(0, RAISE / 2, WALL_Z + 6), STONE, CONC)
 		for k = 1, 4 do
-			local z = WALL_Z + 2 * (k - 1) + 1
-			ctx:part("StairsL", V(44, RAISE - k, 2), CF(-40, (RAISE - k) / 2, z), STONE, CONC)
-			ctx:part("StairsR", V(44, RAISE - k, 2), CF(40, (RAISE - k) / 2, z), STONE, CONC)
+			local z = WALL_Z + 3 * (k - 1) + 1.5
+			ctx:part("BleacherL", V(48, RAISE - k, 3), CF(-52, (RAISE - k) / 2, z), BLEACH, CONC)
+			ctx:part("BleacherR", V(70, RAISE - k, 3), CF(63, (RAISE - k) / 2, z), BLEACH, CONC)
 		end
-		for _, px in ipairs({ -10.5, 10.5 }) do
-			for _, pz in ipairs({ WALL_Z + 1.5, WALL_Z + 6.5 }) do
+		for k = 1, 4 do
+			local x = 120 + 2 * (k - 1) + 1
+			ctx:part("SideStairsE", V(2, RAISE - k, 12), CF(x, (RAISE - k) / 2, 26), STONE, CONC)
+			ctx:part("SideStairsW", V(2, RAISE - k, 12), CF(-x, (RAISE - k) / 2, 26), STONE, CONC)
+		end
+		for _, px in ipairs({ -17, 17 }) do
+			for _, pz in ipairs({ WALL_Z + 1.5, WALL_Z + 10.5 }) do
 				ctx:part("StagePost", V(0.8, 9.5, 0.8), CF(px, RAISE + 4.75, pz), LAMP_METAL, METAL)
 			end
 		end
-		ctx:part("StageCanopy", V(26, 0.6, 10), CF(0, RAISE + 9.8, WALL_Z + 4), ROOF, ROOFMAT)
-		local fascia = ctx:part("StageFascia", V(26, 2.2, 0.5), CF(0, RAISE + 8.4, WALL_Z + 9), TRIM, CONC)
+		ctx:part("StageCanopy", V(38, 0.6, 12), CF(0, RAISE + 9.8, WALL_Z + 6), ROOF, ROOFMAT)
+		local fascia = ctx:part("StageFascia", V(38, 2.2, 0.5), CF(0, RAISE + 8.4, WALL_Z + 12), TRIM, CONC)
 		label(fascia, Enum.NormalId.Back, "PUBLIC EVENTS", Color3.new(1, 1, 1), 30) -- readable from the lower plaza (the spawn)
 	end
 

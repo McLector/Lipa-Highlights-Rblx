@@ -8,7 +8,7 @@
 -- Independencia at ground level (y 0), where the spawn, the pavilion, the vans and the CreditsBoard are.
 local HttpService = game:GetService("HttpService")
 local RAISE = 5 -- podium top (upper level), studs above the ground; must equal builders/site01.luau RAISE
-local WALL_Z = 56 -- the podium's south face, the retaining wall
+local WALL_Z = 48 -- the podium's south face, the retaining wall
 
 local results = { passed = 0, failed = 0, failures = {} }
 local function check(name, cond, detail)
@@ -136,7 +136,7 @@ end)())
 ------------------------------------------------------------------ Two levels: podium, retaining wall, stairs, landing (P1 crop: wall with stairs down to the plaza)
 local podium = anchor("Podium")
 check("Podium top is RAISE studs above the ground", podium ~= nil and math.abs(topY(podium) - RAISE) < 0.06, podium and fmt(topY(podium)) or "missing")
-check("Podium south face (the retaining wall) is at z 56", podium ~= nil and math.abs(podium.Position.Z + podium.Size.Z / 2 - WALL_Z) < 0.5,
+check("Podium south face (the retaining wall) is at z 48", podium ~= nil and math.abs(podium.Position.Z + podium.Size.Z / 2 - WALL_Z) < 0.5,
 	podium and fmt(podium.Position.Z + podium.Size.Z / 2) or "missing")
 check("Podium carries the whole church: spans x +-120 and back to z <= -99", podium ~= nil and podium.Size.X >= 238 and podium.Position.Z - podium.Size.Z / 2 <= -99,
 	podium and string.format("x %s back %s", fmt(podium.Size.X), fmt(podium.Position.Z - podium.Size.Z / 2)) or "missing")
@@ -148,17 +148,44 @@ check("2+ parapet runs cap the retaining wall, on the upper level", #parapets >=
 	return true
 end)(), tostring(#parapets))
 local landing = anchor("StageLanding")
-check("StageLanding is a platform on the wall axis at podium height", landing ~= nil and math.abs(landing.Position.X) < 2 and math.abs(topY(landing) - RAISE) < 0.06
-	and landing.Position.Z - landing.Size.Z / 2 >= WALL_Z - 0.6, landing and fmt(topY(landing)) or "missing")
-for _, side in ipairs({ "StairsL", "StairsR" }) do
-	local steps = allNamed(side)
+check("StageLanding is a wide stage (50+ studs, 10+ deep) on the wall axis at podium height", landing ~= nil and math.abs(landing.Position.X) < 2 and math.abs(topY(landing) - RAISE) < 0.06
+	and landing.Size.X >= 50 and landing.Size.Z >= 10 and landing.Position.Z - landing.Size.Z / 2 >= WALL_Z - 0.6,
+	landing and string.format("top %s w %s d %s", fmt(topY(landing)), fmt(landing.Size.X), fmt(landing.Size.Z)) or "missing")
+-- The terraced seating beside the stage (P1 crop: long wooden tiers either side of the stage, reading as seats): 4 tiers each,
+-- 3+ studs deep so a person can sit or stand on them, risers of exactly 1 stud. The east side is the longer one in the photo.
+for _, spec in ipairs({ { "BleacherL", 40 }, { "BleacherR", 60 } }) do
+	local steps = allNamed(spec[1])
 	table.sort(steps, function(a, b) return a.Position.Z < b.Position.Z end)
-	local okRisers, detail = #steps == 4, "steps " .. #steps
+	local okRisers, detail = #steps == 4, "tiers " .. #steps
 	for i, s in ipairs(steps) do
-		if math.abs(topY(s) - (RAISE - i)) > 0.06 or s.Size.X < 30 then okRisers = false; detail = detail .. string.format(" [%d top %s w %s]", i, fmt(topY(s)), fmt(s.Size.X)) end
+		if math.abs(topY(s) - (RAISE - i)) > 0.06 or s.Size.X < spec[2] or s.Size.Z < 2.9 then
+			okRisers = false
+			detail = detail .. string.format(" [%d top %s w %s d %s]", i, fmt(topY(s)), fmt(s.Size.X), fmt(s.Size.Z))
+		end
 	end
-	check(side .. ": 4 wide steps, each riser exactly 1 stud (5 -> 4 -> 3 -> 2 -> 1 -> ground)", okRisers, detail)
+	check(spec[1] .. ": 4 seating tiers, " .. spec[2] .. "+ studs long and 3+ deep, each riser exactly 1 stud (5 -> 4 -> 3 -> 2 -> 1 -> ground)", okRisers, detail)
 end
+-- Street-level access (review finding: Roads A and C end at the podium edge, so the forecourt needs side stairs, not only the front seating).
+for _, name in ipairs({ "SideStairsW", "SideStairsE" }) do
+	local steps = allNamed(name)
+	table.sort(steps, function(a, b) return math.abs(a.Position.X) < math.abs(b.Position.X) end)
+	local okSteps, detail = #steps == 4, "steps " .. #steps
+	for i, s in ipairs(steps) do
+		if math.abs(topY(s) - (RAISE - i)) > 0.06 or s.Size.Z < 10 then
+			okSteps = false
+			detail = detail .. string.format(" [%d top %s w %s]", i, fmt(topY(s)), fmt(s.Size.Z))
+		end
+	end
+	check(name .. ": 4 steps, each riser exactly 1 stud, 10+ studs wide (street access to the forecourt)", okSteps, detail)
+end
+local fenceBlocks = {}
+for _, p in ipairs(allNamed("FencePost")) do
+	if p.Position.X > 98 and p.Position.Z > WALL_Z and p.Position.Z < 68 then table.insert(fenceBlocks, "post z" .. fmt(p.Position.Z)) end
+end
+for _, p in ipairs(allNamed("FenceRail")) do
+	if p.Position.X > 98 and p.Position.Z - p.Size.Z / 2 < 68 and p.Position.Z + p.Size.Z / 2 > WALL_Z then table.insert(fenceBlocks, "rail z" .. fmt(p.Position.Z)) end
+end
+check("the east fence leaves the lower plaza open toward Road C (nothing at x 99 between z 48 and 68)", #fenceBlocks == 0, table.concat(fenceBlocks, ", "))
 local stage = site:FindFirstChild("EventStage")
 check("EventStage is the landing gazebo: landing, 4 posts and a canopy above the podium", stage ~= nil and landing ~= nil and countNamed("StagePost") == 4
 	and anchor("StageCanopy") ~= nil and anchor("StageCanopy").Position.Y > RAISE + 9)
@@ -190,7 +217,7 @@ end
 
 ------------------------------------------------------------------ Upper level: the car-park forecourt, monument, garden
 local apron = anchor("ApronPaving")
-check("ApronPaving (the wide parking forecourt) lies on the podium, z 10..56", apron ~= nil and apron.Position.Y >= RAISE and apron.Size.Z >= 40
+check("ApronPaving (the wide parking forecourt) lies on the podium, z 10..48", apron ~= nil and apron.Position.Y >= RAISE and apron.Size.Z >= 34
 	and apron.Position.Z - apron.Size.Z / 2 <= 12 and apron.Position.Z + apron.Size.Z / 2 >= WALL_Z - 1,
 	apron and string.format("y %s z %s..%s", fmt(apron.Position.Y), fmt(apron.Position.Z - apron.Size.Z / 2), fmt(apron.Position.Z + apron.Size.Z / 2)) or "missing")
 check("St Sebastian Monument on a plinth, on the forecourt", anchor("MonumentPlinth") ~= nil and anchor("MonumentPlinth").Position.Y >= RAISE
@@ -223,7 +250,7 @@ end
 
 ------------------------------------------------------------------ Lower plaza (P1: paved plaza below the wall, the gabled pavilion, palms, fence)
 local paving = anchor("ForecourtPaving")
-check("lower plaza paving (ForecourtPaving) is at ground level and spans z 56..100", paving ~= nil and paving.Position.Y <= 0.6
+check("lower plaza paving (ForecourtPaving) is at ground level and spans z 48..100", paving ~= nil and paving.Position.Y <= 0.6
 	and math.abs(paving.Position.Z - paving.Size.Z / 2 - WALL_Z) < 1 and paving.Position.Z + paving.Size.Z / 2 >= 99,
 	paving and string.format("y %s z %s..%s", fmt(paving.Position.Y), fmt(paving.Position.Z - paving.Size.Z / 2), fmt(paving.Position.Z + paving.Size.Z / 2)) or "missing")
 local pavilion = anchor("CivicBuildingS")
@@ -252,6 +279,11 @@ local spawnHits = blockers(CFrame.new(0, 5, 70), Vector3.new(8, 8, 8))
 check("the spawn (0,70) has 8x8 studs of clear ground", #spawnHits == 0, table.concat(spawnHits, ", ", 1, math.min(#spawnHits, 4)))
 local boardHits = blockers(CFrame.new(0, 8, 94.5), Vector3.new(60, 14, 8))
 check("the CreditsBoard strip (x +-30, z 90..98) is clear of Site01 geometry", #boardHits == 0, table.concat(boardHits, ", ", 1, math.min(#boardHits, 4)))
+local centreHits = blockers(CFrame.new(-2, 6, 76), Vector3.new(64, 10, 24))
+check("the lower plaza has a wide open centre (x -34..30, z 64..88 clear of Site01 geometry)", #centreHits == 0, table.concat(centreHits, ", ", 1, math.min(#centreHits, 4)))
+local lowerBenches = 0
+for _, b in ipairs(allNamed("BenchSeat")) do if b.Position.Y < RAISE then lowerBenches += 1 end end
+check("5+ benches at the foot of the seating tiers on the lower plaza", lowerBenches >= 5, tostring(lowerBenches))
 local stray = {}
 for _, p in ipairs(site:GetDescendants()) do
 	if p:IsA("BasePart") and not isRig(p) and p.Size.Y <= 0.5 and p.Position.Y <= 0.6 and p.Parent.Name ~= "JeepStop" then
@@ -262,7 +294,7 @@ for _, p in ipairs(site:GetDescendants()) do
 		end
 	end
 end
-check("flat ground-level parts lie on the lower plaza only (x +-100, z 56..100: the repainted Pavement; the podium covers the rest)", #stray == 0,
+check("flat ground-level parts lie on the lower plaza only (x +-100, z 48..100: the repainted Pavement; the podium covers the rest)", #stray == 0,
 	table.concat(stray, "; ", 1, math.min(#stray, 3)))
 
 return HttpService:JSONEncode(results)

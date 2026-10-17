@@ -135,3 +135,18 @@ The first rework treated the plaza as one flat slab with an amphitheatre. The us
 - Terrain is untouched: the lower plaza sits on the existing repainted Pavement (z 56..100); the podium hides the rest.
 - Player-facing consequence: the door is hidden behind the wall from the spawn (the church rises above it), so a visitor climbs the steps to reach the Guide.
 - Simplifications: the seasonal Christmas tree and the signage letters on the wall are not modelled; the real stairs are longer and terraced; the forecourt is about half its real depth; the pavilion is one gabled hall, not the real cross-gabled roof.
+
+---
+
+# Revision 3 (2026-10-17): stage, seating and a wide lower plaza (user: "revisit the scale")
+
+User feedback on Revision 2: the real Plaza Independencia is a **wide open space with seating around the stairs and a stage**. In the drone crop the terraced tiers either side of the gazebo landing are seating, the landing is the stage, and the lower plaza is deeper than the forecourt. Revision 2 had a 36-stud landing, 4-step stairs and the pavilion in the middle of the plaza.
+
+Scale decision: the footprint (240 x 200 studs) and massScale 2.0 are fixed, and human-scale parts are never shrunk, so the **forecourt is shortened (46 -> 38 studs) and the wall moves from z 56 to z 48** to give the room to the stage, the seating and the open plaza. The real lower plaza is still about 1.6x the forecourt, so this remains a compression.
+
+## What changed (builders/site01.luau, `WALL_Z = 48`)
+- **Stage**: `StageLanding` 56 x 12 (about 0.8 of the church frontage, measured from the drone crop), gazebo roof 38 x 12 on four posts, fascia label facing the lower plaza.
+- **Seating**: `BleacherL` (48 long) and `BleacherR` (70 long; the east side is the longer one in the photo), 4 tiers each, **3 studs deep** so people can sit and stand on them, risers exactly 1 stud, brown-grey like the photo. 5 benches at their foot.
+- **Open lower plaza**: the pavilion moved east (x 36..78), the centre x -34..30, z 64..88 stays clear (the spawn, the Guide's approach and the CreditsBoard strip too); vans on the west, tents and a light slab on the east.
+- **Forecourt** (z 10..48): garden, parking bays, monument, benches and lamps re-fitted to the shorter depth.
+- **Walkability (design review)**: the podium's wall would have left Roads A and C dead-ending, so `SideStairsW` / `SideStairsE` (4 steps of 1 stud, 12 wide, z 20..32) give street-level access, and the east fence leaves a 22-stud opening toward Road C. `tests/routes_check.luau` proves it with PathfindingService (no jumping): Road C to the Guide is 156 studs with the side stairs and 180 without, Road A 383 / 407. Players could already reach the forecourt by the seating, so the stairs are a convenience of about 24 studs, not a fix for an unreachable area.
