@@ -97,3 +97,17 @@ The fish-scale inlay (bars/discs, not arcs); the thatch as stacked cone tiers; t
 
 ## Art-observation hooks for dialogue (Slice 12 will source them)
 Horizontal layering across the pool: water, coping, terrace, glass, roof; the low hipped roof's deep eaves as shade and shelter; the repeating slat screens as rhythm; the round thatched cone against the rectilinear villa (contrast of form); the path's scale pattern leading the eye (line and pattern); reflection and stillness in the lagoon (balance, calm).
+
+## Revision 1 (Slice 20): fidelity rework from `Farm_Villa_Pool_Front.jpg` and `Farm_Big_Lagoon_and_Pavilion.jpg`
+**References:** the same two photos the brief already names; no new photo, no credit change. The builder uses world coordinates (no Slice 14 shift). `tests/site07_check.luau` encodes the table below.
+
+| # | Real | Before | Now |
+|---|---|---|---|
+| 1 | Dark teal-green pool | bright cyan water (46,150,142), 0.35 transparent | (24,98,94), 0.2 transparent |
+| 2 | Pool wall of laid stone blocks | plain wall | 12 `CopingJoint` strips on the east wall |
+| 3 | Round shaggy thatched hat on posts | six coarse tiers | 12 fine tiers on a convex profile (18 down to about 1.9) + `PavilionFinial` |
+| 4 | Tall palms, large drooping fronds | 12 high, 6 fronds of 6.5 | 16/18/20 high, 8 fronds of 9.5 |
+| 5 | Wings sit between timber posts under the eave | bare slats | 6 `WingPost` (3 per wing) |
+| 6 | (model bug) | `WellnessBoard` 213 characters TextScaled (tiny type) | fixed 18 px wrapped text |
+
+**Guard changed on purpose (sites_check, Site 7):** the thatch sight-line ray was aimed at each tier's axis centre, which cannot see the upper tiers of a fine cone from a low eye (9 of 12). It now aims at each tier's near-side edge, the surface a player sees. The guard still needs 80% of the tiers visible; 12 of 12 pass.

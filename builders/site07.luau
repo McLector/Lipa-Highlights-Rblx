@@ -40,7 +40,8 @@ return function()
 	local STONE = Color3.fromRGB(200, 194, 182)
 	local POOL_B = Color3.fromRGB(58, 78, 74)
 	local COPING = Color3.fromRGB(86, 104, 98)
-	local WATER = Color3.fromRGB(46, 150, 142)
+	local WATER = Color3.fromRGB(24, 98, 94) -- dark teal-green, as in Farm_Villa_Pool_Front.jpg (the first pass was bright cyan)
+	local POOL_J = Color3.fromRGB(36, 52, 50)
 	local RATTAN = Color3.fromRGB(190, 150, 100)
 	local TEAL = Color3.fromRGB(60, 170, 170)
 	local BLUE = Color3.fromRGB(30, 110, 220)
@@ -85,7 +86,7 @@ return function()
 		return ctx:ball(name, dia, L(x, y, z), color, material)
 	end
 	-- Text on the part's frontage (Back face, which points west).
-	local function gui(part, text, color, ppstud)
+	local function gui(part, text, color, ppstud, fixedSize)
 		local g = Instance.new("SurfaceGui")
 		g.Face = Enum.NormalId.Back
 		g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
@@ -96,7 +97,9 @@ return function()
 		t.Position = UDim2.fromScale(0.03, 0.1)
 		t.BackgroundTransparency = 1
 		t.TextColor3 = color
-		t.TextScaled = true
+		-- A long line must use a fixed TextSize: TextScaled shrinks a 200-character board to unreadable type.
+		t.TextScaled = fixedSize == nil
+		if fixedSize then t.TextSize = fixedSize end
 		t.TextWrapped = true
 		t.Font = Enum.Font.GothamBlack
 		t.Text = text
@@ -230,6 +233,10 @@ return function()
 		-- Wings: north (z 212..228) and south (z 252..268). Each has its own lower slate roof and slatted screens on the west face.
 		for _, w in ipairs({ { 212, 228, 210, 228 }, { 252, 268, 252, 270 } }) do
 			B(ctx, "WingBody", 765, 786, 0, 10.5, w[1], w[2], CREAM, SMOOTH)
+			-- Timber posts frame the screens under the eave (the photo's wings sit between posts).
+			for _, pz in ipairs({ w[1] + 0.3, (w[1] + w[2]) / 2, w[2] - 0.3 }) do
+				B(ctx, "WingPost", 763.6, 765.2, 0, 10.5, pz - 0.3, pz + 0.3, TIMBER, WOODM)
+			end
 			B(ctx, "WingRoof", 762, 788, 10.5, 11.3, w[3], w[4], ROOF, SLATE)
 			for z = w[1] + 0.5, w[2] - 0.5, 1 do
 				B(ctx, "WingSlat", 764, 765, 0, 9, z - 0.3, z + 0.3, SLAT, WOODM)
@@ -246,8 +253,13 @@ return function()
 		B(ctx, "PoolCopingW", 712, 714, 0, 0.5, 208, 272, COPING, SLATE)
 		B(ctx, "PoolCopingE", 744, 748, 0, 0.5, 208, 272, COPING, SLATE)
 		local water = B(ctx, "PoolWater", 714, 744, 0.4, 1.0, 208, 272, WATER, GLASSM)
-		water.Transparency = 0.35
+		water.Transparency = 0.2
 		water.CanCollide = false
+		-- Cut-stone joints on the pool's east wall (the photo's wall is laid stone blocks).
+		for k = 0, 11 do
+			local z = 211 + k * 4.9
+			B(ctx, "CopingJoint", 741.9, 742, 0, 1.2, z, z + 0.12, POOL_J, SMOOTH)
+		end
 	end
 
 	------------------------------------------------------------------ Structure / LagoonEdge: rim stones, reeds, lily pads
@@ -269,9 +281,9 @@ return function()
 		for k = 0, 2 do
 			VCyl(ctx, "PalmTrunk", x, z, k * seg, (k + 1) * seg, 1.2, TRUNK, WOODM)
 		end
-		for k = 1, 6 do
-			local ang = (k - 1) * PI / 3 + 0.3
-			local fr = ctx:part("PalmFrond", V(6.5, 0.3, 1.5), L(x, h, z) * ANG(0, ang, 0) * CF(3.4, 0, 0) * ANG(0, 0, -0.35), FROND, GRASSM)
+		for k = 1, 8 do
+			local ang = (k - 1) * PI / 4 + 0.3
+			local fr = ctx:part("PalmFrond", V(9.5, 0.3, 1.8), L(x, h, z) * ANG(0, ang, 0) * CF(4.6, 0, 0) * ANG(0, 0, -0.5), FROND, GRASSM)
 			fr.CanCollide = false
 		end
 	end
@@ -284,7 +296,7 @@ return function()
 			{ 640, 348 }, { 690, 360 }, { 748, 362 }, { 790, 358 },
 			{ 598, 268 }, { 620, 284 }, { 604, 308 }, { 628, 330 },
 		}) do
-			palm(ctx, p[1], p[2], 12)
+			palm(ctx, p[1], p[2], 16 + (p[1] + p[2]) % 3 * 2) -- 16, 18 or 20 tall (the photo's palms tower over the pavilion)
 		end
 	end
 
@@ -333,11 +345,13 @@ return function()
 			local a = k * PI / 4
 			VCyl(ctx, "PavilionPost", 740 + 8 * math.cos(a), 312 + 8 * math.sin(a), 0.7, 8, 0.7, DARKWOOD, WOODM)
 		end
-		-- Stepped thatched cone: six tiers (eave at y 8, peak at y 14.8).
-		local tiers = { { 8.0, 9.2, 18 }, { 9.2, 10.3, 15.2 }, { 10.3, 11.4, 12.4 }, { 11.4, 12.5, 9.6 }, { 12.5, 13.6, 6.8 }, { 13.6, 14.8, 3.6 } }
-		for _, t in ipairs(tiers) do
-			VCyl(ctx, "PavilionThatch", 740, 312, t[1], t[2], t[3], STRAW, WOODM)
+		-- Round thatched cone: twelve fine tiers on a slightly convex profile (eave at y 8, peak at y 14.8), so it reads as the
+		-- photo's smooth hat rather than a stepped pyramid; a dark finial caps it.
+		for i = 0, 11 do
+			local y0 = 8 + i * 0.57
+			VCyl(ctx, "PavilionThatch", 740, 312, y0, y0 + 0.57, 18 * (1 - i / 12) ^ 0.9, STRAW, WOODM)
 		end
+		ball(ctx, "PavilionFinial", 740, 15.2, 312, 1.4, DARKWOOD, WOODM)
 	end
 
 	------------------------------------------------------------------ LandscapedPath (container): entry path, plaza, walks, shore apron
@@ -372,7 +386,7 @@ return function()
 	local function buildWellness(ctx)
 		-- Moved from the brief's z 224..236 to z 204..216: at z 224..236 it blocks the sight-line to the villa glass.
 		local board = B(ctx, "WellnessBoard", 702, 704, 3, 9, 204, 216, CREAM, SMOOTH)
-		gui(board, "WELLNESS TOURISM. The Farm at San Benito is an operating resort representing Lipa's contemporary wellness tourism: gardens, accommodation, dining and organized activities. Visits involve bookings or paid services.", DARKWOOD, 40)
+		gui(board, "WELLNESS TOURISM. The Farm at San Benito is an operating resort representing Lipa's contemporary wellness tourism: gardens, accommodation, dining and organized activities. Visits involve bookings or paid services.", DARKWOOD, 40, 18)
 		B(ctx, "WellnessPost", 702, 704, 0, 3, 205, 206, DARKWOOD, WOODM)
 		B(ctx, "WellnessPost", 702, 704, 0, 3, 213, 214, DARKWOOD, WOODM)
 	end

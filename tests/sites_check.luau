@@ -288,8 +288,20 @@ if sites then
 						end
 						return seen
 					end
+					-- A cone's upper tiers sit behind the lower ones when aimed at their axis from a low eye, so each thatch tier is aimed at
+					-- its near-side edge (the surface a player sees). Slice 20 replaced six coarse tiers with twelve fine ones.
+					local function seenEdgeFrom(eye, targets)
+						local seen = 0
+						for _, t in ipairs(targets) do
+							local flat = Vector3.new(eye.X - t.Position.X, 0, eye.Z - t.Position.Z)
+							local aim = t.Position + flat.Unit * (math.max(t.Size.Y, t.Size.Z) / 2 - 0.15)
+							local r = workspace:Raycast(eye, aim - eye, vp)
+							if r and r.Instance == t then seen += 1 end
+						end
+						return seen
+					end
 					local eyeGuide, eyeRoad = Vector3.new(664, 6, 234), Vector3.new(576, 6, 236)
-					local sGuide, sRoad, sThatch = seenFrom(eyeGuide, panes), seenFrom(eyeRoad, panes), seenFrom(eyeGuide, thatch)
+					local sGuide, sRoad, sThatch = seenFrom(eyeGuide, panes), seenFrom(eyeRoad, panes), seenEdgeFrom(eyeGuide, thatch)
 					check(label .. " villa glass is visible from the plaza", #panes >= 4 and sGuide >= #panes * 0.8,
 						sGuide .. " of " .. #panes .. " panes seen from the plaza")
 					check(label .. " villa glass is visible from the road mouth", #panes >= 4 and sRoad >= #panes * 0.8,
