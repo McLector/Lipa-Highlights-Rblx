@@ -13,6 +13,7 @@ CreditsData.sites = {
 		"https://jeromedoe.blogspot.com/2014/04/sidetrip-candido-lopez-public-market-in.html",
 		"https://www.flickr.com/photos/25609128@N07/4798040027",
 		"https://www.flickr.com/photos/25609128@N07/5578415545",
+		"https://www.openstreetmap.org/way/465374399",
 	} },
 	{ id = 3, urls = {
 		"https://primer.com.ph/food/location/philippines/batangas/lomi-king-the-king-of-all-noodles-in-lipa-2/",

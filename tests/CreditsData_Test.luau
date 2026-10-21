@@ -58,6 +58,14 @@ return function(t)
 		expect.truthy(found)
 	end)
 
+	t.test("site 2 credits the OpenStreetMap market way (465374399), whose footprint, height and roof colour sized the Slice 17 Market rework (ODbL)", function()
+		local found = false
+		for _, url in ipairs(CreditsData.sites[2].urls) do
+			if url == "https://www.openstreetmap.org/way/465374399" then found = true end
+		end
+		expect.truthy(found)
+	end)
+
 	t.test("site 6 credits the Commons category and the LIMA Estate drone file that the Slice 16 Outlets rework drew on", function()
 		local category, drone = false, false
 		for _, url in ipairs(CreditsData.sites[6].urls) do

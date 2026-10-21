@@ -16,11 +16,12 @@ Photos in folder: 32 (plus 7 in rework_2026, see the attribution section at the 
 
 ## Site 2: Candido B. Lopez Memorial Public Market
 Folder: 03_Lipa_Public_Market
-Photos in folder: 3; unique source pages: 3
+Photos in folder: 3; unique source pages: 4 (3 photo pages plus the OpenStreetMap footprint, see the Slice 17 attribution section at the end)
 
 - https://jeromedoe.blogspot.com/2014/04/sidetrip-candido-lopez-public-market-in.html
 - https://www.flickr.com/photos/25609128@N07/4798040027
 - https://www.flickr.com/photos/25609128@N07/5578415545
+- https://www.openstreetmap.org/way/465374399
 
 ## Site 3: Lomi King
 Folder: 01_Lomi_Houses
@@ -129,3 +130,11 @@ The Site 6 junction, approach road, landscaping, signage and entrance were rewor
 | LIMA Estate as of 2025 | 2025-07-17 | Aboitiz Economic Estates | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:LIMA_Estate_as_of_2025.jpg |
 
 All 26 files of `Category:The_Outlets_at_Lipa` (Judgefloro, CC0, 2019-09-23) were downloaded, but only the eight above were examined; the other 18 are not credited as sources. The category page is https://commons.wikimedia.org/wiki/Category:The_Outlets_at_Lipa.
+
+## Slice 17 rework: Market reference attribution
+
+The Site 2 model was reworked from the three photos already listed under Site 2 (the 2014 facade, the 2010 street and the 2011 stalls) and from OpenStreetMap footprint data. No new photo was added: Wikimedia Commons has no category or street-level file of the Candido B. Lopez Memorial Public Market (searched 2026-10-22), and the Commons street photos of C.M. Recto Avenue and Rizal Street carry no coordinates and show no market building. The photos were used only as visual reference for shapes, proportions and colours; no photo is used as a texture in the experience.
+
+Building footprint, level count, height and roof colour of the market (way 465374399, "Candido B. Lopez - Memorial Public Market": about 84 x 40 m, 3 levels, 11 m, roof colour #6b88b4): (c) OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright (market building: https://www.openstreetmap.org/way/465374399). Data fetched via the Overpass API on 2026-10-22. The neighbouring OSM ways (the LGU parking building 465374433, the Wet Market 1315225896 and the marketplace compound 1365681180) were read for context and are not modelled.
+
+The Lipa Poblacion drone shot that shows the Cathedral and the market (credited under Site 1) was looked at, but the market could not be pinned in it, so nothing was drawn from it.

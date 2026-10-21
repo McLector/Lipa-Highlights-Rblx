@@ -64,3 +64,32 @@ Sides and rear of the hall (plain walls); interior (none: closed arcade with dar
 
 ## Art-observation hooks for dialogue (Slice 12 will source them)
 Rhythm of arched bays and maroon pilasters against a cream wall; the strong horizontal of the long name band; the diagonal stair as the one dynamic line; the colour accents of tarps and produce against concrete; a lived-in, layered street-market scene as everyday community life.
+
+## Revision 1 (Slice 17): fidelity rework (2014 facade + OSM massing)
+The user judged the model against the real market and chose **the 2014 facade with OSM massing** (not the 2025 state), with the photos already on disk: Wikimedia Commons has no category or street-level file of the market (searched 2026-10-22; the C.M. Recto and Rizal Street photos have no coordinates and no market in them). The approved dialogue ("as photographed in 2014") is unchanged. The footprint (200 x 160) and SiteData are unchanged. Checks: `tests/site02_check.luau` (45), written before the rebuild and run red against the old model (26 passed, 19 failed).
+
+**OSM (ODbL, Overpass 2026-10-22):** way 465374399 "Candido B. Lopez - Memorial Public Market": about 84 x 40 m, 3 levels, 11 m, roof colour #6b88b4 (blue-grey). Neighbours read for context and not modelled: LGU parking building 465374433 (4 levels), Wet Market 1315225896 (roof #4f5b86), marketplace compound 1365681180. The 2025 drone shot (credited under Site 1) shows the market but could not be pinned in it, so no roof or layout is drawn from it.
+
+**Current coordinates for the keep-clear zones** (the "Keep clear" section above is in the original, pre-Slice-14 coordinates; add -100 to x): Guide (-300, 0, 160), box x -312..-288, z 148..172; InfoPanel (-306, 5, 148), a 12 x 8 board facing E; aisle x -300..-228, z 154..166; paved region x -376..-228, z 80..240 (the hall's own walls extend west of it, which is fine because they are tall). `site02_check` tests all of them.
+
+### Real vs model (what changed)
+| # | Real (2014 photo / OSM) | Before | Now |
+|---|---|---|---|
+| 1 | Depth about 40 m | 40-stud slab (x -370..-330) | `HallBody` 150 x 24 x **90** (x -420..-330); bays were never squeezed, depth is not a repeat |
+| 2 | Low-pitch blue-grey roof | flat top | 2 `RoofSlope` slabs (107,136,180) at 8 degrees, ridge along the hall at y 30.9, 30 `RoofSeam` strips, 4 `Gable*` wedges; blue `RoofEdge` kept; the old N/S edge strips are gone |
+| 3 | Capitals fill the sign band | 3 high, small text | `NameBand` 120 x **5**, lx -45..75, fixed 60 px text (TextScaled with wrapping off rendered at a tenth of the width) |
+| 4 | Cantilevered south gallery under a dark awning | none | `UpperGallery` deck (lx -76..-40, top 12.05), `GalleryFascia`, `GalleryRail` + 12 `GalleryPost`, `GalleryWall` (maroon) with 4 `GalleryOpening`, `GalleryAwning` (dark, tilted) |
+| 5 | Open upper bays, tilted shutters in pairs | dark flat panes, thin hoods | bays k 4..15: recessed glass plus **2 `Shutter`s** each (24), tilted 26 degrees, y 15.2 and 18.4 |
+| 6 | Round yellow portico columns under the gallery | none | 4 `PorticoColumn` (lx -74, -66, -58, -50); the 16 arched, gridded ground bays stay behind them |
+| 7 | Stair rises to the SOUTH along the facade, roofed over its full run | short stair, perpendicular to the wall | 12 risers of 1 from lx -22 to -46 (lz 9 to 4), 2 `StairStringer` panels, rails, `StairCover` over the whole run, 6 yellow `StairPier`s; lands on the gallery deck |
+| 8 | North balcony on round yellow columns, pink-maroon ground | 3 columns | 5 `BalconyColumn`, 11 balusters, `EndBayWall` spandrel |
+| 9 | Stained, weathered wall | uniform paint | `UpperWall` (lighter cladding) and 6 red-oxide `RustPatch`es over arches (colour only) |
+| 10 | Tin lean-tos hard against the facade, tricycles, dense yard | 4 lean-to segments with a stair gap; 5 rows of booths out to z 94 | 8 `LeanRoof` segments (lx -16..50) with counters and posts; **3 tricycles** (`TricycleBody`, 3 wheels, roof, 4 posts each) at the yard's mouth; booth rows 17 apart (z 12..80), cart, heaps and vendors moved to match |
+| 11 | Blue pharmacy billboard (top left) | none | `Billboard` 30 x 5, plain blue, **no text** (brands are never reproduced) |
+| 12 | Sides and rear unknown | plain | still approximated: plain cream with a maroon `SideBase`/`RearBase`, 8 `RearWindow`s, 6 `EndWindow`s |
+
+**Kept as-is:** Guide, InfoPanel, the five required props (`MarketStalls`, `Baskets`, `Produce`, `PriceSigns`, `VendorNPCs`), the anchors `HallBody`/`NameBand`/`BalconyDeck`/`YardSlab`, the sample-price board, pivot (-330, 0, 160) facing E. No terrain repaint; all thin ground parts stay inside the paved region.
+
+**Result:** 1,104 parts (1,087 built + 17 kept; 960 without the 8 vendor rigs), BuildCheck 15/0, checkWorld 6256 (6128 - 976 + 1104).
+
+**Approximated:** the ridge runs along the long axis (the photo shows no roof pitch direction); the roof is a stand-in for the OSM colour, not seen in a photo; sides, rear, interior; the exact bay count (16 kept); stall contents; prices (illustrative).
