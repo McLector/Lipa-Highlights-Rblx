@@ -58,5 +58,24 @@ No terrain change (world.luau, world_check and the cell count stay as they are).
 ## Approximated
 One block stands in for the complex; the curved stand is three straight segments; lawns and the landscaped garden are plain terrain grass plus hedges; roofs are flat; no interiors; the logos in the photos are replaced by text.
 
+## Revision 1 (Slice 16): approach road, junction, roofs and layout
+New references (credited in `content/site_credits.md`): eight Commons junction photos by Judgefloro (CC0, 2019-09-23, `Category:The_Outlets_at_Lipa`) and the LIMA Estate 2025 drone shot (Aboitiz Economic Estates, CC BY-SA 4.0). The Commons set shows only the road side (no shop block or pitch), so the shop facades, pitch and stand keep following the architizer photos above. Decisions with the user: use Commons for the junction, drone shot for layout and roofs, and the recommended middle scope (one extra block, not a full cluster).
+Real vs model, and what changed (origin frame unless "SH"; `tests/site06_check.luau` pins every number):
+| Area | Real | Now built |
+|---|---|---|
+| Road | light-grey concrete, black and yellow kerbs, zebra crossing | `EntryPath` 16 wide (x -128..-112), 34 painted `KerbBlack`/`KerbYellow` segments, 7 `ZebraStripe` at z 91 |
+| Sidewalks | light interlocking pavers | two 0.4-thick `PaverStrip` (5 x 68) |
+| Avenue and lamps | royal palms both sides, cobra-head lamps, purple banners | 4 avenue palms, 4 lamps with `LampBanner` ("NOW OPEN"), 2 orange `WaterBarrier` |
+| Island | ~30 clipped round shrubs, foxtail palms, lava rock, yellow chain bollards | `IslandLawn` x -150..-136, 28 `Topiary` in five greens, 3 palms, 2 `IslandRock`, 7 `ChainBollard`, 6 `ChainLink` |
+| Billboard | roadside, steel frame, "%/OUTLETS" | `BillboardPanel` 24 x 10 on 2 posts at x -152, bottom 17 above ground, text only |
+| Pylon | tall stacked tenant panels, red chevron | `PylonBody` 26 tall at (-94, 98), 7 `PylonSign` (generic names plus ABOITIZ PITCH), `PylonChevron` red on `PylonChevronDark` |
+| Entrance | low white office, red door, canopy | `OfficeBody` 10 x 9 x 12 at (-87, 86), `OfficeDoor` 8.6 high, `OfficeCanopy` on 2 posts |
+| Roofs | blue solar, brown-maroon fascia | `ShopSolar` (6) on the shop block, `WingFascia`, `SecondSolar` (8), `SecondFascia` |
+| Layout | many blocks round courtyards | `SecondBlock` (SH x 56..92, z 46..60, 22 high) across a courtyard: `CourtyardLink` slab, 2 `CourtyardPlanter`, 4 `CourtyardShrub` |
+| Pitch side | long maroon and white block along the pitch | `PitchBlock` 9 x 10 x 72 at x 77, 6 `PitchBlockSolar`, 3 `PitchBlockDoor` |
+| Pitch | bright turf | `PitchTurf` (44, 152, 62); the south fence was dropped because the stand closes that side |
+The car park slab moved 9 studs south (z 62..106) and is light concrete; the old flat `Hedge` boxes and the old 11-stud pylon are gone. Kept and untouched: Guide, InfoPanel, JeepStop, Jeepney, the entrance sign, estate pedestal, Lipa/Malvar panel, stand, walkway.
+Not measured: the drone shot's compass orientation (assumed pitch south-east of the cluster, as built); the pylon tenant list is generic, not the photographed shop names. No terrain change. Parts 512 -> 687.
+
 ## Art-observation hooks for dialogue (Slice 12 will source them)
 Strong colour contrast of warm orange timber cladding against white render and dark glass; deep overhangs that create shade and a clear horizontal rhythm; repeated vertical slats and planks; open green pitch against the dense block of shops.

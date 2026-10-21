@@ -58,6 +58,16 @@ return function(t)
 		expect.truthy(found)
 	end)
 
+	t.test("site 6 credits the Commons category and the LIMA Estate drone file that the Slice 16 Outlets rework drew on", function()
+		local category, drone = false, false
+		for _, url in ipairs(CreditsData.sites[6].urls) do
+			if url == "https://commons.wikimedia.org/wiki/Category:The_Outlets_at_Lipa" then category = true end
+			if url == "https://commons.wikimedia.org/wiki/File:LIMA_Estate_as_of_2025.jpg" then drone = true end
+		end
+		expect.truthy(category)
+		expect.truthy(drone)
+	end)
+
 	t.test("credits are ASCII so the board and the typewriter-safe rules hold", function()
 		for _, entry in ipairs(CreditsData.sites) do
 			for _, url in ipairs(entry.urls) do

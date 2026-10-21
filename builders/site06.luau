@@ -37,7 +37,7 @@ return function()
 	local PART_BUDGET = 2500
 	local REPLACED = {
 		Block = true, Structure = true, Grounds = true, ShopStreet = true, SportsField = true,
-		EstateModelPedestal = true, LipaMalvarPanel = true,
+		EstateModelPedestal = true, LipaMalvarPanel = true, Junction = true,
 	}
 
 	-- Colours (Outlets_Corner_Storefront.jpg, Outlets_Storefront_Front.jpg, Outlets_Facade_and_Covered_Walkway.jpg,
@@ -52,8 +52,8 @@ return function()
 	local BLACK = Color3.fromRGB(18, 18, 22)
 	local GLASSC = Color3.fromRGB(60, 76, 88)
 	local STEEL = Color3.fromRGB(120, 124, 130)
-	local TURF = Color3.fromRGB(50, 130, 60)
-	local TURF2 = Color3.fromRGB(58, 142, 68)
+	local TURF = Color3.fromRGB(44, 152, 62) -- the drone shot shows a bright synthetic green
+	local TURF2 = Color3.fromRGB(54, 166, 72)
 	local LINE_W = Color3.fromRGB(240, 240, 236)
 	local LINE_O = Color3.fromRGB(210, 110, 40)
 	local CONCRETE = Color3.fromRGB(190, 188, 182)
@@ -66,6 +66,20 @@ return function()
 	local HEDGE = Color3.fromRGB(52, 110, 56)
 	local YELLOW = Color3.fromRGB(240, 200, 40)
 	local BULB = Color3.fromRGB(255, 214, 140)
+	-- Slice 16 (Commons junction photos, LIMA Estate 2025 drone shot): light-grey concrete road, paver sidewalks, maroon fascias,
+	-- purple lamp banners, clipped round shrubs in four greens, lava rock.
+	local ROAD = Color3.fromRGB(184, 184, 180)
+	local ROAD2 = Color3.fromRGB(176, 176, 172)
+	local PAVER = Color3.fromRGB(212, 210, 204)
+	local MAROON = Color3.fromRGB(112, 52, 44)
+	local PURPLE = Color3.fromRGB(78, 40, 112)
+	local REDC = Color3.fromRGB(214, 32, 40)
+	local SLATE = Color3.fromRGB(66, 62, 64)
+	local GRASSC = Color3.fromRGB(74, 140, 62)
+	local TOPIARY = {
+		Color3.fromRGB(62, 128, 60), Color3.fromRGB(54, 112, 52), Color3.fromRGB(92, 150, 60),
+		Color3.fromRGB(170, 196, 60), Color3.fromRGB(196, 208, 110),
+	}
 	local CONC, PLAS = Enum.Material.Concrete, Enum.Material.SmoothPlastic
 	local METAL, GLASS = Enum.Material.Metal, Enum.Material.Glass
 	local NEON, LEAFM, WOOD = Enum.Material.Neon, Enum.Material.Grass, Enum.Material.Wood
@@ -240,12 +254,19 @@ return function()
 		ctx:repeatAlong(8, V(-35, 10.5, 15.55), V(10, 0, 0), function(_, p)
 			ctx:part("CanopyStrut", V(0.4, 0.4, 6.9), CF(p) * ANG(-0.55, 0, 0), STEEL, METAL)
 		end)
+		-- Solar roof (drone shot: nearly every roof carries blue panels), on top of the 34-high band.
+		for _, x in ipairs({ -24, 0, 24 }) do
+			for _, z in ipairs({ -6, 8 }) do
+				ctx:part("ShopSolar", V(9, 0.3, 6), CF(x, 34.7, z) * ANG(0.18, 0, 0), SOLAR, PLAS)
+			end
+		end
 	end
 
 	------------------------------------------------------------------ White neighbour: its own roofline, orange tower (SH frame)
 	local function buildWing(ctx)
 		ctx:part("WingBody", V(40, 22, 24), CF(66, 11, 2), WHITE, CONC)
 		ctx:part("WingParapet", V(40.8, 0.8, 24.8), CF(66, 22.4, 2), GREY, CONC)
+		ctx:part("WingFascia", V(40.8, 1.2, 0.6), CF(66, 20.6, 14.6), MAROON, PLAS) -- brown-maroon fascia (drone shot)
 		-- Tall orange accent panel at the SE end, standing 4 studs above the roof.
 		for i = 0, 2 do
 			ctx:part("AccentPlank", V(3.5, 26, 1.6), CF(77.5 + 3.5 * i, 13, 14.8), (i % 2 == 0) and ORANGE or ORANGE2, PLAS)
@@ -272,6 +293,39 @@ return function()
 		ctx:part("WalkwayFascia", V(46, 1, 0.4), CF(63, 11.6, 26), WHITE, PLAS)
 		for _, x in ipairs({ 46, 58, 70, 83 }) do
 			post(ctx, "WalkwayPost", 0.7, 11.4, x, 0, 25.4, STEEL, METAL)
+		end
+	end
+
+	------------------------------------------------------------------ Second block: a white two-storey unit across the courtyard (SH frame)
+	-- The drone shot shows many low blocks round courtyards; one more block, facing NE onto the forecourt, hints at that cluster.
+	-- Shop-frame x 56..92, z 46..60: 13+ studs east of the Guide, clear of the pad and the path (see site06_check).
+	local function buildSecond(ctx)
+		ctx:part("SecondBody", V(36, 22, 14), CF(74, 11, 53), WHITE, CONC)
+		ctx:part("SecondFascia", V(36.8, 1.2, 14.8), CF(74, 22.6, 53), MAROON, PLAS)
+		for _, x in ipairs({ 61, 67, 81, 87 }) do
+			glass(ctx, "SecondGlassGround", V(5.2, 9, 0.4), CF(x, 5.2, 45.8))
+		end
+		for _, x in ipairs({ 60, 67, 74, 81, 88 }) do
+			glass(ctx, "SecondGlassUpper", V(6, 7, 0.4), CF(x, 16.2, 45.8))
+		end
+		glass(ctx, "SecondDoor", V(6, 9, 0.4), CF(74, 4.5, 45.7))
+		for i = 0, 3 do
+			for _, z in ipairs({ 49.5, 56.5 }) do
+				ctx:part("SecondSolar", V(7, 0.3, 5), CF(62 + 8.6 * i, 23.6, z), SOLAR, PLAS)
+			end
+		end
+	end
+
+	------------------------------------------------------------------ Pitch-side block: long, low, maroon and white, solar roof (ORIGIN frame)
+	-- The drone shot has a long block along the pitch's near side; here it runs along the pitch's west fence (x 72.5..81.5).
+	local function buildPitchBlock(ctx)
+		ctx:part("PitchBlock", V(9, 10, 72), CF(77, 5, -56), WHITE, CONC)
+		ctx:part("PitchBlockFascia", V(9.8, 1, 72.8), CF(77, 10.5, -56), MAROON, PLAS)
+		for i = 0, 5 do
+			ctx:part("PitchBlockSolar", V(7, 0.3, 10), CF(77, 11.3, -86 + 12 * i), SOLAR, PLAS)
+		end
+		for _, z in ipairs({ -80, -56, -32 }) do
+			glass(ctx, "PitchBlockDoor", V(0.4, 9, 4), CF(81.7, 4.5, z))
 		end
 	end
 
@@ -419,11 +473,13 @@ return function()
 				ctx:ball("Bulb", 0.6, CF(x0 + (x1 - x0) * t, y - 0.45, 25), BULB, NEON)
 			end
 		end
-		-- Wayfinding pylon with text rows (text only).
-		ctx:part("PylonBody", V(3.2, 11, 1.2), CF(40, 5.9, 28), STEEL, METAL)
-		for i, text in ipairs({ "SHOPS", "ABOITIZ PITCH", "PARKING", "RESTROOM" }) do
-			local bar = ctx:part("PylonSign", V(2.9, 1.5, 0.2), CF(40, 9.4 - 1.9 * (i - 1), 28.7), WHITE, PLAS)
-			gui(bar, Enum.NormalId.Back, text, nil, Color3.fromRGB(30, 36, 48), 40)
+		-- Courtyard between the forecourt and the second block: a link slab, two planters with clipped shrubs.
+		ctx:part("CourtyardLink", V(40, 0.4, 4), CF(74, 0.2, 44), BRICK, CONC)
+		for _, x in ipairs({ 64.5, 78 }) do
+			ctx:part("CourtyardPlanter", V(8, 1.2, 3), CF(x, 0.6, 40), CONCRETE_LIGHT, CONC)
+			for _, dx in ipairs({ -2, 2 }) do
+				ctx:ball("CourtyardShrub", 3.6, CF(x + dx, 2.6, 40), HEDGE, LEAFM)
+			end
 		end
 	end
 
@@ -447,36 +503,116 @@ return function()
 		ctx:part("SignCap", V(36, 1, 4.4), SIGN * CF(0, 15.7, 0), WHITE, CONC)
 
 		-- Entry path from the road mouth (-120, +100), with a spur east toward the Guide (it stops 21 studs short of her).
-		ctx:part("EntryPath", V(12, 0.4, 76), CF(-120, 0.2, 62), CONCRETE_LIGHT, CONC)
+		ctx:part("EntryPath", V(16, 0.4, 76), CF(-120, 0.2, 62), ROAD, CONC) -- the concrete approach road, kerbed in buildJunction
 		ctx:part("EntrySpur", V(86, 0.4, 10), CF(-83, 0.2, 25), CONCRETE_LIGHT, CONC)
 
 		-- Car park south of the shops: slab, bay lines, a few cars, light poles.
-		ctx:part("CarParkSlab", V(118, 0.4, 46), CF(-1, 0.2, 75), ASPHALT, CONC)
-		for _, zc in ipairs({ 62, 88 }) do
+		-- Slice 16: moved 9 studs south (z 62..106) to leave room for the second block; light concrete like the road.
+		ctx:part("CarParkSlab", V(118, 0.4, 44), CF(-1, 0.2, 84), ROAD2, CONC)
+		for _, zc in ipairs({ 72, 96 }) do
 			ctx:repeatAlong(13, V(-54, 0.43, zc), V(9, 0, 0), function(_, p)
 				ctx:part("BayLine", V(0.3, 0.05, 12), CF(p), LINE_W, PLAS)
 			end)
 		end
-		car(ctx, -36, 62, WHITE)
-		car(ctx, -9, 62, Color3.fromRGB(170, 40, 40))
-		car(ctx, -27, 88, Color3.fromRGB(150, 154, 160))
-		car(ctx, 18, 88, Color3.fromRGB(30, 50, 110))
-		car(ctx, 45, 88, Color3.fromRGB(60, 62, 68))
+		car(ctx, -36, 72, WHITE)
+		car(ctx, -9, 72, Color3.fromRGB(170, 40, 40))
+		car(ctx, -27, 96, Color3.fromRGB(150, 154, 160))
+		car(ctx, 18, 96, Color3.fromRGB(30, 50, 110))
+		car(ctx, 45, 96, Color3.fromRGB(60, 62, 68))
 		for _, x in ipairs({ -40, -10, 20, 50 }) do
-			post(ctx, "CarParkPole", 0.8, 16, x, 0.4, 75, STEEL, METAL)
-			ctx:part("CarParkLamp", V(4, 0.6, 1.2), CF(x, 16.6, 75), BULB, NEON)
+			post(ctx, "CarParkPole", 0.8, 16, x, 0.4, 84, STEEL, METAL)
+			ctx:part("CarParkLamp", V(4, 0.6, 1.2), CF(x, 16.6, 84), BULB, NEON)
 		end
 
-		-- Palm rows along the entry path and the car park's west edge.
-		for _, p in ipairs({ { -132, 34 }, { -132, 50 }, { -132, 66 }, { -132, 82 }, { -132, 96 }, { -66, 56 }, { -66, 76 }, { -66, 96 } }) do
+		-- Palm row along the car park's west edge (the entry avenue and the junction island are in buildJunction).
+		for _, p in ipairs({ { -66, 56 }, { -66, 76 }, { -66, 96 } }) do
 			palm(ctx, p[1], p[2])
 		end
-		-- Low hedges along the car park's north edge and the spur.
-		for i = 0, 4 do
-			ctx:part("Hedge", V(20, 1.8, 1.6), CF(-52 + 22 * i, 0.9, 50), HEDGE, LEAFM)
+	end
+
+	------------------------------------------------------------------ Junction: kerbed road, sidewalks, avenue, island, billboard, pylon, office (ORIGIN frame)
+	-- From the Commons junction photos (Judgefloro, CC0): light-grey concrete road with black and yellow painted kerbs, a zebra
+	-- crossing, light paver sidewalks, royal palms down both sides, cobra-head lamps with purple banners, an island of clipped
+	-- round shrubs with foxtail palms and a lava rock behind yellow chain bollards, a billboard on a steel frame, a tall tenant
+	-- pylon with a red chevron, and a low white entrance office with a red door. The road is the 16-wide EntryPath (x -128..-112).
+	local function buildJunction(ctx)
+		-- Painted kerbs, 4-stud segments alternating black and yellow; the east kerb starts at z 34 so the spur stays open.
+		for i = 0, 17 do
+			ctx:part((i % 2 == 0) and "KerbBlack" or "KerbYellow", V(0.8, 0.6, 4), CF(-128.4, 0.3, 28 + 4 * i), (i % 2 == 0) and BLACK or YELLOW, CONC)
 		end
-		for i = 0, 2 do
-			ctx:part("Hedge", V(20, 1.8, 1.6), CF(-110 + 24 * i, 0.9, 32), HEDGE, LEAFM)
+		for i = 0, 15 do
+			ctx:part((i % 2 == 0) and "KerbBlack" or "KerbYellow", V(0.8, 0.6, 4), CF(-111.6, 0.3, 36 + 4 * i), (i % 2 == 0) and BLACK or YELLOW, CONC)
+		end
+		for i = 0, 6 do
+			ctx:part("ZebraStripe", V(1.2, 0.05, 6), CF(-124.8 + 2.1 * i, 0.43, 91), LINE_W, PLAS)
+		end
+		-- Paver sidewalks, 0.4 thick (thinner paving is buried by the terrain's grass blades).
+		ctx:part("PaverStrip", V(5, 0.4, 68), CF(-131.5, 0.2, 66), PAVER, CONC)
+		ctx:part("PaverStrip", V(5, 0.4, 68), CF(-108.5, 0.2, 66), PAVER, CONC)
+		-- Cobra-head lamps on the east sidewalk, each with a purple "NOW OPEN" banner facing the road.
+		for _, z in ipairs({ 44, 62, 80, 96 }) do
+			post(ctx, "StreetLampPole", 0.7, 16, -108.5, 0.4, z, STEEL, METAL)
+			ctx:part("StreetLampArm", V(3.6, 0.4, 0.4), CF(-110.3, 16.2, z), STEEL, METAL)
+			ctx:part("StreetLampHead", V(1.8, 0.4, 0.9), CF(-112.2, 16, z), Color3.fromRGB(230, 230, 220), PLAS)
+			local banner = ctx:part("LampBanner", V(0.2, 5.5, 1.8), CF(-109.4, 9.5, z), PURPLE, PLAS)
+			gui(banner, Enum.NormalId.Left, "NOW OPEN", nil, Color3.new(1, 1, 1), 40)
+		end
+		for _, z in ipairs({ 52, 70 }) do
+			ctx:part("WaterBarrier", V(1.6, 3, 5), CF(-108.5, 1.9, z), Color3.fromRGB(214, 100, 64), PLAS)
+		end
+		-- Royal palms down both sides of the road (the junction island carries its own).
+		for _, p in ipairs({ { -139, 34 }, { -139, 46 }, { -103, 33 }, { -103, 42 } }) do
+			palm(ctx, p[1], p[2])
+		end
+
+		-- Island: a 0.4 thick lawn (x -150..-136, z 58..100), 28 clipped round shrubs, 3 palms, 2 lava rocks, chain bollards.
+		ctx:part("IslandLawn", V(14, 0.4, 42), CF(-143, 0.2, 79), GRASSC, LEAFM)
+		local seed = 7
+		local function rnd()
+			seed = (seed * 16807) % 2147483647
+			return seed / 2147483647
+		end
+		for i = 1, 28 do
+			local d = 3 + rnd() * 3.2
+			ctx:ball("Topiary", d, CF(-148.6 + rnd() * 11.2, 0.4 + d * 0.4, 59 + rnd() * 40), TOPIARY[(i - 1) % 5 + 1], LEAFM)
+		end
+		for _, p in ipairs({ { -141, 64 }, { -146, 78 }, { -141, 92 } }) do
+			palm(ctx, p[1], p[2])
+		end
+		ctx:part("IslandRock", V(3.2, 2.2, 3), CF(-139.5, 1.2, 72) * ANG(0.2, 0.6, 0.1), SLATE, Enum.Material.Slate)
+		ctx:part("IslandRock", V(3, 2, 3.2), CF(-146, 1.2, 88) * ANG(0.1, 1.1, 0.2), SLATE, Enum.Material.Slate)
+		for i = 0, 6 do
+			post(ctx, "ChainBollard", 0.6, 3.4, -135.2, 0.4, 60 + 6 * i, YELLOW, PLAS)
+		end
+		for i = 0, 5 do
+			ctx:part("ChainLink", V(0.12, 0.12, 6), CF(-135.2, 3.2, 63 + 6 * i), BLACK, PLAS)
+		end
+
+		-- Billboard on a steel frame west of the road, facing east (text and plain colours only, no photo texture).
+		for _, z in ipairs({ 34, 50 }) do
+			post(ctx, "BillboardPost", 1.6, 18, -152, 0, z, STEEL, METAL)
+		end
+		ctx:part("BillboardFrame", V(0.5, 11.2, 25.2), CF(-152.6, 22, 42), DARK, PLAS)
+		ctx:part("BillboardAccent", V(0.5, 1.2, 24), CF(-151.7, 16.4, 42), REDC, PLAS)
+		local board = ctx:part("BillboardPanel", V(0.8, 10, 24), CF(-152, 22, 42), WHITE, PLAS)
+		gui(board, Enum.NormalId.Right, "% THE OUTLETS", "ALL-OUT ON GREAT DEALS. GREAT FINDS.", Color3.fromRGB(180, 30, 40), 30)
+
+		-- Tenant pylon at the road mouth: tall steel stack of seven panels with a red chevron and a dark-grey backing.
+		ctx:part("PylonBody", V(1.2, 26, 3.6), CF(-94, 13, 98), STEEL, METAL)
+		for i, text in ipairs({ "SPORTSWEAR OUTLET", "FOOTWEAR OUTLET", "ABOITIZ PITCH", "FOOD HALL", "PARKING", "RESTROOMS", "INFO" }) do
+			local bar = ctx:part("PylonSign", V(0.2, 2.6, 3.2), CF(-94.7, 2.8 + 3.3 * (i - 1), 98), WHITE, PLAS)
+			gui(bar, Enum.NormalId.Left, text, nil, Color3.fromRGB(30, 36, 48), 40)
+		end
+		-- (z 101: the 11-stud diamond's far corner then reaches z 108.8, inside the footprint +10% of 110)
+		ctx:part("PylonChevronDark", V(1, 8, 8), CF(-95.7, 7, 101) * ANG(PI / 4, 0, 0), Color3.fromRGB(62, 64, 70), PLAS)
+		ctx:part("PylonChevron", V(1.2, 11, 11), CF(-96.5, 7, 101) * ANG(PI / 4, 0, 0), REDC, PLAS)
+
+		-- Entrance office: a low white block with a red door on its west face and a flat canopy on two posts.
+		ctx:part("OfficeBody", V(10, 9, 12), CF(-87, 4.5, 86), WHITE, CONC)
+		ctx:part("OfficeDoor", V(0.3, 8.6, 4), CF(-92.1, 4.3, 86), Color3.fromRGB(200, 40, 40), PLAS)
+		ctx:part("OfficeCanopy", V(6, 0.4, 12), CF(-95, 9.8, 86), Color3.fromRGB(60, 64, 70), PLAS)
+		for _, z in ipairs({ 81, 91 }) do
+			post(ctx, "OfficePost", 0.6, 9.6, -97.5, 0, z, STEEL, METAL)
 		end
 	end
 
@@ -517,8 +653,11 @@ return function()
 		component("Walkway", "Structure", SH, buildWalkway)
 		component("Stand", "Structure", ORIGIN, buildStand)
 		component("SportsField", "Site", ORIGIN, buildPitch)
+		component("SecondBlock", "Structure", SH, buildSecond)
+		component("PitchBlock", "Structure", ORIGIN, buildPitchBlock)
 		component("ShopStreet", "Site", SH, buildStreet)
 		component("Grounds", "Site", ORIGIN, buildGrounds)
+		component("Junction", "Site", ORIGIN, buildJunction)
 		component("EstateModelPedestal", "Site", SH, buildPedestal)
 		component("LipaMalvarPanel", "Site", SH, buildPanel)
 		assert(used <= PART_BUDGET, string.format("site06: %d parts exceeds the %d budget", used, PART_BUDGET))

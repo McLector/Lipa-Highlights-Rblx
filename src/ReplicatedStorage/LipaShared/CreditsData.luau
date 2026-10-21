@@ -31,6 +31,8 @@ CreditsData.sites = {
 	} },
 	{ id = 6, urls = {
 		"https://architizer.com/projects/the-outlets-at-lipa/",
+		"https://commons.wikimedia.org/wiki/Category:The_Outlets_at_Lipa",
+		"https://commons.wikimedia.org/wiki/File:LIMA_Estate_as_of_2025.jpg",
 	} },
 	{ id = 7, urls = {
 		"https://www.marriott.com/en-us/hotels/mnlfs-the-farm-at-san-benito-autograph-collection/photos/",

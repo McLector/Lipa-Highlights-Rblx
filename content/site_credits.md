@@ -48,9 +48,11 @@ Photos in folder: 28 (plus 11 in rework_2026, see the attribution section at the
 
 ## Site 6: The Outlets @LIMA Estate and Aboitiz Pitch
 Folder: 05_The_Outlets_LIMA
-Photos in folder: 22; unique source pages: 1
+Photos in folder: 22 (plus 27 in rework_2026, see the attribution section at the end); unique source pages: 3
 
 - https://architizer.com/projects/the-outlets-at-lipa/
+- https://commons.wikimedia.org/wiki/Category:The_Outlets_at_Lipa
+- https://commons.wikimedia.org/wiki/File:LIMA_Estate_as_of_2025.jpg
 
 ## Site 7: The Farm at San Benito
 Folder: 06_The_Farm_San_Benito
@@ -109,3 +111,21 @@ The Site 5 model was rebuilt from the photos below (Wikimedia Commons, downloade
 | MtCarmelChurchjf1012 13 | 2013-06-17 | Ramon FVelasquez | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:MtCarmelChurchjf1012_13.JPG |
 
 Church and monastery-compound footprints (church building way 157078294, Carmelite Monastery way 384123043 and the buildings around them): (c) OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright (church building: https://www.openstreetmap.org/way/157078294). Data fetched via the Overpass API on 2026-10-22.
+
+## Slice 16 rework: Outlets reference attribution
+
+The Site 6 junction, approach road, landscaping, signage and entrance were reworked from the Wikimedia Commons files below, and the roof, block and pitch layout from the LIMA Estate drone shot (downloaded at 2000 px width into `Lipa_structure_Exterior_References/05_The_Outlets_LIMA/rework_2026/`, which is not in this repository). The photos were used only as visual reference for shapes, proportions and colours; no photo is used as a texture in the experience. Author, licence and page are as recorded by Commons on 2026-10-22. The licences differ (CC0 and CC BY-SA 4.0), as noted per photo. The shop-block facades, the pitch and the stand still follow the architizer photos listed under Site 6.
+
+| Photo | Date | Author | Licence | Commons page |
+|---|---|---|---|---|
+| 595Lipa City Malvar Junction 21 | 2019-09-23 | Judgefloro | CC0 | https://commons.wikimedia.org/wiki/File:595Lipa_City_Malvar_Junction_21.jpg |
+| 595Lipa City Malvar Junction 24 | 2019-09-23 | Judgefloro | CC0 | https://commons.wikimedia.org/wiki/File:595Lipa_City_Malvar_Junction_24.jpg |
+| 595Lipa City Malvar Junction 27 | 2019-09-23 | Judgefloro | CC0 | https://commons.wikimedia.org/wiki/File:595Lipa_City_Malvar_Junction_27.jpg |
+| 595Lipa City Malvar Junction 30 | 2019-09-23 | Judgefloro | CC0 | https://commons.wikimedia.org/wiki/File:595Lipa_City_Malvar_Junction_30.jpg |
+| 9803Lipa City Malvar, Batangas 30 | 2019-09-23 | Judgefloro | CC0 | https://commons.wikimedia.org/wiki/File:9803Lipa_City_Malvar,_Batangas_30.jpg |
+| 9803Lipa City Malvar, Batangas 34 | 2019-09-23 | Judgefloro | CC0 | https://commons.wikimedia.org/wiki/File:9803Lipa_City_Malvar,_Batangas_34.jpg |
+| 9803Lipa City Malvar, Batangas 37 | 2019-09-23 | Judgefloro | CC0 | https://commons.wikimedia.org/wiki/File:9803Lipa_City_Malvar,_Batangas_37.jpg |
+| 9803Lipa City Malvar, Batangas 40 | 2019-09-23 | Judgefloro | CC0 | https://commons.wikimedia.org/wiki/File:9803Lipa_City_Malvar,_Batangas_40.jpg |
+| LIMA Estate as of 2025 | 2025-07-17 | Aboitiz Economic Estates | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:LIMA_Estate_as_of_2025.jpg |
+
+All 26 files of `Category:The_Outlets_at_Lipa` (Judgefloro, CC0, 2019-09-23) were downloaded, but only the eight above were examined; the other 18 are not credited as sources. The category page is https://commons.wikimedia.org/wiki/Category:The_Outlets_at_Lipa.
