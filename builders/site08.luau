@@ -31,11 +31,12 @@ return function()
 	local REPLACED = { Block = true, Structure = true, Clubhouse = true, MountainBackdrop = true, LeisureSpacesPanel = true }
 
 	-- Colours (brief table) and materials.
-	local TERRA = Color3.fromRGB(170, 70, 45)
-	local TERRA_CAP = Color3.fromRGB(140, 54, 36)
+	local TERRA = Color3.fromRGB(200, 84, 52) -- the photos' roof is a bright orange-red; the first pass (170,70,45) read dull pink
+	local TERRA_CAP = Color3.fromRGB(168, 64, 40)
 	local OFFW = Color3.fromRGB(232, 228, 214)
 	local TAN = Color3.fromRGB(176, 160, 130)
 	local MINT = Color3.fromRGB(150, 196, 170)
+	local STONE_J = Color3.fromRGB(128, 114, 90)
 	local BROWN = Color3.fromRGB(130, 90, 60)
 	local GLASSC = Color3.fromRGB(150, 190, 200)
 	local CONC = Color3.fromRGB(186, 178, 166)
@@ -152,6 +153,16 @@ return function()
 			box(ctx, "Pilaster", x - 0.6, x + 0.6, 4, 12, 16.2, 16.8, MINT, SMOOTH)
 		end
 		box(ctx, "MintBand", -50, 50, 11.4, 11.8, 16.2, 16.6, MINT, SMOOTH)
+		-- Cut-stone courses on the cladding and mint surrounds on the six ground-floor windows (cart-side photo).
+		for _, y in ipairs({ 5.5, 7, 8.5, 10 }) do
+			box(ctx, "StoneCourse", -50, 50, y, y + 0.15, 16.2, 16.4, STONE_J, STONE)
+		end
+		for _, x in ipairs({ -43.75, -31.25, -18.75, 18.75, 31.25, 43.75 }) do
+			box(ctx, "WindowTrim", x - 4.6, x - 4, 4.4, 11.6, 15.9, 16.9, MINT, SMOOTH)
+			box(ctx, "WindowTrim", x + 4, x + 4.6, 4.4, 11.6, 15.9, 16.9, MINT, SMOOTH)
+			box(ctx, "WindowTrim", x - 4.6, x + 4.6, 11, 11.6, 15.9, 16.9, MINT, SMOOTH)
+			box(ctx, "WindowTrim", x - 4.6, x + 4.6, 4.4, 5, 15.9, 16.9, MINT, SMOOTH)
+		end
 		-- Balcony slab (front, except the entry gable), slim columns under it, and eight separate rail segments.
 		box(ctx, "BalconySlabL", -50, -14, 12, 12.8, 16, 21, OFFW, SMOOTH)
 		box(ctx, "BalconySlabR", 14, 50, 12, 12.8, 16, 21, OFFW, SMOOTH)
@@ -235,6 +246,10 @@ return function()
 		for i, x in ipairs({ -37, -30.5, -24 }) do
 			cart(x, 52.5, i % 2 == 0 and CART_C or CART_G, CART_C)
 			cart(x, 46, i % 2 == 0 and CART_G or CART_C, CART_C)
+		end
+		-- A third row on the left (the right side is walking lane c to the pool), as the aerial shows carts lined up along the drive.
+		for i, x in ipairs({ -37, -30.5, -24 }) do
+			cart(x, 41, i % 2 == 0 and CART_C or CART_G, CART_C)
 		end
 		-- Flagpole outside the lanes, with a small cloth.
 		vcyl(ctx, "Flagpole", -44, 30, 0, 14, 0.4, OFFW, SMOOTH)
@@ -394,7 +409,9 @@ return function()
 		label.Position = UDim2.fromScale(0.03, 0.07)
 		label.BackgroundTransparency = 1
 		label.TextColor3 = TEXT
-		label.TextScaled = true
+		-- 225 characters: a fixed TextSize (TextScaled shrinks a board this long to unreadable type).
+		label.TextScaled = false
+		label.TextSize = 16
 		label.TextWrapped = true
 		label.Font = Enum.Font.GothamBold
 		label.Text = "LEISURE SPACES. Mount Malarayat Golf & Country Club is a recreation and hospitality destination in Lipa's mountain setting. It offers golf, accommodation and other leisure facilities; access depends on the service or booking."
@@ -409,25 +426,25 @@ return function()
 	section(ID, panel, buildPanel)
 
 	------------------------------------------------------------------ Trees and planting (world frame): trunks collide, fronds do not
-	-- Norfolk pine, 28 high: a trunk and five stepped tiers. Seated on the ground under (x, z).
+	-- Norfolk pine, 34 high: a trunk and eight slender stepped tiers (the photos' pines are tall and narrow). Seated on the ground under (x, z).
 	local function pine(ctx, x, z)
 		local g = gnd(x, z)
-		vcyl(ctx, "PineTrunk", x, z, g, g + 28, 1.2, PTRUNK, WOODM)
-		local tiers = { { 7, 11, 9 }, { 11, 15, 7.5 }, { 15, 19, 6 }, { 19, 23, 4.5 }, { 23, 28, 3 } }
-		for _, t in ipairs(tiers) do
-			vcyl(ctx, "PineTier", x, z, g + t[1], g + t[2], t[3], PINE, GRASSM)
+		vcyl(ctx, "PineTrunk", x, z, g, g + 34, 1.2, PTRUNK, WOODM)
+		for k = 0, 7 do
+			local y0 = 6 + k * 3.5
+			vcyl(ctx, "PineTier", x, z, g + y0, g + y0 + 3.2, 9.5 - k * 0.95, PINE, GRASSM)
 		end
 	end
 	-- Palm, 15 high: three stacked trunk segments and six non-colliding fronds.
 	local function palm(ctx, x, z)
 		local g = gnd(x, z)
-		local h = 15
+		local h = 18
 		for k = 0, 2 do
 			vcyl(ctx, "PalmTrunk", x, z, g + k * h / 3, g + (k + 1) * h / 3, 1.2, PTRUNK, WOODM)
 		end
-		for k = 1, 6 do
-			local ang = (k - 1) * PI / 3 + 0.3
-			local fr = ctx:part("PalmFrond", V(6.5, 0.3, 1.5), CF(x, g + h, z) * ANG(0, ang, 0) * CF(3.4, 0, 0) * ANG(0, 0, -0.35), FROND, GRASSM)
+		for k = 1, 8 do
+			local ang = (k - 1) * PI / 4 + 0.3
+			local fr = ctx:part("PalmFrond", V(9.5, 0.3, 1.8), CF(x, g + h, z) * ANG(0, ang, 0) * CF(4.6, 0, 0) * ANG(0, 0, -0.5), FROND, GRASSM)
 			fr.CanCollide = false
 		end
 	end

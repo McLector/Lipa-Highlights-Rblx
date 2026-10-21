@@ -119,3 +119,16 @@ The clubhouse as a box with a hipped roof (real: a longer, more complex roof mas
 
 ## Art-observation hooks for dialogue (Slice 12 will source them)
 The big hipped roof as the dominant mass (emphasis and unity); the horizontal layering of lawn, arcade, balcony and roof; the repeated windows and columns as rhythm; red-brown roof against green lawn and blue-green mountains (colour harmony and contrast); the curved pool and pond against the straight building (organic against geometric form); the mountain backdrop as depth and scale.
+
+## Revision 1 (Slice 21): fidelity rework from the clubhouse aerial and the cart-side exterior
+**References:** the photos the brief already names (`Malarayat_Clubhouse_Aerial.jpg`, `Malarayat_Club_Building_Exterior_Golf_Cart_Side.jpg`, `Malarayat_Clubhouse_Across_Lake.jpg`); no new photo, no credit change. `tests/site08_check.luau` encodes the table.
+
+| # | Real | Before | Now |
+|---|---|---|---|
+| 1 | Bright orange-red terracotta roof | dull pink (170,70,45) | (200,84,52); cap (168,64,40) |
+| 2 | Mint surrounds on the ground windows | mint pilasters and band only | 24 `WindowTrim` strips (4 per window) |
+| 3 | Cut-stone courses on the cladding | flat tan | 4 `StoneCourse` lines |
+| 4 | Rows of carts along the drive | 9 carts | 12 (third row on the left; the right side is walking lane c) |
+| 5 | Tall slender Norfolk pines | 28 high, 5 tiers | 34 high, 8 tiers (9.5 down to 2.9) |
+| 6 | Tall palms | 15 high, 6 fronds of 6.5 | 18 high, 8 fronds of 9.5 |
+| 7 | (model bug) | `LeisureBoard` 225 characters TextScaled | fixed 16 px wrapped text |
