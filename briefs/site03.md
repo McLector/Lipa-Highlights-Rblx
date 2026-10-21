@@ -72,3 +72,27 @@ Sides and rear walls (plain pink); the roof (flat parapet); the upper storeys' i
 
 ## Art-observation hooks for dialogue (Slice 12 will source them)
 The warm pink-and-orange palette against a plain street; the strong horizontal of the awning and banner band that frames the open dining front; an open front that invites people in (inside/outside continuity); rhythm of tables, chairs and globe lamps; eating together as a social scene.
+
+## Revision 1 (Slice 18): fidelity rework from the 2015 photo
+**Reference:** still only `Lomi_King_Front_Oblique_2015.jpg`. Wikimedia Commons has no Lomi King file (full-text search 0 hits, 2026-10-22). Twelve street files from the De La Salle Lipa / JP Laurel Highway area (2013-2025, CC BY-SA) were downloaded and looked at; none shows the shop or its sign, so none is used or credited. The era stays 2015 and the approved dialogue is unchanged.
+
+**Coordinates.** The sections above are in the original Slice 07 coordinates (centre 180, 140). The site is now at (292, 140): add +112 to every x. `tests/site03_check.luau` uses the world values (guide box x 250..274, z 128..152; InfoPanel front zone x 256..268, z 146..158; aisle x 272..313, z 138..142; paved region x 240..340, z 100..180). The builder still works in the original coordinates.
+
+### Real vs model (what changed)
+| # | Real (2015 photo) | Before | Now |
+|---|---|---|---|
+| 1 | "LOMI KING" is free-standing 3-D letters on the awning top, no backing board | grey `LetterBoard` slab with scaled text | 8 `Letter_*` blocks (x 165..167.6, y 16..19): LOMI cream-grey, KING blue-grey, 50 px glyph labels; board removed |
+| 2 | Fascia is plain orange | "LOMI KING" text on the fascia | no text on `AwningFascia` |
+| 3 | Tall full-width banner of blocks: red logo block, dish panels, red cup block | one thin yellow strip, one scaled text line | 6 `BannerBlock*` (y 8.5..12, z 116..150): SPECIALS, LOMI, PANCIT, RICE MEALS, SANDWICHES, a red cup block; 8 `BannerDish*` squares; 32 px labels. The KOPI VINZ name and the phone number are not reproduced |
+| 4 | Black steel posts and rail frame the opening | pink columns | 3 `SteelPost` (z 115.6, 126, 150.4) + `SteelRail`; none in the aisle |
+| 5 | Row of about 7 globe lamps behind the banner | 3 under the awning | 7 `PendantGlobe` at y 9.4 (z 119..149), cords to the rail; the 4 interior globes stay |
+| 6 | Large curved bay on the second floor | 6-stud cylinder | 7 dark glass panels (about 18 wide, 4 deep, z 120..138) between a pink sill and head band: `CurvedBay*` |
+| 7 | Iron grille on the upper right window; darker pier at the right edge | plain glass | 10 `GrilleBar*` over the southern upper window; `CornerPier` (x 170..172, z 164..166.6, y 0..44) |
+| 8 | Round red logo at the upper-left corner on a steel bracket | small, centred | `LogoDisk` 9 across at z 118.5, white `LogoRing`, red `LogoCore`, cream `LogoBowl`, `LogoBracket` from the awning top (y 16..33) + `LogoArm` |
+| 9 | Big pots, tall bushy shrubs | 2.4 pots, 3-stud ball | 3.2 `Pot`s, 3 stacked `Topiary*` balls each (top about y 10.8, 5 wide), x >= 163.5 (clear of the Guide box) |
+| 10 | Large parking board; ramen poster; bamboo screen with a cap | 12 x 5 sign, scaled text | `ParkingSign` 12 x 7 (y 1.5..8.5, 40 px wrapped text), `RamenPoster`, 8 `BambooSlat*`, `BambooCap` |
+| 11 | Saturated coral, darker pier | pale pink (232,130,112) | wall (242,129,108), pier (216,104,88) |
+| 12 | (model bug) back `MenuBoard` text clipped | one scaled line | six fixed-size lines (24 px) on a taller board |
+
+Guards kept: awning > 10 west of `LomiBody`; `CounterTop` > 15 east of the awning; `ParkingSign` z > body z + 10; lane, Guide and InfoPanel zones; thin ground parts inside the paved region.
+Still approximated: sides, rear, roof, upper-floor interiors, neighbours and wires.

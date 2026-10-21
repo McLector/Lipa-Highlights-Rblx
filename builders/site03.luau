@@ -38,8 +38,11 @@ return function()
 	}
 
 	-- Colours (by eye from Lomi_King_Front_Oblique_2015.jpg; see briefs/site03.md).
-	local PINK = Color3.fromRGB(232, 130, 112)
-	local PINK_DARK = Color3.fromRGB(214, 112, 96)
+	local PINK = Color3.fromRGB(242, 129, 108)
+	local PINK_DARK = Color3.fromRGB(216, 104, 88)
+	local STEEL_BLK = Color3.fromRGB(30, 32, 38)
+	local BANNER2 = Color3.fromRGB(236, 150, 40)
+	local SLAT = Color3.fromRGB(176, 146, 98)
 	local ORANGE = Color3.fromRGB(226, 120, 30)
 	local CREAM_GREY = Color3.fromRGB(200, 196, 184)
 	local BLUE_GREY = Color3.fromRGB(110, 140, 170)
@@ -86,7 +89,7 @@ return function()
 		return ctx:ball(name, dia, L(x, y, z), color, material)
 	end
 	-- Text on the part's frontage (Back) face.
-	local function gui(part, text, color, ppstud)
+	local function gui(part, text, color, ppstud, fixedSize)
 		local g = Instance.new("SurfaceGui")
 		g.Face = Enum.NormalId.Back
 		g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
@@ -97,7 +100,9 @@ return function()
 		t.Position = UDim2.fromScale(0.03, 0.1)
 		t.BackgroundTransparency = 1
 		t.TextColor3 = color
-		t.TextScaled = true
+		-- A long line must use a fixed TextSize: TextScaled renders tiny on a wide SurfaceGui (the Slice 17 name-band bug).
+		t.TextScaled = fixedSize == nil
+		if fixedSize then t.TextSize = fixedSize end
 		t.TextWrapped = true
 		t.Font = Enum.Font.GothamBlack
 		t.Text = text
@@ -150,54 +155,101 @@ return function()
 		B(ctx, "NorthWall", 172, 216, 0, 14, 114, 116, PINK, SMOOTH)
 		B(ctx, "RearWall", 214, 216, 0, 14, 116, 150, PINK_DARK, SMOOTH)
 		B(ctx, "ClosedBay", 172, 216, 0, 14, 150, 166, PINK, SMOOTH)
-		for _, z in ipairs({ 116, 126, 150 }) do
-			B(ctx, "FrontColumn", 171, 172.6, 0, 14, z - 0.8, z + 0.8, PINK_DARK, SMOOTH)
+		-- Black steel frame of the open front (the banner hangs in it); the posts stay out of the aisle (z 138..142).
+		for _, z in ipairs({ 115.6, 126, 150.4 }) do
+			B(ctx, "SteelPost", 162.9, 163.6, 0, 12, z - 0.4, z + 0.4, STEEL_BLK, METAL)
 		end
+		B(ctx, "SteelRail", 162.9, 163.6, 11.4, 12, 115, 151, STEEL_BLK, METAL)
 
 		-- Awning fascia across the open front, letter board on top, LOMI KING on the street face.
-		local awning = B(ctx, "AwningFascia", 162.4, 172, 12, 16, 114, 166, ORANGE, SMOOTH)
-		gui(awning, "LOMI KING", WHITE, 30)
-		local letters = B(ctx, "LetterBoard", 165, 170.5, 16, 18.2, 122, 158, CREAM_GREY, SMOOTH)
-		gui(letters, "LOMI KING", BLUE_GREY, 24)
+		B(ctx, "AwningFascia", 162.4, 172, 12, 16, 114, 166, ORANGE, SMOOTH)
+		-- Eight free-standing letters on the awning top (cream-grey LOMI, blue-grey KING), reading north to south.
+		for i = 1, 8 do
+			local g = ("LOMIKING"):sub(i, i)
+			local z0 = 122.45 + (i - 1) * 4.5
+			local letter = B(ctx, "Letter_" .. i .. g, 165, 167.6, 16, 19, z0, z0 + 3.6, i <= 4 and CREAM_GREY or BLUE_GREY, SMOOTH)
+			gui(letter, g, DARKF, 30, 50)
+		end
 
 		-- Upper storeys: one pink mass on top of the ground storey (hollow below y 14), flat parapet roof.
 		B(ctx, "LomiBody", 172, 216, 14, 44, 114, 166, PINK, SMOOTH)
 		B(ctx, "RoofSlab", 172, 216, 44, 45, 114, 166, ROOF, CONC)
 		B(ctx, "FrontParapet", 172, 172.6, 44, 45.5, 114, 166, PINK, SMOOTH)
-		for _, zr in ipairs({ { 116.5, 120.5 }, { 128.5, 135.5 }, { 137.5, 148.5 }, { 151.5, 159.5 } }) do
+		for _, zr in ipairs({ { 116.5, 119.5 }, { 139.5, 148.5 }, { 151.5, 159.5 } }) do
 			B(ctx, "WindowGlassA", 171.6, 171.95, 20, 26, zr[1], zr[2], GLASS_C, GLASS).Transparency = 0.25
 		end
 		for _, zr in ipairs({ { 116.5, 122.5 }, { 125.5, 134.5 }, { 146.5, 159.5 } }) do
 			B(ctx, "WindowGlassB", 171.6, 171.95, 30, 36, zr[1], zr[2], GLASS_C, GLASS).Transparency = 0.25
 		end
-		-- Second-floor round bay on the west face.
-		VCyl(ctx, "RoundBay", 171.4, 124, 19, 27, 6, PINK, SMOOTH)
-		-- Round red logo sign on a bracket high on the west face.
-		B(ctx, "LogoBracket", 169.2, 172, 30.6, 31.4, 139.8, 140.2, DARKF, METAL)
-		XCyl(ctx, "LogoDisk", 169.15, 169.65, 31, 140, 7, RED, SMOOTH)
-		XCyl(ctx, "LogoBowl", 168.9, 169.15, 31, 140, 4, CREAM_GREY, SMOOTH)
+		-- Curved second-floor bay (about 18 wide, 4 deep, z 120..138): 7 dark glass panels between a sill and a head band, each panel
+		-- a flat part yawed along the ellipse (local frame: lx = z - 140, lz = 180 - x).
+		do
+			local function bayPt(k)
+				local th = -PI / 2 + k * PI / 7
+				return 9 * math.sin(th) - 11, 8 + 4 * math.cos(th)
+			end
+			for k = 0, 6 do
+				local ax, az = bayPt(k)
+				local bx, bz = bayPt(k + 1)
+				local len = math.sqrt((bx - ax) ^ 2 + (bz - az) ^ 2)
+				local rot = ANG(0, math.atan2(-(bz - az), bx - ax), 0)
+				local mx, mz = (ax + bx) / 2, (az + bz) / 2
+				ctx:part("CurvedBayGlass" .. k, V(len + 0.2, 7.5, 0.5), CF(mx, 23.25, mz) * rot, GLASS_C, GLASS).Transparency = 0.25
+				ctx:part("CurvedBaySill" .. k, V(len + 0.4, 1, 0.8), CF(mx, 19, mz) * rot, PINK, SMOOTH)
+				ctx:part("CurvedBayHead" .. k, V(len + 0.4, 1, 0.8), CF(mx, 27.5, mz) * rot, PINK, SMOOTH)
+			end
+		end
+		-- Iron grille over the southern upper window: 8 vertical bars and 2 rails.
+		for k = 0, 7 do
+			B(ctx, "GrilleBar" .. k, 171.3, 171.6, 29.8, 36.2, 147 + k * 1.65, 147.2 + k * 1.65, DARKF, METAL)
+		end
+		for _, y in ipairs({ 31.5, 34.5 }) do
+			B(ctx, "GrilleBar", 171.3, 171.6, y, y + 0.2, 146.8, 158.8, DARKF, METAL)
+		end
+		-- Round red logo (white ring, red core, cream bowl) at the north corner on a steel bracket rising from the awning top.
+		B(ctx, "LogoBracket", 167.9, 168.5, 16, 33, 118.1, 118.9, STEEL_BLK, METAL)
+		B(ctx, "LogoArm", 167.9, 172, 32.4, 33, 118.1, 118.9, STEEL_BLK, METAL)
+		XCyl(ctx, "LogoDisk", 166.9, 167.7, 29, 118.5, 9, RED, SMOOTH)
+		XCyl(ctx, "LogoRing", 166.6, 166.9, 29, 118.5, 8, WHITE, SMOOTH)
+		XCyl(ctx, "LogoCore", 166.4, 166.6, 29, 118.5, 6.4, RED, SMOOTH)
+		XCyl(ctx, "LogoBowl", 166.1, 166.4, 29, 118.5, 3.6, CREAM_GREY, SMOOTH)
 
 		-- Closed bay west face: bamboo screen and the parking sign on two posts.
 		B(ctx, "BambooScreen", 171.5, 171.9, 2, 12, 152, 164, TAN, WOODM)
-		local sign = B(ctx, "ParkingSign", 170.8, 171.2, 3, 8, 152, 164, WHITE, SMOOTH)
-		gui(sign, "PARKING FOR LOMI KING CUSTOMERS ONLY", RED, 30)
+		for k = 0, 7 do
+			B(ctx, "BambooSlat" .. k, 171.25, 171.5, 8.5, 12, 152.3 + k * 1.5, 152.3 + k * 1.5 + 1.2, SLAT, WOODM)
+		end
+		B(ctx, "BambooCap", 170.9, 172.6, 12, 12.6, 151.5, 164, ORANGE, SMOOTH)
+		local sign = B(ctx, "ParkingSign", 170.8, 171.2, 1.5, 8.5, 152, 164, WHITE, SMOOTH)
+		gui(sign, "PARKING FOR LOMI KING CUSTOMERS ONLY", RED, 30, 40)
+		local poster = B(ctx, "RamenPoster", 171.0, 171.25, 8.7, 12, 160, 163.5, RED, SMOOTH)
+		gui(poster, "LOMI KING RAMEN", WHITE, 30, 20)
+		-- The darker pier on the south edge, ground to parapet.
+		B(ctx, "CornerPier", 170, 172, 0, 44, 164, 166.6, PINK_DARK, SMOOTH)
 		B(ctx, "SignPost", 170.85, 171.15, 0, 3, 153, 153.3, STEEL, METAL)
 		B(ctx, "SignPost", 170.85, 171.15, 0, 3, 162.7, 163, STEEL, METAL)
 
 		-- Terracotta pots with topiary on the step, outside the aisle.
 		for _, z in ipairs({ 122, 147 }) do
-			VCyl(ctx, "Pot", 166, z, 1, 2.2, 2.4, TERRA, SMOOTH)
-			ball(ctx, "Topiary", 166, 4.6, z, 3, LEAF, SMOOTH)
+			VCyl(ctx, "Pot", 166, z, 1, 3.4, 3.2, TERRA, SMOOTH)
+			ball(ctx, "Topiary", 166, 5.9, z, 5, LEAF, SMOOTH)
+			ball(ctx, "TopiaryUpper", 166.3, 8.0, z + 0.4, 3.8, LEAF, SMOOTH)
+			ball(ctx, "TopiaryTop", 166.1, 9.5, z - 0.4, 2.6, LEAF, SMOOTH)
 		end
 
 		-- Globe pendants (lamp bulb at y 10.8, above the walking lane). Under the awning and inside the room.
 		local pendants = {
-			{ 168, 122, 12 }, { 168, 131, 12 }, { 168, 140, 12 },
 			{ 182, 131, 14 }, { 182, 140, 14 }, { 196, 131, 14 }, { 196, 140, 14 },
 		}
 		for _, p in ipairs(pendants) do
 			B(ctx, "PendantCord", p[1] - 0.05, p[1] + 0.05, 11.4, p[3], p[2] - 0.05, p[2] + 0.05, DARKF, METAL)
 			ball(ctx, "PendantGlobe", p[1], 10.8, p[2], 1.2, LAMP, NEON)
+		end
+		-- Row of seven globes just behind the banner (bulb y 9.4, above the lane).
+		for k = 0, 6 do
+			local z = 119 + k * 5
+			B(ctx, "PendantCord", 165.95, 166.05, 10, 12, z - 0.05, z + 0.05, DARKF, METAL)
+			ball(ctx, "PendantGlobe", 166, 9.4, z, 1.2, LAMP, NEON)
 		end
 
 		-- Kitchen suggestion behind the counter.
@@ -269,13 +321,29 @@ return function()
 
 	------------------------------------------------------------------ Menu: banner under the awning, menu board, framed menu
 	local function buildMenu(ctx)
-		local banner = B(ctx, "MenuBanner", 162.6, 163, 9, 11.3, 116, 150, BANNER, SMOOTH)
-		gui(banner, "LOMI   PANCIT   RICE MEALS   SANDWICHES   COFFEE", RED, 20)
-		B(ctx, "MenuStripe", 162.6, 163, 11.3, 12, 116, 150, RED, SMOOTH)
+		-- Banner: six coloured blocks hanging in the steel frame (y 8.5..12), labels at a fixed size; the KOPI VINZ name and the
+		-- phone number of the photo are not reproduced.
+		local blocks = {
+			{ 116, 122, "SPECIALS", RED, WHITE }, { 122, 127.5, "LOMI", BANNER, RED }, { 127.5, 133, "PANCIT", BANNER2, RED },
+			{ 133, 140, "RICE MEALS", BANNER, RED }, { 140, 146.5, "SANDWICHES", BANNER2, RED }, { 146.5, 150, "", RED, WHITE },
+		}
+		for i, b in ipairs(blocks) do
+			local blk = B(ctx, "BannerBlock" .. i, 162.5, 162.9, 8.5, 12, b[1], b[2], b[4], SMOOTH)
+			if b[3] ~= "" then gui(blk, b[3], b[5], 40, 32) end
+		end
+		-- Dish squares (bowls, plates) above the labels of the four menu blocks.
+		local dishCols = { BOWL, EGG, SOUP, LEAF, BOWL, EGG, SOUP, LEAF }
+		for i = 1, 4 do
+			local b = blocks[i + 1]
+			for j = 0, 1 do
+				local z = j == 0 and b[1] + 0.9 or b[2] - 2.0
+				B(ctx, "BannerDish" .. (i * 2 - 1 + j), 162.3, 162.5, 10.85, 11.95, z, z + 1.1, dishCols[i * 2 - 1 + j], SMOOTH)
+			end
+		end
 		local framed = B(ctx, "FramedMenu", 179, 179.2, 3, 4.6, 124.2, 125.8, WHITE, SMOOTH)
 		gui(framed, "MENU", DARKF, 30)
-		local board = B(ctx, "MenuBoard", 213.6, 214, 5, 12, 124, 148, WHITE, SMOOTH)
-		gui(board, "MENU   LOMI   PANCIT   RICE MEALS   SANDWICHES   COFFEE", DARKF, 30)
+		local board = B(ctx, "MenuBoard", 213.6, 214, 4, 12, 124, 148, WHITE, SMOOTH)
+		gui(board, "MENU\nLOMI\nPANCIT\nRICE MEALS\nSANDWICHES\nCOFFEE", DARKF, 30, 24)
 	end
 
 	------------------------------------------------------------------ Utensils: caddies, chopsticks, spoons
