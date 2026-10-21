@@ -27,6 +27,7 @@ CreditsData.sites = {
 		"https://www.tripadvisor.co.uk/Attraction_Review-g1469074-d2706118-Reviews-Our_Lady_of_Mt_Carmel_Church-Lipa_City_Batangas_Province_Calabarzon_Region_Luzon.html",
 		"https://www.trip.com/moments/detail/lipa-57532-131168270/",
 		"https://commons.wikimedia.org/wiki/Category:Our_Lady_of_Mount_Carmel_Church_of_Lipa",
+		"https://www.openstreetmap.org/way/157078294",
 	} },
 	{ id = 6, urls = {
 		"https://architizer.com/projects/the-outlets-at-lipa/",

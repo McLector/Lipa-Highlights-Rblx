@@ -1,12 +1,13 @@
--- site05: Monastery of Our Lady of Mount Carmel (Slice 04). Studio copy: ServerStorage.Builders.site05; run with
+-- site05: Monastery of Our Lady of Mount Carmel (Slice 04, reworked in Slice 15). Studio copy: ServerStorage.Builders.site05; run with
 --   require(game.ServerStorage.Builders.site05:Clone())()
 -- Run builders/placeholders first (it creates Workspace.Sites.Site05_Carmel with Guide, InfoPanel, JeepStop...).
 -- IDEMPOTENT: replaces Block / Structure / Grounds / Garden / Shrine / Pews / Kneeler / Candles / HistoryPanels and keeps
 -- Guide, InfoPanel, JeepStop, JeepSign*, Jeepney. Touches nothing outside Workspace.Sites.Site05_Carmel.
 -- (The terrain under the forecourt is repainted Pavement by builders/world.luau: x -352..-248, z -600..-508. The forecourt
 -- paving below must stay inside that region.)
--- Brief: briefs/site05.md. FRAME: the site pivot is yawed 180 degrees (RightVector = -X), so the pivot is NOT used as
--- the origin. origin = CFrame.new(pivot position): local +X = east, +Z = south = facade side, y up.
+-- Brief: briefs/site05.md "Revision 1 (Slice 15)"; spec: tests/site05_check.luau. FRAME: the site pivot is yawed 180 degrees
+-- (RightVector = -X), so the pivot is NOT used as the origin. origin = CFrame.new(pivot position): local +X = east,
+-- +Z = south = facade side, y up. All heights are above the ground; the portico floor is B = 6 (six risers of one stud).
 -- Fail-safe order as in site01: everything is built into unparented components first (budget and CSG included); only then
 -- are the old children deleted and the components parented one at a time. An error before that point destroys the partial
 -- build and leaves the placeholder Block untouched. The model, its WorldPivot and PrimaryPart are never touched.
@@ -29,21 +30,26 @@ return function()
 		Pews = true, Kneeler = true, Candles = true, HistoryPanels = true,
 	}
 
-	-- Colours (Chapel_Front_Wide.jpg, Carmel_Monastery_Oblique_Official_2021.jpg, Outdoor_Shrine_Structure.jpg).
+	-- Colours (facade_front_wide_balingit_2018.jpg, elevated_monastery_roofs_velasquez.jpg, dome_velasquez.jpg).
 	local WALL = Color3.fromRGB(240, 220, 160)
 	local WALL_SHADE = Color3.fromRGB(214, 196, 140)
 	local TRIM = Color3.fromRGB(240, 236, 222)
-	local ROOF = Color3.fromRGB(40, 110, 70)
-	local ROOF_RIB = Color3.fromRGB(60, 135, 90)
+	local ROOF = Color3.fromRGB(30, 92, 56) -- dark forest green (the Slice 04 teal was too light)
+	local ROOF_RIB = Color3.fromRGB(46, 112, 70)
 	local DOME = Color3.fromRGB(244, 232, 190)
 	local RIB = Color3.fromRGB(226, 212, 168)
 	local TIMBER = Color3.fromRGB(80, 50, 40)
-	local MAROON = Color3.fromRGB(150, 55, 45)
+	local MAROON = Color3.fromRGB(110, 40, 36)
 	local HEDGE = Color3.fromRGB(52, 110, 56)
+	local LAWN = Color3.fromRGB(86, 140, 60)
 	local GLASS = Color3.fromRGB(40, 48, 58)
 	local STONE = Color3.fromRGB(196, 188, 176)
 	local STONE_LIGHT = Color3.fromRGB(214, 206, 194)
 	local PAVE = Color3.fromRGB(150, 148, 144)
+	local TERRACOTTA = Color3.fromRGB(196, 128, 94)
+	local TEAL = Color3.fromRGB(20, 120, 110)
+	local LAVA = Color3.fromRGB(70, 66, 64)
+	local BILLBOARD = Color3.fromRGB(170, 215, 225)
 	local PEW = Color3.fromRGB(120, 78, 48)
 	local KNEEL_PAD = Color3.fromRGB(140, 40, 50)
 	local PANEL = Color3.fromRGB(30, 36, 48)
@@ -127,18 +133,17 @@ return function()
 		end
 	end
 
-	-- A cone shrub in a planter (2 balls + planter = 3 parts).
-	local function shrub(ctx, x, y0, z)
-		ctx:part("Planter", V(3, 1.4, 3), CF(x, y0 + 0.7, z), TRIM, CONC)
-		ctx:ball("Shrub", 4.2, CF(x, y0 + 3.1, z), HEDGE, LEAF)
-		ctx:ball("ShrubTop", 3, CF(x, y0 + 5, z), HEDGE, LEAF)
+	-- A cone topiary: a ball and a smaller ball above it (2 parts). `lowName` names the lower ball.
+	local function topiary(ctx, lowName, x, y0, z)
+		ctx:ball(lowName, 3.4, CF(x, y0 + 1.7, z), HEDGE, LEAF)
+		ctx:ball(lowName .. "Top", 2.2, CF(x, y0 + 3.6, z), HEDGE, LEAF)
 	end
 
-	-- A white Marian statue on a pedestal (6 parts). baseY = top of the ground slab.
-	local function statue(ctx, x, baseY, z)
+	-- A white Marian statue on a pedestal (6 parts). baseY = top of the ground slab; bodyName names the figure.
+	local function statue(ctx, x, baseY, z, bodyName)
 		ctx:part("Pedestal", V(4, 4, 4), CF(x, baseY + 2, z), STONE_LIGHT, CONC)
 		ctx:part("PedestalCap", V(4.6, 0.5, 4.6), CF(x, baseY + 4.25, z), TRIM, CONC)
-		ctx:part("StatueBody", V(1.8, 5, 1.4), CF(x, baseY + 7, z), TRIM, PLAS)
+		ctx:part(bodyName or "StatueBody", V(1.8, 5, 1.4), CF(x, baseY + 7, z), TRIM, PLAS)
 		ctx:part("StatueArms", V(4, 0.5, 0.6), CF(x, baseY + 8.4, z), TRIM, PLAS)
 		ctx:ball("StatueHead", 1.6, CF(x, baseY + 10.2, z), TRIM, PLAS)
 		ctx:part("StatueHalo", V(0.3, 2.2, 2.2), CF(x, baseY + 10.2, z - 0.6), TRIM, PLAS)
@@ -159,161 +164,212 @@ return function()
 		end
 	end
 
-	local B = 2 -- podium height: the portico floor
+	local B = 6 -- portico floor, studs above the forecourt
 
-	------------------------------------------------------------------ Facade (z -9..+4, x +-26)
+	------------------------------------------------------------------ Facade (front plane z = 0, body z -10..0, x +-34)
+	-- Heights are measured from the 2018 frontal photo: 68 studs = the outer facade (1130 px); the three steps rise to B+25,
+	-- B+33 and B+36, the pediment apex to B+41 and the ringed cross to B+46.
 	local function buildFacade(ctx)
-		ctx:part("Podium", V(52, 2, 10), CF(0, 1, -4), STONE, CONC)
-		ctx:part("Step1", V(34, 1, 3), CF(0, 0.5, 2.5), STONE, CONC) -- risers of 1 stud
+		ctx:part("Podium", V(72, B, 10), CF(0, B / 2, -5), STONE, CONC)
+		-- One wide terracotta stair across the portico: six risers of 1 stud, each a solid block down to the ground.
+		for i = 1, 6 do
+			ctx:part("StairRiser", V(56, 1, 1.7), CF(0, i - 0.5, 0.85 + (6 - i) * 1.7), TERRACOTTA, CONC)
+		end
+		-- Cream flank walls with a maroon base stripe and cone topiary, beside the stair (x +-28..52).
+		for _, s in ipairs({ -1, 1 }) do
+			ctx:part("FlankWall", V(24, 4, 1.4), CF(s * 40, 2, 8), WALL, CONC)
+			ctx:part("FlankWallBase", V(24, 1, 1.6), CF(s * 40, 0.5, 8), MAROON, CONC)
+			ctx:part("FlankWallCap", V(24.4, 0.4, 1.8), CF(s * 40, 4.2, 8), TRIM, CONC)
+			for k = 0, 3 do
+				topiary(ctx, "StairTopiary", s * (31 + 6 * k), 4.4, 8)
+			end
+		end
+		-- Handrails over the stair.
+		for _, x in ipairs({ -12, 12 }) do
+			ctx:part("RailPost", V(0.3, 3, 0.3), CF(x, 1.5, 9.4), STONE, METAL)
+			ctx:part("RailPost", V(0.3, 3, 0.3), CF(x, B + 1.5, 0.6), STONE, METAL)
+			ctx:part("StairRail", V(0.3, 0.3, 10.4), CF(x, 3 + 1.6, 5) * ANG(0.62, 0, 0), STONE, METAL)
+		end
+
 		-- Triple-arched portico: one large centre arch, two smaller side arches, timber doors set back in each.
-		arch(ctx, "ArchC", { width = 12, height = 14, depth = 8, wallWidth = 20, wallHeight = 16,
-			cframe = CF(0, B + 8, -4), color = WALL, material = CONC })
-		for _, sx in ipairs({ -17.5, 17.5 }) do
-			arch(ctx, "ArchS", { width = 8, height = 11, depth = 8, wallWidth = 15, wallHeight = 16,
-				cframe = CF(sx, B + 8, -4), color = WALL, material = CONC })
+		arch(ctx, "ArchC", { width = 13, height = 13.5, depth = 8, wallWidth = 20, wallHeight = 20,
+			cframe = CF(0, B + 10, -4), color = WALL, material = CONC })
+		for _, sx in ipairs({ -16.65, 16.65 }) do
+			arch(ctx, "ArchS", { width = 9, height = 10.5, depth = 8, wallWidth = 12.7, wallHeight = 20,
+				cframe = CF(sx, B + 10, -4), color = WALL, material = CONC })
 			ctx:window("DoorS", 6, 9, 0.8, CF(sx, B, -5.6), TIMBER, WOOD)
 		end
-		ctx:window("DoorC", 9.2, 11, 0.8, CF(0, B, -5.6), TIMBER, WOOD)
-		for _, x in ipairs({ -25, -10, 10, 25 }) do
-			ctx:part("Pilaster", V(2.6, 16, 1.4), CF(x, B + 8, 0.7), TRIM, CONC)
-			ctx:part("PierPlinth", V(3.2, 2, 1.8), CF(x, B + 1, 0.9), MAROON, CONC)
+		ctx:window("DoorC", 9.6, 11, 0.8, CF(0, B, -5.6), TIMBER, WOOD)
+		-- White pilasters (13 high) on maroon plinths.
+		for _, x in ipairs({ -23, -10.3, 10.3, 23 }) do
+			ctx:part("Pilaster", V(2.6, 13, 1.4), CF(x, B + 6.5, 0.7), TRIM, CONC)
+			ctx:part("PierPlinth", V(3.2, 2.4, 1.8), CF(x, B + 1.2, 0.9), MAROON, CONC)
 		end
-		-- Coat-of-arms relief above the west side arch (flat panel).
-		ctx:part("CrestFrame", V(3.4, 3.8, 0.3), CF(-17.5, B + 13.6, 0.15), TRIM, CONC)
-		ctx:part("Crest", V(2.4, 2.8, 0.4), CF(-17.5, B + 13.6, 0.25), WALL_SHADE, CONC)
+		-- Stepped white entablature: low across the portico, raised over the centre arch.
+		ctx:part("EntabLow", V(47, 1.2, 11), CF(0, B + 20.6, -4.5), TRIM, CONC)
+		ctx:part("CentreRise", V(26, 1.8, 8), CF(0, B + 21.5, -5), WALL, CONC)
+		ctx:part("EntabMid", V(26, 1.2, 11), CF(0, B + 22.4, -4.5), TRIM, CONC)
+		-- Relief bands over the side arches and the coat of arms over the centre arch.
+		for _, x in ipairs({ -14.2, 14.2 }) do
+			ctx:part("ReliefBand", V(13, 1.4, 0.4), CF(x, B + 14.8, 0.2), TRIM, CONC)
+		end
+		ctx:part("CrestFrame", V(3.4, 3.8, 0.3), CF(0, B + 17.5, 0.15), TRIM, CONC)
+		ctx:part("Crest", V(2.4, 2.8, 0.4), CF(0, B + 17.5, 0.25), WALL_SHADE, CONC)
 
-		ctx:part("Cornice1", V(53, 1.6, 10.4), CF(0, B + 16.8, -4), TRIM, CONC)
-		ctx:part("Register2", V(50, 10.4, 8), CF(0, B + 22.8, -4), WALL, CONC)
-		-- Rose window with three spokes.
-		ctx:cyl("RoseTrim", V(0.5, 9.6, 9.6), CF(0, B + 23, 0.1) * ANG(0, PI / 2, 0), TRIM, CONC)
-		ctx:cyl("Rose", V(0.4, 8, 8), CF(0, B + 23, 0.3) * ANG(0, PI / 2, 0), GLASS)
-		for k = 0, 2 do
-			ctx:part("RoseSpoke", V(8, 0.35, 0.2), CF(0, B + 23, 0.6) * ANG(0, 0, k * PI / 3), TRIM, CONC)
+		-- Outer shoulders (first step, x +-23..34, top B+25) with twin-arched windows and three square slits each.
+		for _, s in ipairs({ -1, 1 }) do
+			ctx:part("FacadeOuter", V(11, 25, 10), CF(s * 28.5, B + 12.5, -5), WALL, CONC)
+			ctx:part("ShoulderFill", V(3, 4.4, 9), CF(s * 21.5, B + 22.8, -5.5), WALL, CONC)
+			arched(ctx, "ShoulderWin", V(s * 28.5, B + 3, 0), 0, 6, 10)
+			ctx:part("ShoulderMullion", V(0.5, 10, 0.5), CF(s * 28.5, B + 8, 0.45), TRIM, CONC)
+			for k = -1, 1 do
+				ctx:part("ShoulderSlit", V(0.9, 2, 0.3), CF(s * (28.5 + 3 * k), B + 19.8, 0.15), GLASS, Enum.Material.Glass)
+			end
+			-- crenellated white band along the top of the shoulder (6) and of the mid step (4)
+			for k = 0, 5 do
+				ctx:part("Crenel", V(1.4, 1.2, 1.4), CF(s * (23.5 + 1.9 * k), B + 25.6, -0.8), TRIM, CONC)
+			end
+			for k = 0, 3 do
+				ctx:part("Crenel", V(1.4, 1.2, 1.4), CF(s * (14.5 + 1.8 * k), B + 33.6, -1.8), TRIM, CONC)
+			end
+			arched(ctx, "MidWin", V(s * 17, B + 22, -1), 0, 2.2, 7.5)
 		end
-		ctx:part("Cornice2", V(52, 1.2, 9.6), CF(0, B + 28.6, -4.2), TRIM, CONC)
-		-- Stepped upper tiers.
-		ctx:part("Tier2", V(36, 8, 8), CF(0, B + 33.2, -4), WALL, CONC)
-		ctx:part("Cornice3", V(38, 1.2, 9.6), CF(0, B + 37.8, -4.2), TRIM, CONC)
-		ctx:part("Tier3", V(22, 5, 8), CF(0, B + 40.9, -4), WALL, CONC)
-		-- Pediment: white border gable behind a slightly smaller cream gable.
-		ctx:gable("PedTrim", 25, 8, 8, CF(0, B + 43.4, -4), TRIM, CONC)
-		ctx:gable("Ped", 22, 6.6, 9, CF(0, B + 43.4, -4), WALL, CONC)
-		-- Scalloped corbel band under the pediment.
+		-- Second step (40 wide, top B+33), third step (26 wide, top B+36), and the pediment.
+		ctx:part("FacadeMid", V(40, 12.4, 8), CF(0, B + 26.8, -5), WALL, CONC)
+		ctx:part("FacadeCentre", V(26, 3, 8), CF(0, B + 34.5, -5), WALL, CONC)
+		ctx:gable("PedTrim", 27, 5, 8, CF(0, B + 36, -5), TRIM, CONC)
+		ctx:gable("Ped", 24, 4.1, 8.6, CF(0, B + 36, -5), WALL, CONC)
 		for i = 1, 7 do
-			ctx:part("Scallop", V(1.6, 1.6, 0.6), CF(-7.5 + 2.5 * (i - 1), B + 42.4, 0.3), TRIM, CONC)
+			ctx:part("PedScallop", V(1.6, 1.6, 0.6), CF(-7.5 + 2.5 * (i - 1), B + 37, -0.7), TRIM, CONC)
+		end
+		-- Rose window (white trim, dark glass, three spokes dropped: the photo shows a ringed tracery).
+		ctx:cyl("RoseTrim", V(0.5, 8.6, 8.6), CF(0, B + 26.3, -0.85) * ANG(0, PI / 2, 0), TRIM, CONC)
+		ctx:cyl("Rose", V(0.4, 7.4, 7.4), CF(0, B + 26.3, -0.6) * ANG(0, PI / 2, 0), GLASS)
+		for k = 0, 2 do
+			ctx:part("RoseTracery", V(7.4, 0.3, 0.2), CF(0, B + 26.3, -0.4) * ANG(0, 0, k * PI / 3), TRIM, CONC)
 		end
 		-- Marian niche with a white statue.
-		ctx:part("NicheShelf", V(5.6, 0.6, 1.4), CF(0, B + 30.3, 0.6), TRIM, CONC)
-		ctx:part("NicheFrame", V(5, 6.5, 0.5), CF(0, B + 33.6, 0.25), TRIM, CONC)
-		ctx:part("NicheRecess", V(3.4, 5, 0.4), CF(0, B + 33.5, 0.5), WALL_SHADE, CONC)
-		ctx:part("NicheStatue", V(1.2, 3.4, 0.8), CF(0, B + 32.4, 0.8), TRIM, PLAS)
-		ctx:ball("NicheHead", 1.2, CF(0, B + 34.5, 0.8), TRIM, PLAS)
-		-- Ringed (Celtic) cross on the apex.
-		local cy = B + 56.4
-		ctx:part("CrossStem", V(1, 7, 0.9), CF(0, B + 54.9, -3.5), TRIM, CONC)
-		ctx:part("CrossArm", V(4, 1, 0.9), CF(0, cy, -3.5), TRIM, CONC)
+		ctx:part("NicheShelf", V(5.6, 0.6, 1.4), CF(0, B + 31.6, -0.5), TRIM, CONC)
+		ctx:part("NicheFrame", V(5, 6.5, 0.5), CF(0, B + 34.6, -0.75), TRIM, CONC)
+		ctx:part("NicheRecess", V(3.4, 5, 0.4), CF(0, B + 34.4, -0.5), WALL_SHADE, CONC)
+		ctx:part("NicheStatue", V(1.2, 3.4, 0.8), CF(0, B + 33.4, -0.3), TRIM, PLAS)
+		ctx:ball("NicheHead", 1.2, CF(0, B + 35.4, -0.3), TRIM, PLAS)
+		-- Ringed (Celtic) cross on the apex: top B+46.
+		local cy = B + 44
+		ctx:part("CrossStem", V(1, 7, 0.9), CF(0, B + 42.5, -4), TRIM, CONC)
+		ctx:part("CrossArm", V(4, 1, 0.9), CF(0, cy, -4), TRIM, CONC)
 		for k = 0, 7 do
 			local th = k * PI / 4
-			ctx:part("CrossRing", V(1.45, 0.45, 0.6), CF(1.8 * math.cos(th), cy + 1.8 * math.sin(th), -3.5) * ANG(0, 0, th + PI / 2), TRIM, CONC)
-		end
-		-- Handrails over the two steps.
-		for _, x in ipairs({ -15, 15 }) do
-			ctx:part("RailPostLow", V(0.3, 3, 0.3), CF(x, 1.5, 4), STONE, METAL)
-			ctx:part("RailPostHigh", V(0.3, 3, 0.3), CF(x, B + 1.5, 1), STONE, METAL)
-			ctx:part("Rail", V(0.3, 0.3, 3.2), CF(x, 4, 2.5) * ANG(0.32, 0, 0), STONE, METAL)
+			ctx:part("CrossRing", V(1.45, 0.45, 0.6), CF(1.8 * math.cos(th), cy + 1.8 * math.sin(th), -4) * ANG(0, 0, th + PI / 2), TRIM, CONC)
 		end
 	end
 
-	------------------------------------------------------------------ Nave (z -8..-66, x +-21)
+	------------------------------------------------------------------ Nave (z -10..-66, x +-23)
 	local function buildNave(ctx)
-		ctx:part("NaveBlock", V(42, 26, 58), CF(0, 15, -37), WALL, CONC)
-		ctx:gable("NaveRoof", 46, 12, 60, CF(0, 28, -37), ROOF, PLAS)
-		roofRibs(ctx, "NaveRib", 0, -37, 28, 23, 12, 60.4, 6)
-		ctx:part("NaveCornL", V(1.2, 1.2, 58), CF(-21.4, 27.4, -37), TRIM, CONC)
-		ctx:part("NaveCornR", V(1.2, 1.2, 58), CF(21.4, 27.4, -37), TRIM, CONC)
-		-- The repeated tall arched windows: six per side.
-		ctx:repeatAlong(6, V(0, 0, -16), V(0, 0, -8), function(_, p)
-			arched(ctx, "NaveWinE", V(21, 8, p.Z), PI / 2, 4, 11)
-			arched(ctx, "NaveWinW", V(-21, 8, p.Z), -PI / 2, 4, 11)
+		ctx:part("NaveBlock", V(46, 28, 56), CF(0, 14, -38), WALL, CONC)
+		ctx:gable("NaveRoof", 50, 11, 58, CF(0, 28, -38), ROOF, PLAS)
+		roofRibs(ctx, "NaveRib", 0, -38, 28, 25, 11, 58.4, 6)
+		ctx:part("NaveCornL", V(1.2, 1.2, 56), CF(-23.4, 27.4, -38), TRIM, CONC)
+		ctx:part("NaveCornR", V(1.2, 1.2, 56), CF(23.4, 27.4, -38), TRIM, CONC)
+		-- The repeated tall arched windows: five per side.
+		ctx:repeatAlong(5, V(0, 0, -18), V(0, 0, -9), function(_, p)
+			arched(ctx, "NaveWinE", V(23, 8, p.Z), PI / 2, 4, 11)
+			arched(ctx, "NaveWinW", V(-23, 8, p.Z), -PI / 2, 4, 11)
 		end)
 	end
 
-	------------------------------------------------------------------ East wing (x +21..+66, recessed)
-	local function buildEastWing(ctx)
-		ctx:part("EastWingBlock", V(31, 20, 38), CF(36.5, 12, -25), WALL, CONC)
-		ctx:gable("EastWingRoof", 33, 7, 40, CF(36.5, 22, -25), ROOF, PLAS)
-		ctx:part("EastWingCornice", V(32, 1, 1.2), CF(36.5, 21.5, -6.4), TRIM, CONC)
-		arched(ctx, "WingBigWin", V(36, 8, -6), 0, 8, 12)
-		for _, x in ipairs({ 27, 30, 42, 45 }) do
-			ctx:part("WingSmallWin", V(1.6, 2, 0.3), CF(x, 18, -5.9), GLASS, Enum.Material.Glass)
-		end
-		-- Low annex with a green canopy over its door (door 8.5 studs).
-		ctx:part("AnnexBlock", V(14, 10, 24), CF(59, 7, -18), WALL, CONC)
-		ctx:part("AnnexRoof", V(15, 0.6, 25), CF(59, 12.3, -18), ROOF, PLAS)
-		ctx:window("AnnexDoor", 5, 8.5, 0.6, CF(59, B, -5.8), TIMBER, WOOD)
-		ctx:part("AnnexCanopy", V(9, 0.4, 4), CF(59, 11.2, -4), ROOF, PLAS)
-		for _, x in ipairs({ 55, 63 }) do
-			ctx:part("AnnexCanopyPost", V(0.4, 9.2, 0.4), CF(x, 6.6, -2.2), STONE, METAL)
+	------------------------------------------------------------------ East annex (low block east of the facade, x 34..50)
+	local function buildAnnex(ctx)
+		ctx:part("AnnexBlock", V(16, 12, 20), CF(42, 6, -12), WALL, CONC)
+		ctx:part("AnnexRoof", V(17, 0.6, 21), CF(42, 12.3, -12), ROOF, PLAS)
+		ctx:part("AnnexCornice", V(16.6, 0.8, 1), CF(42, 11.4, -1.6), TRIM, CONC)
+		ctx:window("AnnexDoor", 5, 8.5, 0.6, CF(42, 0, -1.8), TIMBER, WOOD)
+		ctx:part("AnnexCanopy", V(9, 0.4, 4), CF(42, 10.4, -0.2), ROOF, PLAS)
+		for _, x in ipairs({ 38, 46 }) do
+			ctx:part("AnnexCanopyPost", V(0.4, 10.2, 0.4), CF(x, 5.1, 1.6), STONE, METAL)
 		end
 	end
 
-	------------------------------------------------------------------ Monastery wing (west, approximated) + dome
+	------------------------------------------------------------------ Monastery wing (west): long 2-storey block, walkway, L-return
 	local function buildMonastery(ctx)
-		ctx:part("MonasteryBlock", V(49, 20, 40), CF(-47.5, 12, -34), WALL, CONC)
-		ctx:gable("MonasteryRoof", 42, 8, 51, CF(-47.5, 22, -34) * ANG(0, PI / 2, 0), ROOF, PLAS)
-		ctx:part("MonasteryCornice", V(50, 1, 1.2), CF(-47.5, 21.5, -14.4), TRIM, CONC)
-		-- Two rows of rectangular windows on the south face.
-		for _, y in ipairs({ 8, 16 }) do
-			ctx:repeatAlong(8, V(-68, y, -13.9), V(6, 0, 0), function(_, p)
-				ctx:part("MonasteryWin", V(3.6, 5, 0.3), CF(p), GLASS, Enum.Material.Glass)
-			end)
+		ctx:part("MonasteryBlock", V(68, 24, 26), CF(-68, 12, -21), WALL, CONC)
+		ctx:gable("MonasteryRoof", 32, 7, 72, CF(-68, 24, -21) * ANG(0, PI / 2, 0), ROOF, PLAS)
+		ctx:part("MonasteryEave", V(72, 0.7, 1.4), CF(-68, 23.8, -7.6), ROOF_RIB, PLAS)
+		ctx:part("MonasteryCornice", V(69, 1, 1.2), CF(-68, 23.4, -7.6), TRIM, CONC)
+		-- Paired louvred windows in two rows (six pairs per row, two panes each).
+		for _, y in ipairs({ 6.5, 17.5 }) do
+			for k = 0, 5 do
+				for _, dx in ipairs({ -1.9, 1.9 }) do
+					ctx:part("MonasteryWin", V(3, 5, 0.3), CF(-98 + 10.8 * k + dx, y, -7.85), GLASS, Enum.Material.Glass)
+				end
+			end
 		end
-		-- Veranda: floor, green canopy, posts.
-		ctx:part("VerandaFloor", V(49, 0.4, 7), CF(-47.5, 0.2, -10.5), STONE, CONC)
-		ctx:part("VerandaCanopy", V(49, 0.5, 7.4), CF(-47.5, 12.5, -10.5), ROOF, PLAS)
-		ctx:repeatAlong(6, V(-70, 0, -7.5), V(9, 0, 0), function(_, p)
-			ctx:part("VerandaPost", V(0.5, 12, 0.5), CF(p.X, 6.4, p.Z), TRIM, CONC)
-		end)
+		-- Covered walkway along the front: floor, dark green roof at 12.4, eight posts, five teal umbrellas.
+		ctx:part("WalkwayFloor", V(68, 0.4, 6), CF(-68, 0.2, -5), STONE, CONC)
+		ctx:part("WalkwayRoof", V(70, 0.5, 7.4), CF(-68, 12.4, -4.7), ROOF, PLAS)
+		for k = 0, 7 do
+			ctx:part("WalkwayPost", V(0.5, 12, 0.5), CF(-100 + 9.5 * k, 6.2, -2.3), TRIM, CONC)
+		end
+		for k = 0, 4 do
+			local x = -94 + 11 * k
+			post(ctx, "UmbrellaPole", 0.3, 7, x, 0.4, -5.2, STONE, METAL)
+			ctx:cyl("Umbrella", V(0.5, 7, 7), CF(x, 8.2, -5.2) * ANG(0, 0, PI / 2), TEAL, PLAS)
+		end
+		-- L-shaped return wing to the north of the court (guessed; no photo shows its rear).
+		ctx:part("MonasteryReturn", V(22, 24, 36), CF(-91, 12, -52), WALL, CONC)
+		ctx:gable("MonasteryReturnRoof", 26, 7, 40, CF(-91, 24, -52), ROOF, PLAS)
+		for _, z in ipairs({ -42, -52, -62 }) do
+			for _, y in ipairs({ 6.5, 17.5 }) do
+				ctx:part("ReturnWin", V(0.3, 5, 3.6), CF(-79.85, y, z), GLASS, Enum.Material.Glass)
+			end
+		end
 	end
 
+	------------------------------------------------------------------ Dome over the nave rear: round drum, cream ribbed dome, lantern, cross
 	local function buildDome(ctx)
-		local cx, cz = -47, -34
-		ctx:part("DrumBlock", V(14, 16, 14), CF(cx, 32, cz), WALL, CONC)
-		ctx:part("DrumCornice", V(15.4, 1, 15.4), CF(cx, 40.5, cz), TRIM, CONC)
-		for _, f in ipairs({ { 7, 0, PI / 2 }, { -7, 0, -PI / 2 }, { 0, 7, 0 }, { 0, -7, PI } }) do
-			arched(ctx, "DrumWin", V(cx + f[1], 30, cz + f[2]), f[3], 3, 7)
+		local cx, cz = 0, -50
+		ctx:cyl("DomeDrum", V(12, 17, 17), CF(cx, 36, cz) * ANG(0, 0, PI / 2), WALL, CONC)
+		ctx:cyl("DrumCornice", V(1, 19, 19), CF(cx, 42.3, cz) * ANG(0, 0, PI / 2), TRIM, CONC)
+		for _, f in ipairs({ { 8.45, 0, PI / 2 }, { -8.45, 0, -PI / 2 }, { 0, 8.45, 0 }, { 0, -8.45, PI } }) do
+			arched(ctx, "DrumWin", V(cx + f[1], 32.5, cz + f[2]), f[3], 3, 7)
 		end
-		ctx:dome("Dome", 7.2, 8, CF(cx, 41, cz), DOME, RIB, PLAS)
-		post(ctx, "Lantern", 3, 5, cx, 48, cz, TRIM, CONC)
-		ctx:ball("LanternCap", 3.4, CF(cx, 53.5, cz), DOME, PLAS)
-		ctx:part("DomeCrossStem", V(0.5, 4, 0.5), CF(cx, 56, cz), TRIM, CONC)
-		ctx:part("DomeCrossArm", V(2, 0.5, 0.5), CF(cx, 56.5, cz), TRIM, CONC)
+		ctx:dome("Dome", 8, 8, CF(cx, 42.5, cz), DOME, RIB, PLAS)
+		post(ctx, "Lantern", 3, 5, cx, 49.5, cz, TRIM, CONC)
+		ctx:ball("LanternCap", 3.4, CF(cx, 55, cz), DOME, PLAS)
+		ctx:part("DomeCrossStem", V(0.5, 4, 0.5), CF(cx, 57.4, cz), TRIM, CONC)
+		ctx:part("DomeCrossArm", V(2, 0.5, 0.5), CF(cx, 58.4, cz), TRIM, CONC)
 	end
 
-	------------------------------------------------------------------ Grounds: forecourt, low walls, hedges, shrubs
+	------------------------------------------------------------------ Grounds: forecourt paving, medallion, the Marian billboard
 	local function buildGrounds(ctx)
 		ctx:part("ForecourtPaving", V(100, 0.1, 86), CF(0, 0.05, 45), PAVE, CONC) -- inside the repainted terrain region
 		ctx:cyl("ForecourtMedallion", V(0.15, 10, 10), CF(0, 0.17, 50) * ANG(0, 0, PI / 2), STONE_LIGHT, CONC)
-		for _, sx in ipairs({ -38, 38 }) do
-			ctx:part("LowWallBase", V(26, 1, 1.4), CF(sx, 0.5, 12), MAROON, CONC)
-			ctx:part("LowWall", V(26, 2.4, 1.2), CF(sx, 2.2, 12), WALL, CONC)
-			ctx:part("LowWallCap", V(26.4, 0.4, 1.6), CF(sx, 3.6, 12), TRIM, CONC)
-			ctx:part("FrontHedge", V(26, 2.5, 2), CF(sx, 1.25, 9.6), HEDGE, LEAF)
+		-- The arched Marian billboard on a lava-stone base, facing the road (+Z). Plain colours, no text, no photo texture.
+		local bx, bz = 40, 56
+		ctx:part("BillboardBase", V(8, 4.5, 5), CF(bx, 2.25, bz), LAVA, Enum.Material.Slate)
+		for _, r in ipairs({ { -3.4, 1.7, 1.6 }, { 3.4, 1.5, 1.9 }, { 0.4, 1.1, 3.3 } }) do
+			ctx:ball("BillboardRock", 3.4, CF(bx + r[1], r[2], bz + r[3]), LAVA, Enum.Material.Slate)
 		end
-		for _, x in ipairs({ -24, -30, -36, -42, 24, 30, 36, 42 }) do
-			shrub(ctx, x, 0.1, 6.5)
-		end
+		ctx:window("BillboardFrame", 9.6, 14, 0.4, CF(bx, 4.4, bz - 0.3), TRIM, CONC)
+		ctx:window("BillboardPanel", 8.4, 13, 0.6, CF(bx, 4.5, bz), BILLBOARD, PLAS)
+		ctx:part("BillboardFigure", V(2.6, 6, 0.3), CF(bx, 8.6, bz + 0.45), TRIM, PLAS)
+		ctx:ball("BillboardHead", 1.6, CF(bx, 12.3, bz + 0.45), TRIM, PLAS)
 	end
 
 	------------------------------------------------------------------ Garden: west topiary court, east prayer garden
 	local function buildGarden(ctx)
-		-- West court: hedge and a row of cone topiaries beside the portico.
-		ctx:part("CourtHedge", V(26, 2.5, 2), CF(-37, 1.35, -3), HEDGE, LEAF)
-		for i = 0, 5 do
-			local x = -48 + 3.6 * i
-			ctx:ball("Topiary", 3.4, CF(x, 2.1, 1), HEDGE, LEAF)
-			ctx:ball("TopiaryTop", 2.2, CF(x, 4, 1), HEDGE, LEAF)
+		-- West court in front of the monastery wing (x -101..-51, z -2..14): a raised lawn so the terrain's grass blades
+		-- are hidden, a terracotta path, cone topiaries, a hedge and the white statue on its pedestal.
+		ctx:part("CourtLawn", V(50, 0.4, 16), CF(-76, 0.2, 6), LAWN, LEAF)
+		ctx:part("CourtPath", V(40, 0.25, 3), CF(-76, 0.525, 6), TERRACOTTA, CONC)
+		ctx:part("CourtHedge", V(50, 2.5, 1.6), CF(-76, 1.65, 13.4), HEDGE, LEAF)
+		for k = 0, 5 do
+			topiary(ctx, "Topiary", -97 + 8.5 * k, 0.4, 10)
 		end
+		for k = 0, 3 do
+			topiary(ctx, "Topiary", -93 + 8.5 * k, 0.4, 2)
+		end
+		statue(ctx, -56, 0.4, 6, "CourtStatue")
 		-- East prayer garden: a raised stone slab (0.4 thick so no grass shows), a connecting path, the statue.
 		ctx:part("PrayerSlab", V(46, 0.4, 56), CF(76, 0.2, 32), STONE_LIGHT, CONC)
 		ctx:part("PrayerPath", V(8, 0.3, 6), CF(51.5, 0.15, 18), STONE_LIGHT, CONC)
@@ -340,7 +396,7 @@ return function()
 		end
 	end
 
-	------------------------------------------------------------------ Required props
+	------------------------------------------------------------------ Required props (unchanged from Slice 04)
 	local function buildPews(ctx)
 		for i = 0, 3 do
 			local z = 26 + 6 * i
@@ -394,7 +450,7 @@ return function()
 	local ok, err = pcall(function()
 		component("Facade", "Structure", buildFacade)
 		component("Nave", "Structure", buildNave)
-		component("EastWing", "Structure", buildEastWing)
+		component("Annex", "Structure", buildAnnex)
 		component("Monastery", "Structure", buildMonastery)
 		component("Dome", "Structure", buildDome)
 		component("Grounds", "Site", buildGrounds)

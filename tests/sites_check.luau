@@ -46,16 +46,20 @@ if sites then
 				check(label .. " Structure present and Block absent", m:FindFirstChild("Structure") ~= nil and m:FindFirstChild("Block") == nil)
 				if s.id == 5 then
 					-- Orientation guard (Slice 04): the pivot is yawed 180 degrees, so a build that used the pivot as its origin is
-					-- mirrored yet still passes the symmetric bounds check. The facade must be south (+Z) of the nave, and the east
-					-- wing must be east (+X) of it.
+					-- mirrored yet still passes the symmetric bounds check. The facade must be south (+Z) of the nave, the low annex
+					-- must be east (+X) of it and the monastery wing west (-X). (Slice 15: the old EastWingBlock became AnnexBlock
+					-- and the monastery wing is now a long west block, so the guard checks both sides.)
 					local st = m:FindFirstChild("Structure")
 					local podium = st and st:FindFirstChild("Podium", true)
 					local nave = st and st:FindFirstChild("NaveBlock", true)
-					local wing = st and st:FindFirstChild("EastWingBlock", true)
+					local annex = st and st:FindFirstChild("AnnexBlock", true)
+					local monastery = st and st:FindFirstChild("MonasteryBlock", true)
 					check(label .. " facade is south of the nave", podium ~= nil and nave ~= nil and podium.Position.Z > nave.Position.Z + 20,
 						podium and nave and (podium.Position.Z .. " vs " .. nave.Position.Z) or "parts missing")
-					check(label .. " east wing is east of the nave", wing ~= nil and nave ~= nil and wing.Position.X > nave.Position.X + 15,
-						wing and nave and (wing.Position.X .. " vs " .. nave.Position.X) or "parts missing")
+					check(label .. " east annex is east of the nave", annex ~= nil and nave ~= nil and annex.Position.X > nave.Position.X + 15,
+						annex and nave and (annex.Position.X .. " vs " .. nave.Position.X) or "parts missing")
+					check(label .. " monastery wing is west of the nave", monastery ~= nil and nave ~= nil and monastery.Position.X < nave.Position.X - 30,
+						monastery and nave and (monastery.Position.X .. " vs " .. nave.Position.X) or "parts missing")
 				elseif s.id == 6 then
 					-- Orientation guards (Slice 05): the site is diagonal (SW), so the symmetric bounds check cannot see a mirrored or
 					-- rotated build. Each anchor is ONE uniquely named BasePart, searched through the whole site (the pitch lives

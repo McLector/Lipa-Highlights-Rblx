@@ -50,6 +50,14 @@ return function(t)
 		expect.truthy(found)
 	end)
 
+	t.test("site 5 credits OpenStreetMap, whose church footprint sized the Slice 15 Carmel rework (ODbL asks for attribution)", function()
+		local found = false
+		for _, url in ipairs(CreditsData.sites[5].urls) do
+			if string.find(url, "https://www.openstreetmap.org/", 1, true) then found = true end
+		end
+		expect.truthy(found)
+	end)
+
 	t.test("credits are ASCII so the board and the typewriter-safe rules hold", function()
 		for _, entry in ipairs(CreditsData.sites) do
 			for _, url in ipairs(entry.urls) do

@@ -38,12 +38,13 @@ Photos in folder: 3; unique source pages: 3
 
 ## Site 5: Monastery of Our Lady of Mount Carmel
 Folder: 09_Mount_Carmel_Monastery
-Photos in folder: 28; unique source pages: 4
+Photos in folder: 28 (plus 11 in rework_2026, see the attribution section at the end); unique source pages: 5
 
 - https://www.carmelitaniscalzi.com/en/2021/06/24/lipa-carmels-75th-anniversary-of-foundation-written-by-the-sisters-of-lipa/
 - https://www.tripadvisor.co.uk/Attraction_Review-g1469074-d2706118-Reviews-Our_Lady_of_Mt_Carmel_Church-Lipa_City_Batangas_Province_Calabarzon_Region_Luzon.html
 - https://www.trip.com/moments/detail/lipa-57532-131168270/
 - https://commons.wikimedia.org/wiki/Category:Our_Lady_of_Mount_Carmel_Church_of_Lipa
+- https://www.openstreetmap.org/way/157078294
 
 ## Site 6: The Outlets @LIMA Estate and Aboitiz Pitch
 Folder: 05_The_Outlets_LIMA
@@ -88,3 +89,23 @@ The Site 1 model was rebuilt from the photos below (Wikimedia Commons, downloade
 Building and compound footprints (cathedral building, religious compound, the park named "Plaza Independencia", streets): (c) OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright (cathedral building: https://www.openstreetmap.org/way/249138738). Data fetched via the Overpass API on 2026-10-17.
 
 Two further files were downloaded to the same folder but not examined and are not credited as sources: "Lipa Cathedral dome 2023-04-05" and "The Siege of Villa de Lipa Historical Marker, Batangas".
+
+## Slice 15 rework: Carmel reference attribution
+
+The Site 5 model was rebuilt from the photos below (Wikimedia Commons, downloaded at 2000 px width into `Lipa_structure_Exterior_References/09_Mount_Carmel_Monastery/rework_2026/`, which is not in this repository) and from OpenStreetMap footprint data. The photos were used only as visual reference for shapes, proportions and colours; no photo is used as a texture in the experience. Author, licence and page are as recorded by Commons on 2026-10-22. The two licences differ (CC BY-SA 3.0 and CC BY-SA 4.0), as noted per photo.
+
+| Photo | Date | Author | Licence | Commons page |
+|---|---|---|---|---|
+| Our Lady of Mount Carmel Church, Lipa City, Batangas - panoramio | 2013-03-16 | Carl Flores Trinidad | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Our_Lady_of_Mount_Carmel_Church,_Lipa_City,_Batangas_-_panoramio.jpg |
+| Our Lady of Mount Carmel Church (Lipa) | 2018-11-12 | Roel Balingit | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Our_Lady_of_Mount_Carmel_Church_(Lipa).jpg |
+| Mt.CarmelChurchjf1082 02 | 2013-06-17 | Ramon FVelasquez | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1082_02.JPG |
+| Mt.CarmelChurchjf1082 01 | 2013-06-17 | Ramon FVelasquez | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1082_01.JPG |
+| Mt.CarmelChurchjf1068 11 | 2013-06-17 | Ramon FVelasquez | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1068_11.JPG |
+| Mt.CarmelChurchjf1090 01 | 2013-06-17 | Ramon FVelasquez | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1090_01.JPG |
+| Mt.CarmelChurchjf1068 05 | 2013-06-17 | Ramon FVelasquez | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1068_05.JPG |
+| Mt.CarmelChurchjf1096 14 | 2013-06-17 | Ramon FVelasquez | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1096_14.JPG |
+| Mt.CarmelChurchjf1110 03 | 2013-06-17 | Ramon FVelasquez | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1110_03.JPG |
+| Mt.CarmelChurchjf1068 03 | 2013-06-17 | Ramon FVelasquez | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1068_03.JPG |
+| MtCarmelChurchjf1012 13 | 2013-06-17 | Ramon FVelasquez | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:MtCarmelChurchjf1012_13.JPG |
+
+Church and monastery-compound footprints (church building way 157078294, Carmelite Monastery way 384123043 and the buildings around them): (c) OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright (church building: https://www.openstreetmap.org/way/157078294). Data fetched via the Overpass API on 2026-10-22.
