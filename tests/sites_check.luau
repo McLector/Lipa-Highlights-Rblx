@@ -493,7 +493,8 @@ if sites then
 						local windows, wall = named("ShoreWindow"), named("SeawallSegment")
 						check(label .. " building is SW of the Guide", body ~= nil and off(body.Position, guidePos):Dot(SW) >= 60,
 							body and tostring(off(body.Position, guidePos):Dot(SW)) or "part missing")
-						local winFront = #windows >= 10 and body ~= nil
+						-- Slice 22: the photo's lake face has 8 windows (one ground and one upper per pavilion, four on the centre bay), not 12.
+						local winFront = #windows >= 8 and body ~= nil
 						if winFront then
 							local sum = 0
 							for _, w in ipairs(windows) do sum += off(w.Position, body.Position):Dot(SW) end
@@ -647,7 +648,7 @@ if sites then
 						end
 						local eyeDock, eyeGuide = Vector3.new(-703.7, 6.2, 641.7), Vector3.new(-583.0, 5.5, 533.0)
 						local sDock = seenFrom(eyeDock, windows)
-						check(label .. " shore windows are visible from the dock end", #windows >= 10 and sDock >= #windows * 0.8,
+						check(label .. " shore windows are visible from the dock end", #windows >= 8 and sDock >= #windows * 0.8,
 							sDock .. " of " .. #windows .. " windows seen from the dock end")
 						-- The roof caps are hidden from a low eye by the building's own rear wall and the tier-1 roof edge, so the Guide sees
 						-- the two pavilion bodies (first hit on their NE faces) and the rear door.

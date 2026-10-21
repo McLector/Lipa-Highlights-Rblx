@@ -38,7 +38,7 @@ return function()
 	local WHITE_F = Color3.fromRGB(232, 232, 228)
 	local DOOR = Color3.fromRGB(70, 76, 80)
 	local SEAWALL = Color3.fromRGB(168, 166, 158)
-	local PAVE = Color3.fromRGB(200, 190, 172)
+	local PAVE = Color3.fromRGB(214, 188, 148) -- the photo's yard is warm sand; the first pass was a cool near-white
 	local TIMBER = Color3.fromRGB(150, 104, 64)
 	local POST_T = Color3.fromRGB(96, 70, 48)
 	local BANCA_W = Color3.fromRGB(236, 238, 236)
@@ -182,22 +182,24 @@ return function()
 		box(ctx, "BaseBand", -14, -3, 1.2, 3.2, -15.3, -15, BAND, CONC)
 		box(ctx, "BaseBand", 3, 14, 1.2, 3.2, -15.3, -15, BAND, CONC)
 		-- Roof deck (recessed roof terrace) with a 1.4 parapet on its four edges.
-		box(ctx, "ShoreRoofDeck", -14, 14, 23.2, 24.0, -15, 11, ROOF, METAL)
+		-- Roofs and canopies are Concrete, not Metal: the metal sheen reflected the sky and read blue against the photo's grey.
+		box(ctx, "ShoreRoofDeck", -14, 14, 23.2, 24.0, -15, 11, ROOF, CONC)
 		box(ctx, "Parapet", -14, 14, 24.0, 25.4, -15, -14.6, WALL, CONC)
 		box(ctx, "Parapet", -14, 14, 24.0, 25.4, 10.6, 11, WALL, CONC)
 		box(ctx, "Parapet", -14, -13.6, 24.0, 25.4, -14.6, 10.6, WALL, CONC)
 		box(ctx, "Parapet", 13.6, 14, 24.0, 25.4, -14.6, 10.6, WALL, CONC)
 		-- Pavilion roofs: three stacked tiers each; tier 3 is the single part PavilionRoofL / PavilionRoofR.
-		box(ctx, "PavilionTier1L", -38, -12, 25.2, 26.4, -17, 17, ROOF_E, METAL)
-		box(ctx, "PavilionTier2L", -34, -16, 26.4, 27.6, -13, 13, ROOF, METAL)
-		box(ctx, "PavilionRoofL", -30, -20, 27.6, 28.6, -9, 9, ROOF, METAL)
-		box(ctx, "PavilionTier1R", 12, 38, 25.2, 26.4, -17, 17, ROOF_E, METAL)
-		box(ctx, "PavilionTier2R", 16, 34, 26.4, 27.6, -13, 13, ROOF, METAL)
-		box(ctx, "PavilionRoofR", 20, 30, 27.6, 28.6, -9, 9, ROOF, METAL)
+		box(ctx, "PavilionTier1L", -38, -12, 25.2, 26.4, -17, 17, ROOF_E, CONC)
+		box(ctx, "PavilionTier2L", -34, -16, 26.4, 27.6, -13, 13, ROOF, CONC)
+		box(ctx, "PavilionRoofL", -30, -20, 27.6, 28.6, -9, 9, ROOF, CONC)
+		box(ctx, "PavilionTier1R", 12, 38, 25.2, 26.4, -17, 17, ROOF_E, CONC)
+		box(ctx, "PavilionTier2R", 16, 34, 26.4, 27.6, -13, 13, ROOF, CONC)
+		box(ctx, "PavilionRoofR", 20, 30, 27.6, 28.6, -9, 9, ROOF, CONC)
 		-- Lake-facade glass (SW face). Pavilions at lz 15: a ground and an upper pane per column.
-		for _, c in ipairs({ -29, -21, 21, 29 }) do
-			pane(ctx, "ShoreWindow", c - 2.5, c + 2.5, 5.2, 10.2, 15)
-			pane(ctx, "ShoreWindow", c - 2.5, c + 2.5, 16.2, 21.2, 15)
+		-- The photo's pavilions each carry one small ground window and one small upper window (about 3.4 wide), not two large ones.
+		for _, c in ipairs({ -25, 25 }) do
+			pane(ctx, "ShoreWindow", c - 1.7, c + 1.7, 5.4, 9.0, 15)
+			pane(ctx, "ShoreWindow", c - 1.7, c + 1.7, 16.4, 19.6, 15)
 		end
 		-- Centre bay at lz 11: double door glass and flank panes; the dark door sits behind the glass.
 		box(ctx, "CentreDoor", -4.5, 4.5, 1.2, 9.2, 11.0, 11.15, DOOR, METAL)
@@ -205,10 +207,10 @@ return function()
 		pane(ctx, "ShoreWindow", 0.3, 4.5, 1.8, 9.2, 11)
 		pane(ctx, "ShoreWindow", -11, -7, 4.2, 9.2, 11)
 		pane(ctx, "ShoreWindow", 7, 11, 4.2, 9.2, 11)
-		box(ctx, "EntryCanopy", -14, 14, 10.4, 11.0, 11, 15, ROOF, METAL)
+		box(ctx, "EntryCanopy", -14, 14, 10.4, 11.0, 11, 15, ROOF, CONC)
 		-- Rear (NE face, lz -15): the rear door, its canopy, and six plainer RearWindow panes.
 		box(ctx, "RearDoor", -2.2, 2.2, 1.2, 9.2, -15.4, -15.0, DOOR, METAL)
-		box(ctx, "RearCanopy", -5, 5, 10, 10.6, -21, -15, ROOF, METAL)
+		box(ctx, "RearCanopy", -5, 5, 10, 10.6, -21, -15, ROOF, CONC)
 		for _, c in ipairs({ -29, -21, -7, 7, 21, 29 }) do
 			box(ctx, "RearWindow", c - 2, c + 2, 16, 21, -15.45, -15.05, GLASS_C, GLASSM).Transparency = 0.3
 		end
@@ -383,13 +385,13 @@ return function()
 		end
 		local bg = shape(g, 0, 0, 1, 1, CREAM, 0)
 		text(bg, "LOCATION MAP", 0.03, 0.02, 0.94, 0.12)
-		local lake = shape(bg, 0.03, 0.17, 0.56, 0.7, LAKE_C, 0.12)
+		local lake = shape(bg, 0.03, 0.17, 0.44, 0.7, LAKE_C, 0.12) -- narrower lake: the description column was 34% of the board and its type tiny
 		text(lake, "Taal Lake", 0.04, 0.8, 0.4, 0.16)
 		shape(lake, 0.4, 0.3, 0.14, 0.175, ISLAND_C, 0.5)
 		text(lake, "Volcano Island", 0.3, 0.5, 0.36, 0.1)
 		shape(lake, 0.84, 0.12, 0.06, 0.074, PIN_C, 0.5)
 		text(lake, "Tagbakin, Brgy. Halang", 0.42, 0.0, 0.52, 0.1)
-		text(bg, "Tagbakin sits on the shore of Taal Lake in Barangay Halang, Lipa City.\nHalang is one of the city's developed tourist spots.", 0.63, 0.17, 0.34, 0.6)
+		text(bg, "Tagbakin sits on the shore of Taal Lake in Barangay Halang, Lipa City.\nHalang is one of the city's developed tourist spots.", 0.51, 0.17, 0.46, 0.6)
 		text(bg, "Schematic map, not to scale.", 0.03, 0.9, 0.94, 0.08)
 	end
 	section(CFL, panel, buildMapPanel)

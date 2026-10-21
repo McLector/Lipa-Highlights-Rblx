@@ -114,3 +114,15 @@ The building as boxes with stacked-tier roofs (real: pitched sheet roofs); the s
 The long horizontal band of lake, quay and building against the tall volcano (horizon and scale); the dock as a leading line to the volcano (linear perspective); the grey geometric building against the organic shoreline and palms (geometric against organic form); cool blue-green water and grey render with warm timber accents (colour harmony); the repeated dock posts and windows as rhythm; the volcano's blue-green haze as atmospheric depth.
 
 **Budget:** <= 2,500 parts (target 700..1,300).
+
+## Revision 1 (Slice 22): fidelity rework from `Tagbakin_Shoreline_Building_From_Lake.jpg`
+**References:** the photo the brief already names; no new photo, no credit change. The building stays a generic lakeshore building (never called glamping). `tests/site09_check.luau` encodes the table.
+
+| # | Real | Before | Now |
+|---|---|---|---|
+| 1 | One small ground window and one small upper window per pavilion | two large 5 x 5 panes per floor per pavilion (12 windows on the face) | one 3.4-wide pane per floor per pavilion; 8 windows on the lake face with the centre bay |
+| 2 | Plain grey-white roofs | Metal roofs and canopies that reflected the sky blue | Concrete, neutral grey |
+| 3 | Warm sandy yard | cool near-white `PAVE` (200,190,172) | (214,188,148) |
+| 4 | (model bug) | map description at 34% of the board width, tiny type | lake 44%, description column 46% |
+
+**Guards changed on purpose (sites_check, Site 9):** "the windows are on the SW (lake) face" and "shore windows are visible from the dock end" required at least 10 windows (the old model had 12). The photo has 8 on the lake face, so both now require at least 8; the average-offset and 80%-visibility conditions are unchanged.
