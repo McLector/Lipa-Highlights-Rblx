@@ -76,3 +76,19 @@ Sides, rear and roof (flat); the neighbour bays; the number and position of tabl
 
 ## Art-observation hooks for dialogue (Slice 12 will source them)
 A glass front that lets warm interior light spill onto the outdoor seating; the dark fascia band against the glowing yellow letters (contrast and emphasis); the strong horizontal of the fascia and arcade soffit; repeated red chairs as rhythm against the dark wood; inside/outside continuity.
+
+## Revision 1 (Slice 19): fidelity rework from the Tibig/STAR night photo
+**Reference:** still only `Cafe_de_Lipa_Tibig_STAR_Entrance_and_Outdoor_Seating_Night.jpg`; the two unconfirmed-branch photos stay excluded. Wikimedia Commons has no Cafe de Lipa file (search 0 hits, 2026-10-22), so nothing is added or credited. Coordinates above are the original ones (+112 in x for the current site); `tests/site04_check.luau` uses world values.
+
+| # | Real (night photo) | Before | Now |
+|---|---|---|---|
+| 1 | Smooth lowercase "cafedelipa", lit yellow | 3-column pixel font that read "cafedc l i pa" | 5 x 9 pixel font (0.75 pixels), 10 glyph windows of 6 pixels, descender on the p, centred on the band (z -158) |
+| 2 | Dark fascia, no white line under it | roof slab edge showed white under the band | `ArcadeSignBand` now y 13..22 |
+| 3 | Open arcade, few piers | 5 columns | 3 `ArcadeColumn`s (z -186, -133, -128.5), none in the lane |
+| 4 | Pale wall with two cool spotlights beside the unit | dark block | pale `NeighbourBay`, dark `NeighbourWindow`, 2 neon `NeighbourSpot`s |
+| 5 | Slat-back red and dark-wood chairs | solid backs | 3 `ChairSlat` + 2 `ChairPost` per chair |
+| 6 | Square tiles with joints | plain slab | 38 `TileGrout` lines on the terrace slab |
+| 7 | Plank-front wood bar | plain box | 11 `BarPlank` strips |
+| 8 | (model bug) | `RepresentativeSign` TextScaled on a 32-char line | fixed 26 px wrapped text |
+
+Still approximated: sides, rear, roof, the interior (labelled representative), the neighbour beyond the bay.

@@ -66,6 +66,9 @@ return function()
 	local JAR = Color3.fromRGB(120, 70, 40)
 	local KRAFT = Color3.fromRGB(190, 150, 100)
 	local KRAFT_DARK = Color3.fromRGB(120, 90, 50)
+	local GROUT = Color3.fromRGB(150, 148, 142)
+	local PALE_WALL = Color3.fromRGB(200, 206, 216)
+	local COOL_SPOT = Color3.fromRGB(230, 240, 255)
 	local SMOOTH, WOODM, METAL = Enum.Material.SmoothPlastic, Enum.Material.Wood, Enum.Material.Metal
 	local GLASS, NEON, FABRIC = Enum.Material.Glass, Enum.Material.Neon, Enum.Material.Fabric
 
@@ -85,7 +88,7 @@ return function()
 		return ctx:ball(name, dia, L(x, y, z), color, material)
 	end
 	-- Text on the part's frontage (Back) face.
-	local function gui(part, text, color, ppstud)
+	local function gui(part, text, color, ppstud, fixedSize)
 		local g = Instance.new("SurfaceGui")
 		g.Face = Enum.NormalId.Back
 		g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
@@ -96,7 +99,9 @@ return function()
 		t.Position = UDim2.fromScale(0.03, 0.1)
 		t.BackgroundTransparency = 1
 		t.TextColor3 = color
-		t.TextScaled = true
+		-- A long line must use a fixed TextSize: TextScaled renders tiny on a wide SurfaceGui.
+		t.TextScaled = fixedSize == nil
+		if fixedSize then t.TextSize = fixedSize end
 		t.TextWrapped = true
 		t.Font = Enum.Font.GothamBlack
 		t.Text = text
@@ -137,17 +142,17 @@ return function()
 		return model
 	end
 
-	-- Lowercase pixel letters for the fascia sign. Six rows, top to bottom: row 1 is the ascender line, rows 2..5 the
-	-- x-height, row 6 the descender. Each glyph is three columns wide.
+	-- Lowercase pixel letters for the fascia sign. Nine rows, top to bottom: rows 1..2 the ascenders, rows 3..7 the
+	-- x-height, rows 8..9 the descender. Each glyph is five columns wide (the Slice 08 three-column font read "cafedc l i pa").
 	local FONT = {
-		c = { "   ", "###", "#  ", "#  ", "###", "   " },
-		a = { "   ", "###", "  #", "###", "###", "   " },
-		f = { " ##", " # ", " # ", "###", " # ", "   " },
-		e = { "   ", "###", "###", "#  ", "###", "   " },
-		d = { "  #", "###", "# #", "# #", "###", "   " },
-		l = { " # ", " # ", " # ", " # ", " # ", "   " },
-		i = { " # ", "   ", " # ", " # ", " # ", "   " },
-		p = { "   ", "###", "# #", "###", "#  ", "#  " },
+		c = { "     ", "     ", " ### ", "#   #", "#    ", "#   #", " ### ", "     ", "     " },
+		a = { "     ", "     ", " ### ", "    #", " ####", "#   #", " ####", "     ", "     " },
+		f = { "  ## ", " #   ", "#### ", " #   ", " #   ", " #   ", " #   ", "     ", "     " },
+		e = { "     ", "     ", " ### ", "#   #", "#####", "#    ", " ### ", "     ", "     " },
+		d = { "    #", "    #", " ####", "#   #", "#   #", "#   #", " ####", "     ", "     " },
+		l = { "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "     ", "     " },
+		i = { "  #  ", "     ", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "     ", "     " },
+		p = { "     ", "     ", "#### ", "#   #", "#   #", "#   #", "#### ", "#    ", "#    " },
 	}
 	-- Neon letters on the sign band's west face (x xLo..xHi, proud by 0.6), reading left to right from the street, i.e.
 	-- increasing z. Runs of lit pixels in a row become one block each.
@@ -172,7 +177,7 @@ return function()
 					end
 				end
 			end
-			cursor += 4 * pitch
+			cursor += 6 * pitch
 		end
 	end
 
@@ -189,12 +194,23 @@ return function()
 				end
 			end
 		end
-		-- Plain dark neighbour bay south of the unit (kept to one block).
-		B(ctx, "NeighbourBay", 164, 204, 0, 12, -134, -122, CHARCOAL, SMOOTH)
+		-- Square floor tiles: grout lines on the terrace slab (the photo shows light tiles with dark joints).
+		for x = 146, 162, 2 do
+			B(ctx, "TileGrout", x - 0.04, x + 0.04, 0.2, 0.23, -188, -128, GROUT, SMOOTH)
+		end
+		for z = -186, -130, 2 do
+			B(ctx, "TileGrout", 144, 164, 0.2, 0.23, z - 0.04, z + 0.04, GROUT, SMOOTH)
+		end
+		-- Neighbour bay south of the unit: a pale wall lit by two cool spotlights (the photo, right of the glass).
+		B(ctx, "NeighbourBay", 164, 204, 0, 12, -134, -122, PALE_WALL, SMOOTH)
+		B(ctx, "NeighbourWindow", 163.8, 164, 2, 7, -131, -125, MULLION, SMOOTH)
+		for _, z in ipairs({ -130.1, -125.1 }) do
+			B(ctx, "NeighbourSpot", 163.5, 164, 8.5, 9.3, z - 0.4, z + 0.4, COOL_SPOT, NEON)
+		end
 
 		-- Arcade: white soffit (underside y 13), slim charcoal columns on the west edge (none in the lane), Neon downlights.
 		B(ctx, "ArcadeRoof", 144, 164, 13, 14, -188, -128, SOFFIT, SMOOTH)
-		for _, z in ipairs({ -186, -176, -146, -136, -130 }) do
+		for _, z in ipairs({ -186, -133, -128.5 }) do
 			B(ctx, "ArcadeColumn", 144, 145, 0, 13, z - 0.5, z + 0.5, CHARCOAL, SMOOTH)
 		end
 		for _, x in ipairs({ 148, 156 }) do
@@ -207,8 +223,9 @@ return function()
 		B(ctx, "SignFascia", 163, 165, 12, 18, -186, -134, CHARCOAL, SMOOTH)
 		-- The sign sits on a charcoal band rising above the arcade's outer (west) edge, so the letters are seen from the street;
 		-- on the fascia behind the roof slab they were hidden (guard "sign letters are visible from the street").
-		B(ctx, "ArcadeSignBand", 144, 145.2, 14, 21.6, -188, -128, CHARCOAL, SMOOTH)
-		buildWord(ctx, "cafedelipa", -185.5, 20.7, 1.3, 0.9, 143.4, 144)
+		-- The band runs down to the roof slab (y 13) so no white roof edge shows under the dark fascia.
+		B(ctx, "ArcadeSignBand", 144, 145.2, 13, 22, -188, -128, CHARCOAL, SMOOTH)
+		buildWord(ctx, "cafedelipa", -180.1, 20.9, 0.75, 0.75, 143.4, 144)
 		B(ctx, "CafeBody", 164, 204, 12, 17, -186, -134, CHARCOAL, SMOOTH)
 		B(ctx, "BackWall", 202, 204, 0, 12, -186, -134, CHARCOAL, SMOOTH)
 		B(ctx, "SideWallN", 164, 204, 0, 12, -186, -185.5, CHARCOAL, SMOOTH)
@@ -231,13 +248,18 @@ return function()
 
 		-- Representative-interior sign on the back wall: 12 wide, 2.5 tall, centred on y 9.5, clear of the shelves.
 		local rep = B(ctx, "RepresentativeSign", 201.5, 202, 8.25, 10.75, -166, -154, WHITE, SMOOTH)
-		gui(rep, "INTERIOR SHOWN IS REPRESENTATIVE", DARKMETAL, 40)
+		gui(rep, "INTERIOR SHOWN IS REPRESENTATIVE", DARKMETAL, 40, 26)
 	end
 
 	------------------------------------------------------------------ CoffeeBar (anchor: BarTop)
 	local function buildCoffeeBar(ctx)
 		B(ctx, "BarBody", 190, 196, 0, 3, -182, -138, BAR_WOOD, WOODM)
 		B(ctx, "BarTop", 190, 196, 3, 3.5, -182, -138, BAR_TOP, WOODM)
+		-- Plank front: dark joints between vertical boards on the bar's street side.
+		for k = 0, 10 do
+			local z = -181 + k * 4
+			B(ctx, "BarPlank", 189.85, 190, 0, 3, z, z + 0.15, BAR_TOP, WOODM)
+		end
 		-- Espresso machine at the north (left from the lane) end, grinder beside it, cups along the front.
 		B(ctx, "EspressoMachine", 191.5, 194.5, 3.5, 5.8, -180, -175, STEEL, METAL)
 		B(ctx, "EspressoCap", 191.5, 194.5, 5.8, 6, -180, -175, DARKMETAL, METAL)
@@ -306,11 +328,24 @@ return function()
 			local cx, cz = tx + dx * 2.3, tz + dz * 2.3
 			B(ctx, "ChairSeat", cx - 0.7, cx + 0.7, 1.6, 2, cz - 0.7, cz + 0.7, color, mat)
 			if dx ~= 0 then
+				-- Slat back: two posts and three horizontal slats (the photo's red and dark-wood slat chairs).
 				local a, b = cx + dx * 0.7, cx + dx * 0.9
-				B(ctx, "ChairBack", math.min(a, b), math.max(a, b), 2, 4, cz - 0.7, cz + 0.7, color, mat)
+				local x0, x1 = math.min(a, b), math.max(a, b)
+				for _, y0 in ipairs({ 2.3, 2.9, 3.5 }) do
+					B(ctx, "ChairSlat", x0, x1, y0, y0 + 0.4, cz - 0.7, cz + 0.7, color, mat)
+				end
+				for _, s in ipairs({ -0.6, 0.6 }) do
+					B(ctx, "ChairPost", x0, x1, 2, 4, cz + s - 0.08, cz + s + 0.08, color, mat)
+				end
 			else
 				local a, b = cz + dz * 0.7, cz + dz * 0.9
-				B(ctx, "ChairBack", cx - 0.7, cx + 0.7, 2, 4, math.min(a, b), math.max(a, b), color, mat)
+				local z0, z1 = math.min(a, b), math.max(a, b)
+				for _, y0 in ipairs({ 2.3, 2.9, 3.5 }) do
+					B(ctx, "ChairSlat", cx - 0.7, cx + 0.7, y0, y0 + 0.4, z0, z1, color, mat)
+				end
+				for _, s in ipairs({ -0.6, 0.6 }) do
+					B(ctx, "ChairPost", cx + s - 0.08, cx + s + 0.08, 2, 4, z0, z1, color, mat)
+				end
 			end
 			for _, lx in ipairs({ -0.55, 0.55 }) do
 				for _, lz in ipairs({ -0.55, 0.55 }) do
