@@ -36,6 +36,7 @@ SiteData.sites = {
 		"Plaza Guide",
 		{
 			"Welcome to the Metropolitan Cathedral of San Sebastian, the center of Lipa's religious life. Down the steps from this forecourt is Plaza Independencia, where the city gathers for events.",
+			"Did you know? The cathedral's octagonal bell tower first had five stories. It was made taller when the church was restored in the 1950s, after damage in World War II.",
 			"Look at the bell tower and count its tiers as it narrows up to the cupola. Then find the paired columns and the warm yellow walls on the front.",
 		},
 		"Plaza Independencia and the Cathedral connect religious life, public gatherings and the city's historic center.",
@@ -45,6 +46,7 @@ SiteData.sites = {
 		"Market Vendor",
 		{
 			"This is the Candido B. Lopez Memorial Public Market, the palengke where Lipa shops for produce, food, and daily needs. Our facade photo is from 2014, so it may look different today.",
+			"Did you know? Lipa's market goes back over a century. In 1914, a government report called the town's new concrete market probably the most complete of any provincial town in the islands.",
 			"Look at the rounded arches repeating along the front, with rows of windows above them. Count the arches, and notice how the stairs break up the line.",
 		},
 		"The public market shows everyday Lipa through food vendors, produce, coffee, local delicacies and small businesses.",
@@ -54,6 +56,7 @@ SiteData.sites = {
 		"Lomi Host",
 		{
 			"This is Lomi King, one of Lipa's lomi houses. Lomi is part of the city's food culture, and sharing a hot bowl is a social way to eat. Our photo is from 2015, so the front may have changed.",
+			"Did you know? Batangas lomi is credited to To Kim Eng, a Chinese immigrant who began serving it in Lipa in the late 1960s.",
 			"Look at the bold orange sign band above the entrance. Its bright colors pull your eye to the name first. Then follow the menu boards down to the doorway.",
 		},
 		"Lomi remains a recognizable part of Lipa's food culture, and a lomihan is a place for eating together.",
@@ -63,6 +66,7 @@ SiteData.sites = {
 		"Cafe Barista",
 		{
 			"This is Cafe de Lipa, linked to kapeng barako, the strong coffee Batangas is known for. Coffee links Lipa's farming past with today's cafe culture. This model shows the Tibig/STAR branch.",
+			"Did you know? Coffee made Lipa rich in the 1800s. In 1887, Spain's Queen Regent Maria Cristina gave the town the title Villa de Lipa.",
 			"Look at the glass storefront glowing warm under the dark fascia and the lit yellow letters. Notice how the light spills out onto the outdoor seating.",
 		},
 		"Coffee connects Lipa's agricultural heritage with its present café culture. The interior shown is representative.",
@@ -74,6 +78,7 @@ SiteData.sites = {
 			"Hi, I'm a volunteer guide and a pilgrim, not a nun. This is the Monastery of Our Lady of Mount Carmel in Lipa, a Carmelite community founded on May 31, 1946.",
 			"In 1948, Teresita Castillo reported apparitions of Mary here, drawing pilgrims to Lipa. In 1951, a commission of Filipino bishops found no supernatural character in the events.",
 			"The Holy See has since reaffirmed that 1951 judgment. In 2015, Archbishop Ramon Arguelles declared the events worthy of belief. The Holy See rejected that, and he later withdrew it.",
+			"Did you know? The monastery was founded less than a year after World War II ended, when Lipa was one of the most damaged areas. Its first sisters came from the Manila Carmel.",
 			"Look at the entry arch and the tall arched windows above it, repeating the same shape. The stepped top of the front wall gives the facade its clear outline.",
 		},
 		"A Carmelite monastery founded on May 31, 1946, a place of prayer and pilgrimage in Lipa.",
@@ -83,6 +88,7 @@ SiteData.sites = {
 		"Outlets Guide",
 		{
 			"This is The Outlets at LIMA Estate, called The Outlets at Lipa until 2025. Its outdoor shops beside the Aboitiz Pitch stand for modern shopping, dining, and an economy tied to growing industry.",
+			"Did you know? Aboitiz, the developer, calls LIMA Estate the largest privately owned industrial estate in the Philippines. In 2024 it had about 71,000 workers.",
 			"Look at the orange timber block against the white walls and dark glass. Follow the long canopy along the covered walkway, then find the slatted sign by the road.",
 		},
 		"Contemporary shopping, dining and recreation. LIMA Estate spans Lipa and Malvar.",
@@ -92,6 +98,7 @@ SiteData.sites = {
 		"Farm Guide",
 		{
 			"This is The Farm at San Benito, a wellness resort in Lipa with gardens, a lagoon, and activities like yoga. It shows Lipa's wellness tourism today. Visits involve a booking or paid services.",
+			"Did you know? The Farm opened on December 14, 2002, on 51 hectares of land.",
 			"Look at the round thatched pavilion beside the straight-edged villa. Its curve and rough texture contrast with the flat walls. Then follow the patterned path.",
 		},
 		"An operating resort representing Lipa's contemporary wellness tourism: gardens, accommodation and dining.",
@@ -101,6 +108,7 @@ SiteData.sites = {
 		"Club Guide",
 		{
 			"This is Mount Malarayat Golf and Country Club in Barangay Dagatan, Lipa, a place for golf, hotel stays, and leisure with a view of the mountains. Access depends on membership or a booking.",
+			"Did you know? The club sits in the Malarayat mountain range, and its 27-hole championship course is split into three courses: Lobo, Makulot, and Malipunyo.",
 			"Look at the big hipped roof on the clubhouse, then find the smaller entry gable and the wing roof. Their red-brown color stands out against the green lawn.",
 		},
 		"A present-day recreation and hospitality destination associated with Lipa's mountain setting.",
@@ -110,6 +118,7 @@ SiteData.sites = {
 		"Lakeside Guide",
 		{
 			"This is Tagbakin, a sitio in Barangay Halang on Lipa's lakeside. The city calls Halang one of its developed tourist spots, and says the waters off Tagbakin have long teemed with tawilis.",
+			"Did you know? Tawilis is a freshwater sardine found only in Taal Lake. In 2019 the IUCN declared it an endangered species.",
 			"Look along the dock and count its repeating posts. The dock leads your eye across the water to the volcano, past the grey lakeside building with stepped roofs.",
 		},
 		"Tagbakin, in Barangay Halang, introduces Lipa's lakeside identity.",

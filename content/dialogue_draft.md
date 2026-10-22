@@ -2,11 +2,27 @@
 
 Status: **approved 2026-10-17; shortened 2026-10-22** after the professor asked for 2-3 sentence descriptions (drafted by Shana with AI help; the repo owner approves the wording in the PR). The shortened lines reuse only facts already approved below; nothing new was added. Cut from the dialogue: The Farm's "places to stay", Carmel's "local devotion grew around them", Tagbakin's "a well-known local fish", Cafe's "the interior is a representative display" (the InfoPanel still says it) and Outlets' "LIMA Estate spans Lipa and Malvar" (the InfoPanel and in-world signs still say it). The user delegated the open decisions: names and details visible in the reference photos are taken as truth, and anything else was decided from the sources below. This text is loaded into `src/ReplicatedStorage/LipaShared/SiteData.luau` (`dialogue`, `panelText`) and into the in-world labels built by `builders/site05.luau`, `site06.luau` and `site09.luau`. If a line here changes, change SiteData and re-run `tests/SiteData_Test.luau`.
 
-Voice: plain, friendly student guide. Each site has two lines: (a) what the place is and what it represents today, (b) a "Look at..." line that points at one art or architecture feature **built on the model**. Carmel has four lines: (a), then (h1) the 1948 reports with the 1951 finding and (h2) the 2015 declaration with the Holy See's rejection, so no reported event appears without the Church ruling on it, then (b). The "Did you know?" trivia (next feedback item) will go between (a) and (b).
+Voice: plain, friendly student guide. Each site has three lines: (a) what the place is and what it represents today, (t) one sourced "Did you know?" fact (added 2026-10-22, the professor's second suggestion; sources in the table below), (b) a "Look at..." line that points at one art or architecture feature **built on the model**. Carmel has five lines: (a), then (h1) the 1948 reports with the 1951 finding and (h2) the 2015 declaration with the Holy See's rejection, so no reported event appears without the Church ruling on it, then (t) and (b).
 
 Until 2026-10-22 each site had four lines (what it is, what it represents, an art observation, the Look prompt) and Carmel had six; the old text is in git history.
 
-Rules enforced by tests: every line is 220 bytes or fewer, **ASCII only** (the typewriter in GuideClient slices by byte, so accented letters would be cut mid-glyph), no tags or placeholders, no glamping claim anywhere, last line starts with "Look".
+Rules enforced by tests: every line is 220 bytes or fewer, **ASCII only** (the typewriter in GuideClient slices by byte, so accented letters would be cut mid-glyph), no tags or placeholders, no glamping claim anywhere, the second-to-last line starts with "Did you know? ", the last line starts with "Look".
+
+## "Did you know?" sources (checked 2026-10-22)
+
+Every trivia fact was read on the opened page; none rests on a search snippet. No Wikipedia page is the source for any trivia line. Where a source is the place's own (company, resort) the line keeps to plain facts or says who makes the claim.
+
+| Site | Fact used | Source opened | Notes |
+|---|---|---|---|
+| 1 Cathedral | Octagonal bell tower first had five stories; made taller in the 1950s restoration after WWII damage | https://herencialipena.com/attractions/san-sebastian-cathedral | Sources disagree on the completion year (1790 vs 1894) and on how many stories were added, so the line names neither. |
+| 2 Market | 1914: "probably the most complete market establishment of any provincial town in the Islands" | https://www.batangashistory.date/2022/06/photo-of-the-completed-lipa-public-market-july-1914.html, quoting the Bureau of Public Works Quarterly Bulletin vol. 2 no. 4 (July 1914) | No source links the 1914 market to today's Candido B. Lopez building, so the line says "Lipa's market", not "this building". |
+| 3 Lomi | Lomi's creation is "attributed to the immigrant To Kim Eng", who began serving it in the late 1960s | https://www.batangashistory.date/2022/05/history-and-origin-of-batangas-lomi.html, citing H. B. Panganiban, *Lomi King: Savoring the Taste of Royalty* | One book behind it, hence "is credited to". |
+| 4 Cafe | Coffee brought Lipa great affluence; Queen Regent Maria Cristina's 1887 decree gave the title Villa de Lipa | https://batangashistory.date/2018/03/sastronlipa.html, based on M. Sastron, *Batangas y su Provincia* (1895) | https://lipa.gov.ph/?p=844 ("richest municipality") could not be opened (HTTP 406), so the line says "rich", not "richest". |
+| 5 Carmel | Founded less than a year after WWII, when Lipa was one of the most devastated areas; founding group from the Manila Carmel | https://www.carmelitaniscalzi.com/en/2021/06/24/lipa-carmels-75th-anniversary-of-foundation-written-by-the-sisters-of-lipa/ | A neutral fact on purpose; the history lines already carry the 1948-2015 events. |
+| 6 Outlets | Aboitiz: "the largest privately-owned industrial estate in the Philippines"; 71,000 employees | https://aboitizeyes.aboitiz.com/?p=21255 (posted 16 September 2024) | Company claim, attributed in the line. The estate's area differs by source and year (794, 940, 1,000 ha), so no area is given. |
+| 7 Farm | Opened 14 December 2002; 51 hectares | https://www.globalwellnesssummit.com/2022-global-wellness-summit/2022-global-wellness-summit-sponsors/wellness-property-showcase-2022/the-farm-at-san-benito/ (2022 wellness property showcase) | Sponsor profile; "green jungle" and award counts left out as marketing. |
+| 8 Malarayat | In the Malarayat mountain range; 27-hole championship course; Lobo, Makulot and Malipunyo courses | https://malarayat.com/about/ and https://malarayat.com/golf-course/ | The club's own site; plain facts only. |
+| 9 Tagbakin | Tawilis is endemic to Taal Lake; declared endangered by the IUCN | https://ptvnews.ph/?p=104132 (30 January 2019) | PTV also says "the only freshwater sardine in the world"; left out because scientific wording is narrower. |
 
 ## What was checked, and how
 
@@ -37,6 +53,7 @@ Pages that returned HTTP 403 and could not be opened: the Inquirer (`newsinfo.in
 
 ## 1. Plaza Independencia and Metropolitan Cathedral of San Sebastian
 - (a) Welcome to the Metropolitan Cathedral of San Sebastian, the center of Lipa's religious life. Down the steps from this forecourt is Plaza Independencia, where the city gathers for events.
+- (t) Did you know? The cathedral's octagonal bell tower first had five stories. It was made taller when the church was restored in the 1950s, after damage in World War II.
 - (b) Look at the bell tower and count its tiers as it narrows up to the cupola. Then find the paired columns and the warm yellow walls on the front.
 
 The earlier draft's (c)/(d) described the rear apse from an aerial photo, which a player in the plaza cannot see. The sources disagree on the cathedral's style, so no style is named.
@@ -45,16 +62,19 @@ Revised in Slice 14 (the user left the wording to the assistant) after the model
 
 ## 2. Candido B. Lopez Memorial Public Market
 - (a) This is the Candido B. Lopez Memorial Public Market, the palengke where Lipa shops for produce, food, and daily needs. Our facade photo is from 2014, so it may look different today.
+- (t) Did you know? Lipa's market goes back over a century. In 1914, a government report called the town's new concrete market probably the most complete of any provincial town in the islands.
 - (b) Look at the rounded arches repeating along the front, with rows of windows above them. Count the arches, and notice how the stairs break up the line.
 
 The reference photos date from 2010 to 2014. The in-world price boards are labelled as sample prices.
 
 ## 3. Lomi King
 - (a) This is Lomi King, one of Lipa's lomi houses. Lomi is part of the city's food culture, and sharing a hot bowl is a social way to eat. Our photo is from 2015, so the front may have changed.
+- (t) Did you know? Batangas lomi is credited to To Kim Eng, a Chinese immigrant who began serving it in Lipa in the late 1960s.
 - (b) Look at the bold orange sign band above the entrance. Its bright colors pull your eye to the name first. Then follow the menu boards down to the doorway.
 
 ## 4. Cafe de Lipa (Tibig/STAR branch)
 - (a) This is Cafe de Lipa, linked to kapeng barako, the strong coffee Batangas is known for. Coffee links Lipa's farming past with today's cafe culture. This model shows the Tibig/STAR branch.
+- (t) Did you know? Coffee made Lipa rich in the 1800s. In 1887, Spain's Queen Regent Maria Cristina gave the town the title Villa de Lipa.
 - (b) Look at the glass storefront glowing warm under the dark fascia and the lit yellow letters. Notice how the light spills out onto the outdoor seating.
 
 Only the Tibig/STAR photo is used; the other two streetfront photos are not confirmed as the same branch. The dialogue spells "Cafe" without the accent (byte slicing); the site name and InfoPanel keep "Café".
@@ -63,6 +83,7 @@ Only the Tibig/STAR photo is used; the other two streetfront photos are not conf
 - (a) Hi, I'm a volunteer guide and a pilgrim, not a nun. This is the Monastery of Our Lady of Mount Carmel in Lipa, a Carmelite community founded on May 31, 1946.
 - (h1) In 1948, Teresita Castillo reported apparitions of Mary here, drawing pilgrims to Lipa. In 1951, a commission of Filipino bishops found no supernatural character in the events.
 - (h2) The Holy See has since reaffirmed that 1951 judgment. In 2015, Archbishop Ramon Arguelles declared the events worthy of belief. The Holy See rejected that, and he later withdrew it.
+- (t) Did you know? The monastery was founded less than a year after World War II ended, when Lipa was one of the most damaged areas. Its first sisters came from the Manila Carmel.
 - (b) Look at the entry arch and the tall arched windows above it, repeating the same shape. The stepped top of the front wall gives the facade its clear outline.
 
 Panel text: "A Carmelite monastery founded on May 31, 1946, a place of prayer and pilgrimage in Lipa."
@@ -73,22 +94,26 @@ The shrine tablets read "THE TEN COMMANDMENTS", as in `Outdoor_Shrine_Structure.
 
 ## 6. The Outlets at LIMA Estate and Aboitiz Pitch
 - (a) This is The Outlets at LIMA Estate, called The Outlets at Lipa until 2025. Its outdoor shops beside the Aboitiz Pitch stand for modern shopping, dining, and an economy tied to growing industry.
+- (t) Did you know? Aboitiz, the developer, calls LIMA Estate the largest privately owned industrial estate in the Philippines. In 2024 it had about 71,000 workers.
 - (b) Look at the orange timber block against the white walls and dark glass. Follow the long canopy along the covered walkway, then find the slatted sign by the road.
 
 The source press release writes "The Outlets @LIMA Estate"; the site name stays "The Outlets at LIMA Estate" (details document). In-world: estate model plinth "A small model of the estate. LIMA Estate spans Lipa and Malvar."; map panel footer "Schematic map, not to scale. The estate spans Lipa and Malvar." The pitch's own renaming is not confirmed.
 
 ## 7. The Farm at San Benito
 - (a) This is The Farm at San Benito, a wellness resort in Lipa with gardens, a lagoon, and activities like yoga. It shows Lipa's wellness tourism today. Visits involve a booking or paid services.
+- (t) Did you know? The Farm opened on December 14, 2002, on 51 hectares of land.
 - (b) Look at the round thatched pavilion beside the straight-edged villa. Its curve and rough texture contrast with the flat walls. Then follow the patterned path.
 
 Listings give the barangay as Tipacan (Marriott) and Tipakan (the details document); no line names a barangay.
 
 ## 8. Mount Malarayat Golf and Country Club
 - (a) This is Mount Malarayat Golf and Country Club in Barangay Dagatan, Lipa, a place for golf, hotel stays, and leisure with a view of the mountains. Access depends on membership or a booking.
+- (t) Did you know? The club sits in the Malarayat mountain range, and its 27-hole championship course is split into three courses: Lobo, Makulot, and Malipunyo.
 - (b) Look at the big hipped roof on the clubhouse, then find the smaller entry gable and the wing roof. Their red-brown color stands out against the green lawn.
 
 ## 9. Tagbakin, Barangay Halang
 - (a) This is Tagbakin, a sitio in Barangay Halang on Lipa's lakeside. The city calls Halang one of its developed tourist spots, and says the waters off Tagbakin have long teemed with tawilis.
+- (t) Did you know? Tawilis is a freshwater sardine found only in Taal Lake. In 2019 the IUCN declared it an endangered species.
 - (b) Look along the dock and count its repeating posts. The dock leads your eye across the water to the volcano, past the grey lakeside building with stepped roofs.
 
 The shoreline building is described only by its form. The in-world map board reads "Tagbakin sits on the shore of Taal Lake in Barangay Halang, Lipa City. Halang is one of the city's developed tourist spots."

@@ -234,17 +234,19 @@ return function(t)
 		end
 	end)
 
-	-- Professor's feedback: short descriptions. Every guide gets two lines (what it is and why it matters, then the "Look"
-	-- line). Carmel gets four so each reported event stays next to the Church ruling on it.
-	t.test("line counts are 4 for Carmel and 2 elsewhere", function()
+	-- Professor's feedback: short descriptions plus one sourced trivia line. Every guide gets three lines (what it is and why
+	-- it matters, "Did you know?", then the "Look" line). Carmel gets five so each reported event stays next to the Church
+	-- ruling on it.
+	t.test("line counts are 5 for Carmel and 3 elsewhere", function()
 		for _, s in ipairs(SiteData.sites) do
-			expect.equal(#s.dialogue, s.id == 5 and 4 or 2)
+			expect.equal(#s.dialogue, s.id == 5 and 5 or 3)
 		end
 	end)
 
-	-- The last line of each guide points the player at the model.
-	t.test("every guide ends with a Look prompt", function()
+	-- The trivia line comes just before the last line, and the last line points the player at the model.
+	t.test("every guide ends with a Did you know? line and then a Look prompt", function()
 		for _, s in ipairs(SiteData.sites) do
+			expect.equal(string.sub(s.dialogue[#s.dialogue - 1], 1, 14), "Did you know? ")
 			expect.equal(string.sub(s.dialogue[#s.dialogue], 1, 4), "Look")
 		end
 	end)
