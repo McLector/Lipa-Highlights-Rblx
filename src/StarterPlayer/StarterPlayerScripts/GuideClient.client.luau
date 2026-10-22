@@ -6,6 +6,7 @@
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("LipaShared")
 local SiteData = require(Shared:WaitForChild("SiteData"))
@@ -19,6 +20,7 @@ local TYPE_DELAY = 0.02
 local BUTTON_HEIGHT = 48
 local BODY_TEXT = 18
 local TITLE_TEXT = 16
+local LEAVE_DISTANCE = 30 -- studs from where the dialogue opened; walking or riding farther closes it
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "GuideDialogue"
@@ -125,6 +127,7 @@ closeButton.BackgroundColor3 = Color3.fromRGB(90, 90, 100)
 local nextButton = button("Next", "Next", 2)
 
 local dialogue, current, typing, typeToken = nil, nil, false, 0
+local openedAt = nil -- player position when the dialogue opened
 
 local function show()
 	local line = dialogue and DialogueLogic.current(dialogue)
@@ -171,10 +174,20 @@ end
 local function close()
 	typeToken += 1
 	typing = false
-	dialogue, current = nil, nil
+	dialogue, current, openedAt = nil, nil, nil
 	gui.Enabled = false
 	gui:SetAttribute("DialogueOpen", false)
 end
+
+-- Playtest finding (Slice 23): a dialogue left open stayed on screen after walking away or riding the jeepney.
+RunService.Heartbeat:Connect(function()
+	if not gui.Enabled or not openedAt then return end
+	local char = player.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hrp and (hrp.Position - openedAt).Magnitude > LEAVE_DISTANCE then
+		close()
+	end
+end)
 
 nextButton.Activated:Connect(advance)
 closeButton.Activated:Connect(close)
@@ -187,6 +200,9 @@ local function open(siteId)
 		return
 	end
 	current = siteId
+	local char = player.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	openedAt = hrp and hrp.Position or nil
 	dialogue = DialogueLogic.new(site.dialogue)
 	title.Text = site.guideName .. " - " .. site.name
 	gui.Enabled = true

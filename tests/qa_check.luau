@@ -161,6 +161,10 @@ if guide then
 	check("GuideClient dialogue box no longer scales its buttons from the box", string.find(src, "fromScale(0.16, 0.22)", 1, true) == nil)
 	check("GuideClient dialogue text is a fixed readable size (>= 16)", (tonumber(string.match(src, "BODY_TEXT%s*=%s*(%d+)")) or 0) >= 16)
 	check("GuideClient never turns RichText on", string.find(src, "RichText = true", 1, true) == nil)
+	-- Slice 23 playtest: after talking to a guide and riding the jeepney, the old dialogue (Next/Close) stayed on screen under the jeep menu.
+	local leave = tonumber(string.match(src, "LEAVE_DISTANCE%s*=%s*(%d+)")) or 0
+	check("GuideClient closes the dialogue once the player walks or rides away (LEAVE_DISTANCE 20..60 studs)", leave >= 20 and leave <= 60, tostring(leave))
+	check("GuideClient measures that distance from where the dialogue opened", string.find(src, "openedAt", 1, true) ~= nil and string.find(src, "LEAVE_DISTANCE", 1, true) ~= nil and string.find(src, "Heartbeat", 1, true) ~= nil)
 end
 local jeep = sps and sps:FindFirstChild("JeepneyClient")
 check("JeepneyClient exists", jeep ~= nil)
