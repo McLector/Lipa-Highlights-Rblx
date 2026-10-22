@@ -1,4 +1,18 @@
-﻿backups/
+﻿# Studio saves and backups: binary, unmergeable, shared privately (see docs/baseline.md)
+backups/
 *.rbxl
 *.rbxlx
+*.rbxm
+*.lock
 *.bak
+
+# Secrets and personal files: never commit
+.env
+.env.*
+*.pem
+*.key
+
+# Source photos and course material live outside the repo (licences, instructor-owned); keep them out if copied in
+Lipa_structure_Exterior_References/
+*.pptx
+*.docx
