@@ -167,10 +167,10 @@ return function(t)
 		end
 	end)
 
-	-- Guides need 3+ non-empty lines, each short enough for the dialogue box.
-	t.test("dialogue has at least 3 lines of at most 220 chars", function()
+	-- Guides need 2+ non-empty lines, each short enough for the dialogue box.
+	t.test("dialogue has at least 2 lines of at most 220 chars", function()
 		for _, s in ipairs(SiteData.sites) do
-			expect.truthy(#s.dialogue >= 3)
+			expect.truthy(#s.dialogue >= 2)
 			for _, line in ipairs(s.dialogue) do
 				expect.truthy(#line > 0 and #line <= 220)
 			end
@@ -234,16 +234,19 @@ return function(t)
 		end
 	end)
 
-	-- Carmel gets six lines (founding, 1948, 1951, 2015 each on their own); every other guide gets four.
-	t.test("line counts are 6 for Carmel and 4 elsewhere", function()
+	-- Professor's feedback: short descriptions plus one sourced trivia line. Every guide gets three lines (what it is and why
+	-- it matters, "Did you know?", then the "Look" line). Carmel gets five so each reported event stays next to the Church
+	-- ruling on it.
+	t.test("line counts are 5 for Carmel and 3 elsewhere", function()
 		for _, s in ipairs(SiteData.sites) do
-			expect.equal(#s.dialogue, s.id == 5 and 6 or 4)
+			expect.equal(#s.dialogue, s.id == 5 and 5 or 3)
 		end
 	end)
 
-	-- The last line of each guide points the player at the model.
-	t.test("every guide ends with a Look prompt", function()
+	-- The trivia line comes just before the last line, and the last line points the player at the model.
+	t.test("every guide ends with a Did you know? line and then a Look prompt", function()
 		for _, s in ipairs(SiteData.sites) do
+			expect.equal(string.sub(s.dialogue[#s.dialogue - 1], 1, 14), "Did you know? ")
 			expect.equal(string.sub(s.dialogue[#s.dialogue], 1, 4), "Look")
 		end
 	end)
@@ -283,11 +286,14 @@ return function(t)
 		expect.truthy(string.find(c.panelText, "May 31, 1946", 1, true))
 	end)
 
-	-- Carmel's rulings stay as reported: 1951 finding and 2015 declaration each have their own line.
+	-- Carmel's rulings stay as reported: the 1948 reports share a line with the 1951 finding, and the 2015 declaration
+	-- shares a line with the Holy See's rejection, so no claim is shown without its ruling.
 	t.test("Carmel dialogue covers 1948, 1951 and 2015 in order", function()
 		local d = SiteData.byId(5).dialogue
-		expect.truthy(string.find(d[2], "1948", 1, true))
-		expect.truthy(string.find(d[3], "1951", 1, true))
-		expect.truthy(string.find(d[4], "2015", 1, true))
+		local at1948 = string.find(d[2], "1948", 1, true)
+		local at1951 = string.find(d[2], "1951", 1, true)
+		expect.truthy(at1948 and at1951 and at1948 < at1951)
+		expect.truthy(string.find(d[3], "2015", 1, true))
+		expect.truthy(string.find(d[3], "rejected", 1, true))
 	end)
 end
