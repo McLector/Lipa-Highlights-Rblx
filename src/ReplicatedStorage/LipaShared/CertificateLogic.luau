@@ -1,4 +1,4 @@
--- CertificateLogic: pure data for the 9/9 passport certificate (no Instances). The client draws it; the date is added there.
+-- CertificateLogic: pure data for the 10/10 passport certificate (no Instances). The client draws it; the date is added there.
 -- cleanName makes a Roblox display name safe to print; build returns nil unless the passport state is genuinely complete.
 local PassportLogic = require(game:GetService("ReplicatedStorage"):WaitForChild("LipaShared"):WaitForChild("PassportLogic"))
 
@@ -7,6 +7,7 @@ local CertificateLogic = {}
 local FALLBACK_NAME = "Traveler"
 local MAX_NAME_CHARS = 40
 local TITLE = "Lipa Passport Complete"
+local TOTAL_SITES = 10 -- the nine town sites plus New Lipa City Hall; PassportLogic derives its ids from SiteData and must agree
 
 -- Trimmed, control-free display name of at most 40 UTF-8 characters, cut on a character boundary.
 function CertificateLogic.cleanName(raw)
@@ -25,15 +26,28 @@ function CertificateLogic.cleanName(raw)
 	return s
 end
 
+-- layout(w, h): grid columns for the certificate. Portrait (taller than wide) gets 2 so long names stay readable;
+-- landscape and square get 3. Anything that is not a positive finite pair of numbers gets the safe default (3).
+local function positiveFinite(n)
+	return type(n) == "number" and n == n and n > 0 and n < math.huge
+end
+
+function CertificateLogic.layout(w, h)
+	if positiveFinite(w) and positiveFinite(h) and h > w then
+		return { columns = 2 }
+	end
+	return { columns = 3 }
+end
+
 local function isRealPassport(state)
 	if type(state) ~= "table" or type(state.valid) ~= "table" or type(state.stamped) ~= "table"
 		or type(state.n) ~= "number" or type(state.total) ~= "number" then
 		return false
 	end
-	if state.total ~= 9 or not PassportLogic.isComplete(state) then
+	if state.total ~= TOTAL_SITES or not PassportLogic.isComplete(state) then
 		return false
 	end
-	for id = 1, 9 do
+	for id = 1, TOTAL_SITES do
 		if not PassportLogic.has(state, id) then
 			return false
 		end
@@ -41,9 +55,9 @@ local function isRealPassport(state)
 	return true
 end
 
--- build(state, displayName, sites): { title, player, places, count } at 9/9, else nil. `sites` is SiteData.sites.
+-- build(state, displayName, sites): { title, player, places, count } at 10/10, else nil. `sites` is SiteData.sites.
 function CertificateLogic.build(state, displayName, sites)
-	if not isRealPassport(state) or type(sites) ~= "table" or #sites ~= 9 then
+	if not isRealPassport(state) or type(sites) ~= "table" or #sites ~= TOTAL_SITES then
 		return nil
 	end
 	local ordered = {}

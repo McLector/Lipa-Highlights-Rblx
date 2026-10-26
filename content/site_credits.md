@@ -1,6 +1,6 @@
 # Photo Credits by Site
 
-Source pages come from SOURCES.csv in the Lipa_structure_Exterior_References folder. Each page is listed once per folder, in first-appearance order. Sites are sorted by site ID (1 to 9).
+Source pages come from SOURCES.csv in the Lipa_structure_Exterior_References folder. Each page is listed once per folder, in first-appearance order. Sites are sorted by site ID (1 to 10).
 
 ## Credits board identity (student name, course, section)
 PENDING (user): not yet supplied as of Slice 12. The CreditsBoard is built in Slice 13 and needs these three values. Nothing here is invented.
@@ -76,6 +76,48 @@ Folder: 08_Tagbakin_Halang
 Photos in folder: 9; unique source pages: 1
 
 - https://www.wowbatangas.com/lipa-citys-hidden-gem-sitio-tagbakin-halang-lipa-city/
+
+## Site 10: New Lipa City Hall
+Folder: none (reference photos are Google Street View views and are not stored in the repository); unique source pages: 1
+
+- https://www.google.com/maps
+
+City Hall reference photos: Google Street View. The Site 10 model (Slice 3a) was built from those views plus the group's AI-assisted concept drawings, which were used for massing only.
+
+## Project credit lines
+
+- City Hall reference photos: Google Street View.
+- Site blueprints: AI-assisted concept drawings prepared by the group; used for massing only.
+
+## Tour sources
+
+The 25 numbered References of the group's tour-script PDF (`Detail Reference/more details.pdf`, not in this repository), in the PDF's order. The `[n]` numbers are the `pdfRef` values used in `TourContent.luau`. Mirrored in `CreditsData.tourSources`.
+
+1. Daily Tribune. "Lipa inaugurates new City Hall in Areza." April 13, 2026. https://tribune.net.ph/2026/04/13/lipa-inaugurates-new-city-hall-in-areza
+2. Ayala Land. "Areza in New City Center Lipa." https://ayalaland.com/estates/areza
+3. Inquirer.net (advertorial). "ALI welcomes new Lipa City Hall and trading center in Areza estate." https://business.inquirer.net/353940/ali-welcomes-new-lipa-city-hall-and-trading-center-in-areza-estate
+4. Ayala Land. "Ayala Land breaks ground on 92-hectare estate in Lipa." https://ayalaland.com/blog/ayala-land-breaks-ground-on-92-hectare-estate-in-lipa
+5. Wikipedia. "Lipa, Batangas." https://en.wikipedia.org/wiki/Lipa,_Batangas
+6. Philippine Information Agency. "Kape, lomi at pasyalan, tampok sa probinsya ng Batangas." October 25, 2022. https://mirror.pia.gov.ph/features/2022/10/25/kape-lomi-at-pasyalan-tampok-sa-probinsya-ng-batangas
+7. Batangas History, Culture and Folklore. "History and origin of Batangas lomi." https://www.batangashistory.date/2022/05/history-and-origin-of-batangas-lomi.html
+8. Wikipedia. "Lomi." https://en.wikipedia.org/wiki/Lomi
+9. The Poor Traveler. "Lomi King, Lipa City." 2012. https://www.thepoortraveler.net/?p=3102
+10. Traveloka. "Start the day by enjoying the scent of coffee... Lipa City." https://www.traveloka.com/en-ph/explore/destination/start-the-day-by-enjoying-the-scent-of-coffee-while-strolling-around-to-enjoy-the-historical-stories-of-lipa-city/302025
+11. The Poor Traveler. "Cafe de Lipa: Kapeng Barako and Batangas history." April 9, 2012. https://www.thepoortraveler.net/?p=1447
+12. Wikipedia. "Kapeng barako." https://en.wikipedia.org/wiki/Kapeng_barako
+13. Batangas History, Culture and Folklore. "What ended Lipa's coffee boom." 2024. https://www.batangashistory.date/2024/04/what-ended-lipas-coffee-boom.html
+14. Wikivoyage. "Lipa." https://en.wikivoyage.org/wiki/Lipa
+15. Batangas History, Culture and Folklore. "Photo of the completed Lipa public market, July 1914." https://www.batangashistory.date/2022/06/photo-of-the-completed-lipa-public-market-july-1914.html
+16. Wikipedia. "Lipa Cathedral." https://en.wikipedia.org/wiki/Lipa_Cathedral
+17. City Government of Lipa. "The City." https://lipa.gov.ph/city/
+18. Aboitiz Economic Estates. "The Outlets @ LIMA Estate." March 4, 2025. https://www.aboitizeconomicestates.com/outlets-at-lima-estate/
+19. Marriott. "The Farm at San Benito, Autograph Collection: Experiences." https://www.marriott.com/en-us/hotels/mnlfs-the-farm-at-san-benito-autograph-collection/experiences/
+20. City Government of Lipa. "Barangay Profiles." https://lipa.gov.ph/barangay-profiles/
+21. Mount Malarayat Golf & Country Club. "Contact." https://malarayat.com/contact/
+22. Golf Today. "Mount Malarayat Golf & Country Club." https://golftoday.co.uk/course/asia/philippines/batangas/mount-malarayat-golf-amp-country-club/
+23. Discalced Carmelites. "Lipa Carmel's 75th anniversary of foundation." June 24, 2021. https://www.carmelitaniscalzi.com/en/2021/06/24/lipa-carmels-75th-anniversary-of-foundation-written-by-the-sisters-of-lipa/
+24. Wikipedia. "Mary, Mediatrix of All Grace." https://en.wikipedia.org/wiki/Mary,_Mediatrix_of_All_Grace
+25. Inquirer.net. "Tawilis' 2-month fishing ban in Taal Lake in Batangas ends." May 1, 2024. https://newsinfo.inquirer.net/1935763/tawilis-2-month-fishing-ban-in-taal-lake-in-batangas-ends
 
 ## Slice 14 rework: Cathedral and plaza reference attribution
 

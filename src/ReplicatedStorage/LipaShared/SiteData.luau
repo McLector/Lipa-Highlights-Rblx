@@ -1,4 +1,4 @@
--- SiteData: the nine Lipa sites. Source of truth for layout (structure_model_positioning.png), with ONE deliberate deviation made in
+-- SiteData: the ten Lipa sites (nine town sites plus New Lipa City Hall, id 10, added in Slice 3b). Source of truth for layout (structure_model_positioning.png), with ONE deliberate deviation made in
 -- Slice 14 at the user's request: the three town-core shops were pushed out from the Cathedral so the core is not crowded (Market
 -- -230 -> -330, Lomi King 180 -> 292, Cafe 160 -> 272; z unchanged; the image is not edited). Categories (png legend), and display text. Dialogue is the approved text in content/dialogue_draft.md (Slice 12, shortened after the professor's feedback): ASCII only,
 -- because GuideClient's typewriter slices lines by byte.
@@ -12,7 +12,11 @@ local FACING_DIRS = {
 	NE = Vector3.new(R, 0, -R), NW = Vector3.new(-R, 0, -R), SE = Vector3.new(R, 0, R), SW = Vector3.new(-R, 0, R),
 }
 
-local function site(id, key, name, category, x, groundY, z, facing, sx, sz, massScale, guideName, dialogue, panelText, credits, requiredProps)
+-- Optional per-row local offsets (`locals`: guideLocal, jeepLocal, panelLocal), each a Vector2 (lx, lz) in the site's LOCAL FRAME:
+-- origin = the site pos, +lx = forward (the facing direction), lz = to the right of the facing, i.e. (-f.Z, 0, f.X)
+-- (facing E: forward +X, right +Z). When a row has no offset, the old default formulas apply (see guidePos / jeepStopPos).
+local function site(id, key, name, category, x, groundY, z, facing, sx, sz, massScale, guideName, dialogue, panelText, credits, requiredProps, locals)
+	locals = locals or {}
 	return {
 		id = id,
 		key = key,
@@ -28,6 +32,9 @@ local function site(id, key, name, category, x, groundY, z, facing, sx, sz, mass
 		panelText = panelText,
 		credits = credits,
 		requiredProps = requiredProps,
+		guideLocal = locals.guideLocal,
+		jeepLocal = locals.jeepLocal,
+		panelLocal = locals.panelLocal,
 	}
 end
 
@@ -124,6 +131,21 @@ SiteData.sites = {
 		"Tagbakin, in Barangay Halang, introduces Lipa's lakeside identity.",
 		{ "www.wowbatangas.com" },
 		{ "LocationMapPanel", "FishingActivity", "Dock", "Bancas" }),
+	-- Row 10: New Lipa City Hall, the Welcome gateway. Pivot (-250, 0, -260), facing E, 1104 parts (Slice 3a). The dialogue is
+	-- PROVISIONAL: derived from TourContent site 10 (firstTalk / trivia / lookAt) in the Slice 3b data step, until Slice 11 makes
+	-- GuideClient read TourContent directly. Local offsets keep Ate Joy off the spawn pad and the steps (steps lx 5..25, spawn pad
+	-- lx 30..50 / lz -10..10): guide at lx 27, jeep stop on the curb (lx 90..100, lz 20..40), InfoPanel at lx 28..38 / lz -30..-15.
+	site(10, "CityHall", "New Lipa City Hall", "Welcome", -250, 0, -260, "E", 200, 140, 2.0,
+		"Ate Joy",
+		{
+			"Hiii, welcome to Lipa! This is the New Lipa City Hall, inaugurated April 8, 2026 in Ayala Land's Areza estate. I'm Joy, your tour guide today.",
+			"Did you know? The complex has 72 elevated blocks, one for each of Lipa's 72 barangays, which are like neighborhoods.",
+			"Look at the shape of those raised blocks, repeating in a steady rhythm, and walk under one to feel the space beneath.",
+		},
+		"Lipa's new seat of local government, inaugurated April 8, 2026, with open lobbies, gardens and shaded walkways.",
+		{ "www.google.com" },
+		{ "raised walk-under blocks", "pocket gardens", "open lobby", "front plaza with welcome billboard and tour map", "jeepney stop" },
+		{ guideLocal = Vector2.new(27, 0), jeepLocal = Vector2.new(95, 30), panelLocal = Vector2.new(33, -22) }),
 }
 
 local byIdMap = {}
@@ -131,7 +153,7 @@ for _, s in ipairs(SiteData.sites) do
 	byIdMap[s.id] = s
 end
 
--- Strict: only whole-number ids 1..9 resolve; anything else is nil.
+-- Strict: only whole-number ids 1..10 resolve; anything else is nil.
 function SiteData.byId(id)
 	if type(id) ~= "number" then
 		return nil
@@ -154,24 +176,42 @@ function SiteData.facingToYaw(facing)
 	return math.atan2(-v.X, -v.Z)
 end
 
--- Where the Guide stands: 30 studs in front of the site centre (XZ; Y is seated on terrain by the builder).
-function SiteData.guidePos(id)
+-- Local frame -> world (Y = the site's groundY): origin = site pos, lx along the facing, lz to the right of the facing.
+function SiteData.localToWorld(id, lx, lz)
 	local s = SiteData.byId(id)
 	if not s then
 		return nil
 	end
 	local f = SiteData.facingVector(s.facing)
+	local right = Vector3.new(-f.Z, 0, f.X)
+	return s.pos + f * lx + right * lz
+end
+
+-- Where the Guide stands: the row's guideLocal when it has one, else 30 studs in front of the site centre
+-- (XZ; Y is seated on terrain by the builder).
+function SiteData.guidePos(id)
+	local s = SiteData.byId(id)
+	if not s then
+		return nil
+	end
+	if s.guideLocal then
+		return SiteData.localToWorld(id, s.guideLocal.X, s.guideLocal.Y)
+	end
+	local f = SiteData.facingVector(s.facing)
 	return s.pos + f * 30
 end
 
--- Jeep stops exist for the plaza and the five outer sites only: 20 studs to the right of the Guide, which is
--- outside the Guide's 12-stud prompt radius but inside the 25-stud stamp range.
-local JEEP_SITES = { [1] = true, [5] = true, [6] = true, [7] = true, [8] = true, [9] = true }
+-- Jeep stops exist for the plaza, the five outer sites and City Hall only. Default: 20 studs to the right of the Guide, which
+-- is outside the Guide's 12-stud prompt radius but inside the 25-stud stamp range. A row with jeepLocal puts the stop there.
+local JEEP_SITES = { [1] = true, [5] = true, [6] = true, [7] = true, [8] = true, [9] = true, [10] = true }
 function SiteData.jeepStopPos(id)
 	if type(id) ~= "number" or not JEEP_SITES[id] then
 		return nil
 	end
 	local s = byIdMap[id]
+	if s.jeepLocal then
+		return SiteData.localToWorld(id, s.jeepLocal.X, s.jeepLocal.Y)
+	end
 	local f = SiteData.facingVector(s.facing)
 	local right = Vector3.new(-f.Z, 0, f.X)
 	return SiteData.guidePos(id) + right * 20
@@ -179,6 +219,20 @@ end
 
 function SiteData.hasJeepStop(id)
 	return type(id) == "number" and JEEP_SITES[id] == true
+end
+
+-- Category colours (one table for the panels, guides and the passport). nil for a missing or unknown category.
+local CATEGORY_COLORS = {
+	Eat = Color3.fromRGB(232, 150, 70),
+	Pray = Color3.fromRGB(90, 150, 230),
+	Love = Color3.fromRGB(100, 190, 110),
+	Welcome = Color3.fromRGB(230, 190, 80),
+}
+function SiteData.categoryColor(category)
+	if type(category) ~= "string" then
+		return nil
+	end
+	return CATEGORY_COLORS[category]
 end
 
 return SiteData

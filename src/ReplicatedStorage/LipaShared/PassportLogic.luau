@@ -1,7 +1,12 @@
--- PassportLogic: pure passport state (no Instances). Ids are whole numbers from a fixed valid set (default 1..9).
+-- PassportLogic: pure passport state (no Instances). Ids are whole numbers from a fixed valid set (default: every SiteData id, 1..10).
+local SiteData = require(game:GetService("ReplicatedStorage"):WaitForChild("LipaShared"):WaitForChild("SiteData"))
+
 local PassportLogic = {}
 
-local DEFAULT_IDS = { 1, 2, 3, 4, 5, 6, 7, 8, 9 }
+local DEFAULT_IDS = {}
+for _, s in ipairs(SiteData.sites) do
+	table.insert(DEFAULT_IDS, s.id)
+end
 
 local function isWhole(id)
 	return type(id) == "number" and id == id and id % 1 == 0

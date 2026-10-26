@@ -1,4 +1,4 @@
--- CreditsData: static data for the CreditsBoard at the spawn. Source pages are transcribed from content/site_credits.md
+-- CreditsData: static data for the CreditsBoard (ten sites, project lines, and the 25 tour sources). Source pages are transcribed from content/site_credits.md
 -- (generated from SOURCES.csv); a disk-side script checks the two stay equal. The student identity is filled in before Ship.
 local CreditsData = {}
 
@@ -48,6 +48,45 @@ CreditsData.sites = {
 	{ id = 9, urls = {
 		"https://www.wowbatangas.com/lipa-citys-hidden-gem-sitio-tagbakin-halang-lipa-city/",
 	} },
+	{ id = 10, urls = {
+		"https://www.google.com/maps",
+	} },
+}
+
+-- Project-level credit lines (not tied to one url): the City Hall photo source and the blueprint note. ASCII only.
+CreditsData.projectLines = {
+	"City Hall reference photos: Google Street View.",
+	"Site blueprints: AI-assisted concept drawings prepared by the group; used for massing only.",
+}
+
+-- The 25 numbered References from the group's tour-script PDF (Detail Reference/more details.pdf), in the PDF's order and as
+-- printed (publisher, "title", date when given), with the url on its own field. TourContent's pdfRef numbers point at these refs.
+CreditsData.tourSources = {
+	{ ref = 1, text = "Daily Tribune. \"Lipa inaugurates new City Hall in Areza.\" April 13, 2026.", url = "https://tribune.net.ph/2026/04/13/lipa-inaugurates-new-city-hall-in-areza" },
+	{ ref = 2, text = "Ayala Land. \"Areza in New City Center Lipa.\"", url = "https://ayalaland.com/estates/areza" },
+	{ ref = 3, text = "Inquirer.net (advertorial). \"ALI welcomes new Lipa City Hall and trading center in Areza estate.\"", url = "https://business.inquirer.net/353940/ali-welcomes-new-lipa-city-hall-and-trading-center-in-areza-estate" },
+	{ ref = 4, text = "Ayala Land. \"Ayala Land breaks ground on 92-hectare estate in Lipa.\"", url = "https://ayalaland.com/blog/ayala-land-breaks-ground-on-92-hectare-estate-in-lipa" },
+	{ ref = 5, text = "Wikipedia. \"Lipa, Batangas.\"", url = "https://en.wikipedia.org/wiki/Lipa,_Batangas" },
+	{ ref = 6, text = "Philippine Information Agency. \"Kape, lomi at pasyalan, tampok sa probinsya ng Batangas.\" October 25, 2022.", url = "https://mirror.pia.gov.ph/features/2022/10/25/kape-lomi-at-pasyalan-tampok-sa-probinsya-ng-batangas" },
+	{ ref = 7, text = "Batangas History, Culture and Folklore. \"History and origin of Batangas lomi.\"", url = "https://www.batangashistory.date/2022/05/history-and-origin-of-batangas-lomi.html" },
+	{ ref = 8, text = "Wikipedia. \"Lomi.\"", url = "https://en.wikipedia.org/wiki/Lomi" },
+	{ ref = 9, text = "The Poor Traveler. \"Lomi King, Lipa City.\" 2012.", url = "https://www.thepoortraveler.net/?p=3102" },
+	{ ref = 10, text = "Traveloka. \"Start the day by enjoying the scent of coffee... Lipa City.\"", url = "https://www.traveloka.com/en-ph/explore/destination/start-the-day-by-enjoying-the-scent-of-coffee-while-strolling-around-to-enjoy-the-historical-stories-of-lipa-city/302025" },
+	{ ref = 11, text = "The Poor Traveler. \"Cafe de Lipa: Kapeng Barako and Batangas history.\" April 9, 2012.", url = "https://www.thepoortraveler.net/?p=1447" },
+	{ ref = 12, text = "Wikipedia. \"Kapeng barako.\"", url = "https://en.wikipedia.org/wiki/Kapeng_barako" },
+	{ ref = 13, text = "Batangas History, Culture and Folklore. \"What ended Lipa's coffee boom.\" 2024.", url = "https://www.batangashistory.date/2024/04/what-ended-lipas-coffee-boom.html" },
+	{ ref = 14, text = "Wikivoyage. \"Lipa.\"", url = "https://en.wikivoyage.org/wiki/Lipa" },
+	{ ref = 15, text = "Batangas History, Culture and Folklore. \"Photo of the completed Lipa public market, July 1914.\"", url = "https://www.batangashistory.date/2022/06/photo-of-the-completed-lipa-public-market-july-1914.html" },
+	{ ref = 16, text = "Wikipedia. \"Lipa Cathedral.\"", url = "https://en.wikipedia.org/wiki/Lipa_Cathedral" },
+	{ ref = 17, text = "City Government of Lipa. \"The City.\"", url = "https://lipa.gov.ph/city/" },
+	{ ref = 18, text = "Aboitiz Economic Estates. \"The Outlets @ LIMA Estate.\" March 4, 2025.", url = "https://www.aboitizeconomicestates.com/outlets-at-lima-estate/" },
+	{ ref = 19, text = "Marriott. \"The Farm at San Benito, Autograph Collection: Experiences.\"", url = "https://www.marriott.com/en-us/hotels/mnlfs-the-farm-at-san-benito-autograph-collection/experiences/" },
+	{ ref = 20, text = "City Government of Lipa. \"Barangay Profiles.\"", url = "https://lipa.gov.ph/barangay-profiles/" },
+	{ ref = 21, text = "Mount Malarayat Golf & Country Club. \"Contact.\"", url = "https://malarayat.com/contact/" },
+	{ ref = 22, text = "Golf Today. \"Mount Malarayat Golf & Country Club.\"", url = "https://golftoday.co.uk/course/asia/philippines/batangas/mount-malarayat-golf-amp-country-club/" },
+	{ ref = 23, text = "Discalced Carmelites. \"Lipa Carmel's 75th anniversary of foundation.\" June 24, 2021.", url = "https://www.carmelitaniscalzi.com/en/2021/06/24/lipa-carmels-75th-anniversary-of-foundation-written-by-the-sisters-of-lipa/" },
+	{ ref = 24, text = "Wikipedia. \"Mary, Mediatrix of All Grace.\"", url = "https://en.wikipedia.org/wiki/Mary,_Mediatrix_of_All_Grace" },
+	{ ref = 25, text = "Inquirer.net. \"Tawilis' 2-month fishing ban in Taal Lake in Batangas ends.\" May 1, 2024.", url = "https://newsinfo.inquirer.net/1935763/tawilis-2-month-fishing-ban-in-taal-lake-in-batangas-ends" },
 }
 
 -- Student identity for the board. pending = true shows the TO BE ADDED slot; set it false once all three are filled.
