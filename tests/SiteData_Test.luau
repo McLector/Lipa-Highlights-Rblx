@@ -414,8 +414,11 @@ return function(t)
 		expect.truthy(#c.credits >= 1)
 		expect.truthy(#c.panelText > 0)
 		local joined = table.concat(c.requiredProps, "|")
-		expect.truthy(string.find(joined, "raised walk-under blocks", 1, true))
-		expect.truthy(string.find(joined, "jeepney stop", 1, true))
+		-- BuildCheck matches requiredProps against DIRECT children of the site model, so they are the City Hall model names
+		-- (Blocks = the raised walk-under blocks, Landscape = pocket gardens, Wing = open lobby, Forecourt = front plaza,
+		-- JeepStop = the jeepney stop), not the PDF display words (those stay in TourContent displayProps).
+		expect.truthy(string.find(joined, "Blocks", 1, true))
+		expect.truthy(string.find(joined, "JeepStop", 1, true))
 	end)
 
 	t.test("categoryColor returns the four category colours and nil for unknown or non-string input", function()

@@ -144,7 +144,9 @@ SiteData.sites = {
 		},
 		"Lipa's new seat of local government, inaugurated April 8, 2026, with open lobbies, gardens and shaded walkways.",
 		{ "www.google.com" },
-		{ "raised walk-under blocks", "pocket gardens", "open lobby", "front plaza with welcome billboard and tour map", "jeepney stop" },
+		-- requiredProps are direct child names of the model (BuildCheck): Blocks = raised walk-under blocks, Landscape = pocket gardens,
+		-- Wing = open lobby, Forecourt = front plaza (billboard and tour map spot), JeepStop = the jeepney stop.
+		{ "Blocks", "Landscape", "Wing", "Forecourt", "JeepStop" },
 		{ guideLocal = Vector2.new(27, 0), jeepLocal = Vector2.new(95, 30), panelLocal = Vector2.new(33, -22) }),
 }
 
