@@ -45,7 +45,7 @@ Update this table every time the integrator shares a new baseline. If you save t
 If a place is ever rebuilt from scratch these must be set by hand:
 - `SoundService.AmbientTown`: Sound, `rbxassetid://9112833822` ("Neighborhood 3 (SFX)", Creator Store), Looped, Volume 0.25, attribute `Ambient = true`
 - `Lighting`: `LightingStyle = Realistic`; `ClockTime` is set by `builders/world.luau` (15.5); Sky, Atmosphere, SunRays and Bloom come from the Baseplate template (DepthOfField disabled)
-- `Workspace.SpawnLocation` at (0, 0.5, 70) facing -Z
+- `Workspace.SpawnLocation` at (-208, 0.8, -260), size 12 x 1 x 12, facing -X (City Hall forecourt; set by `builders/spawn.luau`, Slice 3b)
 - Streaming: `StreamingEnabled = true`, Persistent backdrops (`ModelStreamingMode`), invisible boundary walls at +-1000
 - Team Create **off**
 - Studio copies of every script: builders under `ServerStorage.Builders`, checks under `ServerStorage.Checks`, unit tests under `ServerStorage.UnitTest.Cases`, and the mirrors of `src/**`
