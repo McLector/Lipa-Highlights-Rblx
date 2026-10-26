@@ -25,7 +25,6 @@ Left out on purpose: the purple Lenten banners (seasonal) and the parked cars.
 5. `Cathedral_Downtown_Aerial_Alternate_01.jpg` — massing and plan: dome behind the facade on the nave axis, wing to the viewer's right, plaza in front. An aerial is perspective context, not a measured plan.
 
 ## What is built
-> Superseded in part by Revision 5 (below): the tower (7 tiers, small cap), the dome, the wing (now on the west flank), the forecourt walls, the monument and the stage roof.
 **Bell tower** (viewer's left, −X, attached to the facade): octagonal in plan, 4 tiers narrowing upward. Each tier has arched openings on the visible faces and a projecting cornice on top. Cream ribbed cupola with a lantern, finial and cross. A dark panel (the LED screen) sits at its base on the front face. About 80 studs tall.
 
 **Facade** (3 registers, 44 studs wide): paired pilasters (mauve-grey) carry cornices between registers.
@@ -184,41 +183,3 @@ Kept exactly: `RAISE = 5`, `WALL_Z = 48`, the footprint, the forecourt and churc
 
 ## Pitfall recorded
 In Studio a stray drag moved the whole Site01 model by (-57.5, 0.2, 20.3) during this pass. It surfaced only as a dozen unrelated `site01_check` failures. `site01_check` now fails first on "site pivot is at the SiteData pos (0, 0, 0), facing +Z".
-
-# Revision 5 (Slice 4): blueprint pass
-
-> Written after the build, out of order: this brief was meant to be written before the change, and was not. The list below describes what is built and what the tests in `tests/site01_check.luau` (the Revision 5 block) assert. Source: `2nd Reference/cathedral/3d blueprints/Metropolitan Cathedral Blueprint Plaza Plan.png`. Its labels are garbled and are NOT signage: no blueprint text appears in the model. Precedence: the blueprint decides massing, layout and proportion; the photos win on visible detail, except where the owner's gap list overrides (walls, item 10).
-
-## Ranked diff list (12 items, most visible first)
-| # | Blueprint shows | Before | Built (part names the tests assert) | Target size (studs) |
-|---|---|---|---|---|
-| 1 | 7-tier octagonal bell tower with a small cream domed cap, at the SW corner of the facade | 4 tiers, cupola 13 wide | `Tier1..7` (8 segments each, `Tier<i>1..8`), `Tier<i>Win_Pane` (3 on tier 1, 4 on tiers 2-7), `Cornice<i>`, `Cupola` | tier radius 11.0 down to 6.5 in steps of about 0.8; tier heights 7.0 to 4.4; cap 10.8 across; cross top about 84.5 |
-| 2 | Large cream dome with a lantern and a cross, on a drum with 8 windows | radius 19 (38 across), drum apothem 20 | `Dome` (46 across), `Drum1..8`, `DrumWin1..8_Pane`, `Lantern1..8`, `LanternCap`, `DomeCrossV`/`H` | dome radius 23, top y 76.5; drum apothem 24 (side 19.9); lantern apothem 4.2 |
-| 3 | 2-storey parish and archdiocese office wing on the G.A. Solis (SW) flank, arcade facing the street, red roof | 2-storey arcade on the EAST flank (+X), 11 bays | `WingWest`: `WingUpper`, `WingUpperFront`, `WingBay1,2,4,5` (arched), `WingWin1,2,4,5_Pane`, `PavilionDoor`/`PavilionWin`, `EntranceSign`, `WingRoofFront`/`Back` (red tile ribs) | 45 long (z -62..-17), 12 deep (x -48.5..-60.5), storey band at y 13, eave at y 26.8 |
-| 4 | 3-storey parish and archdiocese office wing at the far (back-left) end of the SW flank | none | `Office`: `OfficeBody`, `OfficeS<k>Win<i>` (5 / 6 / 6 windows on storeys 1-3), `OfficeBand1..3`, `OfficeDoor` (8.2 tall), `OfficePilaster`, `OfficeRoofFront`/`Back` (red) | 34 long (z -100..-66), 12 deep, 25.5 tall, storeys 8.5 |
-| 5 | Walled parking forecourt with a retaining wall and steps (5 m drop) | open on the east and west edges | `ForecourtWallW`/`E` (2 segments each, brick, 3 tall), `ForecourtPier` (4 per side), `RetainBrickW`/`E` (brick skins on the podium's south face); gateway z 16..36 kept clear for the side stairs (a test asserts it) | walls at x +-100.6, z 10..16 and 36..46; gateway 20 studs |
-| 6 | Perimeter railing in dark iron | white posts and rails | `FencePost`, `FenceRail` (dark iron, `LAMP_METAL`) | posts 3.2 tall (railings 3 minimum) |
-| 7 | D-shaped monument mound with a looped ribbon sculpture | plinth with a statue | `MonumentPlinth` (12 strips in 3 terraces), `MonumentRibbon` (12 bars), `Monument` (pedestal) | half-disc radii 6.5 / 4.6 / 2.8 with the flat side at (22, 46); ribbon radius 2.4, top about y 13 (world) |
-| 8 | Lipa Cultural Center: a 2-storey cream block with arched windows, at the far corner of the plaza | none | `CulturalCentreBody`, `CulturalS1W1..4_Pane`, `CulturalS2W1..3_Pane`, `CulturalDoor_Pane` (8.5 tall), `CulturalRoof`, `CulturalParapet` | 16 x 18 x 17 at x 80..96, z 65..82; south face at z 82, clear of the palm fronds |
-| 9 | Open-air stage pavilion with a dark peaked roof | pale barrel vault (9 panels) | `CoveredCourt` and `CourtPost` (kept), `StageRoof` (2 planes, colour 58/60/66, tilt about 38 degrees), `StageRidge`, `StageGable` | eaves at y 9.8, ridge at y 16.8 |
-| 10 | Cream walls, as the blueprint shows. Departs from the 2024 photos, which are butter-yellow | (232, 200, 120) | `WALL` = (240, 226, 186), used by the facade, tower, nave and wings | the owner may revert by restoring the old `WALL` value |
-| 11 | Garden with trees north-east of the church | none | `GardenTreeTrunk`, `GardenTreeCanopy` (6 trees, 3 balls each) | canopy balls 4.6 to 6.5 across |
-| 12 | Palms along the plaza edges | 20 palm trunks | `PalmTrunk1` (22 now; new palms at (-40, 72) and (-40, 84)) | fronds 8 |
-
-Other changes, not separate items: the new wings have red roofs with tile ribs every 3 studs; the bench at (24, 42) is removed (the mound's site); `PlazaPeople` Visitor2 moves from (20, 44) to (-44, 34); the lower lamp at (90, 66) moves to (97.5, 62); the brick parapets replace the stone ones. The fountain, stairs, kiosks and seating are unchanged.
-
-## Totals
-- Site 01 parts: 1683 -> 1775 (+92). Max |x| stays 128.0 (roads_check 94/0; the cathedral is 31 studs from the EAST_BYPASS at x 165).
-- Checks: `site01_check` 115 passed, 0 failed. Before the build: 77 passed, 38 failed (the new Revision 5 checks were red).
-
-## Disclosed reversals (not approved by the owner, reversible)
-- **Stage roof (item 9).** The curved vault was a user decision recorded in Revision 4 ("the pavilion gets a curved roof"), not only a photo detail. It is replaced by the dark peaked roof that the blueprint and the gap list ask for. To revert, restore the vault loop in `buildPlazaBuildings` (the Revision 4 code is in the git history of `builders/site01.luau`).
-- **West wing (item 3).** The arcade wing sat on the viewer's right (+X). The Slice 14 rework, item 7, cites photos P3 and P4 for that position, and the old model followed them. The blueprint has no wing on the east flank and shows parking and garden there, so layout precedence moved the wing to the SW flank. The photo evidence that points the other way is P3 (2024 straight-on) and P4 (2023 facade), where the wing is on the right.
-
-## Not done
-- **Podium height.** The blueprint's "5M DROP / RETAINING WALL" is 5 m, which is 10 studs. RAISE stays 5 studs (2.5 m). RAISE is pinned across the flights, the seating, the Guide, the side stairs and the checks. Owner decision needed.
-- **Forecourt depth.** The label "WALLED PARKING FORECOURT (~6?M DEEP)" is garbled, so the forecourt stays at 38 studs (19 m).
-- **Visual check of the after shots.** Not done. The Studio 3D viewport returned blank frames (three in a row, on two camera positions) after the rebuilds. The scene itself is intact: 1775 parts, full terrain, no leftover scratch folder. Someone in Studio needs to bring the 3D viewport forward and retake the six shots (front oblique, straight-on, tower close-up; two captures each).
-- **Label sizing.** `label()` sets `TextScaled = true`, and the rebuilt CATEDRAL sign goes through it. Constraint 6 asks for a fixed TextSize on long labels. It is not changed without a visual check, because a blind change can clip the sign.
-- **Roof tiles** are ribs on a flat slab, as before. There is no tile texture.
-- **Dark panels in the before shot** are `Workspace.World.CreditsBoard` (not Site01's model; `credits.luau` owns it). Not changed.
