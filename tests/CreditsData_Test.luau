@@ -1,16 +1,18 @@
 -- Tests for ReplicatedStorage.LipaShared.CreditsData (static credits board data).
 -- Structural only: the photo set and the student identity are both going to change before Ship, so these tests do not
 -- pin a URL count or the identity text. The md-to-module equality is checked by a disk-side script, not here.
--- Contract: sites = { { id, urls = { "https://..." } } } ids 1..9 in order, >= 1 url each, no duplicate within a site, no spaces;
+-- Contract: sites = { { id, urls = { "https://..." } } } ids 1..10 in order, >= 1 url each, no duplicate within a site, no spaces;
+-- projectLines = ASCII strings (City Hall photo source, blueprint note); tourSources = 25 { ref, text, url? } in ref order;
 -- identity = { name, course, section, pending }; identityText() reads "TO BE ADDED" while pending, else name - course - section;
--- boardLines() returns the printable lines for the board (title, 9 site blocks, identity slot).
+-- boardLines() returns the printable lines for the board (title, 10 site blocks, identity slot).
 return function(t)
 	local CreditsData = require(game.ReplicatedStorage.LipaShared.CreditsData:Clone())
 	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 	local expect = t.expect
 
-	t.test("there is one credits entry per site, ids 1..9 in order", function()
-		expect.equal(#CreditsData.sites, 9)
+	t.test("there is one credits entry per site, ids 1..10 in order", function()
+		expect.equal(#CreditsData.sites, 10)
+		expect.equal(#CreditsData.sites, #SiteData.sites)
 		for i, entry in ipairs(CreditsData.sites) do
 			expect.equal(entry.id, i)
 		end
@@ -135,5 +137,69 @@ return function(t)
 		local partial = { SiteData.sites[1] }
 		local lines = CreditsData.boardLines(partial)
 		expect.truthy(type(lines) == "table" and #lines > 0)
+	end)
+
+	local function ascii(s)
+		return type(s) == "string" and not string.find(s, "[\128-\255]")
+	end
+
+	t.test("site 10 credits the Google Street View reference", function()
+		local urls = CreditsData.sites[10].urls
+		local found = false
+		for _, url in ipairs(urls) do
+			if string.find(url, "https://www.google.com/maps", 1, true) == 1 then found = true end
+		end
+		expect.truthy(found)
+	end)
+
+	t.test("projectLines has the City Hall photo line and the blueprint line, exactly, in ASCII", function()
+		local lines = CreditsData.projectLines
+		expect.equal(type(lines), "table")
+		expect.equal(#lines, 2)
+		expect.equal(lines[1], "City Hall reference photos: Google Street View.")
+		expect.equal(lines[2], "Site blueprints: AI-assisted concept drawings prepared by the group; used for massing only.")
+		for _, line in ipairs(lines) do
+			expect.truthy(ascii(line))
+		end
+	end)
+
+	t.test("tourSources has the 25 PDF references, refs 1..25 in order", function()
+		local src = CreditsData.tourSources
+		expect.equal(type(src), "table")
+		expect.equal(#src, 25)
+		for i, entry in ipairs(src) do
+			expect.equal(entry.ref, i)
+		end
+	end)
+
+	t.test("every tour source has non-empty ASCII text and, when present, an https url without spaces", function()
+		for _, entry in ipairs(CreditsData.tourSources) do
+			expect.truthy(ascii(entry.text) and #entry.text > 0)
+			if entry.url ~= nil then
+				expect.truthy(ascii(entry.url))
+				expect.equal(string.sub(entry.url, 1, 8), "https://")
+				expect.falsy(string.find(entry.url, "%s"))
+			end
+		end
+	end)
+
+	t.test("no tour source is a [VERIFY] placeholder and none repeats a ref", function()
+		local seen = {}
+		for _, entry in ipairs(CreditsData.tourSources) do
+			expect.falsy(string.find(entry.text, "VERIFY", 1, true))
+			expect.falsy(seen[entry.ref])
+			seen[entry.ref] = true
+		end
+	end)
+
+	t.test("all credits strings (urls, project lines, sources) are ASCII", function()
+		for _, entry in ipairs(CreditsData.sites) do
+			for _, url in ipairs(entry.urls) do expect.truthy(ascii(url)) end
+		end
+		for _, line in ipairs(CreditsData.projectLines) do expect.truthy(ascii(line)) end
+		for _, entry in ipairs(CreditsData.tourSources) do
+			expect.truthy(ascii(entry.text))
+			expect.truthy(entry.url == nil or ascii(entry.url))
+		end
 	end)
 end

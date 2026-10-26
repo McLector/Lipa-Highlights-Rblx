@@ -37,7 +37,7 @@ return function(t)
 
 	-- Fake or malformed ids are rejected with invalid_id and change nothing.
 	t.test("rejects fake ids", function()
-		local bad = { 0, 10, -3, 2.5, "3", {}, true }
+		local bad = { 0, 11, -3, -1, 1.5, 2.5, "3", {}, true, 0 / 0 }
 		local now = 100
 		for _, id in ipairs(bad) do
 			local ctx = StampRules.newContext()
@@ -48,6 +48,19 @@ return function(t)
 		end
 		local r = StampRules.check(StampRules.newContext(), nil, ORIGIN, ORIGIN, now)
 		expect.equal(r.reason, "invalid_id")
+	end)
+
+	-- Site 10 (New Lipa City Hall) stamps like any other; 11 is a fake id.
+	t.test("stamps site 10 near its guide and rejects site 11", function()
+		local ctx = StampRules.newContext()
+		local r = StampRules.check(ctx, 10, Vector3.new(10, 0, 0), ORIGIN, 100)
+		expect.equal(r.ok, true)
+		expect.equal(r.new, true)
+		expect.deepEqual(r.stamps, { 10 })
+		local bad = StampRules.check(ctx, 11, ORIGIN, ORIGIN, 101)
+		expect.equal(bad.ok, false)
+		expect.equal(bad.reason, "invalid_id")
+		expect.deepEqual(bad.stamps, { 10 })
 	end)
 
 	-- A missing guide position (guide not found) is its own reason.
@@ -62,7 +75,7 @@ return function(t)
 		local ctx = StampRules.newContext()
 		local oks, limited = 0, 0
 		for i = 1, 20 do
-			local site = ((i - 1) % 9) + 1
+			local site = ((i - 1) % 10) + 1
 			local r = StampRules.check(ctx, site, ORIGIN, ORIGIN, 100)
 			if r.ok then oks += 1 end
 			if r.reason == "rate_limited" then limited += 1 end

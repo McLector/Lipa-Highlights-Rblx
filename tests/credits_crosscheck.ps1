@@ -21,7 +21,7 @@ foreach ($line in $lua) {
 }
 
 $mismatch = 0; $total = 0
-foreach ($id in 1..9) {
+foreach ($id in 1..10) {
 	$a = @($mdSites[$id]); $b = @($luaSites[$id])
 	$total += $a.Count
 	$onlyMd = $a | Where-Object { $_ -notin $b }
@@ -30,5 +30,24 @@ foreach ($id in 1..9) {
 	foreach ($u in $onlyLua) { "site $id : only in lua : $u"; $mismatch++ }
 	if ($a.Count -ne $b.Count) { "site $id : url count differs (md $($a.Count), lua $($b.Count))"; $mismatch++ }
 }
+# Tour sources: the 25 numbered references (md "N. text url" lines under "## Tour sources" vs CreditsData.tourSources rows).
+$mdSrc = @{}; $inSrc = $false
+foreach ($line in $md) {
+	if ($line -match '^## Tour sources') { $inSrc = $true; continue }
+	if ($line -match '^## ') { $inSrc = $false; continue }
+	if ($inSrc -and $line -match '^(\d+)\. (.*) (https://\S+)\s*$') { $mdSrc[[int]$Matches[1]] = @($Matches[2], $Matches[3]) }
+}
+$luaSrc = @{}
+foreach ($line in $lua) {
+	if ($line -match '^\s*\{ ref = (\d+), text = "((?:[^"\\]|\\.)*)", url = "(https://[^"]+)" \},?\s*$') {
+		$luaSrc[[int]$Matches[1]] = @(($Matches[2] -replace '\\"', '"'), $Matches[3])
+	}
+}
+foreach ($n in 1..25) {
+	if (-not $mdSrc.ContainsKey($n)) { "tour source $n : missing in md"; $mismatch++; continue }
+	if (-not $luaSrc.ContainsKey($n)) { "tour source $n : missing in lua"; $mismatch++; continue }
+	if ($mdSrc[$n][0] -ne $luaSrc[$n][0] -or $mdSrc[$n][1] -ne $luaSrc[$n][1]) { "tour source $n : text or url differs"; $mismatch++ }
+}
+if ($mdSrc.Count -ne 25 -or $luaSrc.Count -ne 25) { "tour sources: md $($mdSrc.Count), lua $($luaSrc.Count), expected 25"; $mismatch++ }
 "disk md vs CreditsData: $($mdSites.Count) sites, $total urls, $mismatch mismatched"
-if ($mismatch -gt 0 -or $mdSites.Count -ne 9 -or $luaSites.Count -ne 9) { exit 1 }
+if ($mismatch -gt 0 -or $mdSites.Count -ne 10 -or $luaSites.Count -ne 10) { exit 1 }

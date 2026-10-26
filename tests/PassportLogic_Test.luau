@@ -1,9 +1,10 @@
 -- Tests for ReplicatedStorage.LipaShared.PassportLogic (pure, no Instances).
--- Contract: new(validIds?) -> state (default ids 1..9); stamp(state, id) -> true only when newly added;
+-- Contract: new(validIds?) -> state (default ids = every SiteData id, 1..10); stamp(state, id) -> true only when newly added;
 -- has / count / list (sorted ascending) / isComplete (true only when every valid id is stamped);
 -- sanitize(list, validIds?) -> sorted, de-duplicated list of valid integer ids only.
 return function(t)
-	local PassportLogic = require(game.ReplicatedStorage.LipaShared.PassportLogic)
+	local PassportLogic = require(game.ReplicatedStorage.LipaShared.PassportLogic:Clone())
+	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 	local expect = t.expect
 
 	-- A fresh passport has no stamps and is not complete.
@@ -33,7 +34,7 @@ return function(t)
 	-- Invalid ids are rejected and leave the state untouched.
 	t.test("rejects nil, out-of-range, non-integer and wrong-type ids", function()
 		local p = PassportLogic.new()
-		local bad = { 0, 10, -1, 3.5, "3", {}, true, math.huge, 0 / 0 }
+		local bad = { 0, 11, -1, 1.5, 3.5, "3", {}, true, math.huge, 0 / 0 }
 		for _, id in ipairs(bad) do
 			expect.equal(PassportLogic.stamp(p, id), false)
 		end
@@ -50,22 +51,45 @@ return function(t)
 		expect.equal(PassportLogic.has(p, 99), false)
 	end)
 
-	-- Complete only when all nine are stamped; eight is not enough.
-	t.test("complete only at nine", function()
+	-- Complete only when all ten are stamped; nine is not enough.
+	t.test("complete only at ten", function()
 		local p = PassportLogic.new()
-		for id = 1, 8 do PassportLogic.stamp(p, id) end
-		expect.equal(PassportLogic.count(p), 8)
-		expect.falsy(PassportLogic.isComplete(p))
-		PassportLogic.stamp(p, 9)
+		for id = 1, 9 do PassportLogic.stamp(p, id) end
 		expect.equal(PassportLogic.count(p), 9)
+		expect.falsy(PassportLogic.isComplete(p))
+		expect.equal(PassportLogic.stamp(p, 10), true)
+		expect.equal(PassportLogic.count(p), 10)
 		expect.truthy(PassportLogic.isComplete(p))
+	end)
+
+	-- The valid set is derived from SiteData, so a new site row can never be forgotten here.
+	t.test("default valid ids are exactly the SiteData ids", function()
+		local p = PassportLogic.new()
+		expect.equal(p.total, #SiteData.sites)
+		expect.equal(p.total, 10)
+		for _, s in ipairs(SiteData.sites) do
+			expect.truthy(PassportLogic.isValid(p, s.id))
+		end
+	end)
+
+	t.test("site 10 stamps; ids 0 and 11 never do, and 1..9 alone never complete", function()
+		local p = PassportLogic.new()
+		expect.equal(PassportLogic.stamp(p, 10), true)
+		expect.truthy(PassportLogic.has(p, 10))
+		expect.equal(PassportLogic.stamp(p, 0), false)
+		expect.equal(PassportLogic.stamp(p, 11), false)
+		expect.equal(PassportLogic.count(p), 1)
+		local q = PassportLogic.new()
+		for id = 1, 9 do PassportLogic.stamp(q, id) end
+		PassportLogic.stamp(q, 11) -- a fake tenth stamp must not complete the passport
+		expect.falsy(PassportLogic.isComplete(q))
 	end)
 
 	-- list() is sorted regardless of stamping order.
 	t.test("list is sorted ascending", function()
 		local p = PassportLogic.new()
-		for _, id in ipairs({ 7, 2, 9, 1 }) do PassportLogic.stamp(p, id) end
-		expect.deepEqual(PassportLogic.list(p), { 1, 2, 7, 9 })
+		for _, id in ipairs({ 7, 2, 10, 1 }) do PassportLogic.stamp(p, id) end
+		expect.deepEqual(PassportLogic.list(p), { 1, 2, 7, 10 })
 	end)
 
 	-- Two passports do not share state.
@@ -86,8 +110,8 @@ return function(t)
 
 	-- sanitize drops duplicates, foreign ids and non-numbers, and sorts.
 	t.test("sanitize strips duplicates and foreign ids", function()
-		local out = PassportLogic.sanitize({ 5, 5, 2, 0, 10, "3", 4.5, {}, 9, 2 })
-		expect.deepEqual(out, { 2, 5, 9 })
+		local out = PassportLogic.sanitize({ 5, 5, 2, 0, 11, "3", 4.5, {}, 9, 2, 10, 0 / 0 })
+		expect.deepEqual(out, { 2, 5, 9, 10 })
 	end)
 
 	-- sanitize of junk input is an empty list, not an error.

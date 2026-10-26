@@ -15,6 +15,7 @@ return function(t)
 			[7] = Vector3.new(700, 0, 240),
 			[8] = Vector3.new(560, 20, 720),
 			[9] = Vector3.new(-600, 0, 550),
+			[10] = Vector3.new(-155, 0, -230),
 		}
 	end
 
@@ -37,7 +38,7 @@ return function(t)
 
 	-- An invalid destination is rejected even when the player is standing at a stop.
 	t.test("rejects invalid destinations", function()
-		local bad = { 42, 0, 2, 3, 4, -1, 5.5, "5", {}, true }
+		local bad = { 42, 11, 0, 2, 3, 4, -1, 5.5, "5", {}, true }
 		for _, id in ipairs(bad) do
 			local r = JeepRules.check(JeepRules.newContext(), id, Vector3.new(0, 0, 0), stops(), 100)
 			expect.equal(r.ok, false)
@@ -81,10 +82,26 @@ return function(t)
 		expect.equal(r.ok, true)
 	end)
 
+	-- City Hall (10) is a stop; 11 is not, even when standing at stop 10.
+	t.test("accepts stop 10 and rejects 11", function()
+		local s = stops()
+		local ok = JeepRules.check(JeepRules.newContext(), 10, s[1], s, 100)
+		expect.equal(ok.ok, true)
+		expect.equal(ok.to, 10)
+		local from10 = JeepRules.check(JeepRules.newContext(), 1, s[10], s, 100)
+		expect.equal(from10.ok, true)
+		expect.equal(from10.from, 10)
+		local bad = JeepRules.check(JeepRules.newContext(), 11, s[10], s, 100)
+		expect.equal(bad.ok, false)
+		expect.equal(bad.reason, "invalid_dest")
+		local same = JeepRules.check(JeepRules.newContext(), 10, s[10], s, 100)
+		expect.equal(same.reason, "same_stop")
+	end)
+
 	-- Every outer stop can be reached from the hub, and the hub from every outer stop.
 	t.test("hub to every outer stop and back", function()
 		local s = stops()
-		for _, id in ipairs({ 5, 6, 7, 8, 9 }) do
+		for _, id in ipairs({ 5, 6, 7, 8, 9, 10 }) do
 			local there = JeepRules.check(JeepRules.newContext(), id, s[1], s, 100)
 			expect.equal(there.ok, true)
 			expect.equal(there.to, id)

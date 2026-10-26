@@ -1,11 +1,11 @@
 -- Tests for ReplicatedStorage.LipaShared.CertificateLogic (pure; no Instances).
 -- Contract: cleanName(raw) -> a display name safe to print: non-strings, empty and whitespace-only input give "Traveler";
 -- control characters are dropped; the result is at most 40 UTF-8 characters (cut on a character boundary, never mid-glyph).
--- build(state, displayName, sites) -> nil unless the passport state is complete (9/9); otherwise
+-- build(state, displayName, sites) -> nil unless the passport state is complete (10/10); otherwise
 -- { title, player, places = { "1. <name>", ... in id order }, count } where sites is SiteData.sites.
 return function(t)
 	local CertificateLogic = require(game.ReplicatedStorage.LipaShared.CertificateLogic:Clone())
-	local PassportLogic = require(game.ReplicatedStorage.LipaShared.PassportLogic)
+	local PassportLogic = require(game.ReplicatedStorage.LipaShared.PassportLogic:Clone())
 	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 	local expect = t.expect
 
@@ -14,7 +14,7 @@ return function(t)
 		for _, id in ipairs(ids) do PassportLogic.stamp(s, id) end
 		return s
 	end
-	local function full() return stamped({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }) end
+	local function full() return stamped({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }) end
 
 	-- cleanName -------------------------------------------------------------
 	t.test("cleanName keeps an ordinary name", function()
@@ -57,30 +57,32 @@ return function(t)
 	end)
 
 	-- build -----------------------------------------------------------------
-	t.test("build returns nil below 9/9", function()
+	t.test("build returns nil below 10/10", function()
 		expect.equal(CertificateLogic.build(PassportLogic.new(), "Ana", SiteData.sites), nil)
 		expect.equal(CertificateLogic.build(stamped({ 1, 2, 3, 4, 5, 6, 7, 8 }), "Ana", SiteData.sites), nil)
+		expect.equal(CertificateLogic.build(stamped({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }), "Ana", SiteData.sites), nil) -- the old 9/9
 	end)
 
 	t.test("build returns nil for nil, non-table and malformed state", function()
 		expect.equal(CertificateLogic.build(nil, "Ana", SiteData.sites), nil)
 		expect.equal(CertificateLogic.build("done", "Ana", SiteData.sites), nil)
-		expect.equal(CertificateLogic.build(9, "Ana", SiteData.sites), nil)
+		expect.equal(CertificateLogic.build(10, "Ana", SiteData.sites), nil)
 		expect.equal(CertificateLogic.build({}, "Ana", SiteData.sites), nil)
-		expect.equal(CertificateLogic.build({ n = 9, total = 9 }, "Ana", SiteData.sites), nil) -- not a real passport state
+		expect.equal(CertificateLogic.build({ n = 10, total = 10 }, "Ana", SiteData.sites), nil) -- not a real passport state
 	end)
 
-	t.test("build at 9/9 lists the nine places in id order", function()
+	t.test("build at 10/10 lists the ten places in id order, City Hall last", function()
 		local cert = CertificateLogic.build(full(), "Ana", SiteData.sites)
 		expect.truthy(cert)
-		expect.equal(cert.count, 9)
-		expect.equal(#cert.places, 9)
+		expect.equal(cert.count, 10)
+		expect.equal(#cert.places, 10)
+		expect.equal(cert.places[10], "10. New Lipa City Hall")
 		for i, s in ipairs(SiteData.sites) do
 			expect.equal(cert.places[i], i .. ". " .. s.name)
 		end
 	end)
 
-	t.test("build at 9/9 has a title and a player line carrying the cleaned name", function()
+	t.test("build at 10/10 has a title and a player line carrying the cleaned name", function()
 		local cert = CertificateLogic.build(full(), "  Ana  ", SiteData.sites)
 		expect.truthy(type(cert.title) == "string" and #cert.title > 0)
 		expect.truthy(string.find(cert.player, "Ana", 1, true))
@@ -104,8 +106,42 @@ return function(t)
 		expect.truthy(cert.player) -- kept verbatim; the label must have RichText off (checked in qa_check)
 	end)
 
-	t.test("build with a sites list that is not nine entries returns nil", function()
+	t.test("build with a sites list that is not ten entries returns nil", function()
 		expect.equal(CertificateLogic.build(full(), "Ana", {}), nil)
+		local nine = {}
+		for i = 1, 9 do nine[i] = SiteData.sites[i] end
+		expect.equal(CertificateLogic.build(full(), "Ana", nine), nil)
 		expect.equal(CertificateLogic.build(full(), "Ana", nil), nil)
+	end)
+
+	-- layout(w, h): the certificate grid. Portrait (taller than wide) gets 2 columns so long names stay readable;
+	-- landscape and square get 3; anything that is not a positive finite size gets the safe default of 3.
+	t.test("layout gives 3 columns for landscape and square", function()
+		expect.equal(CertificateLogic.layout(1920, 1080).columns, 3)
+		expect.equal(CertificateLogic.layout(800, 800).columns, 3)
+		expect.equal(CertificateLogic.layout(801, 800).columns, 3)
+	end)
+
+	t.test("layout gives 2 columns when taller than wide", function()
+		expect.equal(CertificateLogic.layout(390, 844).columns, 2)
+		expect.equal(CertificateLogic.layout(800, 801).columns, 2)
+	end)
+
+	t.test("layout returns the safe default for bad input", function()
+		local bad = { { nil, nil }, { 0, 0 }, { 0, 100 }, { 100, 0 }, { -100, 200 }, { 100, -200 }, { 0 / 0, 100 },
+			{ 100, 0 / 0 }, { math.huge, 100 }, { "800", "600" }, { {}, {} }, { true, false } }
+		for _, c in ipairs(bad) do
+			local r = CertificateLogic.layout(c[1], c[2])
+			expect.equal(type(r), "table")
+			expect.equal(r.columns, 3)
+		end
+		expect.equal(CertificateLogic.layout().columns, 3)
+		expect.equal(CertificateLogic.layout(500).columns, 3)
+	end)
+
+	t.test("layout returns a fresh table each call", function()
+		local a = CertificateLogic.layout(100, 200)
+		a.columns = 99
+		expect.equal(CertificateLogic.layout(100, 200).columns, 2)
 	end)
 end
