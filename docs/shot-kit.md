@@ -16,6 +16,9 @@ Capture rules: one `screen_capture` at a time, twice with a wait between, look a
 | 7 The Farm | 544, 34, 162 | 700, 10, 240 |
 | 8 Mount Malarayat | 475, 66, 465 | 560, 30, 720 |
 | 9 Tagbakin | -447, 31, 499 | -600, 10, 550 |
-| 10 City Hall (proposed site) | -130, 28, -200 | -250, 15, -260 |
+| 10 City Hall, front oblique (tuned Slice 3a) | -130, 45, -330 | -290, 25, -260 |
+| 10 City Hall, walk-under close-up | -225, 4, -262 | -290, 6, -262 |
+| 10 City Hall, atrium and canopy | -300, 30, -170 | -325, 28, -225 |
+| 10 City Hall, forecourt | -110, 35, -200 | -250, 8, -265 |
 
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.
