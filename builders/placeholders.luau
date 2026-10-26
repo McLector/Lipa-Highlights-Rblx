@@ -5,18 +5,28 @@
 -- REBUILD ORDER: this builder wipes ALL of Workspace.Sites, including any real site already built. After running
 -- it, re-run every real site builder (currently only builders/site01.luau): placeholders -> site01 -> ...
 -- Y is seated by a terrain raycast (never by groundY alone) because Malarayat is on a slope.
+-- ONLY MODE (Slice 3b): placeholders({ only = { 10 } }) does NOT touch Workspace.Sites as a whole. For each listed site id it finds
+-- the existing model Workspace.Sites["SiteNN_Key"], sets its SiteId attribute if missing, removes ONLY the previously generated
+-- Guide, InfoPanel, JeepStop, JeepSignPole, JeepSign and Jeepney children, and rebuilds them with the same helpers (placement
+-- honours SiteData.guidePos / jeepStopPos / panelLocal). It builds no Block for a site that already has a Block, Structure or Wing.
+-- The ground is the terrain, plus the site's own Forecourt paving when it has one (so props sit on it, not in it).
+-- Terrain cannot be raycast until a task.wait() after it is written; the only-mode waits once first. The default mode (no
+-- argument) is unchanged: it destroys and rebuilds all of Workspace.Sites. Spec: tests/placeholders_check.luau.
+-- The Guide is rebuilt undressed: re-run builders/guides.luau afterwards (idempotent) to put the tour uniform back on.
 local Players = game:GetService("Players")
 
-local CATEGORY_COLORS = {
-	Eat = Color3.fromRGB(232, 150, 70),
-	Pray = Color3.fromRGB(90, 150, 230),
-	Love = Color3.fromRGB(100, 190, 110),
-}
 local SKIN = Color3.fromRGB(224, 172, 130)
 local DARK = Color3.fromRGB(50, 50, 60)
+local FALLBACK = Color3.fromRGB(200, 200, 200)
+local ONLY_REMOVE = { "Guide", "InfoPanel", "JeepStop", "JeepSignPole", "JeepSign", "Jeepney" }
 
-return function()
+return function(opts)
+	opts = opts or {}
 	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
+	-- One colour table lives in SiteData (nil-safe here: a missing or unknown category falls back to grey).
+	local function colorFor(category)
+		return SiteData.categoryColor(category) or FALLBACK
+	end
 
 	local terrainParams = RaycastParams.new()
 	terrainParams.FilterType = Enum.RaycastFilterType.Include
@@ -75,7 +85,7 @@ return function()
 
 	local function makeGuide(s, cf)
 		local desc = Instance.new("HumanoidDescription")
-		local color = CATEGORY_COLORS[s.category]
+		local color = colorFor(s.category)
 		desc.HeadColor, desc.TorsoColor, desc.LeftArmColor, desc.RightArmColor = SKIN, color, color, color
 		desc.LeftLegColor, desc.RightLegColor = DARK, DARK
 		local guide = Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R15)
@@ -109,6 +119,93 @@ return function()
 		return m
 	end
 
+	-- Guide, InfoPanel and (where SiteData says so) JeepStop + sign + parked jeepney, into `model`.
+	-- ground(x, z) -> surface Y. The default mode passes the terrain raycast; the only-mode adds the Forecourt paving.
+	local function buildProps(s, model, ground)
+		local f = SiteData.facingVector(s.facing)
+		local right = Vector3.new(-f.Z, 0, f.X)
+		local rot = CFrame.Angles(0, SiteData.facingToYaw(s.facing), 0)
+
+		-- Guide, at SiteData.guidePos (30 studs in front of the centre unless the row has guideLocal).
+		local gp = SiteData.guidePos(s.id)
+		local gg = ground(gp.X, gp.Z)
+		local guide = makeGuide(s, CFrame.new(gp.X, gg + 3, gp.Z) * rot)
+		guide.Parent = model
+
+		-- InfoPanel, left of the guide (default) or at the row's panelLocal.
+		local pp
+		if s.panelLocal then
+			pp = SiteData.localToWorld(s.id, s.panelLocal.X, s.panelLocal.Y)
+		else
+			pp = s.pos + f * 24 - right * 12
+		end
+		local pg = ground(pp.X, pp.Z)
+		local panel = part(model, "InfoPanel", Vector3.new(12, 8, 0.5), CFrame.new(pp.X, pg + 5, pp.Z) * rot, Color3.fromRGB(30, 30, 40))
+		label(panel, Enum.NormalId.Front, s.name .. "\n" .. s.panelText, Color3.new(1, 1, 1), 0)
+
+		-- JeepStop + parked jeepney (plaza, the five outer sites and City Hall).
+		if SiteData.hasJeepStop(s.id) then
+			local sp = SiteData.jeepStopPos(s.id)
+			local sg = ground(sp.X, sp.Z)
+			local stop = part(model, "JeepStop", Vector3.new(10, 0.4, 10), CFrame.new(sp.X, sg + 0.2, sp.Z) * rot, Color3.fromRGB(240, 200, 60), Enum.Material.Neon)
+			stop.CanCollide = false
+			prompt(stop, "JeepPrompt", "Jeep", "Ride jeepney", "Jeepney stop")
+			local pole = part(model, "JeepSignPole", Vector3.new(0.6, 9, 0.6), CFrame.new(sp.X, sg + 4.5, sp.Z) * rot, DARK)
+			local sign = part(model, "JeepSign", Vector3.new(7, 2, 0.4), CFrame.new(sp.X, sg + 9.5, sp.Z) * rot, Color3.fromRGB(30, 30, 40))
+			label(sign, Enum.NormalId.Front, "JEEPNEY STOP", Color3.fromRGB(240, 200, 60), 0)
+			label(sign, Enum.NormalId.Back, "JEEPNEY STOP", Color3.fromRGB(240, 200, 60), 0)
+			pole.CanCollide = false
+			local jp = sp + right * 14
+			local jg = ground(jp.X, jp.Z)
+			-- Body is built relative to the ground; its long axis runs along the facing direction.
+			makeJeepney(model, CFrame.new(jp.X, jg, jp.Z) * rot * CFrame.Angles(0, math.rad(90), 0))
+		end
+	end
+
+	-- ONLY MODE: rebuild the generated props of the listed sites inside their existing models; nothing else is touched.
+	if opts.only ~= nil then
+		assert(type(opts.only) == "table", "placeholders: opts.only must be an array of site ids")
+		local existing = workspace:FindFirstChild("Sites")
+		assert(existing, "placeholders: Workspace.Sites not found (only-mode never creates it)")
+		task.wait() -- terrain cannot be raycast until a task.wait() after it was written
+		local done = {}
+		for _, id in ipairs(opts.only) do
+			local s = SiteData.byId(id)
+			assert(s, "placeholders: no SiteData row " .. tostring(id))
+			local model = existing:FindFirstChild(string.format("Site%02d_%s", s.id, s.key))
+			assert(model, string.format("placeholders: Site%02d_%s not found", s.id, s.key))
+			if model:GetAttribute("SiteId") == nil then model:SetAttribute("SiteId", s.id) end
+			for _, name in ipairs(ONLY_REMOVE) do
+				while true do
+					local old = model:FindFirstChild(name)
+					if not old then break end
+					old:Destroy()
+				end
+			end
+			local surfaceParams = RaycastParams.new()
+			surfaceParams.FilterType = Enum.RaycastFilterType.Include
+			local include = { workspace.Terrain }
+			local paving = model:FindFirstChild("Forecourt")
+			if paving then table.insert(include, paving) end
+			surfaceParams.FilterDescendantsInstances = include
+			local function ground(x, z)
+				local r = workspace:Raycast(Vector3.new(x, 400, z), Vector3.new(0, -800, 0), surfaceParams)
+				assert(r, string.format("no ground at (%.1f, %.1f)", x, z))
+				return r.Position.Y
+			end
+			-- A Block only for a site with no real structure (and no placeholder Block yet).
+			if not (model:FindFirstChild("Block") or model:FindFirstChild("Structure") or model:FindFirstChild("Wing")) then
+				local rot = CFrame.Angles(0, SiteData.facingToYaw(s.facing), 0)
+				local g = groundAt(s.pos.X, s.pos.Z)
+				part(model, "Block", Vector3.new(40, 20, 40), CFrame.new(s.pos.X, g + 8, s.pos.Z) * rot, colorFor(s.category))
+			end
+			buildProps(s, model, ground)
+			table.insert(done, id)
+			task.wait()
+		end
+		return #done
+	end
+
 	local old = workspace:FindFirstChild("Sites")
 	if old then old:Destroy() end
 	local sites = Instance.new("Folder")
@@ -116,11 +213,8 @@ return function()
 	sites.Parent = workspace
 
 	for _, s in ipairs(SiteData.sites) do
-		local f = SiteData.facingVector(s.facing)
-		local right = Vector3.new(-f.Z, 0, f.X)
-		local yaw = SiteData.facingToYaw(s.facing)
-		local rot = CFrame.Angles(0, yaw, 0)
-		local color = CATEGORY_COLORS[s.category]
+		local rot = CFrame.Angles(0, SiteData.facingToYaw(s.facing), 0)
+		local color = colorFor(s.category)
 
 		local model = Instance.new("Model")
 		model.Name = string.format("Site%02d_%s", s.id, s.key)
@@ -145,35 +239,7 @@ return function()
 		bt.Text = string.format("%d. %s (placeholder)", s.id, s.name)
 		bt.Parent = bb
 
-		-- Guide, 30 studs in front of the centre.
-		local gp = SiteData.guidePos(s.id)
-		local gg = groundAt(gp.X, gp.Z)
-		local guide = makeGuide(s, CFrame.new(gp.X, gg + 3, gp.Z) * rot)
-		guide.Parent = model
-
-		-- InfoPanel, left of the guide.
-		local pp = s.pos + f * 24 - right * 12
-		local pg = groundAt(pp.X, pp.Z)
-		local panel = part(model, "InfoPanel", Vector3.new(12, 8, 0.5), CFrame.new(pp.X, pg + 5, pp.Z) * rot, Color3.fromRGB(30, 30, 40))
-		label(panel, Enum.NormalId.Front, s.name .. "\n" .. s.panelText, Color3.new(1, 1, 1), 0)
-
-		-- JeepStop + parked jeepney (plaza and the five outer sites).
-		if SiteData.hasJeepStop(s.id) then
-			local sp = SiteData.jeepStopPos(s.id)
-			local sg = groundAt(sp.X, sp.Z)
-			local stop = part(model, "JeepStop", Vector3.new(10, 0.4, 10), CFrame.new(sp.X, sg + 0.2, sp.Z) * rot, Color3.fromRGB(240, 200, 60), Enum.Material.Neon)
-			stop.CanCollide = false
-			prompt(stop, "JeepPrompt", "Jeep", "Ride jeepney", "Jeepney stop")
-			local pole = part(model, "JeepSignPole", Vector3.new(0.6, 9, 0.6), CFrame.new(sp.X, sg + 4.5, sp.Z) * rot, DARK)
-			local sign = part(model, "JeepSign", Vector3.new(7, 2, 0.4), CFrame.new(sp.X, sg + 9.5, sp.Z) * rot, Color3.fromRGB(30, 30, 40))
-			label(sign, Enum.NormalId.Front, "JEEPNEY STOP", Color3.fromRGB(240, 200, 60), 0)
-			label(sign, Enum.NormalId.Back, "JEEPNEY STOP", Color3.fromRGB(240, 200, 60), 0)
-			pole.CanCollide = false
-			local jp = sp + right * 14
-			local jg = groundAt(jp.X, jp.Z)
-			-- Body is built relative to the ground; its long axis runs along the facing direction.
-			makeJeepney(model, CFrame.new(jp.X, jg, jp.Z) * rot * CFrame.Angles(0, math.rad(90), 0))
-		end
+		buildProps(s, model, groundAt)
 
 		model.Parent = sites
 		task.wait()

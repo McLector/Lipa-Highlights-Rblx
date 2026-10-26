@@ -1,10 +1,12 @@
--- guides: a tour-guide uniform that only the nine site guides wear, so players can pick them out. Studio copy:
+-- guides: a tour-guide uniform that only the ten site guides wear (Ate Joy included), so players can pick them out. Studio copy:
 -- ServerStorage.Builders.guides; run with
 --   require(game.ServerStorage.Builders.guides:Clone())()
--- Run AFTER builders/placeholders.luau (which makes each Guide). IDEMPOTENT: replaces only each Guide's GuideOutfit model and
+-- Run AFTER builders/placeholders.luau (which makes each Guide; placeholders({ only = { 10 } }) rebuilds Ate Joy undressed, so
+-- re-run this afterwards). IDEMPOTENT: replaces only each Guide's GuideOutfit model and
 -- GuidePolo shirt; the Guide's position, prompt, name and dialogue are untouched. Spec: tests/guides_check.luau.
 -- The polo is a classic Shirt drawn by tools/guide_shirt.py (teal, collar, 3-button placket, LIPA TOUR badge, short sleeves)
--- and uploaded as rbxassetid://71550766060779. The cap and tour flag carry the site's category colour (Eat/Pray/Love), the
+-- and uploaded as rbxassetid://71550766060779. The cap and tour flag carry the site's category colour (SiteData.categoryColor:
+-- Eat/Pray/Love/Welcome; the one colour table, no local copy), the
 -- lanyard ID hangs below the placket, and a GUIDE sign floats over the head. Every outfit part is welded to the body part it
 -- sits on, massless and non-colliding, so the guide (anchored at its root) is unchanged in Play.
 return function()
@@ -17,7 +19,6 @@ return function()
 	local GOLD = Color3.fromRGB(250, 200, 40)
 	local WHITE = Color3.fromRGB(245, 245, 240)
 	local STRAP = Color3.fromRGB(30, 30, 40)
-	local CATEGORY = { Eat = Color3.fromRGB(232, 150, 70), Pray = Color3.fromRGB(90, 150, 230), Love = Color3.fromRGB(100, 190, 110) }
 	local UPRIGHT = ANG(0, 0, math.pi / 2) -- Roblox cylinders run along local X; this stands them up
 	local ARMS = { "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand" }
 
@@ -132,7 +133,9 @@ return function()
 		end
 		local guide = site and site:FindFirstChild("Guide")
 		assert(guide, "guides: no Guide in site " .. row.id)
-		dress(guide, CATEGORY[row.category])
+		local color = SiteData.categoryColor(row.category)
+		assert(color, "guides: no category colour for " .. tostring(row.category))
+		dress(guide, color)
 		table.insert(done, tostring(row.id))
 		task.wait()
 	end

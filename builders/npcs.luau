@@ -1,14 +1,15 @@
--- npcs: location NPCs for the nine sites (professor's feedback: NPCs that match their location). Studio copy:
+-- npcs: location NPCs for the ten sites (professor's feedback: NPCs that match their location). Studio copy:
 -- ServerStorage.Builders.npcs; run with
---   require(game.ServerStorage.Builders.npcs:Clone())()
--- Run AFTER the nine site builders. IDEMPOTENT: replaces only the LocalNPCs folder of each site; every other child is left alone,
+--   require(game.ServerStorage.Builders.npcs:Clone())()                    -- all ten sites
+--   require(game.ServerStorage.Builders.npcs:Clone())({ only = { 10 } })   -- just those sites' LocalNPCs (Slice 3b: City Hall)
+-- Run AFTER the site builders. IDEMPOTENT: replaces only the LocalNPCs folder of each site; every other child is left alone,
 -- and the site builders leave LocalNPCs alone (they only replace the children they own). Spec: tests/npcs_check.luau.
 -- Figures are R15 rigs from a HumanoidDescription, like site01 buildPeople. These rigs join their limbs with AnimationConstraints,
 -- not Motor6Ds, so a pose is set by placing every limb from its joint attachments and then anchoring every part: the pose holds
 -- in Edit and in Play. Clothing and props are plain coloured parts inside the rig model (no catalog assets, no textures), which
 -- the site checks and BuildCheck treat as rig parts.
 -- Fail-safe order: all figures are built unparented first; only then is each old LocalNPCs folder replaced.
-return function()
+return function(opts)
 	local Players = game:GetService("Players")
 	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 
@@ -294,6 +295,15 @@ return function()
 			{ role = "Fisher", x = -697.4, z = 615.6, face = SW, pose = "sitRod", top = Color3.fromRGB(70, 110, 150), skin = 3, seat = 1.75,
 				wear = { Salakot = Color3.fromRGB(200, 170, 110) }, ground = { "Rod" } },
 		},
+		[10] = { -- City Hall (pivot -250, 0, -260, facing E; local lx = world x + 250, lz = world z + 260): casual locals on the forecourt
+			-- paving, walking toward the steps (-X), clear of the spawn pad (lx 30..50, lz -10..10), Ate Joy (lx 22..32), the panel spot
+			-- (lx 28..38, lz -30..-15), the jeep curb (lx 90..100, lz 20..40) and the steps (lx 5..25).
+			{ role = "ResidentWalking", x = -204, z = -234, face = V(-1, 0, -0.3), pose = "walk", top = Color3.fromRGB(110, 150, 190), legs = Color3.fromRGB(60, 70, 100), skin = 2, probe = 30 },
+			{ role = "ResidentBayong", x = -188, z = -290, face = V(-1, 0, 0.3), pose = "carry", top = Color3.fromRGB(215, 120, 140), skin = 1, probe = 30, wear = { Bayong = true } },
+			{ role = "Student", x = -206, z = -298, face = V(-1, 0, 0.5), pose = "carry", top = WHITE, legs = Color3.fromRGB(40, 60, 110), skin = 4, probe = 30,
+				wear = { ShoppingBag = Color3.fromRGB(70, 140, 100) } },
+			{ role = "OfficeStaff", x = -184, z = -230, face = V(-1, 0, -0.3), pose = "stand", top = CREAM, legs = DARK, skin = 3, probe = 30 },
+		},
 	}
 
 	------------------------------------------------------------------ Build everything unparented, then swap per site
@@ -303,8 +313,16 @@ return function()
 	end
 	rayParams.FilterDescendantsInstances = exclude
 
+	-- Which sites: all ten, or opts.only (an array of site ids) to rebuild just those LocalNPCs folders.
+	local ids = {}
+	if opts and opts.only then
+		for _, id in ipairs(opts.only) do table.insert(ids, id) end
+	else
+		for id = 1, 10 do table.insert(ids, id) end
+	end
+
 	local built = {}
-	for id = 1, 9 do
+	for _, id in ipairs(ids) do
 		local row = SiteData.byId(id)
 		local folder = Instance.new("Folder")
 		folder.Name = "LocalNPCs"
@@ -317,7 +335,7 @@ return function()
 	end
 
 	local counts = {}
-	for id = 1, 9 do
+	for _, id in ipairs(ids) do
 		local site = siteModel(id)
 		local old = site:FindFirstChild("LocalNPCs")
 		if old then old:Destroy() end
