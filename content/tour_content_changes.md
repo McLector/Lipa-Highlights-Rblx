@@ -127,3 +127,14 @@ The URLs are copied from the PDF by script (not retyped). Still needed from you:
 1. Approve (or edit) sections 1 to 8, with the open questions in 2, 3, 4, 5 and 7.
 2. The blueprint credit wording and the City Hall photo source (section 9).
 3. OK or not to upload the outfit textures to your Roblox account (Slice 12 uses them).
+
+## 11. Owner decisions (2026-10-26)
+- Sections 1, 6, 7 and 8 approved as written.
+- Market name, both: the guide's dialogue uses the PDF name "Lipa City Public Market"; the sign and billboard keep
+  "Candido B. Lopez Memorial Public Market" (still [VERIFY]).
+- Ate Joy wrap-up: "a little sunburnt" becomes "a little sun-kissed".
+- Tagbakin billboard: "Lipa's lakeside side" becomes "Lipa's lakeside spot" (the PDF prints "side").
+- The other section 2 lines stay [VERIFY].
+- ASCII-only text is kept.
+- Jun's change ("Hey there!") is confirmed.
+- SiteData guideName takes the PDF names in Slice 3b.

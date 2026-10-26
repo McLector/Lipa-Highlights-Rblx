@@ -72,7 +72,7 @@ TourContent.sites = {
 		npc = { name = "Aling Nena", role = "Market vendor" },
 		firstTalk = {
 			"Halika, halika! That means come, come, so look around.",
-			"This is the Candido B. Lopez Memorial Public Market, the palengke where Lipa shops for produce, food, and daily needs.",
+			"This is the Lipa City Public Market, the palengke where Lipa shops for produce, food, and daily needs.",
 			"'Suki' means regular customer. Buy from me twice and you're officially suki na.",
 		},
 		talkAgain = {
@@ -334,7 +334,7 @@ TourContent.sites = {
 	},
 	{
 		id = 9,
-		headline = "Tagbakin: Lipa's lakeside side, where the city first began.",
+		headline = "Tagbakin: Lipa's lakeside spot, where the city first began.",
 		blurb = "Tagbakin, in Barangay Halang, introduces Lipa's lakeside identity.",
 		trivia = {
 			"Tawilis is found only in Taal Lake.",
@@ -448,7 +448,7 @@ TourContent.glossary = {
 	{ term = "barangay", meaning = "A neighborhood (Lipa has 72 barangays)" },
 }
 TourContent.wrapUp = {
-	text = "So, full, caffeinated, and a little sunburnt? Perfect, that's the full Lipa experience.",
+	text = "So, full, caffeinated, and a little sun-kissed? Perfect, that's the full Lipa experience.",
 	reflection = "Balik ka ha! Which of Eat, Pray or Love do you usually stop at, and which one will you try next time?",
 }
 

@@ -49,7 +49,7 @@ Quiz: How much did Lipa's market cost to build?
   - That market cost 61,000 pesos to build.
 - First talk:
   - Halika, halika! That means come, come, so look around.
-  - This is the Candido B. Lopez Memorial Public Market, the palengke where Lipa shops for produce, food, and daily needs.
+  - This is the Lipa City Public Market, the palengke where Lipa shops for produce, food, and daily needs.
   - 'Suki' means regular customer. Buy from me twice and you're officially suki na.
 - Talk again:
   - Fresh veggies, fish, coffee, sweets... if Lipa eats it, it's here.
@@ -64,7 +64,7 @@ Quiz: How much did Lipa's market cost to build?
   - price signs
   - coffee and delicacies
   - vendor figures
-- Sources: PDF [14] (everyday community life), [15] (1914 praise; three main buildings; 61,000 pesos). [VERIFY] Name: the sign name is kept from the approved dialogue and briefs/site02.md; the PDF calls the market "Lipa City Public Market". [VERIFY] Photo date 2014 (model note from briefs/site02.md; not in the PDF).
+- Sources: PDF [14] (everyday community life), [15] (1914 praise; three main buildings; 61,000 pesos). [VERIFY] Name: the headline, blurb and sign/billboard keep "Candido B. Lopez Memorial Public Market" (sign name, from the approved dialogue and briefs/site02.md); the guide's dialogue uses the PDF name "Lipa City Public Market" (owner decision 2026-10-26). [VERIFY] Photo date 2014 (model note from briefs/site02.md; not in the PDF).
 
 ## Site 3: Lomi King
 Headline: Lomi: Lipa's thick, hearty noodle soup.
@@ -248,7 +248,7 @@ Quiz: How many holes does the Mount Malarayat course have?
 - Sources: PDF [20] (Dagatan from dagat-dagatan; first private golf course), [21] (access depends on the service or booking), [22] (27 holes, about 1,200 ft above sea level); PDF NPC section (Jun lines). Mood change: the PDF greeting "Morning!" became "Hey there! Ready to swing?" for the sunset setting.
 
 ## Site 9: Tagbakin
-Headline: Tagbakin: Lipa's lakeside side, where the city first began.
+Headline: Tagbakin: Lipa's lakeside spot, where the city first began.
 Blurb: Tagbakin, in Barangay Halang, introduces Lipa's lakeside identity.
 Quiz: Since what year has the IUCN listed tawilis as endangered?
 - Options: 1. 2018; 2. 2010; 3. 2023
@@ -274,7 +274,7 @@ Quiz: Since what year has the IUCN listed tawilis as endangered?
   - fishing boats
   - shoreline activities
   - tawilis fish
-- Sources: PDF [20] (Tagbakin in Barangay Halang; name from the tagbak plant; first settlement of early Lipenos), [25] (tawilis found only in Taal Lake; IUCN endangered since 2018; fishing banned March 1 to April 30). Display props are taken from the place entry text, since the PDF has no labelled display list for this site. [VERIFY] Headline: the PDF billboard reads "Lipa's lakeside side".
+- Sources: PDF [20] (Tagbakin in Barangay Halang; name from the tagbak plant; first settlement of early Lipenos), [25] (tawilis found only in Taal Lake; IUCN endangered since 2018; fishing banned March 1 to April 30). Display props are taken from the place entry text, since the PDF has no labelled display list for this site. [VERIFY] Headline: the PDF billboard reads "Lipa's lakeside side"; the owner approved "lakeside spot" (2026-10-26).
 
 ## Site 10: New Lipa City Hall
 Headline: Welcome to Lipa! This is the New Lipa City Hall.
@@ -340,6 +340,6 @@ Quiz: What do the 72 elevated blocks at the New Lipa City Hall stand for?
   - palengke: Public market, where everyday Lipa shops, sells, and chats
   - barangay: A neighborhood (Lipa has 72 barangays)
 - Wrap-up (wrapUp), a proposal for the owner:
-  - Text: So, full, caffeinated, and a little sunburnt? Perfect, that's the full Lipa experience.
+  - Text: So, full, caffeinated, and a little sun-kissed? Perfect, that's the full Lipa experience.
   - Reflection: Balik ka ha! Which of Eat, Pray or Love do you usually stop at, and which one will you try next time?
 - Sources: cityHallFacts 1 to 5 from the PDF Quick Facts [5]; 6 [1][2][3]; 7 [1]; 8 [4]. Glossary from the PDF local-words list and PDF text. Wrap-up from the PDF Ate Joy wrap-up. [VERIFY] Jeep lines are new driver chatter; the glosses of Sakay na, Saan po tayo and the golden hour line are not in the PDF, so the owner should confirm them.
