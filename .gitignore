@@ -19,3 +19,4 @@ Lipa_structure_Exterior_References/
 
 # Agent journals and scratch work
 scratch/
+__pycache__/
