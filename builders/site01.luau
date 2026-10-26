@@ -11,7 +11,7 @@
 -- the church, wing, forecourt and garden stand on a podium RAISE (5) studs above the ground (P1: the forecourt is higher than
 -- Plaza Independencia); the retaining wall at z 48 drops to the lower plaza through two flights of 1-stud risers either side of a
 -- fountain and statue (ground photo, pass 4: terracotta paving, round pergola garden, vaulted covered court, shade tree, kiosks).
--- Brief: briefs/site01.md. Period: the Dec 2025 scheme (cream-white domes) over the 2023-24 ground photos (butter walls).
+-- Brief: briefs/site01.md. Period: the Dec 2025 scheme (cream-white domes) over the 2023-24 ground photos; Revision 5 (blueprint) makes the walls cream.
 -- World axes: x east, z south (+Z is the facade side), y up; the site pivot is at the origin, and everything is placed in
 -- world coordinates. massScale 2.0 (2 studs per metre): the church is at true proportions across the front (facade 42,
 -- tower 26, transept 88) and its length is compressed by dropping nave bays (real ~85 m, shown ~50 m) to fit z -100..+10.
@@ -36,24 +36,29 @@ return function()
 	local RAISE = 5 -- the upper level (podium top) above the ground; tests/site01_check.luau pins the same number
 	local WALL_Z = 48 -- the retaining wall: the podium's south face
 	local UPPER = CF(0, RAISE, 0) -- origin of every component that stands on the podium
+		-- Revision 5 (blueprint): the two west-flank wings. Their local +Z (the arcade side) faces west, and local +X runs south along the flank.
+		local WEST_2 = CF(-48.5, RAISE, -62) * ANG(0, -PI / 2, 0) -- the 2-storey wing, z -62..-17
+		local WEST_3 = CF(-48.5, RAISE, -100) * ANG(0, -PI / 2, 0) -- the 3-storey office wing, z -100..-66
 	local REPLACED = {
 		Block = true, Structure = true, Plaza = true, PlazaBuildings = true, PlazaPeople = true, ParkedVehicles = true,
-		WelcomeArch = true, Benches = true, Lamps = true, Flagpole = true, EventStage = true, Podium = true, PlazaLower = true,
+		WelcomeArch = true, Benches = true, Lamps = true, Flagpole = true, EventStage = true, Podium = true, PlazaLower = true, CulturalCentre = true,
 	}
 
-	-- Colours. Walls and trim: Lipa_Cathedral_2024-03-27 / facade_2023-04-05 (butter yellow, mauve-grey). Domes: the
+	-- Colours. Walls: cream in Revision 5 (blueprint); the 2024 photos are butter-yellow, trim mauve-grey. Domes: the
 	-- 12-28-2025 drone photos (cream-white). Roofs: saturated red as in the same drone photos.
-	local WALL = Color3.fromRGB(232, 200, 120)
+	local WALL = Color3.fromRGB(240, 226, 186) -- cream (Revision 5, blueprint); the 2024 photos are butter-yellow
 	local WALL_PALE = Color3.fromRGB(238, 222, 170)
 	local TRIM = Color3.fromRGB(178, 156, 166)
 	local ROOF = Color3.fromRGB(196, 52, 46)
 	local ROOF_RIB = Color3.fromRGB(214, 76, 64)
 	local ROOF_DARK = Color3.fromRGB(112, 56, 48)
+	local BRICK = Color3.fromRGB(168, 84, 64)
+	local DARK_ROOF = Color3.fromRGB(58, 60, 66)
 	local PAVROOF = Color3.fromRGB(92, 84, 78)
 	local BLEACH = Color3.fromRGB(150, 128, 106)
 	local HEDGE = Color3.fromRGB(52, 110, 56)
 	local LAWN = Color3.fromRGB(88, 142, 72)
-	local DOME = Color3.fromRGB(248, 241, 218)
+	local DOME = Color3.fromRGB(250, 238, 192)
 	local RIB = Color3.fromRGB(214, 210, 198)
 	local TIMBER = Color3.fromRGB(150, 100, 60)
 	local GLASS = Color3.fromRGB(30, 35, 45)
@@ -75,7 +80,6 @@ return function()
 	local PAVING_CREAM = Color3.fromRGB(226, 200, 170)
 	local SALMON = Color3.fromRGB(214, 150, 128)
 	local KIOSK_ROOF = Color3.fromRGB(222, 120, 50)
-	local VAULT = Color3.fromRGB(236, 230, 210)
 	local SOIL = Color3.fromRGB(96, 66, 50)
 	local WATER = Color3.fromRGB(96, 156, 196)
 	local FLOWERS = { Color3.fromRGB(214, 56, 64), Color3.fromRGB(236, 130, 160), Color3.fromRGB(240, 150, 50), Color3.fromRGB(240, 220, 90) }
@@ -220,34 +224,37 @@ return function()
 		-- The LED screen (2023-2025 photos): a protruding box with a pale louvred frame on the FRONT of the first tier,
 		-- just above the base cornice. Tier 1's flat front face (apothem 11) is at z = cz + 11.
 		local front = cz + 11
-		ctx:part("ScreenFrame", V(11.4, 8.2, 1.2), CF(cx, 28.5, front + 0.6), LOUVRE, METAL)
-		ctx:part("Screen", V(10, 6.8, 0.4), CF(cx, 28.5, front + 1.4), SCREEN_BLACK, PLAS)
-		-- Four octagonal tiers, each narrower than the one below, with arched openings (all eight faces from tier 2 up).
+		ctx:part("ScreenFrame", V(11.4, 7.6, 1.2), CF(cx, 27.2, front + 0.6), LOUVRE, METAL)
+		ctx:part("Screen", V(10, 6.2, 0.4), CF(cx, 27.2, front + 1.4), SCREEN_BLACK, PLAS)
+		-- Seven octagonal tiers (Revision 5, blueprint), each narrower than the one below. Arched openings: tier 1 on three faces, tiers 2-7 on the four cardinal faces.
 		local tiers = {
-			{ r = 11, h = 12, ww = 3.6, wh = 7 },
-			{ r = 9.8, h = 11, ww = 3.4, wh = 6.6 },
-			{ r = 8.6, h = 10, ww = 3.2, wh = 6.2 },
-			{ r = 7.4, h = 9, ww = 3.0, wh = 5.6 },
+			{ r = 11.0, h = 7.0, ww = 3.4, wh = 6.2 },
+			{ r = 10.2, h = 6.4, ww = 3.2, wh = 5.8 },
+			{ r = 9.4, h = 6.0, ww = 3.0, wh = 5.4 },
+			{ r = 8.6, h = 5.6, ww = 2.8, wh = 5.0 },
+			{ r = 7.9, h = 5.2, ww = 2.6, wh = 4.6 },
+			{ r = 7.2, h = 4.8, ww = 2.4, wh = 4.2 },
+			{ r = 6.5, h = 4.4, ww = 2.2, wh = 3.8 },
 		}
 		local y = 23.6
 		for i, t in ipairs(tiers) do
 			ctx:octagonRing("Tier" .. i, t.r, t.h, y, 1.8, WALL, CONC, CF(cx, 0, cz))
 			local outer = t.r + 0.9
-			local faces = (i == 1) and { 0, 4, 6 } or { 0, 1, 2, 3, 4, 5, 6, 7 } -- face 2 is the front on tier 1: the screen
+			local faces = (i == 1) and { 0, 4, 6 } or { 0, 2, 4, 6 } -- face 2 is the front (+Z); tier 1's front carries the screen
 			for _, j in ipairs(faces) do
 				local th = j * PI / 4
 				local nx, nz = math.cos(th), math.sin(th)
-				arched(ctx, "Tier" .. i .. "Win", V(cx + nx * outer, y + 2.2, cz + nz * outer), math.atan2(nx, nz), t.ww, t.wh)
+				arched(ctx, "Tier" .. i .. "Win", V(cx + nx * outer, y + (t.h - t.wh) / 2, cz + nz * outer), math.atan2(nx, nz), t.ww, t.wh)
 			end
 			y += t.h
 			ctx:octagonRing("Cornice" .. i, outer + 0.5, 1.6, y, 1.8, TRIM, CONC, CF(cx, 0, cz))
 			y += 1.6
 		end
-		-- Cream-white cupola (Dec 2025 repaint) with a finial and a cross.
-		ctx:dome("Cupola", 6.6, 8, CF(cx, y, cz), DOME, RIB, PLASTER)
-		ctx:ball("Finial", 2.2, CF(cx, y + 6.8, cz), TRIM, METAL)
-		ctx:part("TowerCrossV", V(0.5, 5, 0.5), CF(cx, y + 10.0, cz), TRIM, METAL)
-		ctx:part("TowerCrossH", V(2.6, 0.5, 0.5), CF(cx, y + 10.8, cz), TRIM, METAL)
+		-- Small cream domed cap (Revision 5, blueprint) with a finial and a cross.
+		ctx:dome("Cupola", 5.4, 4, CF(cx, y, cz), DOME, RIB, PLASTER)
+		ctx:ball("Finial", 2.0, CF(cx, y + 5.6, cz), TRIM, METAL)
+		ctx:part("TowerCrossV", V(0.5, 4.6, 0.5), CF(cx, y + 8.0, cz), TRIM, METAL)
+		ctx:part("TowerCrossH", V(2.4, 0.5, 0.5), CF(cx, y + 8.9, cz), TRIM, METAL)
 	end
 
 	------------------------------------------------------------------ Nave (bays dropped to fit the footprint)
@@ -296,10 +303,10 @@ return function()
 
 	------------------------------------------------------------------ Transept and dome (cream-white, about as wide as the nave)
 	local CROSS_Z = -62
-	local DRUM_APOTHEM, DRUM_T = 20, 2.5
+	local DRUM_APOTHEM, DRUM_T = 24, 2.5
 	local DRUM_OUTER = DRUM_APOTHEM + DRUM_T / 2 -- the drum's outer face, where its windows sit
 	local DRUM_BASE, DRUM_TOP = 36, 52
-	local DOME_R, DOME_Y = 19, 53.5 -- DOME_Y = DRUM_TOP + the 1.5-stud cornice; the dome top is 72.5
+	local DOME_R, DOME_Y = 23, 53.5 -- DOME_Y = DRUM_TOP + the 1.5-stud cornice; the dome top is 76.5
 	local function buildDome(ctx)
 		-- Transept block (x +-44 = 88 studs; the real transept is about 48 m), with gabled arm roofs (ridge along X at y 43),
 		-- an end gable and a window on each arm end.
@@ -341,83 +348,117 @@ return function()
 		end
 		-- Ribbed cream-white dome, lantern and cross.
 		ctx:dome("Dome", DOME_R, 8, CF(cx, DOME_Y, cz), DOME, RIB, PLASTER)
-		ctx:octagonRing("Lantern", 3.2, 5, 71.5, 0.8, WALL, CONC, CF(cx, 0, cz))
-		ctx:ball("LanternCap", 6.4, CF(cx, 77.2, cz), DOME, PLASTER)
-		ctx:part("DomeCrossV", V(0.5, 4.5, 0.5), CF(cx, 80.4, cz), TRIM, METAL)
-		ctx:part("DomeCrossH", V(2.4, 0.5, 0.5), CF(cx, 81.2, cz), TRIM, METAL)
+		ctx:octagonRing("Lantern", 4.2, 6, 75.5, 0.8, WALL, CONC, CF(cx, 0, cz))
+		ctx:ball("LanternCap", 7.2, CF(cx, 83.1, cz), DOME, PLASTER)
+		ctx:part("DomeCrossV", V(0.5, 4.0, 0.5), CF(cx, 88.7, cz), TRIM, METAL)
+		ctx:part("DomeCrossH", V(2.6, 0.5, 0.5), CF(cx, 89.3, cz), TRIM, METAL)
 	end
 
-	------------------------------------------------------------------ Adjoining wing (viewer's right, +X; P3 / P4)
-	local function buildWing(ctx)
-		local x0, bays, bayW = 21, 11, 9
-		local wingLen = bays * bayW -- 99
-		local mid = x0 + wingLen / 2
-		local pavX = x0 + bayW * 3.5
-		local entX = x0 + bayW * 9.5
-		local function bayX(i) return x0 + bayW * (i - 0.5) end
-		-- Ground floor: panels with arched openings, a dark backing behind them.
+	------------------------------------------------------------------ West flank: the 2-storey wing on the G.A. Solis side (Revision 5, blueprint)
+	-- Built in local coordinates: the arcade is on local +Z and the length runs along local +X. WEST_2 turns it to face west (-X).
+	local function buildWingWest(ctx)
+		local bays, bayW, L = 5, 9, 45 -- 2 storeys; bay 3 is the entrance
+		local mid = L / 2
+		local function bayX(i) return bayW * (i - 0.5) end
+		-- Body behind the arcade (z 0..9) and the upper-storey front (z 9..12).
+		ctx:part("WingUpper", V(L, 26, 9), CF(mid, 13, 4.5), WALL, CONC)
+		ctx:part("WingUpperFront", V(L, 13, 3), CF(mid, 19.5, 10.5), WALL, CONC)
+		-- Ground arcade: an arched opening per bay (CSG where it works); bay 3 is open for the entrance pavilion.
 		for i = 1, bays do
-			arch(ctx, "WingBay" .. i, { width = 4.6, height = 9.5, depth = 3, wallWidth = bayW, wallHeight = 13,
-				cframe = CF(bayX(i), 6.5, -1.5), color = WALL, material = CONC })
-		end
-		ctx:part("WingBacking", V(wingLen, 10, 0.4), CF(mid, 5, -3.2), GLASS, PLAS)
-		-- Upper floor, storey bands, a pilaster between every bay.
-		ctx:part("WingUpper", V(wingLen, 13, 3), CF(mid, 19.5, -1.5), WALL, CONC)
-		ctx:part("WingPlinth", V(wingLen + 0.4, 1, 3.4), CF(mid, 0.5, -1.3), TRIM, CONC)
-		ctx:part("WingBand", V(wingLen + 0.8, 1.1, 3.6), CF(mid, 13.2, -1.2), TRIM, CONC)
-		ctx:part("WingEave", V(wingLen + 1.6, 1.6, 4.6), CF(mid, 26.8, -0.9), TRIM, CONC)
-		for i = 0, bays do
-			local x = x0 + bayW * i
-			ctx:part("WingPilasterLow", V(1.4, 11.4, 0.9), CF(x, 6.7, 0.45), TRIM, CONC)
-			ctx:part("WingPilasterUp", V(1.4, 11.2, 0.9), CF(x, 19.6, 0.45), TRIM, CONC)
-		end
-		for i = 1, bays do
-			if i ~= 4 then
-				arched(ctx, "WingWin" .. i, V(bayX(i), 15.3, 0), 0, 3.4, 8)
+			if i ~= 3 then
+				arch(ctx, "WingBay" .. i, { width = 4.6, height = 9.5, depth = 3, wallWidth = bayW, wallHeight = 13,
+					cframe = CF(bayX(i), 6.5, 10.5), color = WALL, material = CONC })
 			end
 		end
-		-- Hipped-style gable roof along X: two slopes with ribs, a ridge, and a gabled right end.
-		local run, rise = 21.8, 6
+		ctx:part("WingPlinth", V(L + 0.4, 1, 3.4), CF(mid, 0.5, 10.7), TRIM, CONC)
+		ctx:part("WingBand", V(L + 0.8, 1.1, 3.6), CF(mid, 13.2, 10.8), TRIM, CONC)
+		ctx:part("WingEave", V(L + 1.6, 1.6, 4.6), CF(mid, 26.8, 10.7), TRIM, CONC)
+		for i = 0, bays do
+			local x = bayW * i
+			ctx:part("WingPilasterLow", V(1.4, 11.4, 0.9), CF(x, 6.7, 12.45), TRIM, CONC)
+			ctx:part("WingPilasterUp", V(1.4, 11.2, 0.9), CF(x, 19.6, 12.45), TRIM, CONC)
+		end
+		-- Upper storey: an arched window per bay, except the entrance bay.
+		for i = 1, bays do
+			if i ~= 3 then
+				arched(ctx, "WingWin" .. i, V(bayX(i), 15.3, 12), 0, 3.4, 8)
+			end
+		end
+		-- Red tile roof: two slopes with tile ribs and a ridge over the 12-stud depth.
+		local run, rise = 7, 4
 		local len = math.sqrt(run * run + rise * rise)
 		local theta = math.atan(rise / run)
-		local front = CF(mid, 30.2, -9.1) * ANG(theta, 0, 0)
-		local back = CF(mid, 30.2, -30.9) * ANG(-theta, 0, 0)
-		ctx:part("WingRoofFront", V(wingLen + 2.4, 0.6, len), front, ROOF, ROOFMAT)
-		ctx:part("WingRoofBack", V(wingLen + 2.4, 0.6, len), back, ROOF, ROOFMAT)
-		for x = x0 + 2, x0 + wingLen - 2, 3 do
+		local ridgeY, ridgeZ = 30.2, 6
+		local front = CF(mid, ridgeY - rise / 2, ridgeZ + run / 2) * ANG(theta, 0, 0)
+		local back = CF(mid, ridgeY - rise / 2, ridgeZ - run / 2) * ANG(-theta, 0, 0)
+		ctx:part("WingRoofFront", V(L + 2.4, 0.6, len), front, ROOF, ROOFMAT)
+		ctx:part("WingRoofBack", V(L + 2.4, 0.6, len), back, ROOF, ROOFMAT)
+		for x = 2, L - 2, 3 do
 			ctx:part("WingRib", V(0.5, 0.35, len), front * CF(x - mid, 0.45, 0), ROOF_RIB, ROOFMAT)
 			ctx:part("WingRib", V(0.5, 0.35, len), back * CF(x - mid, 0.45, 0), ROOF_RIB, ROOFMAT)
 		end
-		ctx:part("WingRidge", V(wingLen + 2.4, 1, 1.2), CF(mid, 33.4, -20), TRIM, CONC)
-		ctx:part("WingBackWall", V(wingLen, 27, 2), CF(mid, 13.5, -41), WALL, CONC)
-		ctx:part("WingEndWall", V(1.6, 27, 40), CF(x0 + wingLen - 0.8, 13.5, -20), WALL, CONC)
-		ctx:gable("WingEndGable", 40, 6.2, 1.6, CF(x0 + wingLen - 0.8, 27, -20) * ANG(0, PI / 2, 0), WALL, CONC)
-		for _, z in ipairs({ -10, -30 }) do
-			arched(ctx, "WingEndWinLow", V(x0 + wingLen + 0.1, 3, z), PI / 2, 3.6, 8)
-			arched(ctx, "WingEndWinUp", V(x0 + wingLen + 0.1, 15.3, z), PI / 2, 3.4, 8)
-		end
-		-- Central pavilion: a scrolled (curvilinear) gable with a cross and a shield, a balcony over the entrance.
-		ctx:part("PavilionBody", V(12, 29, 5), CF(pavX, 14.5, -0.5), WALL, CONC)
-		arched(ctx, "PavilionDoor", V(pavX, 0, 2), 0, 4, 8.5)
-		arched(ctx, "PavilionWin", V(pavX, 15.3, 2), 0, 4, 8)
-		ctx:part("PavilionPlaque", V(6, 1.2, 0.3), CF(pavX, 11.2, 2.15), PANEL, CONC)
-		ctx:part("WingBalcony", V(10, 0.8, 3), CF(pavX, 13.2, 3.4), TRIM, CONC)
-		ctx:part("BalconyRail", V(10, 0.4, 0.4), CF(pavX, 15.2, 4.8), TRIM, CONC)
+		ctx:part("WingRidge", V(L + 2.4, 1, 1.2), CF(mid, ridgeY + 0.2, ridgeZ), TRIM, CONC)
+		-- Entrance pavilion on bay 3, projecting to z 13. The cathedral's name on the arcade comes from the 2024 photo of the wing end.
+		local pav = bayX(3)
+		ctx:part("PavilionBody", V(10, 27, 4.2), CF(pav, 13.5, 10.9), WALL, CONC)
+		arched(ctx, "PavilionDoor", V(pav, 0, 13), 0, 4, 8.5)
+		arched(ctx, "PavilionWin", V(pav, 15.3, 13), 0, 4, 8)
+		ctx:part("PavilionPlaque", V(6, 1.2, 0.3), CF(pav, 11.2, 13.15), PANEL, CONC)
+		ctx:part("WingBalcony", V(10, 0.8, 3), CF(pav, 13.2, 14.4), TRIM, CONC)
+		ctx:part("BalconyRail", V(10, 0.4, 0.4), CF(pav, 15.2, 15.8), TRIM, CONC)
 		for k = -4, 4 do
-			ctx:part("BalconyBaluster", V(0.4, 1.8, 0.4), CF(pavX + k * 1.2, 14.2, 4.8), TRIM, CONC)
+			ctx:part("BalconyBaluster", V(0.4, 1.8, 0.4), CF(pav + k * 1.2, 14.2, 15.8), TRIM, CONC)
 		end
 		for _, s in ipairs({ -1, 1 }) do
-			ctx:part("PavilionPilaster", V(1.2, 27, 0.8), CF(pavX + s * 5.4, 13.5, 2.3), TRIM, CONC)
-			ctx:ball("PavilionScroll", 2.4, CF(pavX + s * 6.6, 29.2, 1), WALL, CONC)
-			ctx:ball("PavilionScroll", 1.6, CF(pavX + s * 4.6, 32.4, 1), TRIM, CONC)
+			ctx:part("PavilionPilaster", V(1.2, 27, 0.8), CF(pav + s * 5.4, 13.5, 13.4), TRIM, CONC)
+			ctx:ball("PavilionScroll", 2.4, CF(pav + s * 6.6, 29.2, 11.8), WALL, CONC)
+			ctx:ball("PavilionScroll", 1.6, CF(pav + s * 4.6, 32.4, 11.8), TRIM, CONC)
 		end
-		ctx:cyl("PavilionCurve", V(5, 12, 12), CF(pavX, 29, -0.5) * ANG(0, PI / 2, 0), WALL, CONC)
-		ctx:part("PavilionShield", V(2.4, 3, 0.3), CF(pavX, 31.5, 2.15), PANEL, CONC)
-		ctx:part("PavilionCrossV", V(0.7, 5, 0.7), CF(pavX, 37.5, -0.5), TRIM, METAL)
-		ctx:part("PavilionCrossH", V(3, 0.7, 0.7), CF(pavX, 38.6, -0.5), TRIM, METAL)
-		-- The far entrance carries the cathedral's name (as in the 2024 photo of the wing end).
-		local sign = ctx:part("EntranceSign", V(13, 2.2, 0.3), CF(entX, 11.6, 2.3), GLASS, PLAS)
-		label(sign, Enum.NormalId.Back, "CATEDRAL DE SAN SEBASTIAN", Color3.fromRGB(240, 240, 232), 36)
+		ctx:cyl("PavilionCurve", V(5, 12, 12), CF(pav, 29, 10.9) * ANG(0, PI / 2, 0), WALL, CONC)
+		ctx:part("PavilionShield", V(2.4, 3, 0.3), CF(pav, 31.5, 13.15), PANEL, CONC)
+		ctx:part("PavilionCrossV", V(0.7, 5, 0.7), CF(pav, 37.5, 10.9), TRIM, METAL)
+		ctx:part("PavilionCrossH", V(3, 0.7, 0.7), CF(pav, 38.6, 10.9), TRIM, METAL)
+		local sign = ctx:part("EntranceSign", V(13, 2.2, 0.3), CF(36, 11.6, 12.15), GLASS, PLAS)
+		label(sign, Enum.NormalId.Front, "CATEDRAL DE SAN SEBASTIAN", Color3.fromRGB(240, 240, 232), 36)
+	end
+
+	------------------------------------------------------------------ West flank: the 3-storey parish and archdiocese office wing (Revision 5, blueprint)
+	local function buildOffice(ctx)
+		local L, depth, bays, H = 34, 12, 6, 25.5 -- 3 storeys of 8.5 studs; the ground-floor door is on bay 3
+		local bayW = L / bays
+		local function bayX(i) return bayW * (i - 0.5) end
+		ctx:part("OfficeBody", V(L, H, depth), CF(L / 2, H / 2, depth / 2), WALL, CONC)
+		ctx:part("OfficePlinth", V(L + 0.4, 0.8, depth + 0.4), CF(L / 2, 0.4, depth / 2), TRIM, CONC)
+		for k = 1, 3 do
+			ctx:part("OfficeBand" .. k, V(L + 0.8, 0.9, 0.6), CF(L / 2, 8.5 * k, depth + 0.2), TRIM, CONC)
+		end
+		for i = 0, bays do
+			ctx:part("OfficePilaster", V(0.9, H, 0.9), CF(bayW * i, H / 2, depth + 0.1), TRIM, CONC)
+		end
+		-- Glass windows, one part each, on every storey; the ground-floor door takes bay 3.
+		for k = 1, 3 do
+			local yb = (k - 1) * 8.5
+			for i = 1, bays do
+				if not (k == 1 and i == 3) then
+					ctx:part("OfficeS" .. k .. "Win" .. i, V(2.6, 3.8, 0.4), CF(bayX(i), yb + 4.2, depth + 0.2), GLASS, Enum.Material.Glass)
+				end
+			end
+		end
+		ctx:part("OfficeDoor", V(3.6, 8.2, 0.5), CF(bayX(3), 4.1, depth + 0.25), TIMBER, WOOD)
+		-- Red tile roof: two slopes with tile ribs and a ridge at the top of the 4-stud rise.
+		local run, rise = 6.5, 4
+		local len = math.sqrt(run * run + rise * rise)
+		local theta = math.atan(rise / run)
+		local ridgeY, ridgeZ = H + rise, depth / 2
+		local front = CF(L / 2, ridgeY - rise / 2, ridgeZ + run / 2) * ANG(theta, 0, 0)
+		local back = CF(L / 2, ridgeY - rise / 2, ridgeZ - run / 2) * ANG(-theta, 0, 0)
+		ctx:part("OfficeRoofFront", V(L + 2.4, 0.6, len), front, ROOF, ROOFMAT)
+		ctx:part("OfficeRoofBack", V(L + 2.4, 0.6, len), back, ROOF, ROOFMAT)
+		for x = 2, L - 2, 3 do
+			ctx:part("OfficeRib", V(0.5, 0.35, len), front * CF(x - L / 2, 0.45, 0), ROOF_RIB, ROOFMAT)
+			ctx:part("OfficeRib", V(0.5, 0.35, len), back * CF(x - L / 2, 0.45, 0), ROOF_RIB, ROOFMAT)
+		end
+		ctx:part("OfficeRidge", V(L + 2.4, 1, 1.2), CF(L / 2, ridgeY + 0.2, ridgeZ), TRIM, CONC)
 	end
 
 	------------------------------------------------------------------ Podium: the upper level (church, wing, forecourt, garden) and the retaining wall
@@ -428,6 +469,9 @@ return function()
 		ctx:part("Podium", V(240, RAISE, WALL_Z + 100), CF(0, RAISE / 2, (WALL_Z - 100) / 2), STONE, CONC)
 		ctx:part("PodiumCornice", V(240.8, 0.6, 1.0), CF(0, RAISE - 0.3, WALL_Z), STONE_LIGHT, CONC)
 		ctx:part("PodiumPlinth", V(240.8, 0.8, 1.0), CF(0, 0.4, WALL_Z + 0.1), STONE_DARK, CONC)
+		-- Revision 5 (blueprint): brick skins on the podium's south face at its two ends. The bleachers and the stairs keep the stone face between them.
+		ctx:part("RetainBrickW", V(42, RAISE, 0.8), CF(-99, RAISE / 2, WALL_Z + 0.4), BRICK, CONC)
+		ctx:part("RetainBrickE", V(22, RAISE, 0.8), CF(109, RAISE / 2, WALL_Z + 0.4), BRICK, CONC)
 	end
 
 	local function palm(ctx, i, px, pz)
@@ -452,8 +496,19 @@ return function()
 		ctx:part("ApronPaving", V(200, 0.1, WALL_Z - 10), CF(0, 0.05, (WALL_Z + 10) / 2), Color3.fromRGB(104, 106, 112), CONC) -- z 10..48
 		ctx:part("Walkway", V(14, 0.06, WALL_Z - 10), CF(0, 0.13, (WALL_Z + 10) / 2), STONE_LIGHT, CONC)
 		-- Parapet caps the retaining wall beyond the seating tiers (x < -76 and x > 98).
-		ctx:part("Parapet", V(44, 1.4, 1.6), CF(-98, 0.7, WALL_Z - 0.8), STONE_LIGHT, CONC)
-		ctx:part("Parapet", V(22, 1.4, 1.6), CF(109, 0.7, WALL_Z - 0.8), STONE_LIGHT, CONC)
+		ctx:part("Parapet", V(44, 1.4, 1.6), CF(-98, 0.7, WALL_Z - 0.8), BRICK, CONC)
+		ctx:part("Parapet", V(22, 1.4, 1.6), CF(109, 0.7, WALL_Z - 0.8), BRICK, CONC)
+		-- The walled parking forecourt (Revision 5, blueprint): brick walls on the east and west edges with a 20-stud gateway (z 16..36)
+		-- opposite the side stairs, so the street access (routes_check) stays open. Piers at the ends; the south side is the retaining wall.
+		for _, s in ipairs({ -1, 1 }) do
+			local wx = s * 100.6
+			local name = s < 0 and "ForecourtWallW" or "ForecourtWallE"
+			ctx:part(name, V(1.2, 3, 6), CF(wx, 1.5, 13), BRICK, CONC) -- z 10..16
+			ctx:part(name, V(1.2, 3, 10), CF(wx, 1.5, 41), BRICK, CONC) -- z 36..46
+			for _, pz in ipairs({ 10, 14.5, 37.5, 46 }) do
+				ctx:part("ForecourtPier", V(1.8, 4, 1.8), CF(wx, 2, pz), BRICK, CONC)
+			end
+		end
 		-- Hedges flanking the tower front and the wing front (gap x 44..61 for the pavilion's steps).
 		ctx:part("HedgeTowerW", V(8, 1.8, 2), CF(-43, 0.95, 9), HEDGE, Enum.Material.Grass)
 		ctx:part("HedgeTowerE", V(8, 1.8, 2), CF(-25, 0.95, 9), HEDGE, Enum.Material.Grass)
@@ -469,13 +524,24 @@ return function()
 		for k = 0, 5 do
 			ctx:part("ApronMarking", V(0.4, 0.1, 7), CF(14 + k * 5, 0.15, 38) * ANG(0, 0.6, 0), YELLOW, PLAS)
 		end
-		-- The saint's monument on a plinth, off the walkway.
-		local mx, mz = -10, 40
-		ctx:part("MonumentPlinth", V(5.4, 1.4, 5.4), CF(mx, 0.7, mz), STONE_DARK, CONC)
-		ctx:part("Monument", V(3.4, 5, 3.4), CF(mx, 3.9, mz), STONE_LIGHT, CONC)
-		ctx:part("MonumentCap", V(4.2, 0.6, 4.2), CF(mx, 6.7, mz), STONE_DARK, CONC)
-		ctx:part("MonumentStatue", V(1.4, 3.6, 1.0), CF(mx, 8.8, mz), WHITE, CONC)
-		ctx:ball("MonumentHead", 1.3, CF(mx, 11.3, mz), WHITE, CONC)
+		-- The D-shaped monument mound (Revision 5, blueprint): three stepped terraces. Each is a stack of strips across a half-disc whose
+		-- flat side faces the retaining wall (z 46) and whose round side faces north. A looped ribbon stands on the top terrace.
+		local MX, MZ = 22, 46 -- the flat side's centre: east of the walkway, clear of the kiosk and the stairs
+		for k, R in ipairs({ 6.5, 4.6, 2.8 }) do
+			for j = 1, math.floor(R) do
+				local d = j - 0.5 -- distance from the flat side
+				ctx:part("MonumentPlinth", V(2 * math.sqrt(R * R - d * d), 1, 1), CF(MX, k - 0.5, MZ - d), STONE_DARK, CONC)
+			end
+		end
+		-- Looped ribbon: 12 short bars round a vertical circle of radius 2.4, in the plane z = MZ - 1.
+		local RIB_R, RIB_Y, RIB_Z = 2.4, 5.4, MZ - 1
+		for j = 0, 11 do
+			local a = j * PI / 6
+			local p = V(MX + RIB_R * math.cos(a), RIB_Y + RIB_R * math.sin(a), RIB_Z)
+			local tangent = V(-math.sin(a), math.cos(a), 0)
+			ctx:part("MonumentRibbon", V(0.5, 0.5, 2 * RIB_R * math.sin(PI / 12) + 0.2), CFrame.lookAt(p, p + tangent), WHITE, CONC)
+		end
+		ctx:part("Monument", V(2.2, 0.6, 1.8), CF(MX, 3.3, RIB_Z), STONE_LIGHT, CONC) -- the ribbon's pedestal on the top terrace
 		-- Hedged garden (east of the forecourt): a lawn slab, four hedged beds, a path cross at x 68 / z 30.
 		ctx:part("GardenLawn", V(62, 0.12, 36), CF(68, 0.06, 30), LAWN, Enum.Material.Grass)
 		ctx:part("GardenPathNS", V(8, 0.14, 36), CF(68, 0.07, 30), STONE_LIGHT, CONC)
@@ -491,12 +557,19 @@ return function()
 		ctx:part("PodiumLawn", V(70, 0.12, 106), CF(-83, 0.06, -45), LAWN, Enum.Material.Grass)
 		ctx:part("PodiumLawn", V(98, 0.12, 58), CF(71, 0.06, -70), LAWN, Enum.Material.Grass)
 		for i, p in ipairs({ { -100, -60 }, { -100, -28 }, { -100, 0 }, { -72, -66 }, { -72, -36 }, { 60, -72 } }) do palm(ctx, i + 40, p[1], p[2]) end
+		-- The north-east garden (Revision 5, blueprint): six round-canopy trees, three balls each.
+		for _, t in ipairs({ { 58, -58 }, { 80, -56 }, { 100, -64 }, { 60, -84 }, { 84, -86 }, { 104, -80 } }) do
+			post(ctx, "GardenTreeTrunk", 1.6, 7, t[1], 0, t[2], TRUNK, WOOD)
+			ctx:ball("GardenTreeCanopy", 6.5, CF(t[1], 8.5, t[2]), GREEN, Enum.Material.Grass)
+			ctx:ball("GardenTreeCanopy", 5.5, CF(t[1] + 1.8, 9.5, t[2] - 1.2), GREEN, Enum.Material.Grass)
+			ctx:ball("GardenTreeCanopy", 4.6, CF(t[1] - 1.6, 10.2, t[2] + 1.4), GREEN, Enum.Material.Grass)
+		end
 		for i, p in ipairs(PALMS_UP) do palm(ctx, i, p[1], p[2]) end
 	end
 
 	------------------------------------------------------------------ Lower level (ground): Plaza Independencia below the wall
 	-- The two palms nearest the pergola ring (x -44, -58) are gone: they stood on its south edge.
-	local PALMS_LOW = { { 44, 92 }, { 54, 92 }, { 64, 92 }, { 74, 92 }, { 84, 92 }, { 94, 92 }, { -72, 92 }, { -84, 92 } }
+	local PALMS_LOW = { { 44, 92 }, { 54, 92 }, { 64, 92 }, { 74, 92 }, { 84, 92 }, { 94, 92 }, { -72, 92 }, { -84, 92 }, { -40, 72 }, { -40, 84 } }
 	local RING_X, RING_Z, RING_R = -52, 80, 12 -- the round raised pergola garden (ground photo), west of the open centre
 	local function buildPlazaLower(ctx)
 		ctx:part("ForecourtPaving", V(200, 0.1, 100 - WALL_Z), CF(0, 0, (WALL_Z + 100) / 2), TERRACOTTA, CONC) -- z 48..100: the repainted Pavement (x +-100, z 0..100)
@@ -557,7 +630,7 @@ return function()
 			end
 		end
 		-- Lamps on the lower plaza.
-		for _, s in ipairs({ { -46, 66 }, { 46, 66 }, { -80, 66 }, { 90, 66 } }) do
+		for _, s in ipairs({ { -46, 66 }, { 46, 66 }, { -80, 66 }, { 97.5, 62 } }) do
 			post(ctx, "LampBase", 1.8, 1.2, s[1], 0, s[2], LAMP_METAL, METAL)
 			post(ctx, "LampPole", 0.6, 10, s[1], 1.2, s[2], LAMP_METAL, METAL)
 			post(ctx, "LampCollar", 1.6, 0.5, s[1], 11.2, s[2], LAMP_METAL, METAL)
@@ -570,22 +643,22 @@ return function()
 			ctx:part("BenchLegL", V(0.5, 1.5, 1.8), CF(s[1] - 2.5, 0.75, s[2]), LAMP_METAL, METAL)
 			ctx:part("BenchLegR", V(0.5, 1.5, 1.8), CF(s[1] + 2.5, 0.75, s[2]), LAMP_METAL, METAL)
 		end
-		-- White perimeter fence (P1): the south side with the road-mouth gap at x +-8, and the east side (z 70..99: it leaves the plaza open toward Road C).
+		-- Perimeter railing (Revision 5: dark iron, was white): the south side with the road-mouth gap at x +-8, and the east side (z 70..99: it leaves the plaza open toward Road C).
 		local function fenceRun(x0, z0, x1, z1)
 			local len = (V(x1, 0, z1) - V(x0, 0, z0)).Magnitude
 			local n = math.max(1, math.floor(len / 6))
 			for i = 0, n do
 				local t = i / n
-				ctx:part("FencePost", V(0.6, 3.2, 0.6), CF(x0 + (x1 - x0) * t, 1.6, z0 + (z1 - z0) * t), WHITE, CONC)
+				ctx:part("FencePost", V(0.6, 3.2, 0.6), CF(x0 + (x1 - x0) * t, 1.6, z0 + (z1 - z0) * t), LAMP_METAL, CONC)
 			end
 			local mxm, mzm = (x0 + x1) / 2, (z0 + z1) / 2
 			local sx, sz = math.abs(x1 - x0) + 0.4, math.abs(z1 - z0) + 0.4
 			if sx > sz then
-				ctx:part("FenceRail", V(sx, 0.4, 0.3), CF(mxm, 2.6, mzm), WHITE, CONC)
-				ctx:part("FenceRail", V(sx, 0.4, 0.3), CF(mxm, 1.2, mzm), WHITE, CONC)
+				ctx:part("FenceRail", V(sx, 0.4, 0.3), CF(mxm, 2.6, mzm), LAMP_METAL, CONC)
+				ctx:part("FenceRail", V(sx, 0.4, 0.3), CF(mxm, 1.2, mzm), LAMP_METAL, CONC)
 			else
-				ctx:part("FenceRail", V(0.3, 0.4, sz), CF(mxm, 2.6, mzm), WHITE, CONC)
-				ctx:part("FenceRail", V(0.3, 0.4, sz), CF(mxm, 1.2, mzm), WHITE, CONC)
+				ctx:part("FenceRail", V(0.3, 0.4, sz), CF(mxm, 2.6, mzm), LAMP_METAL, CONC)
+				ctx:part("FenceRail", V(0.3, 0.4, sz), CF(mxm, 1.2, mzm), LAMP_METAL, CONC)
 			end
 		end
 		fenceRun(-96, 99.4, -10, 99.4)
@@ -618,10 +691,10 @@ return function()
 		end
 		ctx:part("LongRidge", V(1, 0.9, len + 2), CF(bx, 28.7, zc), TRIM, CONC)
 		-- The covered court (ground photo: a big curved roof on posts, open at the sides). x 36..78, z 72..88, off the open centre.
-		-- A barrel vault whose axis runs along X: nine panels tangent to a circle of radius VR, springing from the post tops at y 9.8.
+		-- The posts along both long sides carry the eaves at y 9.8 (SPRING).
 		local cx, cz = 57, 80
-		local VR, SPRING = 9.2, 9.8
-		local vy = SPRING - VR * math.cos(math.rad(60)) -- the circle's centre height, so the +-60 degree panels meet the posts
+		local SPRING = 9.8
+		-- Revision 5: the pale barrel vault is replaced by a dark peaked stage roof (below).
 		ctx:part("CoveredCourt", V(42, 0.3, 16), CF(cx, 0.15, cz), STONE_LIGHT, CONC)
 		for i = 0, 5 do
 			for _, pz in ipairs({ cz - 7.2, cz + 7.2 }) do
@@ -631,17 +704,49 @@ return function()
 		for _, pz in ipairs({ cz - 7.2, cz + 7.2 }) do
 			ctx:part("CourtBeam", V(42, 0.7, 0.9), CF(cx, SPRING + 0.1, pz), TRIM, CONC)
 		end
-		for k = -4, 4 do
-			local a = math.rad(k * 15)
-			ctx:part("VaultPanel", V(42.4, 0.5, 2.9), CF(cx, vy + VR * math.cos(a), cz + VR * math.sin(a)) * ANG(a, 0, 0), VAULT, PLASTER)
+		-- The open-air stage (Revision 5, blueprint): a dark peaked roof on the posts, eaves at the post tops and the ridge 7 studs above.
+		local ROOF_Y, RIDGE_Y = SPRING, SPRING + 7
+		local run = 8.8 -- half the depth, plus the overhang
+		local rise = RIDGE_Y - ROOF_Y
+		local slope = math.sqrt(run * run + rise * rise)
+		local th = math.atan(rise / run)
+		for _, s in ipairs({ -1, 1 }) do
+			ctx:part("StageRoof", V(42.8, 0.6, slope), CF(cx, (ROOF_Y + RIDGE_Y) / 2, cz + s * run / 2) * ANG(s * th, 0, 0), DARK_ROOF, ROOFMAT)
 		end
-		ctx:part("VaultRidge", V(42.6, 0.8, 1.2), CF(cx, vy + VR + 0.3, cz), TRIM, CONC)
+		ctx:part("StageRidge", V(43.2, 1.0, 1.4), CF(cx, RIDGE_Y + 0.2, cz), DARK_ROOF, CONC)
+		for _, s in ipairs({ -1, 1 }) do
+			ctx:gable("StageGable", 16, rise, 0.8, CF(cx + s * 21.6, ROOF_Y, cz) * ANG(0, PI / 2, 0), DARK_ROOF, CONC)
+		end
 		-- The big shade tree beside the court (ground photo), west of it and clear of the open centre: the canopy bottoms stay above y 12.
 		local tx, tz = 35, 66
 		post(ctx, "ShadeTreeTrunk", 2.2, 12, tx, 0, tz, TRUNK, WOOD)
 		for _, c in ipairs({ { 0, 18, 0, 11 }, { 4, 17.5, -2, 9 }, { -4, 17.5, 2, 9 }, { 0, 17.5, 3.5, 8 }, { -2, 18.5, -4.5, 9 } }) do
 			ctx:ball("ShadeTreeCanopy", c[4], CF(tx + c[1], c[2], tz + c[3]), GREEN, Enum.Material.Grass)
 		end
+	end
+
+	------------------------------------------------------------------ Lipa Cultural Centre (Revision 5, blueprint): a 2-storey cream block on the lower plaza's east side
+	local function buildCulturalCentre(ctx)
+		-- x 80..96, z 65..82 (the south face at z 82 stays clear of the palm fronds on the z 92 row), 18 studs high. Entrance on the north face.
+		local x0, x1, z0, z1, H = 80, 96, 65, 82, 18
+		local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+		ctx:part("CulturalCentreBody", V(x1 - x0, H, z1 - z0), CF(cx, H / 2, cz), WALL_PALE, CONC)
+		ctx:part("CulturalBand", V(x1 - x0 + 0.6, 0.8, z1 - z0 + 0.6), CF(cx, 9, cz), TRIM, CONC)
+		ctx:part("CulturalRoof", V(x1 - x0 + 0.8, 1, z1 - z0 + 0.8), CF(cx, H + 0.5, cz), TRIM, CONC)
+		ctx:part("CulturalParapet", V(0.8, 1.6, z1 - z0 + 0.8), CF(x0, H + 1.8, cz), TRIM, CONC)
+		ctx:part("CulturalParapet", V(0.8, 1.6, z1 - z0 + 0.8), CF(x1, H + 1.8, cz), TRIM, CONC)
+		ctx:part("CulturalParapet", V(x1 - x0 + 0.8, 1.6, 0.8), CF(cx, H + 1.8, z0), TRIM, CONC)
+		ctx:part("CulturalParapet", V(x1 - x0 + 0.8, 1.6, 0.8), CF(cx, H + 1.8, z1), TRIM, CONC)
+		-- West face (normal -X, yaw -PI/2): two ground windows and three upper windows.
+		arched(ctx, "CulturalS1W1", V(x0, 1.6, 69.5), -PI / 2, 3, 6)
+		arched(ctx, "CulturalS1W2", V(x0, 1.6, 78.5), -PI / 2, 3, 6)
+		for i, z in ipairs({ 69.5, 74, 78.5 }) do
+			arched(ctx, "CulturalS2W" .. i, V(x0, 10.5, z), -PI / 2, 3, 5.5)
+		end
+		-- North face (normal -Z, yaw PI): the entrance and two ground windows.
+		arched(ctx, "CulturalDoor", V(cx, 0, z0), PI, 4, 8.5)
+		arched(ctx, "CulturalS1W3", V(82.5, 1.6, z0), PI, 3, 6)
+		arched(ctx, "CulturalS1W4", V(93.5, 1.6, z0), PI, 3, 6)
 	end
 
 	------------------------------------------------------------------ Welcome Arch (P6): wrought-iron arch on stone gateposts, at the road mouth
@@ -682,7 +787,7 @@ return function()
 	------------------------------------------------------------------ Benches, lamps, flagpole (upper level, origin raised)
 	local function buildBenches(ctx)
 		-- walkway benches, and benches on the garden path (facing each other across it)
-		local spots = { { -24, 34, -PI / 2 }, { -24, 42, -PI / 2 }, { 24, 34, PI / 2 }, { 24, 42, PI / 2 },
+		local spots = { { -24, 34, -PI / 2 }, { -24, 42, -PI / 2 }, { 24, 34, PI / 2 },
 			{ 65.5, 22, PI / 2 }, { 70.5, 22, -PI / 2 }, { 65.5, 38, PI / 2 }, { 70.5, 38, -PI / 2 } }
 		for _, s in ipairs(spots) do
 			local cf = CF(s[1], 0, s[2]) * ANG(0, s[3], 0)
@@ -806,7 +911,7 @@ return function()
 		folder.Name = "PlazaPeople"
 		local skins = { Color3.fromRGB(224, 172, 130), Color3.fromRGB(198, 134, 92), Color3.fromRGB(141, 85, 60), Color3.fromRGB(241, 194, 125) }
 		local shirts = { Color3.fromRGB(200, 60, 60), Color3.fromRGB(60, 100, 170), Color3.fromRGB(230, 200, 80), Color3.fromRGB(90, 150, 100) }
-		local spots = { { -18, 36, 0.4, true }, { 20, 44, -0.5, true }, { -34, 66, 2.6 }, { 30, 66, 3.4 } } -- x, z, yaw, on the upper level?
+		local spots = { { -18, 36, 0.4, true }, { -44, 34, -0.5, true }, { -34, 66, 2.6 }, { 30, 66, 3.4 } } -- x, z, yaw, on the upper level?
 		for i, s in ipairs(spots) do
 			local desc = Instance.new("HumanoidDescription")
 			desc.HeadColor = skins[i]
@@ -839,10 +944,12 @@ return function()
 		component("Tower", "Structure", buildTower, UPPER)
 		component("Nave", "Structure", buildNave, UPPER)
 		component("Dome", "Structure", buildDome, UPPER)
-		component("Wing", "Structure", buildWing, UPPER)
+		component("WingWest", "Structure", buildWingWest, WEST_2)
+		component("Office", "Structure", buildOffice, WEST_3)
 		component("Plaza", "Site", buildPlazaUpper, UPPER)
 		component("PlazaLower", "Site", buildPlazaLower)
 		component("PlazaBuildings", "Site", buildPlazaBuildings)
+		component("CulturalCentre", "Site", buildCulturalCentre)
 		component("WelcomeArch", "Site", buildWelcomeArch)
 		component("Benches", "Site", buildBenches, UPPER)
 		component("Lamps", "Site", buildLamps, UPPER)

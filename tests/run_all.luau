@@ -9,7 +9,8 @@ local HttpService = game:GetService("HttpService")
 local EXPECTED = {
 	-- stored checks: passed count (failed must be 0)
 	checks = {
-		site01_check = 75, site02_check = 45, site03_check = 74, site04_check = 41, site05_check = 71, site06_check = 49,
+		site01_check = 115, -- 75 + 40: Slice 4 blueprint pass (7-tier octagonal tower, dome, wings, forecourt walls, D mound, Cultural Centre, stage roof, palms)
+		site02_check = 45, site03_check = 74, site04_check = 41, site05_check = 71, site06_check = 49,
 		site07_check = 34, site08_check = 29, site09_check = 26,
 		sites_check = 277, -- 256 + 21: site 10 now has the SiteId/pivot/facing/Wing/Guide/InfoPanel/JeepStop/Jeepney/anchored checks, Slice 3b
 		qa_check = 75, routes_check = 14, -- qa_check 44 to 75: 51 checks after the Slice 3b spawn assertions, +8 for the six-panel credits board (panels 4-6, projectLines, 25 tour sources), +16 for the ten-site PassportClient and WelcomeClient structure checks (Slice 3b step 3); routes_check 11 + 3: SpawnLocation exists, Ate Joy exists, spawn -> Ate Joy <= 40 studs, Slice 3b
@@ -23,13 +24,14 @@ local EXPECTED = {
 	-- BuildCheck per site id: { passed, parts }. Parts include each site's LocalNPCs (builders/npcs.luau, 337 parts in all for sites 1..9)
 	-- and the Guide's GuideOutfit (builders/guides.luau, 8 parts per guide).
 	build = {
-		[1] = { 16, 1683 }, [2] = { 15, 1148 }, [3] = { 15, 436 }, [4] = { 14, 705 }, [5] = { 15, 514 },
+		[1] = { 16, 1775 }, -- 1683 + 92 parts: Slice 4 blueprint pass
+		[2] = { 15, 1148 }, [3] = { 15, 436 }, [4] = { 14, 705 }, [5] = { 15, 514 },
 		[6] = { 15, 748 }, [7] = { 14, 723 }, [8] = { 14, 703 }, [9] = { 15, 420 },
 		-- Slice 3b: 1104 City Hall parts + Guide 16 + GuideOutfit 8 + InfoPanel 1 + JeepStop, pole, sign 3 + Jeepney 6 + 4 LocalNPCs 68 = 1206;
 		-- 16 passed = 11 shared checks + 5 required props (Blocks, Landscape, Wing, Forecourt, JeepStop).
 		[10] = { 16, 1206 },
 	},
-	worldParts = 8312, -- 7100 + 1104 City Hall parts (wing 276, blocks 432, steps 57, forecourt 105, landscape 234), Slice 3a; + 102 (Ate Joy, panel, jeep stop and jeepney, 4 locals), Slice 3b; + 6 (credits board 9 to 15 parts for six panels), Slice 3b step 3 (8312)
+	worldParts = 8404, -- 8312 + 92 (Cathedral blueprint pass, Slice 4); 8312 was 7100 + 1104 City Hall parts (wing 276, blocks 432, steps 57, forecourt 105, landscape 234), Slice 3a; + 102 (Ate Joy, panel, jeep stop and jeepney, 4 locals), Slice 3b; + 6 (credits board 9 to 15 parts for six panels), Slice 3b step 3 (8312)
 	cells = 1793696, -- 1793270 + 426: builders/roads_extra.luau paves the SPUR and the two bypasses (Asphalt FillBlock) and repaints the City Hall forecourt ground, Slice 3b
 	pivotY = { [8] = 19.8 }, -- every other site sits at y = 0
 }
