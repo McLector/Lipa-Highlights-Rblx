@@ -21,4 +21,15 @@ Capture rules: one `screen_capture` at a time, twice with a wait between, look a
 | 10 City Hall, atrium and canopy | -300, 30, -170 | -325, 28, -225 |
 | 10 City Hall, forecourt | -110, 35, -200 | -250, 8, -265 |
 
+Slice 4 rows (provisional, tuned by each builder the first time it captures; the front oblique rows above were captured twice before the rebuild and are the "before" shots):
+
+| Site | Shot | Camera position (x, y, z) | Look at (x, y, z) |
+|---|---|---|---|
+| 1 Cathedral | straight-on front (faces S) | 0, 20, 230 | 0, 15, 0 |
+| 1 Cathedral | tower and dome close-up | -60, 40, 90 | 0, 35, 10 |
+| 2 Market | straight-on front (faces E) | -150, 15, 160 | -330, 12, 160 |
+| 2 Market | name banner close-up | -230, 14, 160 | -330, 20, 160 |
+| 3 Lomi King | straight-on front (faces W) | 205, 12, 140 | 292, 15, 140 |
+| 3 Lomi King | sign and canopy close-up | 255, 16, 128 | 285, 20, 140 |
+
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.
