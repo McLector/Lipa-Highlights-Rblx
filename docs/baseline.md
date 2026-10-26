@@ -19,6 +19,14 @@ They live in **one place**: `EXPECTED` at the top of `tests/run_all.luau`. Run `
 | SHA-256 | `0273B45CC657AC298B2007C0B6EE133DA0409BCE4ACFE6F750F71D048DA8FD73` |
 | Verified | `run_all` gave `ok = true`: 14 stored checks, unit 127, 7100 world parts, 1793270 terrain cells (2026-10-26) |
 
+## Working backup (Slice 2 end)
+| Field | Value |
+|---|---|
+| File | `slice-26.rbxl`, saved 2026-10-26 19:48, 441,175 bytes |
+| SHA-256 | `EFED967C57A439B3DF8559EFC1A6F03840E94831FCCB0F1456001CF2E43103F2` |
+| Verified | `run_all` gave `ok = true`: 14 stored checks, unit 184, 7100 world parts, 1793270 terrain cells (2026-10-26, Slice 3a start) |
+| Note | Studio still listed the open place as `slice-25.rbxl` after Save to File; the `.lock` sits on `slice-26.rbxl`. Not treated as a mismatch. |
+
 Update this table every time the integrator shares a new baseline. If you save the place again, the size and SHA-256 change: refresh them before sharing.
 
 ## Check that your copy is the baseline
