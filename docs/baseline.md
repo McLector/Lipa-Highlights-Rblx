@@ -6,11 +6,17 @@ They live in **one place**: `EXPECTED` at the top of `tests/run_all.luau`. Run `
 ## Shared place version
 | Field | Value |
 |---|---|
-| Latest shared baseline | `slice-23.rbxl` (saved 2026-10-22 12:31, 394,178 B) plus `ServerStorage.Checks.run_all` (added after that save, so re-save before sharing) |
-| Where | private shared folder (link in the group chat), never a public GitHub release |
+| Latest shared baseline | `slice-23.rbxl`, saved 2026-10-22 12:51, 395,557 bytes. Includes `ServerStorage.Checks.run_all` (found in the reopened place, same hash as `tests/run_all.luau`: 4290 / 98 / 3994361621) |
+| SHA-256 | `F5C96AA6A4F8EDF7FB1A18ECCB958DD5AB70D67D6463C66517260AF01B33E050` |
+| Verified | opened in Studio, `run_all` gave `ok = true`, 74 rows, 0 mismatches (2026-10-22) |
+| Where | private shared folder (link in the group chat), never a public GitHub release. Share only the `.rbxl`, never its `.rbxl.lock` file |
 | Live place | placeId 138036647354961 (private; it still holds the Slice 03 state until the Ship publish) |
 
-Update this table every time the integrator shares a new baseline.
+Update this table every time the integrator shares a new baseline. If you save the place again, the size and SHA-256 change: refresh them before sharing.
+
+## Check that your copy is the baseline
+1. The file matches: in PowerShell run `Get-FileHash <your-file>.rbxl -Algorithm SHA256` and compare with the SHA-256 above (a copy you re-saved in Studio will differ; the next step is the real test).
+2. The place passes: open it in Studio and run `require(game.ServerStorage.Checks.run_all:Clone())()`. It must say `"ok":true`.
 
 ## State that exists only inside the place (not recreated by any builder)
 If a place is ever rebuilt from scratch these must be set by hand:
