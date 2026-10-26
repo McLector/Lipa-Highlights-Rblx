@@ -31,3 +31,5 @@ New Lipa City Hall as the start with a welcoming guide; structures rebuilt from 
 
 ## Per-slice loop
 Branch `feat/tour-v2`; tests first and shown red, then green; `run_all` ok (update `EXPECTED` on purpose only); Studio and disk hashes equal; screenshots looked at; owner saves `backups/slice-NN.rbxl`; commit locally; write the next handoff; stop.
+
+The advisor can be consulted at any time by the orchestrator and by every subagent, especially before committing to an approach, before a footprint, road or part-cap change, when a check stays red after two attempts, when sources disagree, and before declaring work done. An agent without an advisor tool returns `NEEDS_ADVICE` plus its question. Each consultation is noted in the journal and the handoff context log.
