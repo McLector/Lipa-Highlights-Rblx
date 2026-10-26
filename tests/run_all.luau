@@ -1,7 +1,7 @@
 -- run_all: the resume battery in one call. Studio copy: ServerStorage.Checks.run_all. Run in Edit mode via execute_luau:
 --   require(game.ServerStorage.Checks.run_all:Clone())()            -- returns JSON {ok, mismatches, rows}
 --   require(game.ServerStorage.Checks.run_all:Clone())({ override = { qa_check = 42 } })   -- test hook: proves a wrong number goes red
--- It runs the 12 stored checks, the unit suite, BuildCheck for all nine sites, checkWorld, the pivots and the terrain cell count,
+-- It runs the 14 stored checks, the unit suite, BuildCheck for all nine sites, checkWorld, the pivots and the terrain cell count,
 -- and compares each with EXPECTED below. EXPECTED is the ONE place the baseline numbers live (docs/baseline.md points here).
 -- The integrator updates EXPECTED in the same PR/commit that legitimately changes a number (a new check, a rebuilt site).
 local HttpService = game:GetService("HttpService")
@@ -11,14 +11,16 @@ local EXPECTED = {
 	checks = {
 		site01_check = 75, site02_check = 45, site03_check = 74, site04_check = 41, site05_check = 71, site06_check = 49,
 		site07_check = 34, site08_check = 29, site09_check = 26, sites_check = 256, qa_check = 44, routes_check = 11,
+		npcs_check = 194, guides_check = 111,
 	},
 	unitRun = 127,
-	-- BuildCheck per site id: { passed, parts }
+	-- BuildCheck per site id: { passed, parts }. Parts include each site's LocalNPCs (builders/npcs.luau, 337 parts in all)
+	-- and the Guide's GuideOutfit (builders/guides.luau, 8 parts per guide).
 	build = {
-		[1] = { 16, 1639 }, [2] = { 15, 1104 }, [3] = { 15, 375 }, [4] = { 14, 663 }, [5] = { 15, 472 },
-		[6] = { 15, 687 }, [7] = { 14, 682 }, [8] = { 14, 657 }, [9] = { 15, 392 },
+		[1] = { 16, 1683 }, [2] = { 15, 1148 }, [3] = { 15, 436 }, [4] = { 14, 705 }, [5] = { 15, 514 },
+		[6] = { 15, 748 }, [7] = { 14, 723 }, [8] = { 14, 703 }, [9] = { 15, 420 },
 	},
-	worldParts = 6691,
+	worldParts = 7100,
 	cells = 1793270,
 	pivotY = { [8] = 19.8 }, -- every other site sits at y = 0
 }
