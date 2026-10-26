@@ -1,7 +1,7 @@
 -- run_all: the resume battery in one call. Studio copy: ServerStorage.Checks.run_all. Run in Edit mode via execute_luau:
 --   require(game.ServerStorage.Checks.run_all:Clone())()            -- returns JSON {ok, mismatches, rows}
 --   require(game.ServerStorage.Checks.run_all:Clone())({ override = { qa_check = 42 } })   -- test hook: proves a wrong number goes red
--- It runs the 15 stored checks, the unit suite, BuildCheck for all nine sites, checkWorld, the pivots and the terrain cell count,
+-- It runs the 16 stored checks, the unit suite, BuildCheck for all ten sites, checkWorld, the pivots and the terrain cell count,
 -- and compares each with EXPECTED below. EXPECTED is the ONE place the baseline numbers live (docs/baseline.md points here).
 -- The integrator updates EXPECTED in the same PR/commit that legitimately changes a number (a new check, a rebuilt site).
 local HttpService = game:GetService("HttpService")
@@ -10,18 +10,25 @@ local EXPECTED = {
 	-- stored checks: passed count (failed must be 0)
 	checks = {
 		site01_check = 75, site02_check = 45, site03_check = 74, site04_check = 41, site05_check = 71, site06_check = 49,
-		site07_check = 34, site08_check = 29, site09_check = 26, sites_check = 256, qa_check = 44, routes_check = 11,
-		npcs_check = 194, guides_check = 111,
+		site07_check = 34, site08_check = 29, site09_check = 26,
+		sites_check = 277, -- 256 + 21: site 10 now has the SiteId/pivot/facing/Wing/Guide/InfoPanel/JeepStop/Jeepney/anchored checks, Slice 3b
+		qa_check = 44, routes_check = 11,
+		npcs_check = 237, -- 194 + 43: LocalNPCs for City Hall (4 figures, ~10 checks each) and the reserved-zone check, Slice 3b
+		guides_check = 123, -- 111 + 12: Ate Joy wears the tour uniform (the 11 per-guide checks and the dressed count), Slice 3b
 		site10_check = 52, -- City Hall fidelity check, Slice 3a
+		placeholders_check = 29, -- placeholders({only={10}}) result on Site10_CityHall: props, reserved zones, no Block, Slice 3b
 	},
-	unitRun = 189, -- 127 + TourContent_Test (46) + QuizKey_Test (11), Slice 2; + 5 owner-decision cases, Slice 3a
-	-- BuildCheck per site id: { passed, parts }. Parts include each site's LocalNPCs (builders/npcs.luau, 337 parts in all)
+	unitRun = 214, -- 127 + TourContent_Test (46) + QuizKey_Test (11), Slice 2; + 5 owner-decision cases, Slice 3a; Slice 3b step 1: +25 City Hall data/layout/credits cases
+	-- BuildCheck per site id: { passed, parts }. Parts include each site's LocalNPCs (builders/npcs.luau, 337 parts in all for sites 1..9)
 	-- and the Guide's GuideOutfit (builders/guides.luau, 8 parts per guide).
 	build = {
 		[1] = { 16, 1683 }, [2] = { 15, 1148 }, [3] = { 15, 436 }, [4] = { 14, 705 }, [5] = { 15, 514 },
 		[6] = { 15, 748 }, [7] = { 14, 723 }, [8] = { 14, 703 }, [9] = { 15, 420 },
+		-- Slice 3b: 1104 City Hall parts + Guide 16 + GuideOutfit 8 + InfoPanel 1 + JeepStop, pole, sign 3 + Jeepney 6 + 4 LocalNPCs 68 = 1206;
+		-- 16 passed = 11 shared checks + 5 required props (Blocks, Landscape, Wing, Forecourt, JeepStop).
+		[10] = { 16, 1206 },
 	},
-	worldParts = 8204, -- 7100 + 1104 City Hall parts (wing 276, blocks 432, steps 57, forecourt 105, landscape 234), Slice 3a
+	worldParts = 8306, -- 7100 + 1104 City Hall parts (wing 276, blocks 432, steps 57, forecourt 105, landscape 234), Slice 3a; + 102 (Ate Joy, panel, jeep stop and jeepney, 4 locals), Slice 3b
 	cells = 1793270,
 	pivotY = { [8] = 19.8 }, -- every other site sits at y = 0
 }
@@ -70,7 +77,7 @@ return function(opts)
 
 	local BC = require(game.ServerStorage.BuildCheck:Clone())
 	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
-	for id = 1, 9 do
+	for id = 1, 10 do
 		local model
 		for _, m in ipairs(workspace.Sites:GetChildren()) do
 			if tonumber(m.Name:match("^Site(%d+)")) == id then model = m end

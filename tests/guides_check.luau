@@ -1,4 +1,4 @@
--- guides_check: the spec for builders/guides.luau (a tour-guide uniform only the nine site guides wear), written BEFORE the build.
+-- guides_check: the spec for builders/guides.luau (a tour-guide uniform only the ten site guides wear), written BEFORE the build.
 -- Studio copy: ServerStorage.Checks.guides_check. Run in Edit via execute_luau:
 --   require(game.ServerStorage.Checks.guides_check:Clone())      -- returns JSON {passed, failed, failures}
 -- Each Guide wears the teal LIPA TOUR polo (a Shirt, short sleeves over skin-coloured arms), a cap and a tour flag in its
@@ -8,7 +8,6 @@ local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 
 local POLO = "rbxassetid://71550766060779" -- tools/guide_shirt.py, uploaded 2026-10-22
 local SKIN = Color3.fromRGB(224, 172, 130)
-local CATEGORY = { Eat = Color3.fromRGB(232, 150, 70), Pray = Color3.fromRGB(90, 150, 230), Love = Color3.fromRGB(100, 190, 110) }
 local OUTFIT = { "Cap", "CapBrim", "LanyardL", "LanyardR", "LanyardCard", "FlagPole", "Flag" }
 
 local results = { passed = 0, failed = 0, failures = {} }
@@ -51,9 +50,10 @@ for _, row in ipairs(SiteData.sites) do
 				if not outfit:FindFirstChild(name) then table.insert(missing, name) end
 			end
 			check(label .. " outfit has cap, brim, lanyard, ID card, flag pole and flag", #missing == 0, table.concat(missing, ", "))
-			local cat = CATEGORY[row.category]
+			-- The category colour table lives in SiteData (Eat / Pray / Love / Welcome); nil for an unknown category fails the check.
+			local cat = SiteData.categoryColor(row.category)
 			local cap, flag = outfit:FindFirstChild("Cap"), outfit:FindFirstChild("Flag")
-			check(label .. " cap and flag are the " .. row.category .. " colour", cap ~= nil and flag ~= nil and same(cap.Color, cat) and same(flag.Color, cat))
+			check(label .. " cap and flag are the " .. row.category .. " colour", cat ~= nil and cap ~= nil and flag ~= nil and same(cap.Color, cat) and same(flag.Color, cat))
 			local loose = {}
 			for _, p in ipairs(outfit:GetDescendants()) do
 				if p:IsA("BasePart") then
@@ -93,7 +93,7 @@ for _, row in ipairs(SiteData.sites) do
 			and prompt:GetAttribute("PromptKind") == "Guide" and prompt.MaxActivationDistance == 12)
 	end
 end
-check("all 9 guides are dressed", dressed == 9, tostring(dressed))
+check("all 10 guides are dressed", dressed == 10, tostring(dressed))
 
 -- Only the guides wear it.
 local others = {}

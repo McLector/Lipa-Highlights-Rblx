@@ -28,6 +28,8 @@ local SPEC = {
 	Farm = { YogaGuest = { "sit", "YogaMat" }, FarmStaff = { "stand" } },
 	Malarayat = { Golfer = { "stand", "GolfClub", "Visor" }, Caddie = { "stand", "GolfBag" } },
 	Tagbakin = { Fisher = { "sit", "Rod", "Salakot" } },
+	-- City Hall (Slice 3b): casual locals on the forecourt, outside the reserved zones (spawn pad, Ate Joy, jeep curb, panel, steps).
+	CityHall = { ResidentWalking = { "stand" }, ResidentBayong = { "stand", "Bayong" }, Student = { "stand", "ShoppingBag" }, OfficeStaff = { "stand" } },
 }
 
 local sites = workspace:FindFirstChild("Sites")
@@ -113,8 +115,28 @@ for _, row in ipairs(SiteData.sites) do
 		for role in pairs(spec) do
 			check(row.key .. ": a " .. role .. " is present", seen[role] == true)
 		end
+		-- Reserved zones (local frame of the row, only City Hall defines them): no figure stands in the spawn pad, Ate Joy's spot,
+		-- the jeep curb, the billboard / tour map spot or on the steps.
+		if row.key == "CityHall" then
+			local ZONES = {
+				{ "spawn pad", 30, 50, -10, 10 }, { "Ate Joy spot", 22, 32, -5, 5 }, { "jeep curb", 90, 100, 20, 40 },
+				{ "panel spot", 28, 38, -30, -15 }, { "steps", 5, 25, -60, 60 },
+			}
+			for _, rig in ipairs(folder:GetChildren()) do
+				local hrp = rig:FindFirstChild("HumanoidRootPart")
+				if hrp then
+					local lx, lz = hrp.Position.X - row.pos.X, hrp.Position.Z - row.pos.Z -- facing E: local x = world x, local z = world z
+					local clash = {}
+					for _, z in ipairs(ZONES) do
+						if lx >= z[2] - 1.5 and lx <= z[3] + 1.5 and lz >= z[4] - 1.5 and lz <= z[5] + 1.5 then table.insert(clash, z[1]) end
+					end
+					check(row.key .. "/" .. rig.Name .. " is outside the reserved zones (1.5 studs clear)", #clash == 0,
+						fmt(lx) .. ", " .. fmt(lz) .. " in " .. table.concat(clash, ", "))
+				end
+			end
+		end
 	end
 end
-check("19 location NPCs in all", total == 19, tostring(total))
+check("23 location NPCs in all", total == 23, tostring(total)) -- 19 + 4 at City Hall (Slice 3b)
 
 return HttpService:JSONEncode(results)

@@ -26,12 +26,12 @@ local function xzDist(a, b)
 end
 
 -- Sites whose real builder has run (the rest are still placeholder Blocks).
-local BUILT = { [1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = true, [8] = true, [9] = true }
+local BUILT = { [1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = true, [8] = true, [9] = true, [10] = true }
 
 local sites = workspace:FindFirstChild("Sites")
 check("Workspace.Sites exists", sites ~= nil)
 if sites then
-	-- 9 sites with a SiteData row, plus Site10_CityHall (built in Slice 3a, no row yet). Slice 3b completes this with row 10.
+	-- 10 sites, each with a SiteData row (row 10 = Site10_CityHall, built in Slice 3a, wired in Slice 3b).
 	check("Sites holds exactly 10 children", #sites:GetChildren() == 10, tostring(#sites:GetChildren()))
 	for _, s in ipairs(SiteData.sites) do
 		local label = string.format("Site%02d_%s", s.id, s.key)
@@ -44,7 +44,10 @@ if sites then
 			check(label .. " facing dot > 0.99", pivot.LookVector:Dot(SiteData.facingVector(s.facing)) > 0.99, tostring(pivot.LookVector))
 			if BUILT[s.id] then
 				-- Built sites (1: Slice 02, 5: Slice 04, 6: Slice 05): the builder replaced the placeholder Block with Structure.
-				check(label .. " Structure present and Block absent", m:FindFirstChild("Structure") ~= nil and m:FindFirstChild("Block") == nil)
+				-- City Hall (10, Slice 3a) has no single Structure model: its structure root is the Wing model (beside Blocks, Steps,
+				-- Forecourt and Landscape), so for site 10 the root child is Wing.
+				local structureRoot = s.id == 10 and "Wing" or "Structure"
+				check(label .. " " .. structureRoot .. " present and Block absent", m:FindFirstChild(structureRoot) ~= nil and m:FindFirstChild("Block") == nil)
 				if s.id == 5 then
 					-- Orientation guard (Slice 04): the pivot is yawed 180 degrees, so a build that used the pivot as its origin is
 					-- mirrored yet still passes the symmetric bounds check. The facade must be south (+Z) of the nave, the low annex
@@ -716,7 +719,12 @@ if sites then
 					check(label .. " JeepStop on dry land", mat ~= nil and mat ~= Enum.Material.Water, tostring(mat))
 					if gHrp then
 						local d = xzDist(stop.Position, gHrp.Position)
-						check(label .. " JeepStop 15-25 studs from Guide", d >= 15 and d <= 25, tostring(d))
+						if s.jeepLocal then
+							-- A row with jeepLocal (City Hall, Slice 3b) puts the stop on its own curb, not beside the Guide.
+							check(label .. " JeepStop is on its own curb (jeepLocal), 40-90 studs from Guide", d >= 40 and d <= 90, tostring(d))
+						else
+							check(label .. " JeepStop 15-25 studs from Guide", d >= 15 and d <= 25, tostring(d))
+						end
 					end
 					local jp = stop:FindFirstChild("JeepPrompt")
 					check(label .. " JeepPrompt", jp ~= nil and jp:IsA("ProximityPrompt") and jp:GetAttribute("PromptKind") == "Jeep")
