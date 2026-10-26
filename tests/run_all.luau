@@ -12,14 +12,14 @@ local EXPECTED = {
 		site01_check = 75, site02_check = 45, site03_check = 74, site04_check = 41, site05_check = 71, site06_check = 49,
 		site07_check = 34, site08_check = 29, site09_check = 26,
 		sites_check = 277, -- 256 + 21: site 10 now has the SiteId/pivot/facing/Wing/Guide/InfoPanel/JeepStop/Jeepney/anchored checks, Slice 3b
-		qa_check = 44, routes_check = 14, -- routes_check 11 + 3: SpawnLocation exists, Ate Joy exists, spawn -> Ate Joy <= 40 studs, Slice 3b
+		qa_check = 75, routes_check = 14, -- qa_check 44 to 75: 51 checks after the Slice 3b spawn assertions, +8 for the six-panel credits board (panels 4-6, projectLines, 25 tour sources), +16 for the ten-site PassportClient and WelcomeClient structure checks (Slice 3b step 3); routes_check 11 + 3: SpawnLocation exists, Ate Joy exists, spawn -> Ate Joy <= 40 studs, Slice 3b
 		npcs_check = 237, -- 194 + 43: LocalNPCs for City Hall (4 figures, ~10 checks each) and the reserved-zone check, Slice 3b
 		guides_check = 123, -- 111 + 12: Ate Joy wears the tour uniform (the 11 per-guide checks and the dressed count), Slice 3b
 		site10_check = 52, -- City Hall fidelity check, Slice 3a
 		placeholders_check = 30, -- placeholders({only={10}}) result on Site10_CityHall: props, reserved zones, no Block, Slice 3b; +1 real-SpawnLocation-on-forecourt check
 		roads_check = 94, -- SPUR, WEST_BYPASS, EAST_BYPASS: margins, clearances, junctions, reachability, asphalt and forecourt ground, Slice 3b
 	},
-	unitRun = 214, -- 127 + TourContent_Test (46) + QuizKey_Test (11), Slice 2; + 5 owner-decision cases, Slice 3a; Slice 3b step 1: +25 City Hall data/layout/credits cases
+	unitRun = 226, -- 127 + TourContent_Test (46) + QuizKey_Test (11), Slice 2; + 5 owner-decision cases, Slice 3a; Slice 3b step 1: +25 City Hall data/layout/credits cases; Slice 3b step 3: +12 CertificateLogic.cellRects cases (226)
 	-- BuildCheck per site id: { passed, parts }. Parts include each site's LocalNPCs (builders/npcs.luau, 337 parts in all for sites 1..9)
 	-- and the Guide's GuideOutfit (builders/guides.luau, 8 parts per guide).
 	build = {
@@ -29,7 +29,7 @@ local EXPECTED = {
 		-- 16 passed = 11 shared checks + 5 required props (Blocks, Landscape, Wing, Forecourt, JeepStop).
 		[10] = { 16, 1206 },
 	},
-	worldParts = 8306, -- 7100 + 1104 City Hall parts (wing 276, blocks 432, steps 57, forecourt 105, landscape 234), Slice 3a; + 102 (Ate Joy, panel, jeep stop and jeepney, 4 locals), Slice 3b
+	worldParts = 8312, -- 7100 + 1104 City Hall parts (wing 276, blocks 432, steps 57, forecourt 105, landscape 234), Slice 3a; + 102 (Ate Joy, panel, jeep stop and jeepney, 4 locals), Slice 3b; + 6 (credits board 9 to 15 parts for six panels), Slice 3b step 3 (8312)
 	cells = 1793696, -- 1793270 + 426: builders/roads_extra.luau paves the SPUR and the two bypasses (Asphalt FillBlock) and repaints the City Hall forecourt ground, Slice 3b
 	pivotY = { [8] = 19.8 }, -- every other site sits at y = 0
 }

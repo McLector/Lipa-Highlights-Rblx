@@ -77,6 +77,62 @@ if board then
 	end
 	check("CreditsBoard labels are not set below 14 px", #tooSmall == 0, table.concat(tooSmall, ","))
 
+	-- Slice 3b: the board has six panels. 1-3 sites 1-9, 4 City Hall + project lines, 5-6 the 25 tour sources (they do not fit one panel
+	-- at a readable 16 px: measured 694 px of text for 484 px of canvas, so they are split in two).
+	local panelText = {}
+	for _, g in ipairs(guis) do
+		local k = tonumber(string.match(g.Name, "^CreditsGui(%d+)$"))
+		if k then
+			local lines = {}
+			for _, l in ipairs(g:GetDescendants()) do
+				if l:IsA("TextLabel") then table.insert(lines, l.Text) end
+			end
+			panelText[k] = table.concat(lines, "\n")
+		end
+	end
+	local nPanels = 0
+	for _ in pairs(panelText) do nPanels += 1 end
+	check("CreditsBoard has six panels (CreditsGui1..6)", nPanels == 6 and panelText[6] ~= nil, tostring(nPanels))
+	local p4 = panelText[4] or ""
+	local site10 = CreditsData.sites[10]
+	local p4urls = site10 ~= nil
+	if site10 then
+		for _, url in ipairs(site10.urls) do if not string.find(p4, url, 1, true) then p4urls = false end end
+	end
+	check("panel 4 names City Hall (site 10) and carries its urls", p4urls and string.find(p4, "10. ", 1, true) ~= nil)
+	local missingProject = {}
+	for _, line in ipairs(CreditsData.projectLines) do
+		if not string.find(p4, line, 1, true) then table.insert(missingProject, line) end
+	end
+	check("panel 4 carries every CreditsData.projectLines line", #missingProject == 0 and #CreditsData.projectLines >= 2, table.concat(missingProject, " ; "))
+	local src56 = (panelText[5] or "") .. "\n" .. (panelText[6] or "")
+	check("panel 5 has the Tour sources header", string.find(panelText[5] or "", "TOUR SOURCES", 1, true) ~= nil)
+	local missingSrc = {}
+	for _, s in ipairs(CreditsData.tourSources) do
+		local line = "[" .. s.ref .. "] " .. s.text
+		if not string.find(src56, line, 1, true) and not string.find(src56, s.url, 1, true) then table.insert(missingSrc, "[" .. s.ref .. "]") end
+	end
+	check("panels 5-6 carry every tourSources text (or url)", #missingSrc == 0 and #CreditsData.tourSources == 25, #missingSrc .. " missing: " .. table.concat(missingSrc, ","))
+	local missingDom = {}
+	for _, s in ipairs(CreditsData.tourSources) do
+		local dom = string.match(s.url, "^https?://([^/]+)")
+		if not dom or not string.find(src56, dom, 1, true) then table.insert(missingDom, "[" .. s.ref .. "]") end
+	end
+	check("panels 5-6 show each tour source's domain", #missingDom == 0, table.concat(missingDom, ","))
+	local scaled = {}
+	for _, l in ipairs(labels) do if l.TextScaled then table.insert(scaled, l.Name) end end
+	check("CreditsBoard labels never use TextScaled (fixed TextSize)", #scaled == 0, table.concat(scaled, ","))
+	local smallTail = {}
+	for _, g in ipairs(guis) do
+		local k = tonumber(string.match(g.Name, "^CreditsGui(%d+)$"))
+		if k and k >= 5 then
+			for _, l in ipairs(g:GetDescendants()) do
+				if l:IsA("TextLabel") and l.TextSize < 16 then table.insert(smallTail, l.Name) end
+			end
+		end
+	end
+	check("tour-source panels use at least 16 px text", #smallTail == 0 and panelText[5] ~= nil, table.concat(smallTail, ","))
+
 	-- every panel's text must fit its canvas: measured with TextService, so a long url cannot clip silently
 	local TextService = game:GetService("TextService")
 	local overflow = {}
@@ -185,6 +241,15 @@ if welcome then
 	check("WelcomeClient never turns RichText on", string.find(src, "RichText = true", 1, true) == nil)
 	check("WelcomeClient has a Start button", string.find(src, "Start", 1, true) ~= nil)
 	check("WelcomeClient switches its hint for touch devices", string.find(src, "TouchEnabled", 1, true) ~= nil)
+	-- Slice 3b: ten places, and the credits board directions are true from the City Hall spawn. The board stands at the south end of
+	-- the Cathedral plaza (CreditsBoard at z 94, the Cathedral jeep stop at (-20, 30)), not "south of the spawn" any more.
+	check("WelcomeClient says 'Ten places'", string.find(src, "Ten places", 1, true) ~= nil)
+	check("WelcomeClient no longer says 'Nine places'", string.find(src, "Nine places", 1, true) == nil)
+	check("WelcomeClient says 'Collect all 10 stamps'", string.find(src, "Collect all 10 stamps", 1, true) ~= nil)
+	check("WelcomeClient no longer says 'all 9 stamps'", string.find(src, "all 9 stamps", 1, true) == nil)
+	check("WelcomeClient directions put the credits board at the Cathedral plaza",
+		string.find(src, "credits board at the south end of the Cathedral plaza", 1, true) ~= nil)
+	check("WelcomeClient no longer places the credits board 'south of the spawn'", string.find(src, "south of the spawn", 1, true) == nil)
 end
 local passport = sps and sps:FindFirstChild("PassportClient")
 check("PassportClient exists", passport ~= nil)
@@ -197,6 +262,24 @@ if passport then
 	-- Measured on a 401-wide portrait phone: the third HUD button (Certificate) ended at x 438, off screen. The row must wrap.
 	check("PassportClient HUD button row wraps on narrow screens", string.find(src, "Wraps = true", 1, true) ~= nil)
 	check("PassportClient HUD buttons are not placed at fixed x offsets", string.find(src, "b.Position = UDim2.new(0, x", 1, true) == nil)
+	-- Slice 3b: ten sites. No site-count literal may remain in the script; the counts come from the site list and the certificate
+	-- uses the pure cellRects/layout functions with fixed text sizes.
+	check("PassportClient has no '/9' count literal", string.find(src, "/9", 1, true) == nil)
+	check("PassportClient has no ' 9)' count literal", string.find(src, " 9)", 1, true) == nil)
+	check("PassportClient has no 'for i = 1, 9' loop", string.find(src, "for i = 1, 9", 1, true) == nil)
+	check("PassportClient has no 'lastCount < 9' threshold", string.find(src, "lastCount < 9", 1, true) == nil)
+	check("PassportClient counts from the site list (#SiteData.sites or TOTAL_SITES)",
+		string.find(src, "#SiteData.sites", 1, true) ~= nil or string.find(src, "TOTAL_SITES", 1, true) ~= nil)
+	check("PassportClient shows the 10-based counter ('Passport 0/' .. total and a '%d/' .. total format)",
+		string.find(src, "\"Passport 0/\"", 1, true) ~= nil and string.find(src, "Passport %d/", 1, true) ~= nil)
+	check("PassportClient certificate loops over every site (1..TOTAL)", string.find(src, "for i = 1, TOTAL", 1, true) ~= nil)
+	check("PassportClient HUD has a gold Welcome row from SiteData.categoryColor('Welcome')",
+		string.find(src, "categoryColor(\"Welcome\")", 1, true) ~= nil and string.find(src, "WelcomeRow", 1, true) ~= nil)
+	check("PassportClient lays out the certificate with CertificateLogic.cellRects and layout",
+		string.find(src, "CertificateLogic.cellRects(", 1, true) ~= nil and string.find(src, "CertificateLogic.layout(", 1, true) ~= nil)
+	check("PassportClient certificate cells use a fixed TextSize, not the old scaled 3x3 grid",
+		string.find(src, "TextSize = geo.textSize", 1, true) ~= nil and string.find(src, "UITextSizeConstraint", 1, true) == nil
+		and string.find(src, "CellSize = UDim2.new(1 / 3", 1, true) == nil)
 end
 local guide = sps and sps:FindFirstChild("GuideClient")
 check("GuideClient exists", guide ~= nil)

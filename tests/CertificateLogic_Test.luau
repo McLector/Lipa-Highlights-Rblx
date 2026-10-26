@@ -144,4 +144,145 @@ return function(t)
 		a.columns = 99
 		expect.equal(CertificateLogic.layout(100, 200).columns, 2)
 	end)
+
+	-- cellRects(w, h, count, columns, places): where each place cell goes inside the certificate's places area (w x h pixels), and
+	-- the fixed text size to use. The LAST place (the Welcome site, City Hall) is a full-width row on top; the rest fill `columns`
+	-- columns below it. Returns nil for bad input. textSize is estimated (no Instances), so a Studio test measures it with TextService.
+	local PLACES = {}
+	for i, s in ipairs(SiteData.sites) do PLACES[i] = s.id .. ". " .. s.name end
+
+	local function inside(r, w, h)
+		return r.x >= -0.001 and r.y >= -0.001 and r.x + r.w <= w + 0.001 and r.y + r.h <= h + 0.001 and r.w > 0 and r.h > 0
+	end
+	local function overlap(a, b)
+		return a.x < b.x + b.w - 0.001 and b.x < a.x + a.w - 0.001 and a.y < b.y + b.h - 0.001 and b.y < a.y + a.h - 0.001
+	end
+	local function checkGeometry(g, w, h, count)
+		expect.equal(#g.rects, count)
+		for i = 1, count do
+			expect.truthy(inside(g.rects[i], w, h))
+			for j = i + 1, count do
+				expect.falsy(overlap(g.rects[i], g.rects[j]))
+			end
+		end
+	end
+
+	t.test("cellRects on a 401x778 portrait phone: 2 columns, Welcome row on top, everything inside and apart", function()
+		local g = CertificateLogic.cellRects(313, 352, 10, CertificateLogic.layout(401, 778).columns, PLACES)
+		expect.equal(g.columns, 2)
+		expect.equal(g.rows, 5)
+		checkGeometry(g, 313, 352, 10)
+		expect.equal(g.welcomeIndex, 10)
+		expect.near(g.rects[10].x, 0, 0.001)
+		expect.near(g.rects[10].y, 0, 0.001)
+		expect.near(g.rects[10].w, 313, 0.001)
+		for i = 1, #PLACES - 1 do
+			expect.truthy(g.rects[i].y > g.rects[10].y + g.rects[10].h - 0.001) -- grid cells sit below the Welcome row
+		end
+		expect.near(g.rects[1].x, 0, 0.001)
+		expect.truthy(g.rects[2].x > g.rects[1].x) -- second cell is in the second column
+		expect.near(g.rects[3].x, 0, 0.001) -- third wraps to the next row
+		expect.truthy(g.rects[3].y > g.rects[1].y)
+		expect.equal(g.fits, true)
+		expect.truthy(g.textSize >= 12 and g.textSize <= 20)
+		expect.equal(g.textSize, math.floor(g.textSize)) -- a whole pixel size
+	end)
+
+	t.test("cellRects keeps the longest word on one line: Independencia never wraps mid-word", function()
+		local g = CertificateLogic.cellRects(313, 352, 10, 2, PLACES)
+		-- 13 characters at the estimated width per character must fit the cell minus its padding
+		expect.truthy(13 * CertificateLogic.CHAR_EM * g.textSize <= g.rects[1].w - CertificateLogic.CELL_PAD)
+	end)
+
+	t.test("cellRects on a landscape phone area gives 3 columns of cells, all inside", function()
+		local g = CertificateLogic.cellRects(548, 156, 10, CertificateLogic.layout(705, 338).columns, PLACES)
+		expect.equal(g.columns, 3)
+		expect.equal(g.rows, 3)
+		checkGeometry(g, 548, 156, 10)
+		expect.equal(g.fits, true)
+		expect.truthy(g.textSize >= 12)
+	end)
+
+	t.test("cellRects on a big area uses the maximum text size", function()
+		local g = CertificateLogic.cellRects(560, 400, 10, 3, PLACES)
+		expect.equal(g.textSize, CertificateLogic.MAX_TEXT)
+		checkGeometry(g, 560, 400, 10)
+	end)
+
+	t.test("cellRects works without a places list (defaults) and with a single place", function()
+		local g = CertificateLogic.cellRects(313, 352, 10, 2)
+		expect.equal(#g.rects, 10)
+		local one = CertificateLogic.cellRects(300, 100, 1, 2)
+		expect.equal(#one.rects, 1)
+		expect.equal(one.rows, 0)
+		expect.near(one.rects[1].w, 300, 0.001)
+		expect.truthy(inside(one.rects[1], 300, 100))
+	end)
+
+	t.test("cellRects falls back to layout columns when columns is missing or invalid", function()
+		expect.equal(CertificateLogic.cellRects(313, 480, 10).columns, 2) -- taller than wide
+		expect.equal(CertificateLogic.cellRects(548, 156, 10, 0).columns, 3)
+		expect.equal(CertificateLogic.cellRects(548, 156, 10, 2.5).columns, 3)
+		expect.equal(CertificateLogic.cellRects(548, 156, 10, "3").columns, 3)
+		expect.equal(CertificateLogic.cellRects(548, 156, 10, 99).columns, 3)
+	end)
+
+	t.test("cellRects reports a squeeze: a tiny area gives the minimum size and fits = false", function()
+		local g = CertificateLogic.cellRects(150, 60, 10, 2, PLACES)
+		expect.equal(g.textSize, CertificateLogic.MIN_TEXT)
+		expect.equal(g.fits, false)
+	end)
+
+	t.test("cellRects shrinks the text for a longer word", function()
+		local base = CertificateLogic.cellRects(313, 352, 10, 2, PLACES)
+		local long = {}
+		for i, p in ipairs(PLACES) do long[i] = p end
+		long[1] = "1. Supercalifragilisticexpialidocious Cathedral"
+		local g = CertificateLogic.cellRects(313, 352, 10, 2, long)
+		expect.truthy(g.textSize < base.textSize)
+	end)
+
+	t.test("cellRects returns nil for bad input", function()
+		local bad = { { nil, nil, nil }, { 0, 100, 10 }, { 100, 0, 10 }, { -5, 100, 10 }, { 100, -5, 10 }, { 0 / 0, 100, 10 },
+			{ 100, math.huge, 10 }, { "313", "352", 10 }, { 313, 352, 0 }, { 313, 352, -1 }, { 313, 352, 2.5 }, { 313, 352, "10" },
+			{ 313, 352, 0 / 0 }, { 313, 352, math.huge }, { 313, 352, 1001 }, { 313, 352, nil }, { {}, {}, {} } }
+		for _, c in ipairs(bad) do
+			expect.equal(CertificateLogic.cellRects(c[1], c[2], c[3], 2, PLACES), nil)
+		end
+		expect.equal(CertificateLogic.cellRects(), nil)
+		expect.equal(CertificateLogic.cellRects(313, 352), nil)
+	end)
+
+	t.test("cellRects ignores a malformed places list instead of erroring", function()
+		local g = CertificateLogic.cellRects(313, 352, 10, 2, { 1, {}, false })
+		expect.equal(#g.rects, 10)
+		local g2 = CertificateLogic.cellRects(313, 352, 10, 2, "not a table")
+		expect.equal(#g2.rects, 10)
+	end)
+
+	t.test("cellRects returns fresh tables each call", function()
+		local a = CertificateLogic.cellRects(313, 352, 10, 2, PLACES)
+		a.rects[1].w = 1
+		a.columns = 99
+		local b = CertificateLogic.cellRects(313, 352, 10, 2, PLACES)
+		expect.truthy(b.rects[1].w > 10)
+		expect.equal(b.columns, 2)
+	end)
+
+	t.test("cellRects estimate holds against the real font: Independencia and the longest label fit at the chosen size", function()
+		local TextService = game:GetService("TextService")
+		local function measure(text, size, width)
+			local p = Instance.new("GetTextBoundsParams")
+			p.Text, p.Font, p.Size, p.Width = text, Font.fromEnum(Enum.Font.Gotham), size, width
+			return TextService:GetTextBoundsAsync(p)
+		end
+		for _, case in ipairs({ { 313, 352, 2 }, { 548, 156, 3 }, { 480, 300, 3 } }) do
+			local g = CertificateLogic.cellRects(case[1], case[2], 10, case[3], PLACES)
+			local cell = g.rects[1]
+			local inner = cell.w - CertificateLogic.CELL_PAD
+			expect.truthy(measure("Independencia", g.textSize, 10000).X <= inner)
+			expect.truthy(measure(PLACES[1], g.textSize, inner).Y <= cell.h - CertificateLogic.CELL_PAD + 0.5)
+			expect.truthy(measure(PLACES[10], g.textSize, g.rects[10].w - CertificateLogic.CELL_PAD).Y <= g.rects[10].h - CertificateLogic.CELL_PAD + 0.5)
+		end
+	end)
 end
