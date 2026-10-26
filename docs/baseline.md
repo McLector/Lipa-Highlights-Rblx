@@ -12,6 +12,13 @@ They live in **one place**: `EXPECTED` at the top of `tests/run_all.luau`. Run `
 | Where | private shared folder (link in the group chat), never a public GitHub release. Share only the `.rbxl`, never its `.rbxl.lock` file |
 | Live place | placeId 138036647354961 (private; it still holds the Slice 03 state until the Ship publish) |
 
+## Working backup (Slice 2 start)
+| Field | Value |
+|---|---|
+| File | `slice-25.rbxl` (planned as `slice-25-start`; saved under this name), saved 2026-10-26 18:41, 427,800 bytes |
+| SHA-256 | `0273B45CC657AC298B2007C0B6EE133DA0409BCE4ACFE6F750F71D048DA8FD73` |
+| Verified | `run_all` gave `ok = true`: 14 stored checks, unit 127, 7100 world parts, 1793270 terrain cells (2026-10-26) |
+
 Update this table every time the integrator shares a new baseline. If you save the place again, the size and SHA-256 change: refresh them before sharing.
 
 ## Check that your copy is the baseline
