@@ -13,7 +13,7 @@ local EXPECTED = {
 		site07_check = 34, site08_check = 29, site09_check = 26, sites_check = 256, qa_check = 44, routes_check = 11,
 		npcs_check = 194, guides_check = 111,
 	},
-	unitRun = 127,
+	unitRun = 184, -- 127 + TourContent_Test (46) + QuizKey_Test (11), Slice 2
 	-- BuildCheck per site id: { passed, parts }. Parts include each site's LocalNPCs (builders/npcs.luau, 337 parts in all)
 	-- and the Guide's GuideOutfit (builders/guides.luau, 8 parts per guide).
 	build = {
