@@ -143,6 +143,55 @@ return function(t)
 		expect.truthy(#TourContent.wrapUp.text > 0 and #TourContent.wrapUp.reflection > 0)
 	end)
 
+	-- ===== Owner decisions 2026-10-26 (RED until the wording is changed) =====
+
+	local function containsText(value, needle)
+		if type(value) == "string" then return string.find(value, needle, 1, true) ~= nil end
+		if type(value) == "table" then
+			for _, v in pairs(value) do
+				if containsText(v, needle) then return true end
+			end
+		end
+		return false
+	end
+
+	t.test("owner decisions: the wrap-up says sun-kissed and not sunburnt", function()
+		local text = TourContent.wrapUp.text
+		expect.truthy(string.find(text, "sun-kissed", 1, true))
+		expect.falsy(string.find(text, "sunburnt", 1, true))
+	end)
+
+	t.test("owner decisions: no text anywhere in the content says sunburnt", function()
+		expect.falsy(containsText(TourContent, "sunburnt"))
+	end)
+
+	t.test("owner decisions: the Tagbakin headline says lakeside spot and not lakeside side", function()
+		needTenSites()
+		local site = TourContent.sites[9]
+		expect.equal(site.id, 9)
+		expect.truthy(string.find(site.headline, "lakeside spot", 1, true))
+		expect.falsy(string.find(site.headline, "lakeside side", 1, true))
+	end)
+
+	t.test("owner decisions: the Market guide uses the PDF name and no first-talk line says Candido", function()
+		needTenSites()
+		local site = TourContent.sites[2]
+		expect.equal(site.id, 2)
+		local named = false
+		for _, line in ipairs(site.firstTalk) do
+			if string.find(line, "Lipa City Public Market", 1, true) then named = true end
+			expect.falsy(string.find(line, "Candido", 1, true))
+		end
+		expect.truthy(named)
+	end)
+
+	t.test("owner decisions: the Market headline and blurb do not take the PDF name (sign name stays Candido, [VERIFY])", function()
+		needTenSites()
+		local site = TourContent.sites[2]
+		expect.falsy(string.find(site.headline, "Lipa City Public Market", 1, true))
+		expect.falsy(string.find(site.blurb, "Lipa City Public Market", 1, true))
+	end)
+
 	-- ===== Validator behaviour (green: tests the validate function on a fixture) =====
 
 	t.test("validate: a fully valid fixture returns an empty error list", function()
