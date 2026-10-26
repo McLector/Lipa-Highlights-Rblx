@@ -1,7 +1,7 @@
 # Baseline: what a correct copy of the place looks like
 
 ## The numbers
-They live in **one place**: `EXPECTED` at the top of `tests/run_all.luau`. Run `require(game.ServerStorage.Checks.run_all:Clone())()` in Edit mode; `ok` must be `true`. Currently (2026-10-22): 12 stored checks (qa 44, sites 256, ...), unit suite 127, BuildCheck for all nine sites, 6691 world parts, 1793270 terrain cells.
+They live in **one place**: `EXPECTED` at the top of `tests/run_all.luau`. Run `require(game.ServerStorage.Checks.run_all:Clone())()` in Edit mode; `ok` must be `true`. Currently (2026-10-26, after Slice 2): 14 stored checks (qa 44, sites 256, npcs 194, guides 111, ...), unit suite 184, BuildCheck for all nine sites, 7100 world parts, 1793270 terrain cells.
 
 ## Shared place version
 | Field | Value |
