@@ -1,7 +1,7 @@
 -- run_all: the resume battery in one call. Studio copy: ServerStorage.Checks.run_all. Run in Edit mode via execute_luau:
 --   require(game.ServerStorage.Checks.run_all:Clone())()            -- returns JSON {ok, mismatches, rows}
 --   require(game.ServerStorage.Checks.run_all:Clone())({ override = { qa_check = 42 } })   -- test hook: proves a wrong number goes red
--- It runs the 16 stored checks, the unit suite, BuildCheck for all ten sites, checkWorld, the pivots and the terrain cell count,
+-- It runs the 17 stored checks, the unit suite, BuildCheck for all ten sites, checkWorld, the pivots and the terrain cell count,
 -- and compares each with EXPECTED below. EXPECTED is the ONE place the baseline numbers live (docs/baseline.md points here).
 -- The integrator updates EXPECTED in the same PR/commit that legitimately changes a number (a new check, a rebuilt site).
 local HttpService = game:GetService("HttpService")
@@ -12,11 +12,12 @@ local EXPECTED = {
 		site01_check = 75, site02_check = 45, site03_check = 74, site04_check = 41, site05_check = 71, site06_check = 49,
 		site07_check = 34, site08_check = 29, site09_check = 26,
 		sites_check = 277, -- 256 + 21: site 10 now has the SiteId/pivot/facing/Wing/Guide/InfoPanel/JeepStop/Jeepney/anchored checks, Slice 3b
-		qa_check = 44, routes_check = 11,
+		qa_check = 44, routes_check = 14, -- routes_check 11 + 3: SpawnLocation exists, Ate Joy exists, spawn -> Ate Joy <= 40 studs, Slice 3b
 		npcs_check = 237, -- 194 + 43: LocalNPCs for City Hall (4 figures, ~10 checks each) and the reserved-zone check, Slice 3b
 		guides_check = 123, -- 111 + 12: Ate Joy wears the tour uniform (the 11 per-guide checks and the dressed count), Slice 3b
 		site10_check = 52, -- City Hall fidelity check, Slice 3a
-		placeholders_check = 29, -- placeholders({only={10}}) result on Site10_CityHall: props, reserved zones, no Block, Slice 3b
+		placeholders_check = 30, -- placeholders({only={10}}) result on Site10_CityHall: props, reserved zones, no Block, Slice 3b; +1 real-SpawnLocation-on-forecourt check
+		roads_check = 94, -- SPUR, WEST_BYPASS, EAST_BYPASS: margins, clearances, junctions, reachability, asphalt and forecourt ground, Slice 3b
 	},
 	unitRun = 214, -- 127 + TourContent_Test (46) + QuizKey_Test (11), Slice 2; + 5 owner-decision cases, Slice 3a; Slice 3b step 1: +25 City Hall data/layout/credits cases
 	-- BuildCheck per site id: { passed, parts }. Parts include each site's LocalNPCs (builders/npcs.luau, 337 parts in all for sites 1..9)
@@ -29,7 +30,7 @@ local EXPECTED = {
 		[10] = { 16, 1206 },
 	},
 	worldParts = 8306, -- 7100 + 1104 City Hall parts (wing 276, blocks 432, steps 57, forecourt 105, landscape 234), Slice 3a; + 102 (Ate Joy, panel, jeep stop and jeepney, 4 locals), Slice 3b
-	cells = 1793270,
+	cells = 1793696, -- 1793270 + 426: builders/roads_extra.luau paves the SPUR and the two bypasses (Asphalt FillBlock) and repaints the City Hall forecourt ground, Slice 3b
 	pivotY = { [8] = 19.8 }, -- every other site sits at y = 0
 }
 

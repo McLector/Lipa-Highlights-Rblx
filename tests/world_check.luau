@@ -97,13 +97,15 @@ if world then
 	end
 end
 
--- Spawn: at (0, ?, 70), facing north (-Z).
+-- Spawn (Slice 3b): the City Hall forecourt pad at (-208, ?, -260), 12 x 1 x 12, facing -X (the entrance).
 local spawn = workspace:FindFirstChild("SpawnLocation")
 check("SpawnLocation exists", spawn ~= nil)
 if spawn then
-	check("spawn at x=0 z=70", math.abs(spawn.Position.X) < 1 and math.abs(spawn.Position.Z - 70) < 1,
+	check("spawn at x=-208 z=-260", math.abs(spawn.Position.X + 208) < 1 and math.abs(spawn.Position.Z + 260) < 1,
 		tostring(spawn.Position))
-	check("spawn faces -Z", spawn.CFrame.LookVector.Z < -0.99, tostring(spawn.CFrame.LookVector))
+	check("spawn faces -X", spawn.CFrame.LookVector.X < -0.99, tostring(spawn.CFrame.LookVector))
+	check("spawn pad is 12 x 1 x 12", math.abs(spawn.Size.X - 12) < 0.01 and math.abs(spawn.Size.Y - 1) < 0.01 and math.abs(spawn.Size.Z - 12) < 0.01,
+		tostring(spawn.Size))
 end
 
 -- Plaza ground: world.luau repaints the Grass under Plaza Independencia (x -100..100, z 0..100) as Pavement, so the

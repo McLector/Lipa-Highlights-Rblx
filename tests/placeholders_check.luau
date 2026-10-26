@@ -8,8 +8,9 @@
 -- r.proveOnly() is the MUTATING proof, run by hand only after the builder has opts.only: it snapshots the other nine site models
 -- and Site10's Wing / Blocks / Steps / Forecourt / Landscape (part counts + sorted name lists), calls placeholders({ only = { 10 } }),
 -- compares, calls it a second time (idempotent) and compares again. It leaves the Guide undressed: re-run builders/guides.luau.
--- Spawn-pad distance: the pad is world x -220..-200, z -270..-250 and the Guide stands at local (27, 0) = world (-223, -260), 3 studs
--- west of the pad edge (the Ate Joy spot lx 22..32 and the pad lx 30..50 are adjacent by design). The check requires >= 2.9.
+-- Spawn-pad distance: measured against the REAL Workspace.SpawnLocation (builders/spawn.luau puts it at world x -214..-202,
+-- z -266..-254) and the Guide at local (27, 0) = world (-223, -260), 9 studs west of the pad edge. The check requires >= 6.
+-- (Slice 3b first loosened this to 2.9 against the reserved zone lx 30..50; the smaller 12 x 12 pad restored the 6 studs.)
 local HttpService = game:GetService("HttpService")
 local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 
@@ -24,7 +25,12 @@ local function check(name, cond, detail)
 end
 local function fmt(n) return string.format("%.2f", n) end
 
-local PAD = { x0 = -220, x1 = -200, z0 = -270, z1 = -250 }
+local spawnPart = workspace:FindFirstChild("SpawnLocation")
+local PAD = { x0 = -214, x1 = -202, z0 = -266, z1 = -254 }
+if spawnPart then
+	PAD = { x0 = spawnPart.Position.X - spawnPart.Size.X / 2, x1 = spawnPart.Position.X + spawnPart.Size.X / 2,
+		z0 = spawnPart.Position.Z - spawnPart.Size.Z / 2, z1 = spawnPart.Position.Z + spawnPart.Size.Z / 2 }
+end
 local ORIGIN = Vector3.new(-250, 0, -260)
 local function toLocal(p) return p.X - ORIGIN.X, p.Z - ORIGIN.Z end -- facing E: lx = dx, lz = dz
 local function padDistance(p)
@@ -87,7 +93,10 @@ if m then
 
 	if hrp then
 		local p = hrp.Position
-		check("Guide is at least 2.9 studs from the spawn pad rectangle", padDistance(p) >= 2.9, fmt(padDistance(p)))
+		check("Guide is at least 6 studs from the spawn pad rectangle", padDistance(p) >= 6, fmt(padDistance(p)))
+		check("the real SpawnLocation is on the City Hall forecourt (pad centre within 20 studs of the Guide)",
+			spawnPart ~= nil and (Vector3.new(spawnPart.Position.X - p.X, 0, spawnPart.Position.Z - p.Z)).Magnitude <= 20,
+			spawnPart and tostring(spawnPart.Position) or "no SpawnLocation")
 		local ex = workspace:Raycast(Vector3.new(p.X, 80, p.Z), Vector3.new(0, -200, 0), (function()
 			local rp = RaycastParams.new()
 			rp.FilterType = Enum.RaycastFilterType.Include

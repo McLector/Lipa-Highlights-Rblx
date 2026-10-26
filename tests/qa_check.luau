@@ -48,8 +48,10 @@ if board then
 	check("CreditsBoard sits inside the paved plaza (x -100..100, z 0..100)",
 		minX >= -100 and maxX <= 100 and minZ >= 0 and maxZ <= 100,
 		string.format("x %.1f..%.1f z %.1f..%.1f", minX, maxX, minZ, maxZ))
-	-- the spawn is at (0,70) looking -Z at the Cathedral: keep a 16-stud-wide lane clear
-	check("CreditsBoard does not block the spawn-to-Cathedral lane (|x| < 8, z 0..70)",
+	-- Slice 3b: the spawn moved to the City Hall forecourt, but the board still stands at z 94 (Step 3 of Slice 3b moves it). The lane it must
+	-- keep clear is the plaza's approach to the Cathedral: the OLD spawn constants (x 0, z 70, looking -Z), kept here on purpose
+	-- and no longer read from the SpawnLocation.
+	check("CreditsBoard does not block the plaza lane to the Cathedral (|x| < 8, z 0..70, the old spawn lane)",
 		maxX < -8 or minX > 8 or minZ > 70 or maxZ < 0,
 		string.format("x %.1f..%.1f z %.1f..%.1f", minX, maxX, minZ, maxZ))
 
@@ -106,6 +108,50 @@ if board then
 		end
 	end
 	check("CreditsBoard text fits every panel canvas", #overflow == 0, table.concat(overflow, "; "))
+end
+
+-- Spawn (Slice 3b): the pad is on the City Hall forecourt, facing the entrance, with Ate Joy 9 studs west of its edge ----------------
+do
+	local spawn = workspace:FindFirstChild("SpawnLocation")
+	check("SpawnLocation exists", spawn ~= nil)
+	local city = workspace:FindFirstChild("Sites") and workspace.Sites:FindFirstChild("Site10_CityHall")
+	if spawn and city then
+		local p = spawn.Position
+		check("spawn pad is at (-208, -260) +-0.5", math.abs(p.X + 208) <= 0.5 and math.abs(p.Z + 260) <= 0.5, tostring(p))
+		check("spawn faces -X (the City Hall entrance)", spawn.CFrame.LookVector.X < -0.99, tostring(spawn.CFrame.LookVector))
+		check("spawn pad is 12 x 1 x 12", math.abs(spawn.Size.X - 12) < 0.01 and math.abs(spawn.Size.Y - 1) < 0.01 and math.abs(spawn.Size.Z - 12) < 0.01, tostring(spawn.Size))
+		local rp = RaycastParams.new()
+		rp.FilterType = Enum.RaycastFilterType.Include
+		rp.FilterDescendantsInstances = { workspace.Terrain, city.Forecourt }
+		local hit = workspace:Raycast(Vector3.new(p.X, p.Y + 40, p.Z), Vector3.new(0, -100, 0), rp)
+		local bottom = p.Y - spawn.Size.Y / 2
+		check("paving or ground lies within 1.5 studs below the pad", hit ~= nil and hit.Position.Y <= bottom + 0.05 and bottom - hit.Position.Y <= 1.5,
+			hit and string.format("ground %.2f, pad bottom %.2f", hit.Position.Y, bottom) or "no ground")
+		-- nothing solid of City Hall inside the pad: the box starts 0.6 above y 0, over the flat paving and road layers (top y <= 0.5)
+		local op = OverlapParams.new()
+		op.FilterType = Enum.RaycastFilterType.Include
+		op.FilterDescendantsInstances = { city }
+		local box = CFrame.new(p.X, 2.3, p.Z) * spawn.CFrame.Rotation
+		local hits = workspace:GetPartBoundsInBox(box, Vector3.new(spawn.Size.X - 0.2, 3.4, spawn.Size.Z - 0.2), op)
+		local names = {}
+		for _, h in ipairs(hits) do table.insert(names, h:GetFullName()) end
+		check("spawn pad is not inside any City Hall part", #hits == 0, table.concat(names, ", ", 1, math.min(#names, 3)))
+		local guide = city:FindFirstChild("Guide")
+		if guide then
+			local gx0, gx1, gz0, gz1 = math.huge, -math.huge, math.huge, -math.huge
+			for _, d in ipairs(guide:GetDescendants()) do
+				if d:IsA("BasePart") then
+					gx0, gx1 = math.min(gx0, d.Position.X - d.Size.X / 2), math.max(gx1, d.Position.X + d.Size.X / 2)
+					gz0, gz1 = math.min(gz0, d.Position.Z - d.Size.Z / 2), math.max(gz1, d.Position.Z + d.Size.Z / 2)
+				end
+			end
+			local dx = math.max(gx0 - (p.X + 6), (p.X - 6) - gx1, 0)
+			local dz = math.max(gz0 - (p.Z + 6), (p.Z - 6) - gz1, 0)
+			check("pad is at least 6 studs from Ate Joy's footprint", math.sqrt(dx * dx + dz * dz) >= 6, string.format("%.2f", math.sqrt(dx * dx + dz * dz)))
+		else
+			check("Ate Joy's Guide exists for the spawn distance check", false)
+		end
+	end
 end
 
 -- Ambient audio -----------------------------------------------------------
