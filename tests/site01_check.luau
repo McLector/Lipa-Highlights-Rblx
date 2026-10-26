@@ -66,6 +66,22 @@ local function isRig(inst)
 end
 local function fmt(v) return v and string.format("%.1f", v) or "nil" end
 local function topY(p) return p.Position.Y + p.Size.Y / 2 end
+-- Axis-aligned world bounds of a part (its 8 corners): the Revision 5 checks need world extents of the rotated west wings.
+local function worldBox(p)
+	local minX, maxX, minY, maxY, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge, math.huge, -math.huge
+	local h = p.Size / 2
+	for _, sx in ipairs({ -1, 1 }) do
+		for _, sy in ipairs({ -1, 1 }) do
+			for _, sz in ipairs({ -1, 1 }) do
+				local w = p.CFrame:PointToWorldSpace(Vector3.new(sx * h.X, sy * h.Y, sz * h.Z))
+				minX, maxX = math.min(minX, w.X), math.max(maxX, w.X)
+				minY, maxY = math.min(minY, w.Y), math.max(maxY, w.Y)
+				minZ, maxZ = math.min(minZ, w.Z), math.max(maxZ, w.Z)
+			end
+		end
+	end
+	return { x0 = minX, x1 = maxX, y0 = minY, y1 = maxY, z0 = minZ, z1 = maxZ }
+end
 
 ------------------------------------------------------------------ Proportions (OSM + P3)
 local facade, tower = anchor("FacadeWall"), anchor("TowerBody")
@@ -90,7 +106,7 @@ local tiers = 0
 for _, d in ipairs(site:GetDescendants()) do
 	if d:IsA("BasePart") and d.Name:match("^Tier%d+1$") then tiers += 1 end
 end
-check("tower has 4 octagonal tiers", tiers == 4, tostring(tiers))
+check("tower has 7 octagonal tiers (Revision 5, blueprint: 7-tier octagonal bell tower)", tiers == 7, tostring(tiers))
 
 ------------------------------------------------------------------ Colours (P1 Dec 2025 domes, P3 walls)
 local dome, cupola = anchor("Dome"), anchor("Cupola")
@@ -100,12 +116,12 @@ local function creamWhite(p)
 end
 check("main dome is cream-white (Dec 2025 repaint), not blue-grey", dome ~= nil and creamWhite(dome), dome and tostring(dome.Color) or "missing")
 check("tower cupola is cream-white", cupola ~= nil and creamWhite(cupola), cupola and tostring(cupola.Color) or "missing")
-check("dome diameter 34-42 studs (about as wide as the nave)", dome ~= nil and dome.Size.X >= 34 and dome.Size.X <= 42, fmt(dome and dome.Size.X))
+check("main dome diameter 44-50 studs (Revision 5: larger dome on a 24-stud drum)", dome ~= nil and dome.Size.X >= 44 and dome.Size.X <= 50, fmt(dome and dome.Size.X))
 if facade then
 	local c = facade.Color
-	check("walls are butter-yellow (R-B >= 90, G >= 170)", (c.R - c.B) * 255 >= 90 and c.G * 255 >= 170, tostring(c))
+	check("walls are cream (Revision 5, blueprint; the 2024 photo is butter-yellow): G >= 210, B >= 165, 40 <= R-B <= 90", c.G * 255 >= 210 and c.B * 255 >= 165 and (c.R - c.B) * 255 >= 40 and (c.R - c.B) * 255 <= 90, tostring(c))
 else
-	check("walls are butter-yellow (R-B >= 90, G >= 170)", false, "FacadeWall missing")
+	check("walls are cream (Revision 5): FacadeWall missing", false, "FacadeWall missing")
 end
 if naveRoof then
 	local c = naveRoof.Color
@@ -130,9 +146,10 @@ check("steps to the door", anchor("StepHigh") ~= nil and anchor("StepLow") ~= ni
 
 ------------------------------------------------------------------ Wing (P3/P4)
 local wing = anchor("WingUpper")
-check("wing is 90+ studs long (real ~65 m, compressed to the footprint)", wing ~= nil and wing.Size.X >= 90, fmt(wing and wing.Size.X))
-check("wing starts east of the facade", wing ~= nil and facade ~= nil and wing.Position.X - wing.Size.X / 2 >= facade.Position.X + facade.Size.X / 2 - 3,
-	wing and facade and fmt(wing.Position.X - wing.Size.X / 2) or "missing")
+local wb = wing and worldBox(wing)
+check("2-storey SW wing on the G.A. Solis flank (Revision 5): WingUpper runs 40+ studs along z", wb ~= nil and wb.z1 - wb.z0 >= 40, wb and string.format("z %s..%s", fmt(wb.z0), fmt(wb.z1)) or "missing")
+check("2-storey SW wing stands on the west flank (x1 <= -44, x0 >= -64)", wb ~= nil and wb.x1 <= -44 and wb.x0 >= -64, wb and string.format("x %s..%s", fmt(wb.x0), fmt(wb.x1)) or "missing")
+check("no building on the east flank (blueprint: parking and garden there): WingUpper is west of x 0 and WingEndWall is gone", wing ~= nil and wing.Position.X < 0 and anchor("WingEndWall") == nil, wing and fmt(wing.Position.X) or "missing")
 check("pavilion has scrolls, a balcony and a cross", countNamed("PavilionScroll") >= 4 and anchor("WingBalcony") ~= nil and anchor("PavilionCrossV") ~= nil,
 	"scrolls " .. countNamed("PavilionScroll"))
 check("wing entrance carries the CATEDRAL sign", (function()
@@ -315,22 +332,24 @@ check("lower plaza paving (ForecourtPaving) is at ground level and spans z 48..1
 	paving and string.format("y %s z %s..%s", fmt(paving.Position.Y), fmt(paving.Position.Z - paving.Size.Z / 2), fmt(paving.Position.Z + paving.Size.Z / 2)) or "missing")
 local pr, prCol = paving, paving and paving.Color
 check("lower paving is terracotta, as in the ground photo (R >= 180, R - B >= 60)", pr ~= nil and prCol.R * 255 >= 180 and (prCol.R - prCol.B) * 255 >= 60, prCol and tostring(prCol) or "missing")
--- The covered court (ground photo: a big curved roof on posts): a barrel vault of angled panels, NOT a gabled hall.
+-- The covered court is the open-air stage (Revision 5): a dark peaked roof on posts, NOT a gabled hall.
 local court = anchor("CoveredCourt")
 check("CoveredCourt stands on the lower plaza: z >= 70, 36+ studs wide, ground level, x >= 34 (east of the open centre)",
 	court ~= nil and court.Position.Z >= 70 and court.Size.X >= 36 and court.Position.Y - court.Size.Y / 2 < 0.6 and court.Position.X - court.Size.X / 2 >= 34,
 	court and string.format("x %s z %s w %s", fmt(court.Position.X), fmt(court.Position.Z), fmt(court.Size.X)) or "missing")
-local vault, tilts = allNamed("VaultPanel"), {}
-for _, p in ipairs(vault) do
-	local rx = p.CFrame:ToEulerAnglesXYZ()
-	tilts[math.floor(math.deg(rx) / 5 + 0.5)] = true
+do
+	local sroofs, dark, steep = allNamed("StageRoof"), true, true
+	for _, p in ipairs(sroofs) do
+		local c = p.Color
+		if not (c.R * 255 <= 80 and c.G * 255 <= 80 and c.B * 255 <= 80) then dark = false end
+		local rx = p.CFrame:ToEulerAnglesXYZ()
+		if math.abs(rx) < 0.35 then steep = false end
+	end
+	check("open-air stage pavilion (Revision 5): 2 dark peaked roof planes (R, G, B <= 80), each tilted 20+ degrees", #sroofs == 2 and dark and steep, #sroofs .. " planes")
+	local sridge = anchor("StageRidge")
+	check("stage pavilion ridge is 15+ studs above the ground", sridge ~= nil and topY(sridge) >= 15, sridge and fmt(topY(sridge)) or "missing")
+	check("the pale vault is gone (no VaultPanel)", countNamed("VaultPanel") == 0, tostring(countNamed("VaultPanel")))
 end
-local nTilts = 0
-for _ in pairs(tilts) do nTilts += 1 end
-check("the court roof is a curved vault: 7+ VaultPanel parts at 5+ distinct tilts, each 36+ studs long", #vault >= 7 and nTilts >= 5 and (function()
-	for _, p in ipairs(vault) do if p.Size.X < 36 then return false end end
-	return true
-end)(), #vault .. " panels, " .. nTilts .. " tilts")
 check("no gabled CivicBuildingS / CivicRoof left (the gabled hall is replaced by the vault)", anchor("CivicBuildingS") == nil and anchor("CivicRoof") == nil)
 local trunk = anchor("ShadeTreeTrunk")
 check("ShadeTree: a trunk at x 31..60, z 60..70 (clear of the open centre and the court) with 4+ canopy balls whose bottoms are above y 11.5",
@@ -357,7 +376,7 @@ end)(), tostring(countNamed("PlanterWall")))
 check("4+ flower beds on the lower plaza", countNamed("FlowerBed") >= 4, tostring(countNamed("FlowerBed")))
 check("long arcaded building on the lower plaza's west side (LongBuildingW)", anchor("LongBuildingW") ~= nil and anchor("LongBuildingW").Position.X < -80
 	and anchor("LongBuildingW").Position.Z > WALL_Z)
-check("12+ palm trunks", countNamed("PalmTrunk1") >= 12, tostring(countNamed("PalmTrunk1")))
+check("22+ palm trunks (Revision 5: palms along the plaza edges)", countNamed("PalmTrunk1") >= 22, tostring(countNamed("PalmTrunk1")))
 check("no market tents or slab on the lower plaza (the ground photo shows an open paved plaza)", countNamed("PlazaTent") == 0 and countNamed("TentPost") == 0 and countNamed("PlazaSlab") == 0,
 	countNamed("PlazaTent") .. " tents")
 check("perimeter fence with 20+ posts", countNamed("FencePost") >= 20, tostring(countNamed("FencePost")))
@@ -410,5 +429,200 @@ for _, p in ipairs(site:GetDescendants()) do
 end
 check("flat ground-level parts lie on the lower plaza only (x +-100, z 48..100: the repainted Pavement; the podium covers the rest)", #stray == 0,
 	table.concat(stray, "; ", 1, math.min(#stray, 3)))
+
+------------------------------------------------------------------ Revision 5 (Slice 4): blueprint pass
+-- Source: 2nd Reference/cathedral/3d blueprints/Metropolitan Cathedral Blueprint Plaza Plan.png (massing, layout, proportion).
+-- Each block is one diff item in briefs/site01.md "Revision 5 (Slice 4): blueprint pass". Wrapped in do ... end to keep the locals scoped.
+do
+	-- 1. Bell tower: seven octagonal tiers, narrowing as they rise, arched openings, a small domed cap.
+	local towerBody = anchor("TowerBody")
+	local radii = {}
+	for i = 1, 7 do
+		local p = anchor("Tier" .. i .. "1")
+		if p ~= nil and towerBody ~= nil then
+			radii[i] = math.sqrt((p.Position.X - towerBody.Position.X) ^ 2 + (p.Position.Z - towerBody.Position.Z) ^ 2)
+		else
+			radii[i] = 0
+		end
+	end
+	local narrowing = radii[1] > 0
+	for i = 2, 7 do
+		if radii[i] <= 0 or radii[i] >= radii[i - 1] then narrowing = false end
+	end
+	check("tower tiers narrow as they rise: 7 tier radii, each smaller than the one below", narrowing, table.concat(radii, " "))
+	local octagons = 0
+	for i = 1, 7 do
+		local n = 0
+		for k = 1, 8 do
+			if anchor("Tier" .. i .. k) ~= nil then n += 1 end
+		end
+		if n == 8 then octagons += 1 end
+	end
+	check("each of the 7 tiers is an octagon: 8 wall segments (Tier<i>1..8)", octagons == 7, tostring(octagons))
+	local openings = countNamed("Tier1Win_Pane") == 3
+	for i = 2, 7 do
+		if countNamed("Tier" .. i .. "Win_Pane") ~= 4 then openings = false end
+	end
+	check("arched openings: tier 1 has 3 (its front is the LED screen), tiers 2-7 have 4 on the cardinal faces", openings,
+		countNamed("Tier1Win_Pane") .. " on tier 1, " .. countNamed("Tier2Win_Pane") .. " on tier 2")
+	local cupola2, cornice7 = anchor("Cupola"), anchor("Cornice71")
+	check("tower cap is a small dome: Cupola 8-12 studs across, set on the 7th tier cornice",
+		cupola2 ~= nil and cupola2.Size.X >= 8 and cupola2.Size.X <= 12 and cornice7 ~= nil and cupola2.Position.Y >= topY(cornice7) - 1.5,
+		cupola2 and string.format("d %s y %s", fmt(cupola2.Size.X), fmt(cupola2.Position.Y)) or "missing")
+
+	-- 2. Main dome: larger, warm cream, on a drum of apothem 24 with eight windows, a lantern and a cross.
+	check("main dome is warm cream (R-B >= 40, G >= 215), not the grey of the earlier scheme", dome ~= nil and (dome.Color.R - dome.Color.B) * 255 >= 40 and dome.Color.G * 255 >= 215,
+		dome and tostring(dome.Color) or "missing")
+	check("main dome top reaches y 76 (Revision 5: larger dome on the 24-stud drum)", dome ~= nil and topY(dome) >= 76, dome and fmt(topY(dome)) or "missing")
+	local lanternOk = anchor("LanternCap") ~= nil and anchor("DomeCrossV") ~= nil
+	for k = 1, 8 do
+		if anchor("Lantern" .. k) == nil then lanternOk = false end
+	end
+	check("lantern: 8 Lantern segments, a LanternCap and the DomeCrossV on top", lanternOk)
+	local drum1 = anchor("Drum1")
+	local drumOk = drum1 ~= nil and drum1.Size.X >= 19
+	for k = 1, 8 do
+		if anchor("DrumWin" .. k .. "_Pane") == nil then drumOk = false end
+	end
+	check("drum: 8 arched windows (DrumWin1..8) on an octagon of apothem 24 (Drum1 at least 19 studs)", drumOk, drum1 and fmt(drum1.Size.X) or "missing")
+
+	-- 3. The 2-storey wing on the west flank (the G.A. Solis side): arcade bays 1, 2, 4, 5 with bay 3 as the entrance; red tile roof.
+	local groundBays = 0
+	for i = 1, 5 do
+		if i ~= 3 and (anchor("WingBay" .. i) ~= nil or anchor("WingBay" .. i .. "_PierL") ~= nil) then groundBays += 1 end
+	end
+	check("2-storey wing storey 1: 4 arched arcade bays (bay 3 is the entrance)", groundBays == 4, tostring(groundBays))
+	local upperWins = 0
+	for i = 1, 5 do
+		if i ~= 3 and countNamed("WingWin" .. i .. "_Pane") == 1 then upperWins += 1 end
+	end
+	check("2-storey wing storey 2: 4 arched windows (bays 1, 2, 4, 5)", upperWins == 4, tostring(upperWins))
+	local ww1 = anchor("WingWin1_Pane")
+	check("2-storey wing arcade faces west: its windows sit west of x -52", ww1 ~= nil and ww1.Position.X < -52, ww1 and fmt(ww1.Position.X) or "missing")
+	check("no dark glass backing panel behind the wing arcade (WingBacking removed)", anchor("WingBacking") == nil)
+	local wroof = anchor("WingRoofFront")
+	check("2-storey wing roof is red tile (R >= 150, G and B <= 70)", wroof ~= nil and wroof.Color.R * 255 >= 150 and wroof.Color.G * 255 <= 70 and wroof.Color.B * 255 <= 70,
+		wroof and tostring(wroof.Color) or "missing")
+
+	-- 4. The 3-storey parish and archdiocese office wing at the back-left (the far end of the west flank): 3 storeys, red tile roof.
+	local ob = anchor("OfficeBody")
+	local obb = ob and worldBox(ob)
+	check("3-storey office wing at the back-left: OfficeBody x1 <= -44 and reaches z -90 or beyond", obb ~= nil and obb.x1 <= -44 and obb.z0 <= -90,
+		obb and string.format("x %s..%s z %s..%s", fmt(obb.x0), fmt(obb.x1), fmt(obb.z0), fmt(obb.z1)) or "missing")
+	local storeys = { 0, 0, 0 }
+	for _, d in ipairs(site:GetDescendants()) do
+		if d:IsA("BasePart") then
+			local k = d.Name:match("^OfficeS(%d)Win%d+$")
+			if k ~= nil and storeys[tonumber(k)] ~= nil then
+				storeys[tonumber(k)] += 1
+			end
+		end
+	end
+	check("3-storey office wing: 4+ windows on each of storeys 1, 2 and 3 (OfficeS<k>Win<i>)", storeys[1] >= 4 and storeys[2] >= 4 and storeys[3] >= 4, table.concat(storeys, " / "))
+	check("3-storey office wing: bands OfficeBand1..3 and no fourth storey", anchor("OfficeBand1") ~= nil and anchor("OfficeBand2") ~= nil and anchor("OfficeBand3") ~= nil and anchor("OfficeBand4") == nil)
+	local s1w, s2w, s3w = anchor("OfficeS1Win1"), anchor("OfficeS2Win1"), anchor("OfficeS3Win1")
+	check("3-storey office wing: storeys stack (storey 1 below storey 2 below storey 3)", s1w ~= nil and s2w ~= nil and s3w ~= nil and s1w.Position.Y < s2w.Position.Y and s2w.Position.Y < s3w.Position.Y, "")
+	local od = anchor("OfficeDoor")
+	check("office ground-floor door is 8+ studs tall (human scale)", od ~= nil and od.Size.Y >= 8, od and fmt(od.Size.Y) or "missing")
+	local oroof = anchor("OfficeRoofFront")
+	check("office wing roof is red tile (R >= 150, G and B <= 70)", oroof ~= nil and oroof.Color.R * 255 >= 150 and oroof.Color.G * 255 <= 70 and oroof.Color.B * 255 <= 70,
+		oroof and tostring(oroof.Color) or "missing")
+
+	-- 5. Walled parking forecourt: brick walls on the east and west edges with a 20-stud gateway (z 16..36) opposite the side stairs,
+	--    brick retaining skins at the ends of the podium's south face, and dark iron railings on the lower plaza.
+	local fwW, fwE = allNamed("ForecourtWallW"), allNamed("ForecourtWallE")
+	local wallsOk = #fwW >= 2 and #fwE >= 2
+	for _, p in ipairs(fwW) do
+		local b = worldBox(p)
+		if b.y0 < RAISE - 0.1 or b.y1 - b.y0 < 2.5 or b.z0 < 9.5 or b.z1 > 47 then wallsOk = false end
+	end
+	for _, p in ipairs(fwE) do
+		local b = worldBox(p)
+		if b.y0 < RAISE - 0.1 or b.y1 - b.y0 < 2.5 or b.z0 < 9.5 or b.z1 > 47 then wallsOk = false end
+	end
+	check("walled forecourt: ForecourtWallW and ForecourtWallE segments on the podium top, 2.5+ tall, z 10..46", wallsOk, #fwW .. " west, " .. #fwE .. " east")
+	local gateOk = #fwW >= 2 and #fwE >= 2
+	for _, name in ipairs({ "ForecourtWallW", "ForecourtWallE", "ForecourtPier" }) do
+		for _, p in ipairs(allNamed(name)) do
+			local b = worldBox(p)
+			if math.abs((b.x0 + b.x1) / 2) > 98 and b.z1 > 16 and b.z0 < 36 then gateOk = false end
+		end
+	end
+	check("gateway: no forecourt wall or pier between z 16 and 36 on either side (the side stairs at z 20..32 stay reachable)", gateOk)
+	local function brick(p) return p ~= nil and p.Color.R * 255 >= 150 and p.Color.G * 255 <= 110 and p.Color.B * 255 <= 90 end
+	check("forecourt walls and the retaining skins are brick red (R >= 150, G <= 110, B <= 90)", brick(fwW[1]) and brick(fwE[1]) and brick(anchor("RetainBrickW")) and brick(anchor("RetainBrickE")))
+	local rbw = anchor("RetainBrickW")
+	local rbb = rbw and worldBox(rbw)
+	check("retaining wall: brick skin on the podium's south face (z 48.0..48.8) from the ground to the podium top",
+		rbb ~= nil and rbb.z0 <= 48.1 and rbb.z1 >= 48.6 and rbb.y0 <= 0.1 and rbb.y1 >= RAISE - 0.1,
+		rbb and string.format("z %s..%s y %s..%s", fmt(rbb.z0), fmt(rbb.z1), fmt(rbb.y0), fmt(rbb.y1)) or "missing")
+	local rail = anchor("FenceRail")
+	check("perimeter railing is dark iron, not white (average RGB below 0.4)", rail ~= nil and (rail.Color.R + rail.Color.G + rail.Color.B) / 3 < 0.4, rail and tostring(rail.Color) or "missing")
+	check("railing posts are 3+ studs tall (human scale: railings 3)", anchor("FencePost") ~= nil and anchor("FencePost").Size.Y >= 3)
+
+	-- 6. D-shaped monument mound (three stepped terraces, flat side to the retaining wall) with a looped ribbon sculpture on top.
+	local mound = allNamed("MonumentPlinth")
+	local tops, maxZ = {}, -math.huge
+	for _, p in ipairs(mound) do
+		tops[string.format("%.1f", topY(p))] = true
+		maxZ = math.max(maxZ, p.Position.Z + p.Size.Z / 2)
+	end
+	local nTops = 0
+	for _ in pairs(tops) do nTops += 1 end
+	check("D-shaped monument mound: 3 stepped terraces (MonumentPlinth strips at 3 heights, 12+ strips)", #mound >= 12 and nTops == 3, #mound .. " strips at " .. nTops .. " heights")
+	check("the D's flat side faces the retaining wall (strips reach z 44..47.5)", maxZ >= 44 and maxZ <= 47.5, fmt(maxZ))
+	local ribbon, rTop = allNamed("MonumentRibbon"), -math.huge
+	for _, p in ipairs(ribbon) do
+		rTop = math.max(rTop, topY(p))
+	end
+	check("looped ribbon sculpture: 12 MonumentRibbon segments, top 7.5+ studs above the podium", #ribbon == 12 and rTop >= RAISE + 7.5, #ribbon .. " segments, top " .. fmt(rTop))
+	check("the mound stays off the walkway (no MonumentPlinth within |x| 8)", (function()
+		for _, p in ipairs(mound) do
+			if math.abs(p.Position.X) < 8 then return false end
+		end
+		return true
+	end)(), "")
+
+	-- 7. Lipa Cultural Centre: a 2-storey cream block, arched windows on both storeys, an 8+ studs entrance, on the lower plaza's east side.
+	local cc = anchor("CulturalCentreBody")
+	local ccb = cc and worldBox(cc)
+	check("Lipa Cultural Centre: 2-storey block (18+ tall, 15+ wide) on the lower plaza's east side (x 78..98, z 60..84), on the ground",
+		ccb ~= nil and ccb.y1 - ccb.y0 >= 18 and ccb.x1 - ccb.x0 >= 15 and ccb.x0 >= 78 and ccb.x1 <= 98 and ccb.z0 >= 60 and ccb.z1 <= 84 and ccb.y0 < 0.6,
+		ccb and string.format("x %s..%s z %s..%s y %s..%s", fmt(ccb.x0), fmt(ccb.x1), fmt(ccb.z0), fmt(ccb.z1), fmt(ccb.y0), fmt(ccb.y1)) or "missing")
+	check("Cultural Centre south face at z 82.5 or less, clear of the palm fronds on the z 92 row", ccb ~= nil and ccb.z1 <= 82.5, ccb and fmt(ccb.z1) or "missing")
+	local cs1, cs2 = 0, 0
+	for _, d in ipairs(site:GetDescendants()) do
+		if d:IsA("BasePart") then
+			if d.Name:match("^CulturalS1W%d+_Pane$") then cs1 += 1 end
+			if d.Name:match("^CulturalS2W%d+_Pane$") then cs2 += 1 end
+		end
+	end
+	check("Cultural Centre: 3+ arched windows on each storey (CulturalS1W<i>, CulturalS2W<i>)", cs1 >= 3 and cs2 >= 3, cs1 .. " / " .. cs2)
+	local cdoor = anchor("CulturalDoor_Pane")
+	check("Cultural Centre entrance is 8+ studs tall (human scale)", cdoor ~= nil and cdoor.Size.Y + 2 >= 8, cdoor and fmt(cdoor.Size.Y + 2) or "missing")
+
+	-- 8. North-east garden (blueprint): 6 round-canopy trees (3 balls each) on the podium, east of x 50 and north of z -41.
+	local gcanopies, gOk = allNamed("GardenTreeCanopy"), true
+	for _, c in ipairs(gcanopies) do
+		if c.Position.X < 50 or c.Position.Z > -41 or c.Position.Y < RAISE then gOk = false end
+	end
+	check("north-east garden: 6 round-canopy trees (18 GardenTreeCanopy balls) on the podium, east of x 50 and north of z -41", #gcanopies >= 18 and gOk, #gcanopies .. " canopies")
+
+	-- 9. Budget and reach: at most 2183 parts (1683 + 500), and nothing beyond |x| 128 (the east bypass at x 165 needs 30 studs of clear ground).
+	local nSite, maxAbsX = 0, 0
+	for _, d in ipairs(site:GetDescendants()) do
+		if d:IsA("BasePart") then
+			nSite += 1
+			local b = worldBox(d)
+			maxAbsX = math.max(maxAbsX, math.abs(b.x0), math.abs(b.x1))
+		end
+	end
+	check("part budget: Site01 holds at most 2183 parts (1683 + 500)", nSite <= 2183, tostring(nSite))
+	check("no part beyond |x| 128 world (the east bypass at x 165 needs 30 studs of clear ground)", maxAbsX <= 128.01, fmt(maxAbsX))
+
+	-- 10. Human scale: the facade door stays 8+ studs tall.
+	local fdoor = anchor("Door_Pane")
+	check("facade door is 8+ studs tall (Door_Pane plus its round top)", fdoor ~= nil and fdoor.Size.Y + 4.6 >= 8, fdoor and fmt(fdoor.Size.Y + 4.6) or "missing")
+end
 
 return HttpService:JSONEncode(results)
