@@ -31,7 +31,8 @@ local BUILT = { [1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] 
 local sites = workspace:FindFirstChild("Sites")
 check("Workspace.Sites exists", sites ~= nil)
 if sites then
-	check("Sites holds exactly 9 children", #sites:GetChildren() == 9, tostring(#sites:GetChildren()))
+	-- 9 sites with a SiteData row, plus Site10_CityHall (built in Slice 3a, no row yet). Slice 3b completes this with row 10.
+	check("Sites holds exactly 10 children", #sites:GetChildren() == 10, tostring(#sites:GetChildren()))
 	for _, s in ipairs(SiteData.sites) do
 		local label = string.format("Site%02d_%s", s.id, s.key)
 		local m = sites:FindFirstChild(label)
