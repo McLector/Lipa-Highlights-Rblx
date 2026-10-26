@@ -16,3 +16,6 @@ backups/
 Lipa_structure_Exterior_References/
 *.pptx
 *.docx
+
+# Agent journals and scratch work
+scratch/
