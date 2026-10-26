@@ -342,7 +342,10 @@ end
 local function placeSpawn()
 	local spawn = workspace:FindFirstChild("SpawnLocation")
 	if spawn then
-		spawn.CFrame = CFrame.lookAt(Vector3.new(0, 0.5, 70), Vector3.new(0, 0.5, 0)) -- faces north (-Z)
+		-- Slice 3b: the City Hall forecourt pad, 12 x 1 x 12 on the 0.3 thick forecourt paving (centre y 0.3 + 0.5), facing -X (the entrance).
+		-- Same constants as builders/spawn.luau, which is what actually moves the spawn in the live place.
+		spawn.Size = Vector3.new(12, 1, 12)
+		spawn.CFrame = CFrame.lookAt(Vector3.new(-208, 0.8, -260), Vector3.new(-300, 0.8, -260))
 	end
 end
 
