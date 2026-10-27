@@ -1144,5 +1144,152 @@ do
 	end
 	check("B3c-1 visitors: 2 on the lot (above the podium top) and 2 on the plaza (on the ground, inside the fence)", onLot == 2 and onPlaza == 2 and #badRig == 0, string.format("%d lot, %d plaza, %s", onLot, onPlaza, table.concat(badRig, ", ")))
 end
+------------------------------------------------------------------ B3c-2: the south lot is filled (cars, bay lines, lamps) and the east garden strip is planted
+-- B3c-1 left the lot bare south of z 48. Two more staggered rows of cars (rows z 65 and 87, bays 6 apart), their bay and aisle lines, six lamps down the Walkway and a hedged
+-- tree-and-monument strip along the lot's east edge (x 70..110, z 52..104). The strip reuses the GardenTree / Monument recipes under NEW names (EastGarden*, EastMonument*) on purpose: the
+-- old assertions pin GardenHedge / GardenTreeCanopy to x 36..100 and MonumentPlinth is an anchor, and they stay as they are.
+do
+	local function listed(t) return table.concat(t, ", ", 1, math.min(#t, 3)) end
+	local function ov(p, x0, x1, z0, z1)
+		local a, b = aabb(p)
+		return b.X > x0 and a.X < x1 and b.Z > z0 and a.Z < z1
+	end
+	local ap0, ap1 = Vector3.zero, Vector3.zero
+	if apron then ap0, ap1 = aabb(apron) end
+	local south, bodies = {}, {}
+	if vehicles then
+		for _, v in ipairs(vehicles:GetChildren()) do
+			local body = v:FindFirstChild("VehicleBody", true)
+			if body and body.Position.Y >= RAISE then
+				table.insert(bodies, body)
+				if body.Position.Z > 55 and body.Position.Z < 105 then table.insert(south, body) end
+			end
+		end
+	end
+	-- 1. The cars: 70+ in all, 38+ in two rows in the south lot, every one on the asphalt, clear of the Walkway, the wall (4+ studs) and the entrance lanes, none overlapping another.
+	local badCar, rowSet, zs = {}, {}, {}
+	for _, b in ipairs(south) do
+		local a, c = aabb(b)
+		local zr = math.floor(b.Position.Z + 0.5)
+		if not rowSet[zr] then rowSet[zr] = true table.insert(zs, zr) end
+		if a.X < ap0.X or c.X > ap1.X + 0.05 or a.Z < 48 or c.Z > WALL_Z then table.insert(badCar, b.Parent.Name .. " off the asphalt") end
+		if a.X < 8 and c.X > -8 then table.insert(badCar, b.Parent.Name .. " in the Walkway") end
+		if c.Z > WALL_Z - 4 then table.insert(badCar, b.Parent.Name .. " within 4 of the wall") end
+		if ov(b, -121, 121, 20, 32) then table.insert(badCar, b.Parent.Name .. " on a lane") end
+	end
+	table.sort(zs)
+	local stacked = {}
+	for i = 1, #bodies do
+		local a1, b1 = aabb(bodies[i])
+		for j = i + 1, #bodies do
+			local a2, b2 = aabb(bodies[j])
+			if b1.X > a2.X and a1.X < b2.X and b1.Z > a2.Z and a1.Z < b2.Z then table.insert(stacked, bodies[i].Parent.Name .. "/" .. bodies[j].Parent.Name) end
+		end
+	end
+	check("B3c-2 cars: 70+ parked cars in all, 38+ of them in two staggered rows in the south lot (z 55..105, aisle 12+ studs between the rows), all on the asphalt, none in the Walkway (x -8..8), 4+ studs from the wall, on an entrance lane or on another car",
+		#bodies >= 70 and #south >= 38 and #zs == 2 and (zs[2] - zs[1]) - 10 >= 12 and #badCar == 0 and #stacked == 0,
+		string.format("%d cars, %d south, rows %s, %d bad %s, %d stacked %s", #bodies, #south, table.concat(zs, "/"), #badCar, listed(badCar), #stacked, listed(stacked)))
+	-- 2. Bay lines: a yellow line on both sides of every south car (3 studs from its centre), and an aisle line either side of the drive aisle (z row1 + 5.2, row2 - 5.2).
+	local bayAt, nBay, aisleZ = {}, 0, {}
+	for _, l in ipairs(allNamed("ParkingBayLine")) do
+		if l.Position.Z > 55 and l.Position.Z < 105 then
+			nBay += 1
+			bayAt[math.floor(l.Position.X + 0.5) .. ":" .. math.floor(l.Position.Z + 0.5)] = true
+		end
+	end
+	for _, l in ipairs(allNamed("ParkingAisleLine")) do
+		if l.Position.Z > 55 and l.Position.Z < 105 and l.Size.X > 30 then aisleZ[math.floor(l.Position.Z * 10 + 0.5)] = true end
+	end
+	local unlined = {}
+	for _, b in ipairs(south) do
+		local zk = math.floor(b.Position.Z + 0.5)
+		if not (bayAt[math.floor(b.Position.X - 3 + 0.5) .. ":" .. zk] and bayAt[math.floor(b.Position.X + 3 + 0.5) .. ":" .. zk]) then table.insert(unlined, b.Parent.Name) end
+	end
+	check("B3c-2 bay lines: a ParkingBayLine each side of all south cars (40+ in z 55..105) and aisle lines (ParkingAisleLine) on both edges of the drive aisle (row z + 5.2 and next row z - 5.2)",
+		#south >= 38 and nBay >= 40 and #unlined == 0 and #zs == 2 and aisleZ[math.floor((zs[1] + 5.2) * 10 + 0.5)] == true and aisleZ[math.floor((zs[2] - 5.2) * 10 + 0.5)] == true,
+		string.format("%d lines, %d cars without both lines %s, aisle z %s", nBay, #unlined, listed(unlined), (function() local t = {} for k in pairs(aisleZ) do table.insert(t, k / 10) end table.sort(t) return table.concat(t, "/") end)()))
+	-- 3. The east garden strip: a lawn slab over the asphalt, a long row of 6+ trees (trunk + 2 canopies), a monument.
+	local lawnG, eastAsphalt = anchor("EastGardenLawn"), anchor("ApronPavingEast")
+	local g0, g1 = Vector3.zero, Vector3.zero
+	if lawnG then g0, g1 = aabb(lawnG) end
+	local trunksG, canopiesG = allNamed("EastGardenTreeTrunk"), allNamed("EastGardenTreeCanopy")
+	local treeBad, tzLo, tzHi = {}, math.huge, -math.huge
+	for _, t in ipairs(trunksG) do
+		tzLo, tzHi = math.min(tzLo, t.Position.Z), math.max(tzHi, t.Position.Z)
+		if t.Position.X < g0.X or t.Position.X > g1.X or t.Position.Z < g0.Z or t.Position.Z > g1.Z or t.Position.Y < RAISE then table.insert(treeBad, "trunk " .. fmt(t.Position.X) .. "," .. fmt(t.Position.Z)) end
+	end
+	for _, c in ipairs(canopiesG) do
+		if c.Position.X < g0.X or c.Position.X > g1.X or c.Position.Z < g0.Z or c.Position.Z > g1.Z or c.Position.Y - c.Size.Y / 2 < RAISE + 3 then table.insert(treeBad, "canopy " .. fmt(c.Position.X) .. "," .. fmt(c.Position.Z)) end
+	end
+	local monG = { anchor("EastMonumentPlinth"), anchor("EastMonument"), anchor("EastMonumentCap"), anchor("EastMonumentStatue"), anchor("EastMonumentHead") }
+	local monOk = true
+	for i = 1, 5 do
+		local m = monG[i]
+		if not m or m.Position.X < g0.X or m.Position.X > g1.X or m.Position.Z < g0.Z or m.Position.Z > g1.Z then monOk = false end
+	end
+	check("B3c-2 east garden strip: EastGardenLawn on the podium inside x 68..112, z 50..108 (36+ wide, 45+ deep, green, above the old asphalt), 6+ trees in a row (EastGardenTreeTrunk with 2 EastGardenTreeCanopy each, spanning 30+ studs of z), and a monument (EastMonumentPlinth, EastMonument, EastMonumentCap, EastMonumentStatue, EastMonumentHead) on the lawn",
+		lawnG ~= nil and eastAsphalt ~= nil and lawnG.Position.Y >= RAISE and g0.X >= 68 and g1.X <= 112 and g0.Z >= 50 and g1.Z <= 108 and g1.X - g0.X >= 36 and g1.Z - g0.Z >= 45
+			and lawnG.Color.G > lawnG.Color.R and topY(lawnG) > topY(eastAsphalt) and #trunksG >= 6 and #canopiesG == 2 * #trunksG and tzHi - tzLo >= 30 and #treeBad == 0 and monOk,
+		string.format("lawn %s, %d trunks, %d canopies, span %s, bad %s, monument %s", lawnG and "ok" or "missing", #trunksG, #canopiesG, fmt(tzHi - tzLo), listed(treeBad), tostring(monOk)))
+	-- 4. The hedge round the strip and its walk-in gap at the south end (a clear box 6 wide in the south hedge, a path through it); everything stays at |x| <= 128 and clear of the stair edge (x 118..120.2).
+	local hedgesG, hN, hW, hE, hS = allNamed("EastGardenHedge"), 0, 0, 0, {}
+	for _, h in ipairs(hedgesG) do
+		local a, c = aabb(h)
+		if h.Size.X >= 30 and math.abs(h.Position.Z - g0.Z) < 1.5 then hN += 1 end
+		if h.Size.Z >= 45 and math.abs(h.Position.X - g0.X) < 1.5 then hW += 1 end
+		if h.Size.Z >= 45 and math.abs(h.Position.X - g1.X) < 1.5 then hE += 1 end
+		if h.Size.X < 30 and math.abs(h.Position.Z - g1.Z) < 1.5 and h.Size.Z <= 2.5 then table.insert(hS, { a.X, c.X }) end
+	end
+	table.sort(hS, function(p, q) return p[1] < q[1] end)
+	local gapW = (#hS == 2) and (hS[2][1] - hS[1][2]) or 0
+	local gapX = (#hS == 2) and (hS[1][2] + hS[2][1]) / 2 or 0
+	local gapBlock = {}
+	local pathG, farX = anchor("EastGardenPath"), 0
+	local gz = 0
+	for _, h in ipairs(hedgesG) do if h.Size.X < 30 and h.Size.Z <= 2.5 and math.abs(h.Position.Z - g1.Z) < 1.5 then gz = h.Position.Z end end
+	if #hS == 2 then gapBlock = blockers(CFrame.new(gapX, RAISE + 1.4, gz), Vector3.new(6, 1.6, 3)) end
+	local eg = site:FindFirstChild("EastGarden")
+	if eg then
+		for _, d in ipairs(eg:GetDescendants()) do
+			if d:IsA("BasePart") then
+				local a, c = aabb(d)
+				farX = math.max(farX, math.abs(a.X), math.abs(c.X))
+			end
+		end
+	end
+	check("B3c-2 east garden hedge: EastGardenHedge runs along the north, west and east edges and the south edge in two pieces with a clear walk-in gap 6+ wide (nothing above 0.5 in the gap box) crossed by an EastGardenPath; every EastGarden part at |x| <= 112 (the stair edge strip is untouched)",
+		lawnG ~= nil and hN >= 1 and hW >= 1 and hE >= 1 and #hS == 2 and gapW >= 6 and #gapBlock == 0 and pathG ~= nil and math.abs(pathG.Position.X - gapX) <= 3 and pathG.Position.Z + pathG.Size.Z / 2 >= gz
+			and eg ~= nil and farX > 0 and farX <= 112,
+		string.format("hedges N %d W %d E %d, south pieces %d, gap %s at x %s, blockers %s, path %s, max |x| %s", hN, hW, hE, #hS, fmt(gapW), fmt(gapX), listed(gapBlock), pathG and "ok" or "missing", fmt(farX)))
+	-- 5. Lamps down the Walkway south of z 48 (the lot's lamp rows stop at z 44): 6+ LampPole at |x| 8..14, z 50..110, both sides.
+	local lampW, lampE, lampBad = 0, 0, 0
+	for _, l in ipairs(allNamed("LampPole")) do
+		if l.Position.Z > 50 and l.Position.Z < WALL_Z - 2 then
+			if math.abs(l.Position.X) >= 8 and math.abs(l.Position.X) <= 14 and l.Position.Y > RAISE then
+				if l.Position.X < 0 then lampW += 1 else lampE += 1 end
+			else
+				lampBad += 1
+			end
+		end
+	end
+	check("B3c-2 lamps: 3+ LampPole each side of the Walkway south of z 48 (|x| 8..14, on the podium), none elsewhere in the south lot", lampW >= 3 and lampE >= 3 and lampBad == 0, string.format("%d west, %d east, %d elsewhere", lampW, lampE, lampBad))
+	-- 6. The part budget: the exact count (2222 + 164 car parts + 52 lot markings + 36 garden + 24 lamps = 2498), the cap of 2500 and the batch ceiling of every new group.
+	local totalParts, vehicleParts, lotParts, gardenParts = 0, 0, 0, 0
+	for _, d in ipairs(site:GetDescendants()) do
+		if d:IsA("BasePart") then
+			totalParts += 1
+			if vehicles and d:IsDescendantOf(vehicles) then vehicleParts += 1 end
+		end
+	end
+	for _, nm in ipairs({ "LotMarkings", "EastGarden" }) do
+		local c = site:FindFirstChild(nm)
+		local n = 0
+		if c then for _, d in ipairs(c:GetDescendants()) do if d:IsA("BasePart") then n += 1 end end end
+		if nm == "LotMarkings" then lotParts = n else gardenParts = n end
+	end
+	check("B3c-2 part budget: Site01 holds exactly 2498 parts (cap 2500), ParkedVehicles 388 (under the 400 batch ceiling), LotMarkings 52 and EastGarden 36 as their own components",
+		totalParts == 2498 and totalParts <= 2500 and vehicleParts == 388 and lotParts == 52 and gardenParts == 36 and site:FindFirstChild("LotMarkings") ~= nil and site:FindFirstChild("EastGarden") ~= nil,
+		string.format("total %d, vehicles %d, LotMarkings %d, EastGarden %d", totalParts, vehicleParts, lotParts, gardenParts))
+end
 
 return HttpService:JSONEncode(results)
