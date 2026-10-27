@@ -355,3 +355,52 @@ Guard for the entries is the new section 7 (|x| >= 128, ends at the stair foot o
 
 ### Numbers
 roads_check 207 -> 260 passed, 0 failed (+53: section 7 adds 19; the rest are the existing per-road checks now also running for the two new roads; every replaced assertion keeps one check per road). Terrain cells 1793852 -> 1793870 (+18, the two 12-wide asphalt strips; run_all EXPECTED not edited, so its cell row and the roads_check count row show MISMATCH until the integrator updates them). roads_extra is idempotent: second and third runs add 0. Measured PathfindingService lengths: spawn -> Cathedral Guide 475.8 (cap 510), Road E 203.1 (320), Road A 381.1 (400), Road C 153.9 (170).
+
+## B3c-0b: the owner's second colour markup on the Cathedral compound (2026-10-27)
+
+Source: `scratch/refs/owner-markup-cathedral-2.png`. Magenta = more parking, orange = the side entrances, green = Cultural Center, blue = white fences to black, red = the gate, black = the statue.
+
+### What changed
+| Mark | Built |
+|---|---|
+| Magenta | 19 cars in two staggered rows (z -36 and -8, x -112..-58 / -109..-61, inside x -115..-55, z -42..6) with 21 `ParkingBayLine` and two aisle lines (aisle z -31..-13); `carSlots` obstruction list now includes both entry walkways |
+| Orange | gateway arch, `GatewayPath` moved from z 18 to z 26 (stairs, road and arch on z 26); new `EntryWalkW` (x -117.5..-99) and `EntryWalkE` (x 91.5..100) next to `GatewayPath` (x 100..118), STONE_LIGHT, 10 wide; the garden's east side stays open z 12..33 |
+| Green | Cultural Center moved to x -98..-76 (z 64..94), door, steps, pilasters, `FlowerBed`/`BedBloom` and the plaza-face `CCWin` on the east face; the west palm strip moved to x -27 (z 64..83), the old east site is plain pavers |
+| Blue | `FencePost`/`FenceRail` colour LAMP_METAL (material Metal) |
+| Red | `WelcomeArch` component and builder deleted (name kept in REPLACED); one black south fence run x -100.5..99.4, east line x 99.4 z 49.5..99.6, west kerb line from z 49.5, south kerb closed; the plaza has no gap on the south, east or west |
+| Black | the mound is a D (round tiers at (0, 50) plus 3 `MoundTierFlat` blocks from the wall z 48), ribbons 3.5 studs south of the tiers; `StairFlightC` deleted; `StairFlightL/R` centre x +-19 (inner edge 12, 1 stud clear of the statue); bleachers 50 / 72 long, inner edge |x| 26 |
+
+### Found while building: the stair edge
+A surface above the podium within 2 studs of the side-stair edge (|x| 120) over the stair width (z 20..32) makes the last riser more than 1 stud for PathfindingService (NoPath for every route). It was already true of the old `ApronPaving` on the west (x to -119.5): the west stair was unusable before. So `ApronPaving` now spans x -117.5..64 with two corner pieces `ApronPavingWestN/S` (x -119.5..-117.5, z 10..20 and 32..48) leaving the stair strip bare, `GatewayPath` stops at x 118 and `EntryWalkW` at x -117.5. New check "nothing rises more than 0.05 above the podium on the stair edge strip".
+
+### Old assertions replaced (rule 4; none loosened silently)
+Replaced by renaming the call to `retired(...)` (a no-op defined at the top of tests/site01_check.luau; the old text stays in the file) or by changing the quoted numbers:
+
+| Old name and text | Why | Replaced by |
+|---|---|---|
+| "round 4: StairFlightC fills the wall axis: 4 treads, tops 4, 3, 2, 1, 16 wide (x -8..8)" (retired) | black mark: the statue stands there | "B3c-0b statue ... no StairFlightC" (D-shape, centre x 0, flat back |z-48| <= 1.5, side flights 1+ clear) |
+| "BleacherL/R ... inner edge at |x| 21..23" (numbers changed) | the flights moved out 4 studs | "inner edge at |x| 25..27" (lengths 50+ / 70+ unchanged) |
+| "the east fence leaves the lower plaza open toward Road C (nothing at x 99 between z 48 and 68)" (retired) | red/blue marks: east side closed | the three-line gap probe: no open stretch longer than 1 stud on z 99.6 (x -96..96), x -100.5 and x 99.4 (z 49..99.6) |
+| 4 WelcomeArch checks (child model 12+ parts; walk-through top 14 / span 12; sign text; two gateposts) (retired; the three nested ones by `if arch and false`) | red mark | "no WelcomeArch component or arch parts remain anywhere in the workspace" |
+| "B3c-0 round mound ... centred within 4 studs of x 0, south of the stair flights, 2+ studs clear" (retired) | black mark | the D-shape check above (centre x 0 within 1, flat back on the wall, side flights 1+ clear, nothing above the podium north of z 47.5) |
+| "B3c-0 iron fence ... plaza west kerb (z 58..99.6; gate gap z 49..58 open)" and "gate gap (z 49..58) stay open" (numbers changed) | the west gate gap is closed | kerb run z 49.5..99.6; the gate clauses now test z < 49 |
+| "round 4 Lipa Cultural Center ... x 70..99, along the east edge" (numbers changed) | green mark | x -99..-70 |
+| "B3c-0 plaza ... Cultural Center on the east (centre x > 40, east face x >= 96)" (numbers changed) | green mark | "on the west (centre x < -70, west face x <= -96)" |
+| "B3c-0 lot: asphalt spans from the west fence (x <= -119) to the garden wall" (number changed) | stair-edge strip must be bare | x <= -117.4 plus `ApronPavingWestN/S` |
+
+NOT on the orchestrator's list (the markup contradicts them; please veto if wrong):
+
+| Old name and text | Why | Replaced by |
+|---|---|---|
+| "CATEDRAL labels (wing entrance, welcome arch): 3+ found" (`seen >= 3` -> `seen == 1`) | two of the three labels were the arch sign's two faces | "B3c-0b CATEDRAL label (the wing entrance): 1 found" with the same fixed-TextSize and fit-and-fill clauses |
+| "round 4 (replaces 'EventStage folder ...'): EventStage holds the three flights and the seating" (retired) | it required `StairFlightC` | "EventStage holds StairFlightL, StairFlightR and the seating, no StairFlightC, no gazebo stage" |
+| walking-room box `moundN` (x -10..10, z 56.4..58.2, "between the foot of the middle flight and the mound") (box moved) | the statue fills that box | the box in front of the statue (x -10..10, z 61.2..63.2); `moundE`/`moundW` and the corridor unchanged |
+| second Cultural Center pin in "B3c-0 plaza: stage pavilion on the centre line and the Cultural Center on the east" (numbers changed) | green mark | see above |
+
+The gateway at z 18 was pinned by no assertion; the new checks pin z 26 (arch, SideStairsE, EAST_ENTRY, SideStairsW, WEST_ENTRY).
+
+### Numbers
+`site01_check` 117 -> 125 passed, 0 failed (+8 net: 16 new B3c-0b checks, 8 retired). Site parts 2121 -> 2184 (built 2114): +76 car parts, +bay and aisle lines, walkways, MoundTierFlat; -the WelcomeArch. World parts 8750 -> 8813. Church pin unchanged. Idempotent: three builds give the same children, no `WelcomeArch` instance anywhere.
+
+### Routes (PathfindingService in Play, the routes_check method)
+spawn -> Cathedral Guide 427.7 (cap 510), Road C 153.0 (170), Road A 380.3 (400), **Road E (0,225) 378.7 (cap 320, OVER)**. WEST_ENTRY -> Guide 171.4, EAST_ENTRY -> Guide 163.8. Road E used to walk in through the south arch gap; with the plaza closed it has to go round to a side stair. No cap and no gap was touched: this needs the orchestrator's or the owner's decision.

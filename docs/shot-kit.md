@@ -29,7 +29,7 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 1 Cathedral | tower and dome close-up | -60, 40, 90 | 0, 35, 10 |
 | 1 Cathedral | blueprint view (isometric from the south-west, church at left; found by trial, step B) | -150, 100, 155 | 10, 0, 5 |
 | 1 Cathedral | plaza from the south-west (wing, forecourt cars, brick steps, mound, stage pavilion) | -120, 95, 140 | 40, 0, 50 |
-| 1 Cathedral | plaza from the east (Cultural Center along the east edge, gateway) | 175, 65, 140 | 50, 0, 55 |
+| 1 Cathedral | plaza from the east (Cultural Center along the west edge across the plaza, statue in the middle of the stairs, east gateway) | 175, 65, 140 | 50, 0, 55 |
 | 1 Cathedral | top-down | 0, 420, 1 | 0, 0, 0 |
 | 1 Cathedral | wing entrance sign close-up | 106, 20, 26 | 106.5, 16.6, 2.3 |
 | 1 Cathedral | close top-down of lot and plaza (step B round 2) | 0, 230, 60 | 0, 0, 45 |

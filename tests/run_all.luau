@@ -9,7 +9,7 @@ local HttpService = game:GetService("HttpService")
 local EXPECTED = {
 	-- stored checks: passed count (failed must be 0)
 	checks = {
-		site01_check = 117, -- 115 + 2: Slice 4 B3c-0 (owner colour markup): 15 old assertions replaced where the markup contradicts them (parish wing, LongBuildingW, stage south-west, mound west-middle, plus 7 stale ones, all logged in briefs/site01.md) and 17 new ones (wing gone, iron fence and its stair/plaza gaps, ChurchAnnex box, Structure still 763 parts, mound and stage lanes, lot and west lawn). Earlier 75 + 40: Slice 4 plaza pass (church pin, parish wing, lot, plaza, stage, Cultural Center, mound, sign text size)
+		site01_check = 125, -- 117 + 8: Slice 4 B3c-0b (owner's second markup): 16 new checks (statue D-shape and side flights, Cultural Center west and its east face, black fence closed on the south, east and west, 19 cars and bay lines, entrance walkways and the stair-edge guard, no Welcome Arch) minus 8 retired or replaced, logged in briefs/site01.md. Earlier 115 + 2: Slice 4 B3c-0 (owner colour markup): 15 old assertions replaced where the markup contradicts them (parish wing, LongBuildingW, stage south-west, mound west-middle, plus 7 stale ones, all logged in briefs/site01.md) and 17 new ones (wing gone, iron fence and its stair/plaza gaps, ChurchAnnex box, Structure still 763 parts, mound and stage lanes, lot and west lawn). Earlier 75 + 40: Slice 4 plaza pass (church pin, parish wing, lot, plaza, stage, Cultural Center, mound, sign text size)
 		site02_check = 45, site03_check = 74, site04_check = 41, site05_check = 71, site06_check = 49,
 		site07_check = 34, site08_check = 29, site09_check = 26,
 		sites_check = 277, -- 256 + 21: site 10 now has the SiteId/pivot/facing/Wing/Guide/InfoPanel/JeepStop/Jeepney/anchored checks, Slice 3b
@@ -24,14 +24,14 @@ local EXPECTED = {
 	-- BuildCheck per site id: { passed, parts }. Parts include each site's LocalNPCs (builders/npcs.luau, 337 parts in all for sites 1..9)
 	-- and the Guide's GuideOutfit (builders/guides.luau, 8 parts per guide).
 	build = {
-		[1] = { 16, 2121 }, -- 2331 - 210 (Slice 4 B3c-0): - 342 parish wing - 107 LongBuildingW block - 3 mound flats + 153 ChurchAnnex + 66 iron fence + 23 west lawn and palms. Earlier 1683 + 648: Slice 4 plaza pass (parish wing, lot, plaza, pavilion, Cultural Center, mound)
+		[1] = { 16, 2184 }, -- 2121 + 63 (Slice 4 B3c-0b, owner's second markup): + 19 cars (4 parts each) and bay lines, the statue, entrance walkways, black fence runs, the moved Cultural Center and its beds, minus the Welcome Arch (46 parts). Earlier 2331 - 210 (Slice 4 B3c-0): - 342 parish wing - 107 LongBuildingW block - 3 mound flats + 153 ChurchAnnex + 66 iron fence + 23 west lawn and palms. Earlier 1683 + 648: Slice 4 plaza pass (parish wing, lot, plaza, pavilion, Cultural Center, mound)
 		[2] = { 15, 1148 }, [3] = { 15, 436 }, [4] = { 14, 705 }, [5] = { 15, 514 },
 		[6] = { 15, 748 }, [7] = { 14, 723 }, [8] = { 14, 703 }, [9] = { 15, 420 },
 		-- Slice 3b: 1104 City Hall parts + Guide 16 + GuideOutfit 8 + InfoPanel 1 + JeepStop, pole, sign 3 + Jeepney 6 + 4 LocalNPCs 68 = 1206;
 		-- 16 passed = 11 shared checks + 5 required props (Blocks, Landscape, Wing, Forecourt, JeepStop).
 		[10] = { 16, 1206 },
 	},
-	worldParts = 8750, -- 8960 - 210 (Site01 change of Slice 4 B3c-0, see build 01); 8960 was 8312 + 648 (Cathedral plaza pass, Slice 4); 8312 was 7100 + 1104 City Hall parts (wing 276, blocks 432, steps 57, forecourt 105, landscape 234), Slice 3a; + 102 (Ate Joy, panel, jeep stop and jeepney, 4 locals), Slice 3b; + 6 (credits board 9 to 15 parts for six panels), Slice 3b step 3 (8312)
+	worldParts = 8813, -- 8750 + 63 (the Site01 change of Slice 4 B3c-0b, see build 01); 8750 was 8960 - 210 (Site01 change of Slice 4 B3c-0, see build 01); 8960 was 8312 + 648 (Cathedral plaza pass, Slice 4); 8312 was 7100 + 1104 City Hall parts (wing 276, blocks 432, steps 57, forecourt 105, landscape 234), Slice 3a; + 102 (Ate Joy, panel, jeep stop and jeepney, 4 locals), Slice 3b; + 6 (credits board 9 to 15 parts for six panels), Slice 3b step 3 (8312)
 	cells = 1793870, -- 1793852 + 18: builders/roads_extra.luau paves WEST_ENTRY and EAST_ENTRY (two 12-wide Asphalt strips from the bypasses to the Cathedral side stairs), Slice 4 B3c-0b; a second and third run add 0. Earlier 1793696 + 156: builders/roads_extra.luau paves WEST_LINK and EAST_LINK (Asphalt FillBlock), Slice 4 B3b; a second run gives the same count. Earlier: 1793270 + 426: builders/roads_extra.luau paves the SPUR and the two bypasses (Asphalt FillBlock) and repaints the City Hall forecourt ground, Slice 3b
 	pivotY = { [8] = 19.8 }, -- every other site sits at y = 0
 }

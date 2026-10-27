@@ -79,6 +79,8 @@ return function()
 	local ASPHALT = Color3.fromRGB(62, 64, 70)
 	local PAVER = Color3.fromRGB(150, 152, 158)
 	local PAVER_JOINT = Color3.fromRGB(118, 120, 126)
+	-- B3c-0b (owner's magenta mark): two staggered rows of cars on the asphalt west of the tower, inside x -115..-55, z -42..6 (aisle z -31..-13); n = last car index, x0 = first car x
+	local NW_ROWS = { { z = -36, x0 = -112, n = 9, yaw = 0 }, { z = -8, x0 = -109, n = 8, yaw = PI } }
 	local STATUES = { { -9, 16 }, { -9, 24 }, { -9, 32 }, { 9, 16 }, { 9, 24 }, { 9, 32 }, { 9, 40 } } -- x, z (clear of the Guide, JeepStop and InfoPanel)
 	-- Plaza Independencia from the ground photo: terracotta paving, salmon walls, orange kiosk roofs, a pale vaulted roof.
 	local TERRACOTTA = Color3.fromRGB(205, 142, 116)
@@ -484,7 +486,9 @@ return function()
 	local function buildPlazaUpper(ctx)
 		-- local y 0 is the podium top. Round 2: the forecourt is one big asphalt lot x -100..64 with painted bays in two rows (the plaza drawing);
 		-- the walled garden is the east end (x 66..92), the monument mound is at the far corner (x 95..119).
-		ctx:part("ApronPaving", V(183.5, 0.1, WALL_Z - 10), CF(-27.75, 0.05, (WALL_Z + 10) / 2), ASPHALT, Enum.Material.Asphalt) -- x -119.5..64, z 10..48: from the west fence to the garden wall (B3c-0: the parish wing is gone)
+		ctx:part("ApronPaving", V(181.5, 0.1, WALL_Z - 10), CF(-26.75, 0.05, (WALL_Z + 10) / 2), ASPHALT, Enum.Material.Asphalt) -- x -117.5..64, z 10..48 (B3c-0b: it stops 2 studs short of the west podium edge across the stair width, so the last side step stays 1 stud; the two corner pieces below take the asphalt on to the fence)
+		ctx:part("ApronPavingWestN", V(2, 0.1, 10), CF(-118.5, 0.05, 15), ASPHALT, Enum.Material.Asphalt) -- x -119.5..-117.5, z 10..20
+		ctx:part("ApronPavingWestS", V(2, 0.1, 16), CF(-118.5, 0.05, 40), ASPHALT, Enum.Material.Asphalt) -- x -119.5..-117.5, z 32..48
 		ctx:part("ApronPavingNW", V(69.5, 0.1, 56), CF(-84.75, 0.05, -18), ASPHALT, Enum.Material.Asphalt) -- x -119.5..-50, z -46..10: the asphalt beside the tower, out to the west fence
 		-- B3c-0: the old courtyard block (x -120..-52, z -99..-48) is a lawn like the one behind the church, with two palms.
 		ctx:part("WestLawn", V(69.5, 0.12, 53), CF(-84.75, 0.06, -72.5), LAWN, Enum.Material.Grass) -- x -119.5..-50, z -99..-46
@@ -492,6 +496,9 @@ return function()
 		palm(ctx, 43, -72, -68)
 		ctx:part("GardenApron", V(54, 0.1, WALL_Z - 10), CF(91, 0.05, (WALL_Z + 10) / 2), STONE_LIGHT, CONC) -- x 64..118 under the garden and the gateway; stops 2 studs short of the podium edge so the last side step stays 1 stud
 		ctx:part("Walkway", V(14, 0.06, WALL_Z - 10), CF(0, 0.13, (WALL_Z + 10) / 2), STONE_LIGHT, CONC)
+		-- B3c-0b (orange marks): pale walkways from the side stair tops (x +-120, z 26) into the lot; the east one meets GatewayPath at x 100
+		ctx:part("EntryWalkW", V(18.5, 0.1, 10), CF(-108.25, 0.15, 26), STONE_LIGHT, CONC) -- x -117.5..-99: it stops 2 studs short of the stair edge so the last side step stays 1 stud
+		ctx:part("EntryWalkE", V(8.5, 0.1, 10), CF(95.75, 0.15, 26), STONE_LIGHT, CONC) -- x 91.5..100
 		-- Parapet caps the retaining wall beyond the seating tiers (x < -76 and x > 98).
 		ctx:part("Parapet", V(44, 1.4, 1.6), CF(-98, 0.7, WALL_Z - 0.8), STONE_LIGHT, CONC)
 		ctx:part("Parapet", V(22, 1.4, 1.6), CF(109, 0.7, WALL_Z - 0.8), STONE_LIGHT, CONC)
@@ -513,6 +520,11 @@ return function()
 			ctx:part("ParkingAisleLine", V(84, 0.1, 0.3), CF(-56, 0.15, z), YELLOW, PLAS)
 			ctx:part("ParkingAisleLine", V(48, 0.1, 0.3), CF(40, 0.15, z), YELLOW, PLAS)
 		end
+		-- B3c-0b magenta: yellow bay lines round the two rows of the NW lot (cars are 6 apart), and the aisle edges between them.
+		for _, row in ipairs(NW_ROWS) do
+			for i = 0, row.n + 1 do ctx:part("ParkingBayLine", V(0.3, 0.1, 10), CF(row.x0 - 3 + i * 6, 0.15, row.z), YELLOW, PLAS) end
+		end
+		for _, z in ipairs({ -30.8, -13.2 }) do ctx:part("ParkingAisleLine", V(56, 0.1, 0.3), CF(-85, 0.15, z), YELLOW, PLAS) end
 		-- The saint's monument on a plinth, off the walkway.
 		local mx, mz = -10, 40
 		ctx:part("MonumentPlinth", V(5.4, 1.4, 5.4), CF(mx, 0.7, mz), STONE_DARK, CONC)
@@ -567,10 +579,10 @@ return function()
 				ctx:ball("GardenTreeCanopy", 6, CF(t[1] + 1.6, 11.5, t[2] - 1), Color3.fromRGB(58, 118, 62), Enum.Material.Grass)
 			end
 		end
-		-- The north gateway arch on the C.M. Recto side (x 110): a bold iron arch (0.7-stud bars) on stone piers, a stone path to the side stairs.
+		-- The gateway arch on the C.M. Recto side (x 110, B3c-0b: z 26, the line of SideStairsE and EAST_ENTRY): a bold iron arch (0.7-stud bars) on stone piers, a stone path to the side stairs.
 		do
-			local gx, gz, baseY, R = 110, 18, 10, 6.5
-			ctx:part("GatewayPath", V(20, 0.14, 12), CF(110, 0.07, gz), STONE_LIGHT, CONC)
+			local gx, gz, baseY, R = 110, 26, 10, 6.5
+			ctx:part("GatewayPath", V(18, 0.14, 12), CF(109, 0.07, gz), STONE_LIGHT, CONC) -- x 100..118: B3c-0b, 2 studs short of the stair edge (the path now covers the whole stair width; a surface above the podium within 2 studs of the edge makes the last riser too high for PathfindingService, like GardenApron)
 			for _, dz in ipairs({ -R, R }) do
 				ctx:part(dz < 0 and "GatewayPostL" or "GatewayPostR", V(3.0, baseY, 3.0), CF(gx, baseY / 2, gz + dz), STONE_DARK, CONC)
 				ctx:part("GatewayCap", V(3.6, 1.0, 3.6), CF(gx, baseY + 0.5, gz + dz), STONE_LIGHT, CONC)
@@ -656,23 +668,23 @@ return function()
 		ironRun(-119.5, -99.5, -119.5, 19, RAISE)
 		ironRun(-119.5, 33, -119.5, 47, RAISE)
 		ironRun(-119.5, -99.5, -52, -99.5, RAISE)
-		ironRun(-100.5, 58, -100.5, 99.6, 0)
-		ironRun(-100.5, 99.6, -96.6, 99.6, 0)
+		ironRun(-100.5, 49.5, -100.5, 99.6, 0) -- B3c-0b: the gate gap z 49..58 is closed
 	end
 
 ------------------------------------------------------------------ Lower level (ground): Plaza Independencia below the wall
 	-- Round 2 (plaza drawing): the plaza is a grey grid-paver square with a big shade tree, lamp posts, a lawn square ringed by palms and two
 	-- palm-planted green strips. The pergola ring and the vaulted court are gone. Palms near the CreditsBoard stay out of its 4-stud margin.
 	local PALMS_LOW = { { 64, 92 } }
-	local STRIP_PALMS = { { -71, 58 }, { -71, 63 }, { -71, 68 }, { -71, 73 }, { -71, 78 } }
+	local STRIP_PALMS = { { -27, 66 }, { -27, 70 }, { -27, 74 }, { -27, 78 }, { -27, 82 } } -- B3c-0b: the strip left the Cultural Center's side (x -71) for x -27
 	local STRIP_E_PALMS = { { 62, 64 }, { 62, 69 }, { 62, 74 }, { 62, 79 }, { 62, 84 } }
 	local LAWN_PALMS = { { -65, 68 }, { -65, 75 }, { -65, 82 }, { -36, 68 }, { -36, 75 }, { -36, 82 }, { -50, 69 }, { -50, 82 } }
 	-- B3c-0 (the owner's orange mark): the stepped monument mound with the ribbon sculpture now stands on the plaza centre line, just south of the middle stair flight (the flights end at
 	-- z 56), and is fully round. Three cylinder tiers (radius 11 / 8.5 / 6), risers of 1 stud; 2.5 studs of walking room between the flight and the mound, 2 studs to the stage corridor.
 	local function buildMound(ctx)
-		local cx, cz = 0, WALL_Z + 8 + 2.5 + 11 -- 69.5: one centre for every tier, so they nest
+		local cx, cz = 0, WALL_Z + 2 -- B3c-0b (black mark): in the middle of the stairs, a D with its flat back on the wall: one centre for every tier, so they nest, and a flat block from the wall to the centre
 		for k, r in ipairs({ 11, 8.5, 6 }) do
 			post(ctx, "MoundTier", r * 2, k, cx, 0, cz, k == 3 and STONE_LIGHT or STONE, CONC)
+			ctx:part("MoundTierFlat", V(r * 2, k, cz - WALL_Z), CF(cx, k / 2, (cz + WALL_Z) / 2), k == 3 and STONE_LIGHT or STONE, CONC)
 		end
 		post(ctx, "MoundBase", 3.4, 1.6, cx, 3, cz, STONE_DARK, CONC)
 		-- Two looped ribbons: a tall upright ring and a smaller ring turned across it, each of short, thick bars.
@@ -683,7 +695,7 @@ return function()
 				local p0, p1 = V(radius * math.cos(a0), radius * math.sin(a0), 0), V(radius * math.cos(a1), radius * math.sin(a1), 0)
 				local mid, blen = (p0 + p1) / 2, (p1 - p0).Magnitude + 0.2
 				local phi = math.atan2(p1.Y - p0.Y, p1.X - p0.X)
-				ctx:part("MoundRibbon", V(blen, 1.0, 1.0), CF(cx, cy, cz) * ANG(0, yaw, 0) * CF(mid.X, mid.Y, 0) * ANG(0, 0, phi), IRON, METAL)
+				ctx:part("MoundRibbon", V(blen, 1.0, 1.0), CF(cx, cy, cz + 3.5) * ANG(0, yaw, 0) * CF(mid.X, mid.Y, 0) * ANG(0, 0, phi), IRON, METAL)
 			end
 		end
 		ring(6.2, 0, 10.8)
@@ -702,13 +714,13 @@ return function()
 		-- Kerb (0.3 high) round the lower plaza. The south kerb leaves a gap at x +-8 for the E_to_Tagbakin road mouth at (0,100).
 		ctx:part("KerbWest", V(0.6, 0.3, 100 - WALL_Z), CF(-100.3, 0.15, (WALL_Z + 100) / 2), STONE_LIGHT, CONC)
 		ctx:part("KerbEast", V(0.6, 0.3, 100 - WALL_Z), CF(100.3, 0.15, (WALL_Z + 100) / 2), STONE_LIGHT, CONC)
-		ctx:part("KerbSouthW", V(92, 0.3, 0.6), CF(-54, 0.15, 100.3), STONE_LIGHT, CONC)
-		ctx:part("KerbSouthE", V(92, 0.3, 0.6), CF(54, 0.15, 100.3), STONE_LIGHT, CONC)
+		ctx:part("KerbSouthW", V(100.6, 0.3, 0.6), CF(-50.3, 0.15, 100.3), STONE_LIGHT, CONC) -- B3c-0b: no road mouth any more, the south kerb runs through
+		ctx:part("KerbSouthE", V(100.6, 0.3, 0.6), CF(50.3, 0.15, 100.3), STONE_LIGHT, CONC)
 		for i, p in ipairs(PALMS_LOW) do palm(ctx, i + 20, p[1], p[2]) end
 		-- Palm-planted green strip 1 (west): a lawn border (low hedges) with a palm every 8 studs.
-		ctx:part("GreenStrip", V(8, 0.2, 24), CF(-71, 0.1, 68), LAWN, Enum.Material.Grass) -- z 56..80: it ends before the stage dais (z 82+)
-		ctx:part("StripHedge", V(0.8, 1.2, 24), CF(-75.4, 0.7, 68), HEDGE, Enum.Material.Grass)
-		ctx:part("StripHedge", V(0.8, 1.2, 24), CF(-66.6, 0.7, 68), HEDGE, Enum.Material.Grass)
+		ctx:part("GreenStrip", V(8, 0.2, 19), CF(-27, 0.1, 73.5), LAWN, Enum.Material.Grass) -- B3c-0b: x -31..-23, z 64..83 (clear of the benches at z 62 and the stage lane z 83.2+)
+		ctx:part("StripHedge", V(0.8, 1.2, 19), CF(-31.4, 0.7, 73.5), HEDGE, Enum.Material.Grass)
+		ctx:part("StripHedge", V(0.8, 1.2, 19), CF(-22.6, 0.7, 73.5), HEDGE, Enum.Material.Grass)
 		for i, p in ipairs(STRIP_PALMS) do palm(ctx, i + 60, p[1], p[2]) end
 		-- Palm-planted green strip 2 (east of the shade tree, before the Cultural Center and the stage), z 62..88.
 		ctx:part("GreenStripE", V(8, 0.2, 26), CF(62, 0.1, 75), LAWN, Enum.Material.Grass)
@@ -735,7 +747,7 @@ return function()
 			end
 		end
 		-- Flower beds along the Cultural Center's plaza face (round 4: the west building moved to the wing line, off the paving).
-		local beds = { { 72.8, 66, 2.4, 5 }, { 72.8, 71.5, 2.4, 5 }, { 72.8, 86, 2.4, 5 }, { 72.8, 91.5, 2.4, 5 } }
+		local beds = { { -72.8, 66, 2.4, 5 }, { -72.8, 71.5, 2.4, 5 }, { -72.8, 86, 2.4, 5 }, { -72.8, 91.5, 2.4, 5 } } -- B3c-0b: on the Cultural Center's east face, which is now on the west side
 		for bi, b in ipairs(beds) do
 			ctx:part("FlowerBed", V(b[3], 0.4, b[4]), CF(b[1], 0.2, b[2]), SOIL, Enum.Material.Ground)
 			local n = math.max(3, math.floor(math.max(b[3], b[4]) / 2.4))
@@ -759,27 +771,26 @@ return function()
 			ctx:part("BenchLegL", V(0.5, 1.5, 1.8), CF(s[1] - 2.5, 0.75, s[2]), LAMP_METAL, METAL)
 			ctx:part("BenchLegR", V(0.5, 1.5, 1.8), CF(s[1] + 2.5, 0.75, s[2]), LAMP_METAL, METAL)
 		end
-		-- White perimeter fence (P1): the south side with the road-mouth gap at x +-8, and the east side (z 70..99: it leaves the plaza open toward Road C).
+		-- Perimeter fence (P1; black since B3c-0b): the whole south side and the east side; with the west kerb fence the plaza is closed all round, the stairs from the lot are the only way in.
 		local function fenceRun(x0, z0, x1, z1)
 			local len = (V(x1, 0, z1) - V(x0, 0, z0)).Magnitude
 			local n = math.max(1, math.floor(len / 6))
 			for i = 0, n do
 				local t = i / n
-				ctx:part("FencePost", V(0.6, 3.2, 0.6), CF(x0 + (x1 - x0) * t, 1.6, z0 + (z1 - z0) * t), WHITE, CONC)
+				ctx:part("FencePost", V(0.6, 3.2, 0.6), CF(x0 + (x1 - x0) * t, 1.6, z0 + (z1 - z0) * t), LAMP_METAL, METAL)
 			end
 			local mxm, mzm = (x0 + x1) / 2, (z0 + z1) / 2
 			local sx, sz = math.abs(x1 - x0) + 0.4, math.abs(z1 - z0) + 0.4
 			if sx > sz then
-				ctx:part("FenceRail", V(sx, 0.4, 0.3), CF(mxm, 2.6, mzm), WHITE, CONC)
-				ctx:part("FenceRail", V(sx, 0.4, 0.3), CF(mxm, 1.2, mzm), WHITE, CONC)
+				ctx:part("FenceRail", V(sx, 0.4, 0.3), CF(mxm, 2.6, mzm), LAMP_METAL, METAL)
+				ctx:part("FenceRail", V(sx, 0.4, 0.3), CF(mxm, 1.2, mzm), LAMP_METAL, METAL)
 			else
-				ctx:part("FenceRail", V(0.3, 0.4, sz), CF(mxm, 2.6, mzm), WHITE, CONC)
-				ctx:part("FenceRail", V(0.3, 0.4, sz), CF(mxm, 1.2, mzm), WHITE, CONC)
+				ctx:part("FenceRail", V(0.3, 0.4, sz), CF(mxm, 2.6, mzm), LAMP_METAL, METAL)
+				ctx:part("FenceRail", V(0.3, 0.4, sz), CF(mxm, 1.2, mzm), LAMP_METAL, METAL)
 			end
 		end
-		fenceRun(-96, 99.6, -10, 99.6) -- z 99.6: the posts stay 4 studs clear of the CreditsBoard (it ends at z 95.2)
-		fenceRun(10, 99.6, 96, 99.6)
-		fenceRun(99.4, 70, 99.4, 99)
+		fenceRun(-100.5, 99.6, 99.4, 99.6) -- z 99.6, B3c-0b: one black run the whole south edge (the arch gap is closed); the posts stay 4 studs clear of the CreditsBoard (it ends at z 95.2)
+		fenceRun(99.4, 49.5, 99.4, 99.6) -- B3c-0b: the east side is closed too
 	end
 
 ------------------------------------------------------------------ Lower-plaza buildings (P1: long cream arcade on the west, the big gabled pavilion)
@@ -795,24 +806,24 @@ return function()
 		-- The Lipa Cultural Center (plaza drawing): a long 2-storey cream block down the plaza's EAST edge (x 76..98, z 64..94) with a flat parapet and arched windows
 		-- on the plaza (west) and south faces; the door and its steps face the plaza; z < 64 stays open for Road C.
 		do
-			local x0, x1, z0, z1, H = 76, 98, 64, 94, 24
+			local x0, x1, z0, z1, H = -98, -76, 64, 94, 24 -- B3c-0b (green mark): the plaza's WEST side, door, steps and beds on the east face
 			local cxm, czm = (x0 + x1) / 2, (z0 + z1) / 2
 			ctx:part("CulturalCenterBody", V(x1 - x0, H, z1 - z0), CF(cxm, H / 2, czm), CREAM_CC, CONC)
 			ctx:part("CulturalCenterPlinth", V(x1 - x0 + 0.8, 1.2, z1 - z0 + 0.8), CF(cxm, 0.6, czm), TRIM, CONC)
 			ctx:part("CulturalCenterBand", V(x1 - x0 + 0.8, 0.8, z1 - z0 + 0.8), CF(cxm, H / 2 + 0.4, czm), TRIM, CONC)
 			ctx:part("CulturalCenterCornice", V(x1 - x0 + 1.6, 1.2, z1 - z0 + 1.6), CF(cxm, H + 0.6, czm), TRIM, CONC)
 			ctx:part("CulturalCenterParapet", V(x1 - x0 + 0.4, 1.8, z1 - z0 + 0.4), CF(cxm, H + 2.1, czm), WHITE, CONC)
-			for _, x in ipairs({ 80, 86, 92 }) do
+			for _, x in ipairs({ -92, -86, -80 }) do
 				arched(ctx, "CCWin", V(x, 1.8, z1), 0, 2.8, 7)
 				arched(ctx, "CCWin", V(x, 13.8, z1), 0, 2.8, 7.4)
 			end
-			for _, z in ipairs({ 68, 73.5, 84.5, 90 }) do arched(ctx, "CCWin", V(x0, 1.8, z), -PI / 2, 2.8, 7) end
-			for _, z in ipairs({ 68, 73.5, 79, 84.5, 90 }) do arched(ctx, "CCWin", V(x0, 13.8, z), -PI / 2, 2.8, 7.4) end
-			arched(ctx, "CCDoor", V(x0, 0.6, 79), -PI / 2, 3.4, 9.5)
+			for _, z in ipairs({ 68, 73.5, 84.5, 90 }) do arched(ctx, "CCWin", V(x1, 1.8, z), PI / 2, 2.8, 7) end
+			for _, z in ipairs({ 68, 73.5, 79, 84.5, 90 }) do arched(ctx, "CCWin", V(x1, 13.8, z), PI / 2, 2.8, 7.4) end
+			arched(ctx, "CCDoor", V(x1, 0.6, 79), PI / 2, 3.4, 9.5)
 			for _, z in ipairs({ 64.5, 70.8, 76.2, 81.8, 87.2, 93.5 }) do
-				ctx:part("CulturalCenterPilaster", V(0.8, H - 1.6, 1.0), CF(x0 - 0.2, H / 2, z), TRIM, CONC)
+				ctx:part("CulturalCenterPilaster", V(0.8, H - 1.6, 1.0), CF(x1 + 0.2, H / 2, z), TRIM, CONC)
 			end
-			ctx:part("CulturalCenterSteps", V(2.4, 0.8, 9), CF(x0 - 1.4, 0.4, 79), STONE_LIGHT, CONC)
+			ctx:part("CulturalCenterSteps", V(2.4, 0.8, 9), CF(x1 + 1.4, 0.4, 79), STONE_LIGHT, CONC)
 		end
 		-- The open-air stage pavilion (B3c-0, the owner's orange mark): on the plaza centre line near the south edge, just inside the Welcome Arch, open side facing NORTH, white back wall on the south
 		-- long side, a raised dais under a big dark peaked roof on posts, gables at both ends. Dais x -13..13, z 82.5..94.5: 2 studs from the mound (z 80.5), 4.8 studs from the south fence line
@@ -846,41 +857,6 @@ return function()
 				ctx:gable("StageGable", 11.4, rise + 0.3, 0.6, CF(px + sx * 12.7, topY0 + 0.65, pz) * ANG(0, PI / 2, 0), WHITE, CONC)
 			end
 		end
-	end
-
------------------------------------------------------------------- Welcome Arch (P6): wrought-iron arch on stone gateposts, at the road mouth
-	local function buildWelcomeArch(ctx)
-		local z = 100.8 -- the posts and their 2.8-wide plinths (z 99.4..102.2) keep 4 studs clear of the CreditsBoard, which ends at z 95.2
-		local R = 7.4
-		local baseY = 12
-		for _, s in ipairs({ -1, 1 }) do
-			ctx:part(s < 0 and "GatepostL" or "GatepostR", V(2.4, baseY, 2.4), CF(s * (R + 1.2), baseY / 2, z), STONE_DARK, CONC)
-			ctx:part("GatepostCap", V(2.8, 0.8, 2.8), CF(s * (R + 1.2), baseY + 0.4, z), STONE_LIGHT, CONC)
-			ctx:part("GatepostPlinth", V(2.8, 1.2, 2.8), CF(s * (R + 1.2), 0.6, z), STONE_LIGHT, CONC)
-		end
-		-- Two concentric iron arcs (outer R, inner R - 1.1) built from short bars.
-		local seg = 16
-		for _, radius in ipairs({ R, R - 1.1 }) do
-			for k = 0, seg - 1 do
-				local a0, a1 = k * PI / seg, (k + 1) * PI / seg
-				local p0 = V(radius * math.cos(a0), radius * math.sin(a0), 0)
-				local p1 = V(radius * math.cos(a1), radius * math.sin(a1), 0)
-				local mid = (p0 + p1) / 2
-				local blen = (p1 - p0).Magnitude + 0.1
-				local phi = math.atan2(p1.Y - p0.Y, p1.X - p0.X)
-				ctx:part("ArchIron", V(blen, 0.35, 0.35), CF(mid.X, baseY + mid.Y, z) * ANG(0, 0, phi), IRON, METAL)
-			end
-		end
-		ctx:part("ArchCrossV", V(0.4, 3.2, 0.4), CF(0, baseY + R + 2.2, z), IRON, METAL)
-		ctx:part("ArchCrossH", V(2.2, 0.4, 0.4), CF(0, baseY + R + 2.8, z), IRON, METAL)
-		-- The wire lettering, as text on a clear plate between the arcs: readable from the plaza and from the street.
-		local plate = ctx:part("ArchSign", V(8.4, 4.2, 0.2), CF(0, baseY + 3.8, z), IRON, PLAS)
-		plate.Transparency = 1
-		local text = "CATEDRAL de SAN SEBASTIAN\n10 de ABRIL 1910\nENTRANCE"
-		label(plate, Enum.NormalId.Front, text, IRON, 40)
-		label(plate, Enum.NormalId.Back, text, IRON, 40)
-		ctx:part("ArchYearL", V(1.8, 0.9, 0.2), CF(-(R + 1.2), 6, z - 1.25), IRON, METAL)
-		ctx:part("ArchYearR", V(1.8, 0.9, 0.2), CF(R + 1.2, 6, z - 1.25), IRON, METAL)
 	end
 
 	------------------------------------------------------------------ Benches, lamps, flagpole (upper level, origin raised)
@@ -930,14 +906,13 @@ return function()
 		-- access (Roads A, C). The folder keeps the name EventStage because SiteData lists it.
 		for k = 1, 4 do
 			local z = WALL_Z + 2 * (k - 1) + 1
-			ctx:part("StairFlightL", V(14, RAISE - k, 2), CF(-15, (RAISE - k) / 2, z), STONE, CONC)
-			ctx:part("StairFlightC", V(16, RAISE - k, 2), CF(0, (RAISE - k) / 2, z), STONE, CONC)
-			ctx:part("StairFlightR", V(14, RAISE - k, 2), CF(15, (RAISE - k) / 2, z), STONE, CONC)
+			ctx:part("StairFlightL", V(14, RAISE - k, 2), CF(-19, (RAISE - k) / 2, z), STONE, CONC) -- B3c-0b: the middle flight is gone (the statue stands there), the side flights moved out 4 studs
+			ctx:part("StairFlightR", V(14, RAISE - k, 2), CF(19, (RAISE - k) / 2, z), STONE, CONC)
 		end
 		for k = 1, 4 do
 			local z = WALL_Z + 3 * (k - 1) + 1.5
-			ctx:part("BleacherL", V(54, RAISE - k, 3), CF(-49, (RAISE - k) / 2, z), BLEACH, CONC)
-			ctx:part("BleacherR", V(76, RAISE - k, 3), CF(60, (RAISE - k) / 2, z), BLEACH, CONC)
+			ctx:part("BleacherL", V(50, RAISE - k, 3), CF(-51, (RAISE - k) / 2, z), BLEACH, CONC)
+			ctx:part("BleacherR", V(72, RAISE - k, 3), CF(62, (RAISE - k) / 2, z), BLEACH, CONC)
 		end
 		for k = 1, 4 do
 			local x = 120 + 2 * (k - 1) + 1
@@ -961,6 +936,8 @@ return function()
 		add(-10, 40, 3.4, 3.4)
 		for _, z in ipairs({ 14, 30, 44 }) do add(-14, z, 1.4, 1.4) add(14, z, 1.4, 1.4) end
 		add(-62, 30, 1.4, 1.4)
+		add(-109.5, 26, 11.3, 5.8) -- B3c-0b: the entry walkways (west x -120..-99, east x 91.5..120, z 21..31) stay free of cars
+		add(105.75, 26, 14.8, 5.8)
 		for _, c in ipairs(site:GetChildren()) do
 			if not REPLACED[c.Name] then
 				local cf, size
@@ -985,6 +962,16 @@ return function()
 						table.insert(slots, { cx, rowZ, rowIdx == 1 and 0 or PI, CAR_COLORS[(j * 5 + rowIdx * 3) % #CAR_COLORS + 1] })
 					end
 				end
+			end
+		end
+		-- B3c-0b magenta: the NW lot, 19 cars in two staggered rows (the aisle between them is z -31..-13), skipping anything that would stand on an obstacle.
+		for rIdx, row in ipairs(NW_ROWS) do
+			for j = 0, row.n do
+				local cx, blocked = row.x0 + j * 6, false
+				for _, o in ipairs(obs) do
+					if cx + 2.4 > o[1] and cx - 2.4 < o[2] and row.z + 5.2 > o[3] and row.z - 5.2 < o[4] then blocked = true break end
+				end
+				if not blocked then table.insert(slots, { cx, row.z, row.yaw, CAR_COLORS[(j * 3 + rIdx * 5) % #CAR_COLORS + 1] }) end
 			end
 		end
 		return slots
@@ -1053,7 +1040,6 @@ return function()
 		component("WestFence", "Site", buildWestFence)
 		component("PlazaLower", "Site", buildPlazaLower)
 		component("PlazaBuildings", "Site", buildPlazaBuildings)
-		component("WelcomeArch", "Site", buildWelcomeArch)
 		component("Benches", "Site", buildBenches, UPPER)
 		component("Lamps", "Site", buildLamps, UPPER)
 		component("Flagpole", "Site", buildFlagpole, UPPER)
