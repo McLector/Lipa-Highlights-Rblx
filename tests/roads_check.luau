@@ -85,6 +85,9 @@ check("ten Guides found", #guides == 10, tostring(#guides))
 
 -- 1. Margin rule -----------------------------------------------------------------------------------------------------
 local ALLOWED = { SPUR = { Site10_CityHall = true } }
+-- B3c-0b: the two entrance roads to the Cathedral side stairs (section 7, briefs/site01.md "B3c-0b roads"). Every exception made for them in
+-- sections 1, 3 and 6 reads this one table; every other road is checked exactly as before.
+local ENTRY_ROADS = { WEST_ENTRY = true, EAST_ENTRY = true }
 for _, road in ipairs(RoadData.NEW_ROADS) do
 	for i = 1, #road.pts - 1 do
 		local a, b = road.pts[i], road.pts[i + 1]
@@ -95,6 +98,13 @@ for _, road in ipairs(RoadData.NEW_ROADS) do
 			if ALLOWED[road.name] and ALLOWED[road.name][name] then
 				-- the intentional contact: the road may enter the margin zone but its own footprint may not touch the building
 				check(road.name .. " seg " .. i .. " own footprint (no margin) is clear of " .. name .. " real bounds", not overlap(segRect(a, b, road.w / 2), r))
+			elseif ENTRY_ROADS[road.name] and name == "Site01_Cathedral" then
+				-- B3c-0b: an entrance road ends at the stair foot, inside the +10% margin by design; its body (sides w/2, no end caps) must
+				-- still stay clear of the Cathedral's real bounds (x -128..128, where the stair treads end). Other sites keep the margin test.
+				local body = a[1] == b[1] and { x0 = a[1] - road.w / 2, x1 = a[1] + road.w / 2, z0 = math.min(a[2], b[2]), z1 = math.max(a[2], b[2]) }
+					or { x0 = math.min(a[1], b[1]), x1 = math.max(a[1], b[1]), z0 = a[2] - road.w / 2, z1 = a[2] + road.w / 2 }
+				check(road.name .. " seg " .. i .. " body (no margin, no end caps) is clear of " .. name .. " real bounds", not overlap(body, r),
+					string.format("road x[%.0f,%.0f] z[%.0f,%.0f] vs x[%.1f,%.1f] z[%.1f,%.1f]", body.x0, body.x1, body.z0, body.z1, r.x0, r.x1, r.z0, r.z1))
 			else
 				check(road.name .. " seg " .. i .. " margin (w/2+4) clears " .. name .. " bounds +10%", not hit,
 					string.format("road x[%.0f,%.0f] z[%.0f,%.0f] vs x[%.1f,%.1f] z[%.1f,%.1f]", wide.x0, wide.x1, wide.z0, wide.z1, slack.x0, slack.x1, slack.z0, slack.z1))
@@ -162,7 +172,12 @@ for _, road in ipairs(RoadData.NEW_ROADS) do
 		check("SPUR's west end is the curb contact (8 studs east of City Hall's front edge)", first[1] == -142 and first[2] == -230, first[1] .. "," .. first[2])
 	else
 		check(road.name .. " starts on a road centre line", startOn ~= nil, first[1] .. "," .. first[2])
-		check(road.name .. " ends on a road centre line", endOn ~= nil, last[1] .. "," .. last[2])
+		if ENTRY_ROADS[road.name] then
+			-- B3c-0b: an entrance road ends at the foot of the stair, not on a road (section 7 ties it to the stair parts)
+			check(road.name .. " ends at the stair foot (|x| 128, z 26)", math.abs(last[1]) == 128 and last[2] == 26, last[1] .. "," .. last[2])
+		else
+			check(road.name .. " ends on a road centre line", endOn ~= nil, last[1] .. "," .. last[2])
+		end
 	end
 	local touchesOriginal = false
 	for _, orig in ipairs(RoadData.ROADS) do
@@ -172,7 +187,24 @@ for _, road in ipairs(RoadData.NEW_ROADS) do
 			end
 		end
 	end
-	check(road.name .. " touches an original road", touchesOriginal)
+	if ENTRY_ROADS[road.name] then
+		-- B3c-0b: an entrance road starts on a new bypass; that bypass must itself touch an original road
+		local hostTouches = false
+		for _, host in ipairs(RoadData.NEW_ROADS) do
+			if host.name == startOn then
+				for _, orig in ipairs(RoadData.ROADS) do
+					for _, p in ipairs({ host.pts[1], host.pts[#host.pts] }) do
+						for i = 1, #orig.pts - 1 do
+							if onSegment(p, orig.pts[i], orig.pts[i + 1], 0.01) then hostTouches = true end
+						end
+					end
+				end
+			end
+		end
+		check(road.name .. " touches an original road through its bypass (" .. tostring(startOn) .. ")", hostTouches and not ENTRY_ROADS[startOn])
+	else
+		check(road.name .. " touches an original road", touchesOriginal)
+	end
 end
 check("WEST_BYPASS starts on the SPUR", onRoad(RoadData.NEW_ROADS[2].pts[1], { RoadData.NEW_ROADS[1] }, nil) == "SPUR")
 check("WEST_BYPASS ends on Road F", onRoad(RoadData.NEW_ROADS[2].pts[#RoadData.NEW_ROADS[2].pts], RoadData.ROADS, nil) == "F_to_Market")
@@ -182,7 +214,16 @@ do
 	local eastX = RoadData.NEW_ROADS[3].pts[1][1]
 	check("EAST_BYPASS crosses Road C (it is a junction)", onRoad({ eastX, 0 }, RoadData.ROADS, nil) == "C_to_Farm", tostring(eastX))
 end
-check("RoadData.all() lists the 8 original roads then the 5 new ones (SPUR, two bypasses, two south links)", #all == #RoadData.ROADS + #RoadData.NEW_ROADS and #RoadData.NEW_ROADS == 5 and #RoadData.ROADS == 8, tostring(#all))
+do
+	-- B3c-0b: 7 new roads, in this order (the position-indexed checks above rely on SPUR, WEST_BYPASS, EAST_BYPASS being 1..3)
+	local expectedNew = { "SPUR", "WEST_BYPASS", "EAST_BYPASS", "WEST_LINK", "EAST_LINK", "WEST_ENTRY", "EAST_ENTRY" }
+	local namesOk = #RoadData.NEW_ROADS == #expectedNew
+	for i, nm in ipairs(expectedNew) do
+		if not RoadData.NEW_ROADS[i] or RoadData.NEW_ROADS[i].name ~= nm then namesOk = false end
+	end
+	check("RoadData.all() lists the 8 original roads then the 7 new ones (SPUR, two bypasses, two south links, WEST_ENTRY, EAST_ENTRY)",
+		#all == #RoadData.ROADS + #RoadData.NEW_ROADS and #RoadData.ROADS == 8 and namesOk, tostring(#all))
+end
 for _, r in ipairs(RoadData.NEW_ROADS) do check(r.name .. " is 12 wide", r.w == 12) end
 
 -- 4. Reachability: graph of the centre lines ---------------------------------------------------------------------------------
@@ -306,7 +347,9 @@ do
 			local r = body(road.pts[i], road.pts[i + 1], road.w)
 			check(road.name .. " seg " .. i .. " (centre line and both edges) stays out of the Cathedral slot", not overlap(r, slot),
 				string.format("road x[%.0f,%.0f] z[%.0f,%.0f]", r.x0, r.x1, r.z0, r.z1))
-			if not (EDGE_STARTS[road.name] and i == 1) then
+			-- B3c-0b exception (briefs/site01.md "B3c-0b roads"): the two entrance roads must cross x 128..144 to reach the side stairs; they
+			-- are still checked against the slot above and in section 7 (|x| >= 128, no contact with the treads).
+			if not (EDGE_STARTS[road.name] and i == 1) and not ENTRY_ROADS[road.name] then
 				check(road.name .. " seg " .. i .. " stays out of the slot's 10 percent margin zone", not overlap(r, zone),
 					string.format("road x[%.0f,%.0f] z[%.0f,%.0f] vs zone x[%.1f,%.1f] z[%.1f,%.1f]", r.x0, r.x1, r.z0, r.z1, zone.x0, zone.x1, zone.z0, zone.z1))
 			end
@@ -374,6 +417,77 @@ do
 		if cellMaterial(p[1], p[2]) == Enum.Material.Pavement then table.insert(spill, string.format("(%d,%d)", p[1], p[2])) end
 	end
 	check("control: the cells just outside the repainted ground are not Pavement", #spill == 0, table.concat(spill, " "))
+end
+
+-- 7. Entrance roads to the Cathedral side stairs (Slice 4 B3c-0b, owner markup) ---------------------------------------------------
+-- WEST_ENTRY / EAST_ENTRY run from each bypass centre line straight along the stairs' centre z to the foot of SideStairsW / SideStairsE
+-- (the lowest tread is the part with the largest |x|; its outer edge is the foot). They are the only roads allowed inside the slot's 10 percent
+-- margin zone besides the edge starts of A, C and E (see section 6); they must stay out of the slot itself and must not touch the treads.
+do
+	local byName = {}
+	for _, r in ipairs(all) do byName[r.name] = r end
+	local cathModel = sites and sites:FindFirstChild("Site01_Cathedral")
+	local treads, lowest = {}, {}
+	if cathModel then
+		for _, d in ipairs(cathModel:GetDescendants()) do
+			if d:IsA("BasePart") and (d.Name == "SideStairsW" or d.Name == "SideStairsE") then
+				table.insert(treads, d)
+				local cur = lowest[d.Name]
+				if cur == nil or math.abs(d.Position.X) > math.abs(cur.Position.X) then lowest[d.Name] = d end
+			end
+		end
+	end
+	check("B3c-0b: the Cathedral has SideStairs treads on both sides", #treads >= 2 and lowest.SideStairsW ~= nil and lowest.SideStairsE ~= nil, tostring(#treads))
+	local function entryBody(a, b, w) -- road body without end caps (axis-aligned)
+		if a[1] == b[1] then return { x0 = a[1] - w / 2, x1 = a[1] + w / 2, z0 = math.min(a[2], b[2]), z1 = math.max(a[2], b[2]) } end
+		return { x0 = math.min(a[1], b[1]), x1 = math.max(a[1], b[1]), z0 = a[2] - w / 2, z1 = a[2] + w / 2 }
+	end
+	local specs = {
+		{ stair = "SideStairsW", road = "WEST_ENTRY", bypass = "WEST_BYPASS", bx = -170, mid = -149, sign = -1 },
+		{ stair = "SideStairsE", road = "EAST_ENTRY", bypass = "EAST_BYPASS", bx = 165, mid = 146, sign = 1 },
+	}
+	for _, s in ipairs(specs) do
+		local st, road, bypass = lowest[s.stair], byName[s.road], byName[s.bypass]
+		check("B3c-0b: " .. s.road .. " exists and is 12 wide", road ~= nil and road.w == 12)
+		if st and road and bypass then
+			local foot = math.abs(st.Position.X) + st.Size.X / 2 -- outer edge of the lowest tread
+			local first, last = road.pts[1], road.pts[#road.pts]
+			check("B3c-0b: " .. s.stair .. " foot is at |x| 128", foot == 128, fmt(foot))
+			check("B3c-0b: " .. s.road .. " ends at the foot of " .. s.stair .. " (x within 1 stud of |x| 128, same side)",
+				last[1] * s.sign > 0 and math.abs(math.abs(last[1]) - foot) <= 1, last[1] .. "," .. last[2])
+			check("B3c-0b: " .. s.road .. " ends on the stair's centre z (within 1 stud of " .. fmt(st.Position.Z) .. ")", math.abs(last[2] - st.Position.Z) <= 1, last[1] .. "," .. last[2])
+			check("B3c-0b: " .. s.road .. " starts on the " .. s.bypass .. " centre line (x " .. s.bx .. ")", first[1] == s.bx and onRoad(first, { bypass }, nil) == s.bypass, first[1] .. "," .. first[2])
+			local axis = true
+			for i = 1, #road.pts - 1 do
+				if road.pts[i][1] ~= road.pts[i + 1][1] and road.pts[i][2] ~= road.pts[i + 1][2] then axis = false end
+			end
+			check("B3c-0b: " .. s.road .. " is axis-aligned and runs straight (one z) from the bypass to the stair", axis and first[2] == last[2] and #road.pts == 2)
+			-- the narrow exception to section 6: out of the slot itself, and the end must not touch the treads
+			local inSlot = false
+			for i = 1, #road.pts - 1 do
+				local r = entryBody(road.pts[i], road.pts[i + 1], road.w)
+				if r.x0 < 128 and r.x1 > -128 then inSlot = true end -- the body overlaps x -128..128
+			end
+			check("B3c-0b: " .. s.road .. " stays out of the Cathedral slot (every point at |x| >= 128)", not inSlot)
+			local touch = {}
+			for i = 1, #road.pts - 1 do
+				local r = entryBody(road.pts[i], road.pts[i + 1], road.w)
+				for _, t in ipairs(treads) do
+					if overlap(r, partRect(t)) then table.insert(touch, t.Name .. "@" .. fmt(t.Position.X)) end
+				end
+			end
+			check("B3c-0b: " .. s.road .. " does not touch any stair tread", #touch == 0, table.concat(touch, ", "))
+			-- the asphalt is really there
+			local sample = {}
+			for _, x in ipairs({ s.mid, s.sign * 129 }) do
+				local m = cellMaterial(x, st.Position.Z)
+				if m ~= Enum.Material.Asphalt then table.insert(sample, string.format("(%d,%d)=%s", x, st.Position.Z, m.Name)) end
+			end
+			check("B3c-0b: " .. s.road .. " is Asphalt terrain at its mid-point (x " .. s.mid .. ") and at |x| 129 on z 26", #sample == 0, table.concat(sample, " "))
+		else
+			check("B3c-0b: " .. s.road .. " can be checked (stair, road and bypass found)", false, tostring(st) .. " " .. tostring(road) .. " " .. tostring(bypass))
+		end
+	end
 end
 
 return HttpService:JSONEncode(results)
