@@ -20,6 +20,17 @@ local function sourceOf(inst)
 end
 
 -- CreditsBoard ------------------------------------------------------------
+-- Credits job B (2026-10-27, owner: "another area for like displaying the credits board"): the board left the south end of the Cathedral plaza
+-- (z 205, now outside the Cathedral's closed south fence) for the Credits Plaza (x 24..150, z 274..346, east of Road E) and grew from six panels
+-- to the title, identity, project notes, notices and the 78 APA 7 references. Replaced assertions (old text -> why -> new text):
+--   "CreditsBoard sits inside the paved plaza at its south end (x -100..100, z 195..215)" -> the plaza moved -> "sits inside the Credits Plaza box x 24..150, z 274..346"
+--   "CreditsBoard keeps a walking aisle open (no part under 8 studs headroom inside |x| < 8)" -> the aisle at x 0 led to the old fence -> "keeps a reading aisle, at least 14 studs wide, free of parts under 8 studs headroom"
+--   "CreditsBoard labels have RichText off" -> the references use <i> -> "only the Ref<i> labels have RichText on, equal to marked; every other label has it off"
+--   "CreditsBoard has six panels (CreditsGui1..6)", "panel 4 names City Hall...", "panel 4 carries every projectLines line", "panel 5 has the Tour sources header",
+--   "panels 5-6 carry every tourSources text (or url)", "panels 5-6 show each tour source's domain" -> the sources are now the 78 references, nothing is cut to a domain ->
+--   "panel 1 carries the title, identityText, every projectLines and noticeLines line; panels 2..N carry the references in order, each exactly once (N >= 8)"
+--   "tour-source panels use at least 16 px text" -> "reference labels are exactly 16 px"
+--   "CreditsBoard text carries every credits url" keeps its text, now satisfied through the references.
 local world = workspace:FindFirstChild("World")
 local board = world and world:FindFirstChild("CreditsBoard")
 check("Workspace.World.CreditsBoard exists", board ~= nil)
@@ -31,44 +42,132 @@ if board then
 		if d:IsA("TextLabel") then table.insert(labels, d) end
 	end
 	check("CreditsBoard has parts", #parts >= 1, tostring(#parts))
+	check("CreditsBoard stays under 100 parts (about 90 budgeted)", #parts <= 100, tostring(#parts))
 	local unanchored = {}
 	for _, p in ipairs(parts) do if not p.Anchored then table.insert(unanchored, p.Name) end end
 	check("CreditsBoard parts are all anchored", #unanchored == 0, table.concat(unanchored, ","))
 
-	-- bounding box of the whole board in world axes
-	local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
-	for _, p in ipairs(parts) do
+	-- axis-aligned extents of a (possibly rotated) part: x0, x1, y0, y1, z0, z1
+	local function extents(p)
 		local cf, sz = p.CFrame, p.Size
-		for _, sx in ipairs({ -0.5, 0.5 }) do for _, sz2 in ipairs({ -0.5, 0.5 }) do
-			local c = cf:PointToWorldSpace(Vector3.new(sx * sz.X, 0, sz2 * sz.Z))
-			minX, maxX = math.min(minX, c.X), math.max(maxX, c.X)
-			minZ, maxZ = math.min(minZ, c.Z), math.max(maxZ, c.Z)
-		end end
+		local function half(axis)
+			return (math.abs(cf.RightVector[axis]) * sz.X + math.abs(cf.UpVector[axis]) * sz.Y + math.abs(cf.LookVector[axis]) * sz.Z) / 2
+		end
+		local pos = p.Position
+		return pos.X - half("X"), pos.X + half("X"), pos.Y - half("Y"), pos.Y + half("Y"), pos.Z - half("Z"), pos.Z + half("Z")
 	end
-	check("CreditsBoard sits inside the paved plaza at its south end (x -100..100, z 195..215)",
-		minX >= -100 and maxX <= 100 and minZ >= 195 and maxZ <= 215,
-		string.format("x %.1f..%.1f z %.1f..%.1f", minX, maxX, minZ, maxZ))
-	-- Slice 4 B3b2: the Cathedral slot grew south (compound reaches z 215, Road E starts at (0,225)), so the board moved from z 94 to the plaza's
-	-- new south end (z ~205). The walking lane from Road E up to the Cathedral Guide runs through x 0, so the board has an aisle: no part below
-	-- the 8-stud door-height rule (README rule 7) may intersect |x| < 8. The cap beam (bottom y 14.2) is a lintel over the aisle and is exempt.
+	local function unmark(s)
+		s = string.gsub(string.gsub(s, "<i>", ""), "</i>", "")
+		return (string.gsub(string.gsub(string.gsub(s, "&lt;", "<"), "&gt;", ">"), "&amp;", "&"))
+	end
+
+	-- the Credits Plaza box: every part but the EntryPath ground strip (which reaches Road E's east edge) lies inside x 24..150, z 274..346
+	local outside, paving = {}, nil
+	for _, p in ipairs(parts) do
+		if not string.match(p.Name, "^EntryPath") then
+			local x0, x1, _, _, z0, z1 = extents(p)
+			if x0 < 24 - 0.01 or x1 > 150 + 0.01 or z0 < 274 - 0.01 or z1 > 346 + 0.01 then
+				table.insert(outside, string.format("%s x %.1f..%.1f z %.1f..%.1f", p.Name, x0, x1, z0, z1))
+			end
+			if p.Name == "CreditsPaving" then paving = p end
+		end
+	end
+	check("CreditsBoard sits inside the Credits Plaza box (x 24..150, z 274..346): every part but the EntryPath strip", #outside == 0, table.concat(outside, "; ", 1, math.min(#outside, 3)))
+	local pvOk = paving ~= nil and paving.Size.Y <= 0.25 and paving.Size.X >= 100 and paving.Size.Z >= 60 and select(4, extents(paving)) <= 0.3
+	check("CreditsBoard has a CreditsPaving floor part (0.2 thick, top y <= 0.3, at least 100 x 60 studs) inside that box", pvOk, paving and tostring(paving.Size) or "missing")
+
+	-- two facing rows of panels
+	local panels, nPanels = {}, 0
+	for _, p in ipairs(parts) do
+		local k = tonumber(string.match(p.Name, "^Panel(%d+)$"))
+		if k then panels[k] = p; nPanels += 1 end
+	end
+	local contiguous = nPanels >= 1
+	for k = 1, nPanels do if not panels[k] then contiguous = false end end
+	check("CreditsBoard has Panel1..PanelN, N >= 8", contiguous and nPanels >= 8, tostring(nPanels))
+	local zs = {}
+	for k = 1, nPanels do
+		local z, found = panels[k] and panels[k].Position.Z or 0, false
+		for _, v in ipairs(zs) do if math.abs(v - z) < 0.5 then found = true end end
+		if not found then table.insert(zs, z) end
+	end
+	table.sort(zs)
+	local zN, zS = zs[1] or 0, zs[2] or 0
+	local aisleZ = (zN + zS) / 2
+	local rowN, rowS = 0, 0
+	for k = 1, nPanels do if panels[k].Position.Z < aisleZ then rowN += 1 else rowS += 1 end end
+	check("panels stand in exactly two rows (two z lines), each holding half of them (ceil and floor of N / 2)", #zs == 2 and math.abs(rowN - rowS) <= 1 and rowN >= 4 and rowS >= 4, string.format("%d lines, %d + %d panels", #zs, rowN, rowS))
+	local notFacing = {}
+	for k = 1, nPanels do
+		local p = panels[k]
+		local look = p.CFrame.LookVector
+		local g = p:FindFirstChild("CreditsGui" .. k)
+		if not (math.abs(look.Z) > 0.99 and look.Z * (aisleZ - p.Position.Z) > 0 and g and g:IsA("SurfaceGui") and g.Face == Enum.NormalId.Front) then
+			table.insert(notFacing, "Panel" .. k)
+		end
+	end
+	check("every panel's Front face (its SurfaceGui) points across the aisle, so no text is on a panel back", #notFacing == 0, table.concat(notFacing, ","))
+
+	-- the reading aisle: the strip between the rows (1.3 studs inside each panel line, so the plinth may protrude) is at least 14 studs wide, and no
+	-- part with its bottom under 8 studs stands in it along the rows' x range (ground paving, top y <= 0.3, is not an obstacle)
+	local sx0, sx1 = math.huge, -math.huge
+	for k = 1, nPanels do
+		local x0, x1 = extents(panels[k])
+		sx0, sx1 = math.min(sx0, x0), math.max(sx1, x1)
+	end
+	local stripN, stripS = zN + 1.3, zS - 1.3
 	local blockers = {}
 	for _, p in ipairs(parts) do
-		local sz = p.Size
-		local hx = (math.abs(p.CFrame.RightVector.X) * sz.X + math.abs(p.CFrame.UpVector.X) * sz.Y + math.abs(p.CFrame.LookVector.X) * sz.Z) / 2
-		local bottom = p.Position.Y - (math.abs(p.CFrame.RightVector.Y) * sz.X + math.abs(p.CFrame.UpVector.Y) * sz.Y + math.abs(p.CFrame.LookVector.Y) * sz.Z) / 2
-		if bottom < 8 and p.Position.X - hx < 8 and p.Position.X + hx > -8 then table.insert(blockers, p.Name) end
+		local x0, x1, y0, y1, z0, z1 = extents(p)
+		if y0 < 8 and y1 > 0.3 and x0 < sx1 and x1 > sx0 and z0 < stripS and z1 > stripN then table.insert(blockers, p.Name) end
 	end
-	check("CreditsBoard keeps a walking aisle open (no part under 8 studs headroom inside |x| < 8)",
-		#blockers == 0, #blockers .. " blocking: " .. table.concat(blockers, ","))
+	check("CreditsBoard keeps a reading aisle at least 14 studs wide between the rows", stripS - stripN >= 14, string.format("%.1f studs", stripS - stripN))
+	check("CreditsBoard reading aisle has no part under 8 studs headroom inside it", #blockers == 0, #blockers .. " blocking: " .. table.concat(blockers, ","))
 
-	check("CreditsBoard has at least one SurfaceGui", #guis >= 1)
-	local texts, richText = {}, {}
-	for _, l in ipairs(labels) do
-		table.insert(texts, l.Text)
-		if l.RichText then table.insert(richText, l.Name) end
+	-- the entry path: a ground strip from Road E's east edge (x 6) to the plaza (x 24), on the aisle line (z about 310)
+	local pathX0, pathX1, pathOk, pathN = math.huge, -math.huge, true, 0
+	for _, p in ipairs(parts) do
+		if string.match(p.Name, "^EntryPath") then
+			local x0, x1, _, y1, z0, z1 = extents(p)
+			pathN += 1
+			pathX0, pathX1 = math.min(pathX0, x0), math.max(pathX1, x1)
+			if y1 > 0.3 or math.abs((z0 + z1) / 2 - aisleZ) > 1.5 or math.abs((z0 + z1) / 2 - 310) > 4 then pathOk = false end
+		end
 	end
+	check("CreditsBoard has an EntryPath ground strip from Road E's east edge (x 6) to the plaza (x 24), top y <= 0.3, centred on the aisle (z about 310)",
+		pathN >= 1 and pathOk and pathX0 <= 6.05 and pathX1 >= 23.95, string.format("%d parts, x %.1f..%.1f", pathN, pathX0, pathX1))
+
+	-- the entrance sign (text only), 2 benches and 4 to 6 lamps
+	local sign = board:FindFirstChild("EntrySign")
+	local signGui = sign and sign:FindFirstChild("EntrySignGui")
+	local signLabel = signGui and signGui:FindFirstChildWhichIsA("TextLabel", true)
+	local signOk = sign ~= nil and signGui ~= nil and signLabel ~= nil and signLabel.Text == "CREDITS AND SOURCES" and signLabel.TextScaled == false and signLabel.TextSize >= 14
+		and not string.find(signLabel.Text, "[\128-\255]") and select(3, extents(sign)) >= 8
+		and sign.CFrame:VectorToWorldSpace(Vector3.FromNormalId(signGui.Face)).X < -0.99 and not string.match(signGui.Name, "^CreditsGui")
+	check("entrance sign: text-only 'CREDITS AND SOURCES' (ASCII, fixed TextSize), bottom at 8+ studs, facing west toward Road E", signOk, signLabel and (signLabel.Text .. " " .. signLabel.TextSize) or "missing")
+	local benchN, lampN = 0, 0
+	for _, p in ipairs(parts) do
+		if p.Name == "BenchSeat" then benchN += 1 end
+		if p.Name == "LampGlobe" then lampN += 1 end
+	end
+	check("CreditsBoard has 2 benches and 4 to 6 lamps", benchN == 2 and lampN >= 4 and lampN <= 6, string.format("%d benches, %d lamps", benchN, lampN))
+
+	-- text
+	local texts, richBad = {}, {}
+	for _, l in ipairs(labels) do table.insert(texts, l.Text) end
 	local all = table.concat(texts, "\n")
-	check("CreditsBoard labels have RichText off", #richText == 0, table.concat(richText, ","))
+	local refMarked = {}
+	for i, ref in ipairs(CreditsData.references) do refMarked[i] = ref end
+	for _, l in ipairs(labels) do
+		local i = tonumber(string.match(l.Name, "^Ref(%d+)$"))
+		if i then
+			local ref = refMarked[i]
+			if not (ref and l.RichText == true and l.Text == ref.marked and unmark(l.Text) == ref.text) then table.insert(richBad, l.Name) end
+		elseif l.RichText then
+			table.insert(richBad, l.Name)
+		end
+	end
+	check("only the Ref<i> labels have RichText on (Text = references[i].marked, <i> and entities removed = text); every other label has it off", #richBad == 0, table.concat(richBad, ",", 1, math.min(#richBad, 5)))
 	local missing = {}
 	for _, entry in ipairs(CreditsData.sites) do
 		for _, url in ipairs(entry.urls) do
@@ -82,65 +181,77 @@ if board then
 		if l.TextScaled == false and l.TextSize < 14 then table.insert(tooSmall, l.Name) end
 	end
 	check("CreditsBoard labels are not set below 14 px", #tooSmall == 0, table.concat(tooSmall, ","))
+	check("CreditsBoard has at least one SurfaceGui", #guis >= 1)
 
-	-- Slice 3b: the board has six panels. 1-3 sites 1-9, 4 City Hall + project lines, 5-6 the 25 tour sources (they do not fit one panel
-	-- at a readable 16 px: measured 694 px of text for 484 px of canvas, so they are split in two).
-	local panelText = {}
+	-- panel contents: guis by k, labels by LayoutOrder (GetDescendants order is not guaranteed)
+	local panelLabels, nGuis = {}, 0
 	for _, g in ipairs(guis) do
 		local k = tonumber(string.match(g.Name, "^CreditsGui(%d+)$"))
 		if k then
-			local lines = {}
+			local ls = {}
 			for _, l in ipairs(g:GetDescendants()) do
-				if l:IsA("TextLabel") then table.insert(lines, l.Text) end
+				if l:IsA("TextLabel") then table.insert(ls, l) end
 			end
-			panelText[k] = table.concat(lines, "\n")
+			table.sort(ls, function(a, b) return a.LayoutOrder < b.LayoutOrder end)
+			panelLabels[k] = ls
+			nGuis += 1
 		end
 	end
-	local nPanels = 0
-	for _ in pairs(panelText) do nPanels += 1 end
-	check("CreditsBoard has six panels (CreditsGui1..6)", nPanels == 6 and panelText[6] ~= nil, tostring(nPanels))
-	local p4 = panelText[4] or ""
-	local site10 = CreditsData.sites[10]
-	local p4urls = site10 ~= nil
-	if site10 then
-		for _, url in ipairs(site10.urls) do if not string.find(p4, url, 1, true) then p4urls = false end end
+	check("CreditsBoard has CreditsGui1..N, one per panel", nGuis == nPanels and nPanels >= 8 and panelLabels[nPanels] ~= nil, string.format("%d guis, %d panels", nGuis, nPanels))
+	local pl1 = panelLabels[1] or {}
+	check("panel 1 starts with the title CREDITS AND SOURCES (32 px) and the identity line (24 px)",
+		pl1[1] ~= nil and pl1[1].Text == "CREDITS AND SOURCES" and pl1[1].TextSize == 32 and pl1[2] ~= nil and pl1[2].Text == CreditsData.identityText() and pl1[2].TextSize == 24,
+		pl1[1] and (pl1[1].Text .. " " .. pl1[1].TextSize) or "no labels")
+	local missingNotes = {}
+	for _, list in ipairs({ CreditsData.projectLines, CreditsData.noticeLines }) do
+		for _, line in ipairs(list) do
+			local n = 0
+			for _, l in ipairs(pl1) do if l.Text == line and l.TextSize == 19 then n += 1 end end
+			if n ~= 1 then table.insert(missingNotes, string.sub(line, 1, 40)) end
+		end
 	end
-	check("panel 4 names City Hall (site 10) and carries its urls", p4urls and string.find(p4, "10. ", 1, true) ~= nil)
-	local missingProject = {}
-	for _, line in ipairs(CreditsData.projectLines) do
-		if not string.find(p4, line, 1, true) then table.insert(missingProject, line) end
+	check("panel 1 carries every projectLines and every noticeLines line, once each, at 19 px", #missingNotes == 0 and #CreditsData.projectLines >= 2 and #CreditsData.noticeLines >= 4, table.concat(missingNotes, " ; "))
+	local headersOk, headerBad = true, {}
+	for k = 2, nPanels do
+		local first = panelLabels[k] and panelLabels[k][1]
+		if not (first and first.Text == string.format("REFERENCES (%d of %d)", k - 1, nPanels - 1) and first.TextSize == 32) then
+			headersOk = false
+			table.insert(headerBad, "panel " .. k)
+		end
 	end
-	check("panel 4 carries every CreditsData.projectLines line", #missingProject == 0 and #CreditsData.projectLines >= 2, table.concat(missingProject, " ; "))
-	local src56 = (panelText[5] or "") .. "\n" .. (panelText[6] or "")
-	check("panel 5 has the Tour sources header", string.find(panelText[5] or "", "TOUR SOURCES", 1, true) ~= nil)
-	local missingSrc = {}
-	for _, s in ipairs(CreditsData.tourSources) do
-		local line = "[" .. s.ref .. "] " .. s.text
-		if not string.find(src56, line, 1, true) and not string.find(src56, s.url, 1, true) then table.insert(missingSrc, "[" .. s.ref .. "]") end
+	check("panels 2..N start with the header REFERENCES (k of N-1) at 32 px", headersOk and nPanels >= 8, table.concat(headerBad, ","))
+	local seq, refOnP1 = {}, 0
+	for k = 1, nPanels do
+		for _, l in ipairs(panelLabels[k] or {}) do
+			local i = tonumber(string.match(l.Name, "^Ref(%d+)$"))
+			if i then
+				table.insert(seq, i)
+				if k == 1 then refOnP1 += 1 end
+			end
+		end
 	end
-	check("panels 5-6 carry every tourSources text (or url)", #missingSrc == 0 and #CreditsData.tourSources == 25, #missingSrc .. " missing: " .. table.concat(missingSrc, ","))
-	local missingDom = {}
-	for _, s in ipairs(CreditsData.tourSources) do
-		local dom = string.match(s.url, "^https?://([^/]+)")
-		if not dom or not string.find(src56, dom, 1, true) then table.insert(missingDom, "[" .. s.ref .. "]") end
+	local orderOk = #seq == #CreditsData.references and #seq == 78 and refOnP1 == 0
+	for j, i in ipairs(seq) do if i ~= j then orderOk = false end end
+	check("labels Ref1..Ref78 appear once each, in order across panels 2..N (none on panel 1)", orderOk, #seq .. " Ref labels, first mismatch near " .. tostring(seq[1]))
+	local refBad, refSizeBad = {}, {}
+	for i, ref in ipairs(CreditsData.references) do
+		local n = 0
+		for _, l in ipairs(labels) do if l.Text == ref.marked then n += 1 end end
+		if n ~= 1 then table.insert(refBad, "#" .. i) end
 	end
-	check("panels 5-6 show each tour source's domain", #missingDom == 0, table.concat(missingDom, ","))
+	for _, l in ipairs(labels) do
+		if string.match(l.Name, "^Ref%d+$") and l.TextSize ~= 16 then table.insert(refSizeBad, l.Name) end
+	end
+	check("every references[i].marked string appears in exactly one label", #refBad == 0, table.concat(refBad, ",", 1, math.min(#refBad, 5)))
 	local scaled = {}
 	for _, l in ipairs(labels) do if l.TextScaled then table.insert(scaled, l.Name) end end
 	check("CreditsBoard labels never use TextScaled (fixed TextSize)", #scaled == 0, table.concat(scaled, ","))
-	local smallTail = {}
-	for _, g in ipairs(guis) do
-		local k = tonumber(string.match(g.Name, "^CreditsGui(%d+)$"))
-		if k and k >= 5 then
-			for _, l in ipairs(g:GetDescendants()) do
-				if l:IsA("TextLabel") and l.TextSize < 16 then table.insert(smallTail, l.Name) end
-			end
-		end
-	end
-	check("tour-source panels use at least 16 px text", #smallTail == 0 and panelText[5] ~= nil, table.concat(smallTail, ","))
+	check("reference labels are exactly 16 px", #refSizeBad == 0 and #seq == 78, table.concat(refSizeBad, ",", 1, math.min(#refSizeBad, 5)))
 
-	-- every panel's text must fit its canvas: measured with TextService, so a long url cannot clip silently
+	-- every panel's text must fit its canvas: measured with TextService (RichText measured as RichText when the property exists), so a long url cannot clip silently
 	local TextService = game:GetService("TextService")
+	local probe = Instance.new("GetTextBoundsParams")
+	local hasRich = pcall(function() probe.RichText = true end)
 	local overflow = {}
 	for _, g in ipairs(guis) do
 		local part = g.Adornee or g.Parent
@@ -159,7 +270,10 @@ if board then
 				if l:IsA("TextLabel") then
 					local p = Instance.new("GetTextBoundsParams")
 					p.Text, p.Font, p.Size, p.Width = l.Text, l.FontFace, l.TextSize, width
-					total += TextService:GetTextBoundsAsync(p).Y
+					if l.RichText then
+						if hasRich then p.RichText = true else p.Text = unmark(l.Text) end
+					end
+					total += TextService:GetTextBoundsAsync(p).Y + ((l.RichText and not hasRich) and 4 or 0)
 					n += 1
 				end
 			end
@@ -247,14 +361,16 @@ if welcome then
 	check("WelcomeClient never turns RichText on", string.find(src, "RichText = true", 1, true) == nil)
 	check("WelcomeClient has a Start button", string.find(src, "Start", 1, true) ~= nil)
 	check("WelcomeClient switches its hint for touch devices", string.find(src, "TouchEnabled", 1, true) ~= nil)
-	-- Slice 3b: ten places, and the credits board directions are true from the City Hall spawn. The board stands at the south end of
-	-- the Cathedral plaza (CreditsBoard at z ~205, the Cathedral jeep stop at (-20, 30)), not "south of the spawn" any more.
+	-- Slice 3b: ten places, and the credits board directions are true from the City Hall spawn. Credits job B (2026-10-27): the board moved from the
+	-- south end of the Cathedral plaza to the Credits Plaza (x 24..150, z 274..346), so the old pin "credits board at the south end of the Cathedral plaza"
+	-- (the board is no longer there) is replaced by the new Step4 line below, and the old string must be gone; "not south of the spawn" stays.
 	check("WelcomeClient says 'Ten places'", string.find(src, "Ten places", 1, true) ~= nil)
 	check("WelcomeClient no longer says 'Nine places'", string.find(src, "Nine places", 1, true) == nil)
 	check("WelcomeClient says 'Collect all 10 stamps'", string.find(src, "Collect all 10 stamps", 1, true) ~= nil)
 	check("WelcomeClient no longer says 'all 9 stamps'", string.find(src, "all 9 stamps", 1, true) == nil)
-	check("WelcomeClient directions put the credits board at the Cathedral plaza",
-		string.find(src, "credits board at the south end of the Cathedral plaza", 1, true) ~= nil)
+	check("WelcomeClient Step4 sends players to the credits board in the Credits Plaza, south of the Cathedral",
+		string.find(src, "4. Photo sources are on the credits board in the Credits Plaza, south of the Cathedral. Take the jeepney, exit by a side gate, walk south.", 1, true) ~= nil)
+	check("WelcomeClient no longer places the credits board at the south end of the Cathedral plaza", string.find(src, "south end of the Cathedral plaza", 1, true) == nil)
 	check("WelcomeClient no longer places the credits board 'south of the spawn'", string.find(src, "south of the spawn", 1, true) == nil)
 end
 local passport = sps and sps:FindFirstChild("PassportClient")

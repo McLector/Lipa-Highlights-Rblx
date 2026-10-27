@@ -77,6 +77,12 @@ do
 	if hrp then route("spawn -> Ate Joy", spawnPos, hrp.Position + SiteData.facingVector(row.facing) * 6, 40) end
 end
 
+-- Credits job B (2026-10-27): the Credits Plaza stands south of the Cathedral, east of Road E. From Road E's start (0, 225) the walk to the plaza's entrance
+-- (30, 3, 310), just inside the sign, is the Road E leg plus the EntryPath: measured by PathfindingService in Play on 2026-10-27 at 97.5 studs (the straight
+-- line is 90.1), so the cap is that plus 15 percent = 112 (112.1, rounded down). Unlike the other routes it is also walkable over bare grass, so it was
+-- never red before the board was built; it guards against the entrance being walled in.
+route("Road E start (0, 225) -> Credits Plaza entrance (30, 3, 310)", Vector3.new(0, 3, 225), Vector3.new(30, 3, 310), 112)
+
 -- The core shops: every Guide must be reachable on foot from the spawn (6 studs in front of the Guide, along its facing).
 for _, id in ipairs({ 2, 3, 4 }) do
 	local row = SiteData.byId(id)

@@ -1,9 +1,9 @@
 -- Tests for ReplicatedStorage.LipaShared.CreditsData (static credits board data).
 -- Structural only: the photo set and the student identity are both going to change before Ship, so these tests do not
--- pin a URL count or the identity text. The md-to-module equality is checked by a disk-side script, not here.
+-- pin a URL count; the identity is pinned once, in the owner-supplied case (2026-10-27). The md-to-module equality is checked by a disk-side script, not here.
 -- Contract: sites = { { id, urls = { "https://..." } } } ids 1..10 in order, >= 1 url each, no duplicate within a site, no spaces;
--- projectLines = ASCII strings (City Hall photo source, blueprint note); tourSources = 25 { ref, text, url? } in ref order;
--- identity = { name, course, section, pending }; identityText() reads "TO BE ADDED" while pending, else name - course - section;
+-- projectLines = 2 ASCII strings (blueprints made with Gemini, reference photos), each citing an APA reference by author and letter; tourSources = 25 { ref, text, url? } in ref order;
+-- identity = { name, course, section, pending } (owner-supplied 2026-10-27, no longer pending); identityText() reads "TO BE ADDED" while pending, else name - course - section;
 -- boardLines() returns the printable lines for the board (title, 10 site blocks, identity slot).
 return function(t)
 	local CreditsData = require(game.ReplicatedStorage.LipaShared.CreditsData:Clone())
@@ -152,15 +152,41 @@ return function(t)
 		expect.truthy(found)
 	end)
 
-	t.test("projectLines has the City Hall photo line and the blueprint line, exactly, in ASCII", function()
+	-- Credits job B (2026-10-27, owner-approved): the old pin (exactly 2 lines, "City Hall reference photos: Google Street View." and "Site blueprints:
+	-- AI-assisted concept drawings prepared by the group; used for massing only.") is replaced because the owner supplied the real credit lines:
+	-- the blueprints were made with Gemini and the reference photos come from public images, Google Maps, Google Earth, Street View and the Ayala Land article.
+	t.test("projectLines has the blueprint (Gemini) line and the reference photos line, exactly, in ASCII", function()
 		local lines = CreditsData.projectLines
 		expect.equal(type(lines), "table")
 		expect.equal(#lines, 2)
-		expect.equal(lines[1], "City Hall reference photos: Google Street View.")
-		expect.equal(lines[2], "Site blueprints: AI-assisted concept drawings prepared by the group; used for massing only.")
+		expect.equal(lines[1], "Site blueprints: AI-assisted drawings made by the group with Gemini (Google, n.d.-a).")
+		expect.equal(lines[2], "Reference photos: public images of the sites, Google Maps, Google Earth and Street View, and the Ayala Land City Hall article (Ayala Land, n.d.-c); used only as visual reference.")
 		for _, line in ipairs(lines) do
 			expect.truthy(ascii(line))
 		end
+	end)
+
+	t.test("the letters in projectLines point at the right references: Google n.d.-a is Gemini and Ayala Land n.d.-c is the City Hall article", function()
+		local google, ayala = nil, nil
+		for _, ref in ipairs(CreditsData.references) do
+			if string.sub(ref.text, 1, #"Google. (n.d.-a).") == "Google. (n.d.-a)." then google = ref.text end
+			if string.sub(ref.text, 1, #"Ayala Land. (n.d.-c).") == "Ayala Land. (n.d.-c)." then ayala = ref.text end
+		end
+		expect.truthy(google ~= nil and string.find(google, "Gemini", 1, true) ~= nil)
+		expect.truthy(ayala ~= nil and string.find(ayala, "Lipa City inaugurates new City Hall at Areza", 1, true) ~= nil)
+		expect.truthy(string.find(CreditsData.projectLines[1], "(Google, n.d.-a)", 1, true) ~= nil)
+		expect.truthy(string.find(CreditsData.projectLines[2], "(Ayala Land, n.d.-c)", 1, true) ~= nil)
+	end)
+
+	t.test("identity holds the four student names, the course and the section, and is no longer pending (owner-supplied 2026-10-27)", function()
+		local id = CreditsData.identity
+		expect.equal(id.name, "Casanova, Nino Gabriel C.; Cruzat, Shana Czane M.; Gonzales, Khatrina Joice M.; Morada, Myre Lector")
+		expect.equal(id.course, "Art Appreciation")
+		expect.equal(id.section, "C4A")
+		expect.equal(id.pending, false)
+		expect.truthy(ascii(id.name) and ascii(id.course) and ascii(id.section))
+		expect.equal(CreditsData.identityText(), id.name .. " - Art Appreciation - C4A")
+		expect.falsy(string.find(CreditsData.identityText(), "TO BE ADDED", 1, true))
 	end)
 
 	t.test("tourSources has the 25 PDF references, refs 1..25 in order", function()

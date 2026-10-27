@@ -434,6 +434,26 @@ do
 	check("B3c-1 control: the cells just outside the repainted plaza ground are not Pavement", #spill == 0, table.concat(spill, " "))
 end
 
+-- 6c. The Credits Plaza (Slice 4): CreditsPaving x 24..150, z 274..346 and EntryPath x 6..24, z 306..314 stand on terrain that builders/roads_extra.luau PAVED repaints Grass -> Pavement
+-- (x 24..152, z 272..348 and x 4..24, z 304..316), so no grass blades show through the floor. Road E's asphalt at x 2 is not touched (ReplaceMaterial only swaps Grass).
+do
+	local function notMat(points, mat)
+		local bad = {}
+		for _, p in ipairs(points) do
+			if cellMaterial(p[1], p[2]) ~= mat then table.insert(bad, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
+		end
+		return bad
+	end
+	local plaza = notMat({ { 30, 280 }, { 90, 310 }, { 140, 340 }, { 60, 340 }, { 120, 285 }, { 36, 330 } }, Enum.Material.Pavement)
+	check("Credits Plaza ground (x 24..152, z 272..348) is Pavement at 6 points", #plaza == 0, #plaza .. " not pavement: " .. table.concat(plaza, " ", 1, math.min(#plaza, 3)))
+	local entry = notMat({ { 10, 310 }, { 18, 310 } }, Enum.Material.Pavement)
+	check("Credits EntryPath ground (x 4..24, z 304..316) is Pavement at 2 points", #entry == 0, #entry .. " not pavement: " .. table.concat(entry, " ", 1, math.min(#entry, 3)))
+	local south = notMat({ { 40, 360 } }, Enum.Material.Grass)
+	check("control: the cell just south of the Credits Plaza repaint (40,360) is still Grass", #south == 0, table.concat(south, " "))
+	local road = notMat({ { 2, 310 } }, Enum.Material.Asphalt)
+	check("control: Road E asphalt at (2,310) beside the EntryPath is still Asphalt", #road == 0, table.concat(road, " "))
+end
+
 -- 7. Entrance roads to the Cathedral side stairs (Slice 4 B3c-0b, owner markup) ---------------------------------------------------
 -- WEST_ENTRY / EAST_ENTRY run from each bypass centre line straight along the stairs' centre z to the foot of SideStairsW / SideStairsE
 -- (the lowest tread is the part with the largest |x|; its outer edge is the foot). They are the only roads allowed inside the slot's 10 percent
@@ -503,6 +523,28 @@ do
 			check("B3c-0b: " .. s.road .. " can be checked (stair, road and bypass found)", false, tostring(st) .. " " .. tostring(road) .. " " .. tostring(bypass))
 		end
 	end
+end
+
+-- Credits job B (2026-10-27): the CreditsBoard stands in the Credits Plaza (x 24..150, z 274..346), east of Road E. Every road body (centre line widened by
+-- width / 2 + 4, the margin rule of section 1) must stay clear of every board part, so no panel, post, bench or lamp stands on or beside a road. The one
+-- allowed contact is the EntryPath ground strip (a part named EntryPath* whose top is at y <= 0.3) that links Road E's east edge (x 6) to the plaza.
+do
+	local board = workspace:FindFirstChild("World") and workspace.World:FindFirstChild("CreditsBoard")
+	local near = {}
+	if board then
+		for _, road in ipairs(RoadData.all()) do
+			for i = 1, #road.pts - 1 do
+				local wide = segRect(road.pts[i], road.pts[i + 1], road.w / 2 + 4)
+				for _, d in ipairs(board:GetDescendants()) do
+					if d:IsA("BasePart") and not (string.match(d.Name, "^EntryPath") and d.Position.Y + d.Size.Y / 2 <= 0.3) and overlap(wide, partRect(d)) then
+						table.insert(near, d.Name .. "@" .. road.name)
+					end
+				end
+			end
+		end
+	end
+	check("Credits Plaza: no CreditsBoard part (EntryPath ground strip excepted) is within 4 studs of any road body", board ~= nil and #near == 0,
+		board and table.concat(near, ", ", 1, math.min(#near, 4)) or "CreditsBoard missing")
 end
 
 return HttpService:JSONEncode(results)

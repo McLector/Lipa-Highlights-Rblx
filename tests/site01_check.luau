@@ -1292,4 +1292,28 @@ do
 		string.format("total %d, vehicles %d, LotMarkings %d, EastGarden %d", totalParts, vehicleParts, lotParts, gardenParts))
 end
 
+-- Credits job B (2026-10-27): the CreditsBoard moved out of the Cathedral plaza to the Credits Plaza (x 24..150, z 274..346). The old keep-out assertions
+-- (the board at z 203.8..206.2 needs 4+ studs round it) pass trivially now and are left as they are; this one states the new rule: no board part lies within
+-- 4 studs of the Site01 model bounds (x -128..128, z -101..217).
+do
+	local board = workspace:FindFirstChild("World") and workspace.World:FindFirstChild("CreditsBoard")
+	local near = {}
+	if board then
+		for _, d in ipairs(board:GetDescendants()) do
+			if d:IsA("BasePart") then
+				local x0, x1, z0, z1 = math.huge, -math.huge, math.huge, -math.huge
+				for _, a in ipairs({ -0.5, 0.5 }) do
+					for _, b in ipairs({ -0.5, 0.5 }) do
+						local c = d.CFrame:PointToWorldSpace(Vector3.new(a * d.Size.X, 0, b * d.Size.Z))
+						x0, x1, z0, z1 = math.min(x0, c.X), math.max(x1, c.X), math.min(z0, c.Z), math.max(z1, c.Z)
+					end
+				end
+				if x0 < 128 + 4 and x1 > -128 - 4 and z0 < 217 + 4 and z1 > -101 - 4 then table.insert(near, string.format("%s z %.1f..%.1f", d.Name, z0, z1)) end
+			end
+		end
+	end
+	check("Credits Plaza: no CreditsBoard part lies within 4 studs of the Site01 bounds (x -128..128, z -101..217)", board ~= nil and #near == 0,
+		board and table.concat(near, ", ", 1, math.min(#near, 4)) or "CreditsBoard missing")
+end
+
 return HttpService:JSONEncode(results)
