@@ -84,13 +84,17 @@ end
 route("Road E start (0, 225) -> Credits Plaza entrance (30, 3, 310)", Vector3.new(0, 3, 225), Vector3.new(30, 3, 310), 112)
 
 -- The core shops: every Guide must be reachable on foot from the spawn (6 studs in front of the Guide, along its facing).
+-- Caps by site id. Market and Cafe keep 700. Lomi was 697.2 against 700 (2.8 studs of room, handoff 028); after the Cathedral compound grew and the Credits
+-- Plaza was added, a fresh Studio session measured 700.17 (the pathfinding mesh is rebuilt on every open), so Lomi's cap is that plus 15 percent = 805
+-- (805.2, rounded down), the owner-authorised rule for walking caps (2026-10-27).
+local SHOP_CAP = { [2] = 700, [3] = 805, [4] = 700 }
 for _, id in ipairs({ 2, 3, 4 }) do
 	local row = SiteData.byId(id)
 	local m = sites and sites:FindFirstChild(string.format("Site%02d_%s", row.id, row.key))
 	local hrp = m and m:FindFirstChild("Guide") and m.Guide:FindFirstChild("HumanoidRootPart")
 	check(row.key .. " Guide exists", hrp ~= nil)
 	if hrp then
-		route("spawn -> " .. row.key .. " Guide", spawnPos, hrp.Position + SiteData.facingVector(row.facing) * 6, 700)
+		route("spawn -> " .. row.key .. " Guide", spawnPos, hrp.Position + SiteData.facingVector(row.facing) * 6, SHOP_CAP[id])
 	end
 end
 
