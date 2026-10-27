@@ -47,7 +47,7 @@ return function(t)
 	-- (Market -230 -> -330, Lomi 180 -> 292, Cafe 160 -> 272; the user's call after seeing the town core crowded).
 	t.test("positions and facings match the layout", function()
 		local expected = {
-			[1] = { 0, 0, "S" }, [2] = { -330, 160, "E" }, [3] = { 292, 140, "W" },
+			[1] = { 0, 57.5, "S" }, [2] = { -330, 160, "E" }, [3] = { 292, 140, "W" },
 			[4] = { 272, -160, "W" }, [5] = { -300, -600, "S" }, [6] = { 550, -650, "SW" },
 			[7] = { 700, 240, "W" }, [8] = { 560, 720, "NW" }, [9] = { -600, 550, "NE" },
 			[10] = { -250, -260, "E" },
@@ -329,8 +329,8 @@ return function(t)
 	end)
 
 	-- The old formulas, restated independently: guide 30 studs ahead, jeep stop 20 studs to the right of the guide.
-	t.test("the other nine rows keep the old guidePos and jeepStopPos formulas", function()
-		for id = 1, 9 do
+	t.test("rows 2 to 9 keep the old guidePos and jeepStopPos formulas", function()
+		for id = 2, 9 do
 			local s = SiteData.byId(id)
 			expect.equal(s.guideLocal, nil)
 			expect.equal(s.jeepLocal, nil)
@@ -346,8 +346,6 @@ return function(t)
 			end
 		end
 		-- Pinned values so a change to both sides of the comparison cannot hide a regression.
-		expect.near((SiteData.guidePos(1) - Vector3.new(0, 0, 30)).Magnitude, 0, 1e-6)
-		expect.near((SiteData.jeepStopPos(1) - Vector3.new(-20, 0, 30)).Magnitude, 0, 1e-6)
 		expect.near((SiteData.guidePos(7) - Vector3.new(670, 0, 240)).Magnitude, 0, 1e-6)
 	end)
 
@@ -356,9 +354,30 @@ return function(t)
 		local p = SiteData.localToWorld(10, 27, 5) -- facing E: forward +X, right +Z
 		expect.near(p.X, -250 + 27, 1e-6)
 		expect.near(p.Z, -260 + 5, 1e-6)
-		local q = SiteData.localToWorld(1, 30, 0) -- facing S: forward +Z
-		expect.near((q - Vector3.new(0, 0, 30)).Magnitude, 0, 1e-6)
+		local q = SiteData.localToWorld(1, 30, 0) -- facing S: forward +Z, origin (0, 57.5) since Cathedral south growth
+		expect.near((q - Vector3.new(0, 0, 87.5)).Magnitude, 0, 1e-6)
 		expect.equal(SiteData.localToWorld(11, 0, 0), nil)
+	end)
+
+	-- Cathedral south growth (Slice 4 B3b): the slot centre moved to (0, 57.5) and grew to 240 x 315 (z -100..215); the Guide, the
+	-- jeep stop and the InfoPanel keep their world positions through guideLocal / panelLocal. Literal values, on purpose.
+	t.test("row 1: slot (0,57.5) 240 x 315, Guide (0,30), JeepStop (-20,30), InfoPanel (12,24) stay put", function()
+		local c = SiteData.byId(1)
+		expect.near(c.pos.X, 0, 1e-6)
+		expect.near(c.pos.Z, 57.5, 1e-6)
+		expect.near(c.size.X, 240, 1e-6)
+		expect.near(c.size.Y, 315, 1e-6)
+		expect.equal(c.facing, "S")
+		expect.equal(typeof(c.guideLocal), "Vector2")
+		expect.equal(c.jeepLocal, nil)
+		expect.equal(typeof(c.panelLocal), "Vector2")
+		expect.near((SiteData.guidePos(1) - Vector3.new(0, 0, 30)).Magnitude, 0, 1e-6)
+		expect.near((SiteData.jeepStopPos(1) - Vector3.new(-20, 0, 30)).Magnitude, 0, 1e-6)
+		local pp = SiteData.localToWorld(1, c.panelLocal.X, c.panelLocal.Y)
+		expect.near((pp - Vector3.new(12, 0, 24)).Magnitude, 0, 1e-6)
+		-- the slot reaches z 215 (south) and still starts at z -100 (Road A's start)
+		expect.near(c.pos.Z - c.size.Y / 2, -100, 1e-6)
+		expect.near(c.pos.Z + c.size.Y / 2, 215, 1e-6)
 	end)
 
 	-- Reserved zones in City Hall's local frame: steps lx 5..25, spawn pad lx 30..50 / lz -10..10,

@@ -15,6 +15,7 @@
 -- 5. Terrain: the new centre lines are Asphalt; the forecourt ground x -228..-148, z -332..-188 is Pavement and the cells around it are not.
 local HttpService = game:GetService("HttpService")
 local RoadData = require(game.ReplicatedStorage.LipaShared.RoadData:Clone())
+local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 
 local results = { passed = 0, failed = 0, failures = {}, info = {} }
 local function check(name, cond, detail)
@@ -181,7 +182,7 @@ do
 	local eastX = RoadData.NEW_ROADS[3].pts[1][1]
 	check("EAST_BYPASS crosses Road C (it is a junction)", onRoad({ eastX, 0 }, RoadData.ROADS, nil) == "C_to_Farm", tostring(eastX))
 end
-check("RoadData.all() lists the 8 original roads then the 3 new ones", #all == #RoadData.ROADS + #RoadData.NEW_ROADS and #RoadData.NEW_ROADS == 3 and #RoadData.ROADS == 8, tostring(#all))
+check("RoadData.all() lists the 8 original roads then the 5 new ones (SPUR, two bypasses, two south links)", #all == #RoadData.ROADS + #RoadData.NEW_ROADS and #RoadData.NEW_ROADS == 5 and #RoadData.ROADS == 8, tostring(#all))
 for _, r in ipairs(RoadData.NEW_ROADS) do check(r.name .. " is 12 wide", r.w == 12) end
 
 -- 4. Reachability: graph of the centre lines ---------------------------------------------------------------------------------
@@ -282,6 +283,62 @@ if spawn then
 	local adj0 = buildGraph(RoadData.ROADS, attachments())
 	local dist0 = shortest(adj0, "spawn")
 	check("negative control: without the new roads the spawn cannot reach the Cathedral Guide", dist0["guide:Site01_Cathedral"] == nil)
+end
+
+-- 6. Cathedral south growth (Slice 4 B3b) -------------------------------------------------------------------------------------
+-- The Cathedral slot (SiteData row 1) is 240 x 315 at (0, 57.5): x -120..120, z -100..215; BuildCheck allows the model 10 percent of the
+-- full extent beyond it on each side (x -144..144, z -131.5..246.5). No road may enter the slot, and no road may enter the margin zone
+-- except the three that START at the compound's edge: A (north edge, (0,-100)), C (east edge, (120,0)) and E (south edge, (0,225)).
+do
+	local c = SiteData.byId(1)
+	local slot = { x0 = c.pos.X - c.size.X / 2, x1 = c.pos.X + c.size.X / 2, z0 = c.pos.Z - c.size.Y / 2, z1 = c.pos.Z + c.size.Y / 2 }
+	local zone = expand(slot, 0.1 * c.size.X, 0.1 * c.size.Y)
+	check("Cathedral slot is x -120..120, z -100..215", slot.x0 == -120 and slot.x1 == 120 and slot.z0 == -100 and slot.z1 == 215,
+		string.format("x[%.1f,%.1f] z[%.1f,%.1f]", slot.x0, slot.x1, slot.z0, slot.z1))
+	local EDGE_STARTS = { A_to_Carmel = true, C_to_Farm = true, E_to_Tagbakin = true }
+	-- the road body without end caps (the sides are w/2; the ends are the segment ends)
+	local function body(a, b, w)
+		if a[1] == b[1] then return { x0 = a[1] - w / 2, x1 = a[1] + w / 2, z0 = math.min(a[2], b[2]), z1 = math.max(a[2], b[2]) } end
+		return { x0 = math.min(a[1], b[1]), x1 = math.max(a[1], b[1]), z0 = a[2] - w / 2, z1 = a[2] + w / 2 }
+	end
+	for _, road in ipairs(all) do
+		for i = 1, #road.pts - 1 do
+			local r = body(road.pts[i], road.pts[i + 1], road.w)
+			check(road.name .. " seg " .. i .. " (centre line and both edges) stays out of the Cathedral slot", not overlap(r, slot),
+				string.format("road x[%.0f,%.0f] z[%.0f,%.0f]", r.x0, r.x1, r.z0, r.z1))
+			if not (EDGE_STARTS[road.name] and i == 1) then
+				check(road.name .. " seg " .. i .. " stays out of the slot's 10 percent margin zone", not overlap(r, zone),
+					string.format("road x[%.0f,%.0f] z[%.0f,%.0f] vs zone x[%.1f,%.1f] z[%.1f,%.1f]", r.x0, r.x1, r.z0, r.z1, zone.x0, zone.x1, zone.z0, zone.z1))
+			end
+		end
+	end
+	local byName = {}
+	for _, r in ipairs(all) do byName[r.name] = r end
+	local e, f, g = byName.E_to_Tagbakin, byName.F_to_Market, byName.G_to_Lomi
+	check("Road A starts flush on the slot's north edge (0,-100)", byName.A_to_Carmel.pts[1][1] == 0 and byName.A_to_Carmel.pts[1][2] == slot.z0)
+	check("Road E starts on the slot's south edge side: (0, 225), 10 studs south of the slot", e.pts[1][1] == 0 and e.pts[1][2] == slot.z1 + 10,
+		e.pts[1][1] .. "," .. e.pts[1][2])
+	local wb, eb = byName.WEST_BYPASS, byName.EAST_BYPASS
+	check("Road F starts at the west bypass end (-170,160) and runs west to (-228,160)", f.pts[1][1] == wb.pts[#wb.pts][1] and f.pts[1][2] == wb.pts[#wb.pts][2]
+		and f.pts[1][1] == -170 and f.pts[2][1] == -228 and f.pts[2][2] == 160, f.pts[1][1] .. "," .. f.pts[1][2])
+	check("Road G starts at the east bypass end (165,140) and runs east to (240,140)", g.pts[1][1] == eb.pts[#eb.pts][1] and g.pts[1][2] == eb.pts[#eb.pts][2]
+		and g.pts[1][1] == 165 and g.pts[2][1] == 240 and g.pts[2][2] == 140, g.pts[1][1] .. "," .. g.pts[1][2])
+	-- the south links join each bypass to Road E (the only way the Market, Lomi King and Tagbakin sides of the graph connect to Road E now)
+	for _, nm in ipairs({ "WEST_LINK", "EAST_LINK" }) do
+		local l = byName[nm]
+		check(nm .. " exists and is 12 wide", l ~= nil and l.w == 12)
+		if l then
+			local last = l.pts[#l.pts]
+			check(nm .. " ends on Road E", onRoad(last, { e }, nil) == "E_to_Tagbakin", last[1] .. "," .. last[2])
+			check(nm .. " starts on a bypass end", onRoad(l.pts[1], { wb, eb }, nil) ~= nil, l.pts[1][1] .. "," .. l.pts[1][2])
+		end
+	end
+	-- Road E must be connected to the rest of the network: the Tagbakin Guide is reachable from the spawn (checked in section 4 too)
+	if spawn then
+		local dist = shortest(buildGraph(all, attachments()), "spawn")
+		check("spawn reaches the Tagbakin Guide over the roads", dist["guide:Site09_Tagbakin"] ~= nil)
+		table.insert(results.info, "graph spawn -> Site09_Tagbakin: " .. (dist["guide:Site09_Tagbakin"] and fmt(dist["guide:Site09_Tagbakin"]) or "unreachable"))
+	end
 end
 
 -- 5. Terrain ---------------------------------------------------------------------------------------------------------------

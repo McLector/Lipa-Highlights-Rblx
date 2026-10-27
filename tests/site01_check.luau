@@ -27,11 +27,12 @@ check("Site01_Cathedral exists", site ~= nil)
 if not site then
 	return HttpService:JSONEncode(results)
 end
--- Every coordinate below is site-local = world, so the pivot must sit at the SiteData pos (0, 0, 0) facing +Z. A stray drag in
--- Studio once moved the whole site by (-57.5, 20.3) and showed up only as a dozen unrelated failures.
+-- Every coordinate below is world (the builder works in world axes), and the pivot must sit at the SiteData pos facing +Z. A stray
+-- drag in Studio once moved the whole site by (-57.5, 20.3) and showed up only as a dozen unrelated failures. Slice 4 B3b: the slot
+-- grew south (centre z 57.5), so the pivot moved to (0, 0, 57.5) by a WorldPivot write; no part moved.
 do
 	local pv = site:GetPivot()
-	check("site pivot is at the SiteData pos (0, 0, 0), facing +Z", pv.Position.Magnitude < 0.01 and pv.LookVector:Dot(Vector3.new(0, 0, 1)) > 0.9999,
+	check("site pivot is at the SiteData pos (0, 0, 57.5), facing +Z", (pv.Position - Vector3.new(0, 0, 57.5)).Magnitude < 0.01 and pv.LookVector:Dot(Vector3.new(0, 0, 1)) > 0.9999,
 		string.format("(%.2f, %.2f, %.2f) look %s", pv.X, pv.Y, pv.Z, tostring(pv.LookVector)))
 end
 
