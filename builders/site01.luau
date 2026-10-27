@@ -39,7 +39,7 @@ return function()
 	local UPPER = CF(0, RAISE, 0) -- origin of every component that stands on the podium
 	local REPLACED = {
 		Block = true, Structure = true, Plaza = true, PlazaBuildings = true, PlazaPeople = true, ParkedVehicles = true,
-		WelcomeArch = true, Benches = true, Lamps = true, Flagpole = true, EventStage = true, Podium = true, PlazaLower = true, ParishWing = true,
+		WelcomeArch = true, Benches = true, Lamps = true, Flagpole = true, EventStage = true, Podium = true, PlazaLower = true, ParishWing = true, ChurchAnnex = true, WestFence = true, -- ParishWing is gone (B3c-0) but its name stays here so old copies are cleaned
 	}
 
 	-- Colours. Walls and trim: Lipa_Cathedral_2024-03-27 / facade_2023-04-05 (butter yellow, mauve-grey). Domes: the
@@ -484,8 +484,12 @@ return function()
 	local function buildPlazaUpper(ctx)
 		-- local y 0 is the podium top. Round 2: the forecourt is one big asphalt lot x -100..64 with painted bays in two rows (the plaza drawing);
 		-- the walled garden is the east end (x 66..92), the monument mound is at the far corner (x 95..119).
-		ctx:part("ApronPaving", V(168, 0.1, WALL_Z - 10), CF(-20, 0.05, (WALL_Z + 10) / 2), ASPHALT, Enum.Material.Asphalt) -- x -104..64, z 10..48: from the parish wing to the garden wall
-		ctx:part("ApronPavingNW", V(54, 0.1, 56), CF(-77, 0.05, -18), ASPHALT, Enum.Material.Asphalt) -- x -104..-50, z -46..10: the asphalt beside the tower (round 4: replaces the bare lawn)
+		ctx:part("ApronPaving", V(183.5, 0.1, WALL_Z - 10), CF(-27.75, 0.05, (WALL_Z + 10) / 2), ASPHALT, Enum.Material.Asphalt) -- x -119.5..64, z 10..48: from the west fence to the garden wall (B3c-0: the parish wing is gone)
+		ctx:part("ApronPavingNW", V(69.5, 0.1, 56), CF(-84.75, 0.05, -18), ASPHALT, Enum.Material.Asphalt) -- x -119.5..-50, z -46..10: the asphalt beside the tower, out to the west fence
+		-- B3c-0: the old courtyard block (x -120..-52, z -99..-48) is a lawn like the one behind the church, with two palms.
+		ctx:part("WestLawn", V(69.5, 0.12, 53), CF(-84.75, 0.06, -72.5), LAWN, Enum.Material.Grass) -- x -119.5..-50, z -99..-46
+		palm(ctx, 42, -100, -76)
+		palm(ctx, 43, -72, -68)
 		ctx:part("GardenApron", V(54, 0.1, WALL_Z - 10), CF(91, 0.05, (WALL_Z + 10) / 2), STONE_LIGHT, CONC) -- x 64..118 under the garden and the gateway; stops 2 studs short of the podium edge so the last side step stays 1 stud
 		ctx:part("Walkway", V(14, 0.06, WALL_Z - 10), CF(0, 0.13, (WALL_Z + 10) / 2), STONE_LIGHT, CONC)
 		-- Parapet caps the retaining wall beyond the seating tiers (x < -76 and x > 98).
@@ -529,7 +533,7 @@ return function()
 		end
 		-- The rest of the podium top: lawn with a few palms west of the tower and behind the wing (P1: the compound is green).
 		ctx:part("PodiumLawn", V(98, 0.12, 58), CF(71, 0.06, -70), LAWN, Enum.Material.Grass)
-		for i, p in ipairs({ { 60, -72 } }) do palm(ctx, i + 40, p[1], p[2]) end -- round 4: the five palms on the lawn west of the tower are gone (the wing and the asphalt are there)
+		for i, p in ipairs({ { 106, -72 } }) do palm(ctx, i + 40, p[1], p[2]) end -- B3c-0: the palm moved from (60,-72) onto the lawn east of the ChurchAnnex
 		for i, p in ipairs(PALMS_UP) do palm(ctx, i, p[1], p[2]) end
 		-- A row of small statues down the middle of the lot (the plaza drawing), clear of the Guide, JeepStop and InfoPanel.
 		for _, s in ipairs(STATUES) do
@@ -586,62 +590,74 @@ return function()
 		end
 	end
 
------------------------------------------------------------------- The parish and archdiocese wing (round 4, plaza drawing): down the WEST edge of the podium, beside the church
-	-- One range: a cream block of `storeys` storeys (11 studs each) with storey bands, an eave and a red tile roof. alongZ = the ridge runs north-south.
-	local function parishRange(ctx, bodyName, x0, x1, z0, z1, storeys, alongZ)
-		local H = storeys * 11
+------------------------------------------------------------------ ChurchAnnex (B3c-0, the owner's magenta mark): more cathedral building on the green lawn east of the transept
+	-- One straight-edged 2-storey block x 45.4..94, z -99..-42 (measured against the owner's picture, scratch/b3c0-journal.md): its west face stands on the transept's east wall, its south face on the
+	-- east wing's back wall, so the wing's back roof and the annex roof meet in a valley. Walls, trim, arched windows, red ribbed roof and eave height (WingEave, local y 26.8) are the wing's.
+	local function buildChurchAnnex(ctx)
+		local x0, x1, z0, z1, H = 45.4, 94, -99, -42, 26
+		local W, D = x1 - x0, z1 - z0
 		local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
-		ctx:part(bodyName, V(x1 - x0, H, z1 - z0), CF(cx, H / 2, cz), WALL_PALE, CONC)
-		for k = 1, storeys - 1 do
-			ctx:part("ParishWingBand", V(x1 - x0 + 0.8, 0.8, z1 - z0 + 0.8), CF(cx, k * 11, cz), TRIM, CONC)
+		ctx:part("AnnexBody", V(W, H, D), CF(cx, H / 2, cz), WALL, CONC)
+		ctx:part("AnnexPlinth", V(W + 0.8, 1, D + 0.8), CF(cx, 0.5, cz), TRIM, CONC)
+		ctx:part("AnnexBand", V(W + 0.8, 1.1, D + 0.8), CF(cx, 13.2, cz), TRIM, CONC)
+		ctx:part("AnnexEave", V(W + 1.2, 1.6, D + 0.8), CF(cx, 26.8, cz), TRIM, CONC)
+		-- Pilasters between the bays on the north and east faces, then an arched window per bay and storey on the north, east and west faces.
+		for i = 0, 5 do
+			local px, pz = x0 + W * i / 5, z0 + D * i / 5
+			ctx:part("AnnexPilasterLow", V(1.4, 11.4, 0.9), CF(px, 6.7, z0 - 0.45), TRIM, CONC)
+			ctx:part("AnnexPilasterUp", V(1.4, 11.2, 0.9), CF(px, 19.6, z0 - 0.45), TRIM, CONC)
+			ctx:part("AnnexPilasterLow", V(0.9, 11.4, 1.4), CF(x1 + 0.45, 6.7, pz), TRIM, CONC)
+			ctx:part("AnnexPilasterUp", V(0.9, 11.2, 1.4), CF(x1 + 0.45, 19.6, pz), TRIM, CONC)
 		end
-		ctx:part("ParishWingEave", V(x1 - x0 + 1.8, 1.0, z1 - z0 + 1.8), CF(cx, H + 0.5, cz), TRIM, CONC)
-		local span, len = alongZ and (x1 - x0) or (z1 - z0), alongZ and (z1 - z0) or (x1 - x0)
-		local run, rise = span / 2 + 0.9, 4.5
-		local rlen, th = math.sqrt(run * run + rise * rise), math.atan(rise / run)
-		for _, s in ipairs({ -1, 1 }) do
-			if alongZ then
-				ctx:part("ParishWingRoof", V(rlen, 0.6, len + 2), CF(cx + s * run / 2, H + 1.0 + rise / 2, cz) * ANG(0, 0, -s * th), ROOF, ROOFMAT)
-			else
-				ctx:part("ParishWingRoof", V(len + 2, 0.6, rlen), CF(cx, H + 1.0 + rise / 2, cz + s * run / 2) * ANG(s * th, 0, 0), ROOF, ROOFMAT)
+		for i = 1, 5 do
+			local wx, wz = x0 + W * (i - 0.5) / 5, z0 + D * (i - 0.5) / 5
+			arched(ctx, "AnnexWin", V(wx, 3, z0 - 0.1), PI, 3.6, 8)
+			arched(ctx, "AnnexWin", V(wx, 15.3, z0 - 0.1), PI, 3.4, 8)
+			arched(ctx, "AnnexWin", V(x1 + 0.1, 3, wz), PI / 2, 3.6, 8)
+			arched(ctx, "AnnexWin", V(x1 + 0.1, 15.3, wz), PI / 2, 3.4, 8)
+		end
+		-- The west face is the transept's wall for z -82..-42; the strip north of it (z -99..-82) shows one bay of windows.
+		arched(ctx, "AnnexWin", V(x0 - 0.1, 3, z0 + 6), -PI / 2, 3.6, 8)
+		arched(ctx, "AnnexWin", V(x0 - 0.1, 15.3, z0 + 6), -PI / 2, 3.4, 8)
+		-- Gable roof along X: two slopes with ribs, a ridge, and gable ends east and west (the same pitch as the wing).
+		local run, rise = 29, 8
+		local len = math.sqrt(run * run + rise * rise)
+		local theta = math.atan(rise / run)
+		local south = CF(cx, 27.2 + rise / 2, cz + run / 2) * ANG(theta, 0, 0)
+		local north = CF(cx, 27.2 + rise / 2, cz - run / 2) * ANG(-theta, 0, 0)
+		ctx:part("AnnexRoof", V(W + 1.4, 0.6, len), south, ROOF, ROOFMAT)
+		ctx:part("AnnexRoof", V(W + 1.4, 0.6, len), north, ROOF, ROOFMAT)
+		for x = x0 + 2, x1 - 2, 3 do
+			ctx:part("AnnexRib", V(0.5, 0.35, len), south * CF(x - cx, 0.45, 0), ROOF_RIB, ROOFMAT)
+			ctx:part("AnnexRib", V(0.5, 0.35, len), north * CF(x - cx, 0.45, 0), ROOF_RIB, ROOFMAT)
+		end
+		ctx:part("AnnexRidge", V(W + 1.4, 1, 1.2), CF(cx, 27.2 + rise + 0.2, cz), TRIM, CONC)
+		ctx:gable("AnnexEndGableE", D, 8.1, 1.6, CF(x1 - 0.8, 26.8, cz) * ANG(0, PI / 2, 0), WALL, CONC)
+		ctx:gable("AnnexEndGableW", D, 8.1, 1.6, CF(x0 + 0.8, 26.8, cz) * ANG(0, -PI / 2, 0), WALL, CONC)
+	end
+
+	------------------------------------------------------------------ WestFence (B3c-0, the owner's black lines): a black iron fence where the parish wing stood
+	-- 3 studs tall (posts 0.5 x 3, two rails), like the walled garden's GardenFencePost fence. Podium edge x -119.5 (z -99.5..19 and 33..47: the gap z 19..33 keeps SideStairsW open),
+	-- the podium's north edge z -99.5 (x -119.5..-52, up to the tower), and the lower plaza's west kerb x -100.5 (z 58..99.6; z 49..58 beside the retaining wall is a pedestrian gate, B3c-0 route cap) joined to the white south fence at x -96.6.
+	local function buildWestFence(ctx)
+		local function ironRun(x0, z0, x1, z1, baseY)
+			local len = (V(x1, 0, z1) - V(x0, 0, z0)).Magnitude
+			local n = math.max(1, math.ceil(len / 5))
+			for i = 0, n do
+				local t = i / n
+				ctx:part("IronFencePost", V(0.5, 3, 0.5), CF(x0 + (x1 - x0) * t, baseY + 1.5, z0 + (z1 - z0) * t), LAMP_METAL, METAL)
+			end
+			local sx, sz = math.abs(x1 - x0) + 0.3, math.abs(z1 - z0) + 0.3
+			local mxm, mzm = (x0 + x1) / 2, (z0 + z1) / 2
+			for _, yy in ipairs({ 1.0, 2.6 }) do
+				ctx:part("IronFenceRail", sx > sz and V(sx, 0.3, 0.3) or V(0.3, 0.3, sz), CF(mxm, baseY + yy, mzm), LAMP_METAL, METAL)
 			end
 		end
-		ctx:part("ParishWingRidge", V(alongZ and 1 or len + 2, 0.9, alongZ and len + 2 or 1), CF(cx, H + 1.0 + rise + 0.3, cz), ROOF_RIB, ROOFMAT)
-	end
-	-- Arched windows on one long face: `bays` bays between lo and hi along the face, one window per storey; doorBay (optional) puts a 9.5-tall arched door in that bay instead of the ground window.
-	local function parishWindows(ctx, fixed, yaw, lo, hi, bays, storeys, alongZ, doorBay)
-		for i = 1, bays do
-			local t = lo + (i - 0.5) * (hi - lo) / bays
-			for f = 0, storeys - 1 do
-				local pos = alongZ and V(fixed, f * 11 + 1.5, t) or V(t, f * 11 + 1.5, fixed)
-				if f == 0 and i == doorBay then
-					arched(ctx, "ParishDoor", alongZ and V(fixed, 0, t) or V(t, 0, fixed), yaw, 4.2, 9.5)
-				else
-					arched(ctx, "ParishWin", pos, yaw, 3.6, f == 0 and 8.5 or 8)
-				end
-			end
-		end
-	end
-	local function buildParishWing(ctx)
-		-- local y 0 is the podium top. The west range (x -120..-104) is 3 storeys beside the church (z -98..-12) and 2 storeys along the lot (z -12..16 and 36..46);
-		-- the gap z 16..36 keeps the side stairs (SideStairsW, x -121..-127, z 20..32) open. Two cross ranges run east toward the tower (x -52), round a courtyard.
-		parishRange(ctx, "ParishWingBody", -120, -104, -98, -12, 3, true)
-		parishRange(ctx, "ParishWingBody", -120, -104, -12, 16, 2, true)
-		parishRange(ctx, "ParishWingBody", -120, -104, 36, 46, 2, true)
-		parishRange(ctx, "ParishWingCrossBody", -104, -52, -98, -82, 3, false)
-		parishRange(ctx, "ParishWingCrossBody", -104, -52, -64, -48, 3, false)
-		parishWindows(ctx, -104, PI / 2, -98, -12, 6, 3, true)
-		parishWindows(ctx, -120, -PI / 2, -98, -12, 6, 3, true)
-		parishWindows(ctx, -104, PI / 2, -12, 16, 3, 2, true, 2)
-		parishWindows(ctx, -120, -PI / 2, -12, 16, 3, 2, true)
-		parishWindows(ctx, -104, PI / 2, 36, 46, 1, 2, true)
-		parishWindows(ctx, -120, -PI / 2, 36, 46, 1, 2, true)
-		parishWindows(ctx, -82, 0, -104, -52, 4, 3, false)
-		parishWindows(ctx, -48, 0, -104, -52, 4, 3, false, 2)
-		-- The courtyard between the cross ranges (z -82..-64): a lawn with a low hedge round it.
-		ctx:part("ParishCourtLawn", V(46, 0.12, 16), CF(-78, 0.06, -73), LAWN, Enum.Material.Grass)
-		for _, z in ipairs({ -81, -65 }) do ctx:part("ParishCourtHedge", V(46, 1.2, 0.8), CF(-78, 0.6, z), HEDGE, Enum.Material.Grass) end
-		for _, x in ipairs({ -101, -55 }) do ctx:part("ParishCourtHedge", V(0.8, 1.2, 16), CF(x, 0.6, -73), HEDGE, Enum.Material.Grass) end
+		ironRun(-119.5, -99.5, -119.5, 19, RAISE)
+		ironRun(-119.5, 33, -119.5, 47, RAISE)
+		ironRun(-119.5, -99.5, -52, -99.5, RAISE)
+		ironRun(-100.5, 58, -100.5, 99.6, 0)
+		ironRun(-100.5, 99.6, -96.6, 99.6, 0)
 	end
 
 ------------------------------------------------------------------ Lower level (ground): Plaza Independencia below the wall
@@ -651,14 +667,12 @@ return function()
 	local STRIP_PALMS = { { -71, 58 }, { -71, 63 }, { -71, 68 }, { -71, 73 }, { -71, 78 } }
 	local STRIP_E_PALMS = { { 62, 64 }, { 62, 69 }, { 62, 74 }, { 62, 79 }, { 62, 84 } }
 	local LAWN_PALMS = { { -65, 68 }, { -65, 75 }, { -65, 82 }, { -36, 68 }, { -36, 75 }, { -36, 82 }, { -50, 69 }, { -50, 82 } }
-	-- Round 4: the D-shaped stepped monument mound with a looped ribbon sculpture at the WEST-MIDDLE of the lower plaza (plaza drawing), its straight side on the retaining
-	-- wall (x -99..-77, z 49.3..71.3). Three tiers (radius 11 / 8.5 / 6), risers of 1 stud; the straight run equals the largest radius, so no tier hangs over the wall.
+	-- B3c-0 (the owner's orange mark): the stepped monument mound with the ribbon sculpture now stands on the plaza centre line, just south of the middle stair flight (the flights end at
+	-- z 56), and is fully round. Three cylinder tiers (radius 11 / 8.5 / 6), risers of 1 stud; 2.5 studs of walking room between the flight and the mound, 2 studs to the stage corridor.
 	local function buildMound(ctx)
-		local cx, flatZ, S = -88, WALL_Z + 1.3, 11
-		local cz = flatZ + S -- one centre for every tier, so they nest; the round side faces the plaza (south)
+		local cx, cz = 0, WALL_Z + 8 + 2.5 + 11 -- 69.5: one centre for every tier, so they nest
 		for k, r in ipairs({ 11, 8.5, 6 }) do
 			post(ctx, "MoundTier", r * 2, k, cx, 0, cz, k == 3 and STONE_LIGHT or STONE, CONC)
-			ctx:part("MoundTierFlat", V(r * 2, k, S), CF(cx, k / 2, flatZ + S / 2), k == 3 and STONE_LIGHT or STONE, CONC)
 		end
 		post(ctx, "MoundBase", 3.4, 1.6, cx, 3, cz, STONE_DARK, CONC)
 		-- Two looped ribbons: a tall upright ring and a smaller ring turned across it, each of short, thick bars.
@@ -770,34 +784,7 @@ return function()
 
 ------------------------------------------------------------------ Lower-plaza buildings (P1: long cream arcade on the west, the big gabled pavilion)
 	local function buildPlazaBuildings(ctx)
-		-- West: the 2-storey south end of the parish wing (plaza drawing): a long cream block on the plaza's west edge (x -120..-104, z 52..98), in line with the upper wing,
-		-- with arched windows on both long faces, two doors on the plaza face and a red tile roof.
-		local bx, z0, z1, bays = -112, 52, 98, 6
-		local len, zc = z1 - z0, (z0 + z1) / 2
-		ctx:part("LongBuildingW", V(16, 26, len), CF(bx, 11, zc), WALL_PALE, CONC) -- the bottom 2 studs sit below ground: the terrain here is outside the repainted square
-		ctx:part("LongBuildingWBand", V(17, 1, len + 1), CF(bx, 12.5, zc), TRIM, CONC)
-		ctx:part("LongBuildingWEave", V(18, 1.2, len + 2), CF(bx, 24.4, zc), TRIM, CONC)
-		for _, side in ipairs({ { bx + 8, PI / 2 }, { bx - 8, -PI / 2 } }) do
-			for i = 1, bays do
-				local z = z0 + (i - 0.5) * (len / bays)
-				if (i == 2 or i == 5) and side[2] > 0 then
-					arched(ctx, "ParishDoor", V(side[1], 0, z), side[2], 4.2, 9.5)
-				else
-					arched(ctx, "ParishWin", V(side[1], 1.5, z), side[2], 3.6, 8.5)
-				end
-				arched(ctx, "ParishWin", V(side[1], 13.5, z), side[2], 3.6, 8)
-			end
-		end
-		for i = 0, bays do
-			ctx:part("LongPilaster", V(0.9, 22, 1.2), CF(bx + 8.4, 11.5, z0 + i * (len / bays)), TRIM, CONC)
-		end
-		local run, rise = 8.8, 4.5
-		local rlen = math.sqrt(run * run + rise * rise)
-		local th = math.atan(rise / run)
-		for _, s in ipairs({ -1, 1 }) do
-			ctx:part("LongRoof", V(rlen, 0.6, len + 2), CF(bx + s * run / 2, 24.6 + rise / 2, zc) * ANG(0, 0, -s * th), ROOF, ROOFMAT)
-		end
-		ctx:part("LongRidge", V(1, 0.9, len + 2), CF(bx, 24.6 + rise + 0.3, zc), ROOF_RIB, ROOFMAT)
+		-- (B3c-0: the long west building LongBuildingW that stood here is gone, the owner's red mark.)
 		-- The big shade tree on the paver square (plaza drawing and ground photo): a stone planter, a thick trunk and a wide canopy whose bottoms stay above y 12.
 		local tx, tz = 45, 68
 		post(ctx, "ShadeTreePlanter", 7, 1.2, tx, 0, tz, STONE_LIGHT, CONC)
@@ -827,16 +814,17 @@ return function()
 			end
 			ctx:part("CulturalCenterSteps", V(2.4, 0.8, 9), CF(x0 - 1.4, 0.4, 79), STONE_LIGHT, CONC)
 		end
-		-- The open-air stage pavilion (plaza SOUTH-WEST, round 4): a raised dais under a big dark peaked roof on posts, white back wall on the west, open toward the plaza.
-		-- x -99..-73, z 82..94: the roof ridge runs along X, the eaves stay clear of the planter walls (z 95.8).
+		-- The open-air stage pavilion (B3c-0, the owner's orange mark): on the plaza centre line near the south edge, just inside the Welcome Arch, open side facing NORTH, white back wall on the south
+		-- long side, a raised dais under a big dark peaked roof on posts, gables at both ends. Dais x -13..13, z 82.5..94.5: 2 studs from the mound (z 80.5), 4.8 studs from the south fence line
+		-- (z 99.3), so walkers coming through the arch slide round either end. The roof ridge runs along X; the eaves stay clear of the fence (roof edge z 94.8).
 		do
-			local px, pz, DAIS = -86, 88.1, 1.6
+			local px, pz, DAIS = 0, 88.5, 1.6
 			local topY0 = DAIS + 11 -- post tops / eave line
 			local rise, run = 5, 6
 			local theta = math.atan(rise / run)
 			local slope = math.sqrt(run * run + rise * rise) + 0.9
 			ctx:part("StageDais", V(26, DAIS, 12), CF(px, DAIS / 2, pz), STONE_LIGHT, CONC)
-			ctx:part("StageStep", V(1.6, 0.8, 6), CF(px + 13.8, 0.4, pz), STONE, CONC)
+			ctx:part("StageStep", V(1.6, 0.8, 6), CF(px + 13.8, 0.4, pz - 2), STONE, CONC) -- at the east end of the dais, so the north side stays a clear lane
 			for _, x in ipairs({ px - 12, px - 6, px, px + 6, px + 12 }) do
 				for _, dz in ipairs({ -5, 5 }) do
 					post(ctx, "StagePavilionPost", 0.9, 11, x, DAIS, pz + dz, WHITE, CONC)
@@ -853,8 +841,10 @@ return function()
 				end
 			end
 			ctx:part("StageRidge", V(27.6, 0.8, 1.2), CF(px, topY0 + rise + 0.9, pz), STAGE_RIB, ROOFMAT)
-			ctx:part("StageBackWall", V(0.6, 11, 11), CF(px - 12.7, DAIS + 5.5, pz), WHITE, CONC)
-			ctx:gable("StageGable", 11.4, rise + 0.3, 0.6, CF(px - 12.7, topY0 + 0.65, pz) * ANG(0, PI / 2, 0), WHITE, CONC)
+			ctx:part("StageBackWall", V(25.6, 11, 0.6), CF(px, DAIS + 5.5, pz + 5.7), WHITE, CONC)
+			for _, sx in ipairs({ -1, 1 }) do
+				ctx:gable("StageGable", 11.4, rise + 0.3, 0.6, CF(px + sx * 12.7, topY0 + 0.65, pz) * ANG(0, PI / 2, 0), WHITE, CONC)
+			end
 		end
 	end
 
@@ -1059,7 +1049,8 @@ return function()
 		component("Dome", "Structure", buildDome, UPPER)
 		component("Wing", "Structure", buildWing, UPPER)
 		component("Plaza", "Site", buildPlazaUpper, UPPER)
-		component("ParishWing", "Site", buildParishWing, UPPER)
+		component("ChurchAnnex", "Site", buildChurchAnnex, UPPER)
+		component("WestFence", "Site", buildWestFence)
 		component("PlazaLower", "Site", buildPlazaLower)
 		component("PlazaBuildings", "Site", buildPlazaBuildings)
 		component("WelcomeArch", "Site", buildWelcomeArch)

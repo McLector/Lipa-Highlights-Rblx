@@ -283,3 +283,52 @@ Wing (ranges on x -121..-103, 3 and 2 storeys, 150+ long with LongBuildingW, sid
 
 ### Numbers
 Site parts 2018 -> 2331 (+313); church pin unchanged (5 children, 763 parts, box (-48.2, 5, -100.8)..(121.2, 89.5, 9.8)). routes_check: the first build broke Road C (181 vs 170) because `GardenApron` reached the podium edge at top 5.1 and made the last side step 1.1 high; the apron now stops at x 118 and routes_check is 14/0.
+
+
+
+## B3c-0: the owner's colour markup on the Cathedral compound (2026-10-27)
+
+Source: `scratch/refs/owner-markup-cathedral.png` (colour lines on a high oblique screenshot of the compound) and the owner's rotated blueprint. Red = remove, black = replace with fences, blue = remove, magenta = more cathedral building, orange = move the mound and the stage.
+
+### What changed
+| Mark | Built |
+|---|---|
+| Red | `LongBuildingW` and its trim, windows, pilasters and roofs removed; the lot-level `ParishWingBody` at z 36..46 removed |
+| Black | the whole west range (z -98..16) and the north cross range, the courtyard lawn and hedges removed; new component `WestFence`: black iron fence 3 studs tall (`IronFencePost` / `IronFenceRail`) on the podium west edge x -119.5 (z -99.5..19 and 33..47, gap z 19..33 for `SideStairsW`), the podium north edge z -99.5 (x -119.5..-52, to the tower) and the plaza west kerb x -100.5 (z 58..99.6, joined to the white south fence at x -96.6). `ApronPaving` and `ApronPavingNW` asphalt now run west to x -119.5; the old courtyard block is `WestLawn` (x -119.5..-50, z -99..-46) with two palms |
+| Blue | the south cross range (`ParishWingCrossBody`, z -64..-48) removed; the `ParishWing` component is gone (`buildParishWing` deleted; the name stays in REPLACED so old copies are cleaned) |
+| Magenta | new Site component `ChurchAnnex` (153 parts): measured box AnnexBody x 45.4..94, z -99..-42, 26 tall (2 storeys), eave at the wing's WingEave height (local y 26.8), butter-yellow walls, 22 arched windows, red ribbed gable roof (ridge along X) with gable ends, a valley with the wing's back roof. The palm at (60,-72) moved to (106,-72) |
+| Orange (mound) | `buildMound`: fully round (no `MoundTierFlat`), centre (0, 69.5): the flights end at z 56, 2.5 studs of ground, tiers r 11 / 8.5 / 6 and both ribbons kept |
+| Orange (stage) | the pavilion moved to the centre line: dais (0, 88.5), x -13..13, z 82.5..94.5, white back wall on the SOUTH long side, open to the north, gables at both ends, the step at the east end of the dais; size and look unchanged. 2 studs between mound and dais, 4.8 studs between dais and the south fence line (z 99.3) |
+
+Measured evidence for the annex box: bright marker bars at z -82 and z -99 on the owner's camera angle; the pink line starts level with the z -99 bar (the z -82 bar would sit about 40 px lower), so the north edge is z -99, not the transept's z -82. Details in `scratch/b3c0-journal.md`.
+
+### Deviation from the markup (decided by the builder, please confirm)
+The plaza west kerb fence starts at z 58 instead of z 49: a 9-stud pedestrian gate beside the retaining wall stays open. With the fence closed all the way, `routes_check` "spawn -> Cathedral Guide" measured 582 studs (cap 510); the shortest old route enters the plaza from the west at z 50..56 and climbs the west tiers. With the gate it is 476. The cap was not touched.
+
+### Old assertions replaced (rule 4; none loosened silently)
+Approved by the orchestrator:
+
+| Old name and text | Why | Replaced by |
+|---|---|---|
+| "long arcaded building on the lower plaza's west side (LongBuildingW)" | red mark | "B3c-0 no LongBuildingW or ParishWing* parts remain ... no orphan PlazaSquare anywhere in the workspace" |
+| "round 4 wing: ParishWingBody ranges on the west edge ... 150+ studs"; "the side stairs stay open (no wing range between z 20 and 32)"; "2+ cross ranges (ParishWingCrossBody ...)"; "LongBuildingW is the 2-storey end of the wing"; "red tile roofs (12+ roof slopes incl. LongRoof ...)" (5) | black, red and blue marks remove the wing, the cross ranges and the roofs | two fence checks: "iron fence runs the west podium edge ... north edge ... plaza west kerb, posts every 6 studs or less" and "iron fence is 3 studs tall and black, 40+ posts, stair gap z 20..32 (and the plaza gate gap) open" |
+| "round 4 StagePavilion ... over a raised dais at the SOUTH-WEST (x -99..-72, z 80..96)" | orange mark | same roof, colour and dais-thickness clauses; dais within 4 studs of x 0 at z 80..96, back wall on the south, 4.5+ studs to the south fence line. The size check ("StageDais 24+ wide and 12+ deep, ridge 24+ long ...") is unchanged |
+| "round 4 mound: on the lower plaza at the west-middle (x -100..-76), straight edge on the wall ..., 22+ wide, 18+ deep, 3 tiers" | orange mark | "B3c-0 round mound (3+ cylinder tiers, ribbon) centred within 4 studs of x 0, 22+ wide, no flat blocks, south of the stair flights, 2+ studs clear of them". The ribbon check (28+ bars, 14+ above the ground, 0.8+ thick) is unchanged |
+| new | magenta mark and the Structure pin | five `ChurchAnnex` checks (Site child of 100+ parts; measured box; touches the wing back wall with its eave within 1 stud of `WingEave`; one block with the church: wall colour, 12+ arched windows, band, red roof, 20+ ribs; no palm inside) and "church Structure untouched: 763 parts, box (-48.2, 5, -100.8)..(121.2, 89.5, 9.8)" |
+
+NOT on the orchestrator's list (the markup contradicts them; please veto if wrong):
+
+| Old name and text | Why | Replaced by |
+|---|---|---|
+| "round 4 wing: 60+ arched windows (ParishWin_Pane) and 2+ human-scale arched doors" | the wing that carried them is gone | covered by the "no ParishWin_Pane / ParishDoor_Pane left" list in the new removal check |
+| "the spawn (0,70) has 8x8 studs of clear ground" | the mound now stands at (0, 69.5); the real SpawnLocation is at (-208, -260), so this box guarded nothing | "walking room round the mound": clear boxes between the foot of the middle flight and the mound and on both sides |
+| "the CreditsBoard strip (x +-30, z 90..98) is clear of Site01 geometry" | the stage now stands at z 82.5..94.5; the board is at z 205, so the box was stale. The real board keep-out (4+ studs round the board itself) is unchanged and passes | "walkers pass round both sides of the stage: lanes x +-(15..24), z 83.2..98.8 clear" |
+| "the lower plaza has a wide open centre (x -34..30, z 64..88 clear ...)" | the mound and the stage stand on the centre line | "a corridor (x -15..15, z 80.9..82.3) separates the mound from the stage" |
+| "round 4 lot: the asphalt spans from the wing (x <= -103) to the garden wall (x >= 62)" | the wing is gone, the asphalt runs to the fence | "from the west fence (x <= -119) to the garden wall (x >= 62)" |
+| "round 4 lot: the bare lawn and palms west of the tower are gone (no PodiumLawn or upper PalmTrunk1 at x < -48); asphalt (ApronPavingNW) takes their place" | the markup turns the old courtyard block into lawn with two palms | "WestLawn x -119.5..-50, z -99..-46 on the podium with exactly two palms standing on it; ApronPavingNW asphalt runs west to x <= -119" |
+| "round 4 plaza: the stage pavilion is on the west (dais x < -70) and the Cultural Center on the east" | orange mark | "dais abs(x) <= 4 and the Cultural Center on the east (centre x > 40, east face x >= 96)" |
+
+Checks that mention things the builder touched but were NOT edited: "12+ palm trunks" (still passes), "perimeter fence with 20+ posts" (counts the white `FencePost`; the new iron fence uses `IronFencePost`, so it is unchanged), "walled garden ... 10+ GardenFencePost" (unchanged), the CreditsBoard keep-out (unchanged).
+
+### Numbers
+Site parts 2331 -> 2121 (built 2051): removed the parish wing (342), the LongBuildingW block (107) and the 3 mound flats; added `ChurchAnnex` (153), `WestFence` (66), `WestLawn` and two palms. `site01_check` 115 -> 117. `build 01 parts` 2331 -> 2121. World parts 8960 -> 8750. Church pin unchanged (5 children, 763 parts, box (-48.2, 5, -100.8)..(121.2, 89.5, 9.8)). `routes_check` 15/0: spawn 476 (cap 510), Road E 203 (cap 320, was 279), Road A 381 (400), Road C 154 (170). Idempotent: a second build gives the same child and part list.
