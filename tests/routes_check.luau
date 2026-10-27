@@ -58,8 +58,10 @@ if g1 then
 	route("Road C start (126, 0) -> Cathedral Guide", Vector3.new(126, 3, 0), approach, 170)
 	route("Road A start (0, -106) -> Cathedral Guide", Vector3.new(0, 3, -106), approach, 400)
 	-- Cathedral south growth (Slice 4 B3b): Road E now starts at the compound's south edge (0, 225). Measured by PathfindingService
-	-- 2026-10-27: 279 studs (the straight line is 189), so the cap is that plus 15 percent = 320.
-	route("Road E start (0, 225) -> Cathedral Guide", Vector3.new(0, 3, 225), approach, 320)
+	-- 2026-10-27: 279 studs (the straight line is 189), so the cap was that plus 15 percent = 320. Slice 4 B3c-0b (owner markup): the plaza's south,
+	-- east and west openings were closed with black fence, so every walk now goes round to a side stair (WEST_ENTRY / EAST_ENTRY): measured 378.7
+	-- studs on 2026-10-27 (it was 203 through the old south gate), so the cap is that plus 15 percent = 435 (435.5, rounded down).
+	route("Road E start (0, 225) -> Cathedral Guide", Vector3.new(0, 3, 225), approach, 435)
 	local len = pathLength(spawnPos, Vector3.new(0, 2, -40)) -- inside the solid podium
 	check("negative control: a point inside the podium is not reachable", len == nil, len and string.format("%.0f studs", len) or nil)
 end

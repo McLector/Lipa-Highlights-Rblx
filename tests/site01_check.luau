@@ -67,6 +67,8 @@ local function isRig(inst)
 end
 local function fmt(v) return v and string.format("%.1f", v) or "nil" end
 local function topY(p) return p.Position.Y + p.Size.Y / 2 end
+-- B3c-0b: an assertion the owner's second markup contradicts is retired by renaming its call to retired(...), which does nothing. The old text stays in this file as the record; the reason and the replacement are logged in briefs/site01.md "B3c-0b".
+local function retired() end
 
 ------------------------------------------------------------------ Proportions (OSM + P3)
 local facade, tower = anchor("FacadeWall"), anchor("TowerBody")
@@ -163,7 +165,7 @@ check("round 4: no fountain on the wall axis (no FountainBasin, FountainStatue, 
 	and countNamed("FountainColumn") == 0 and countNamed("FountainWater") == 0, countNamed("FountainWater") .. " water parts")
 local stairC = allNamed("StairFlightC")
 table.sort(stairC, function(a, b) return a.Position.Z < b.Position.Z end)
-check("round 4: StairFlightC fills the wall axis: 4 treads, tops 4, 3, 2, 1, 16 wide (x -8..8)", #stairC == 4 and (function()
+retired("round 4: StairFlightC fills the wall axis: 4 treads, tops 4, 3, 2, 1, 16 wide (x -8..8)", #stairC == 4 and (function()
 	for i, s in ipairs(stairC) do
 		if math.abs(topY(s) - (RAISE - i)) > 0.06 or s.Size.X < 15.9 or math.abs(s.Position.X) > 0.5 then return false end
 	end
@@ -191,12 +193,12 @@ for _, spec in ipairs({ { "BleacherL", 50, -1 }, { "BleacherR", 70, 1 } }) do
 	local okRisers, detail = #steps == 4, "tiers " .. #steps
 	for i, s in ipairs(steps) do
 		local inner = spec[3] < 0 and (s.Position.X + s.Size.X / 2) or (s.Position.X - s.Size.X / 2) -- the edge toward the flight
-		if math.abs(topY(s) - (RAISE - i)) > 0.06 or s.Size.X < spec[2] or s.Size.Z < 2.9 or inner * spec[3] < 21 or inner * spec[3] > 23 then
+		if math.abs(topY(s) - (RAISE - i)) > 0.06 or s.Size.X < spec[2] or s.Size.Z < 2.9 or inner * spec[3] < 25 or inner * spec[3] > 27 then
 			okRisers = false
 			detail = detail .. string.format(" [%d top %s w %s d %s inner %s]", i, fmt(topY(s)), fmt(s.Size.X), fmt(s.Size.Z), fmt(inner))
 		end
 	end
-	check(spec[1] .. ": 4 seating tiers, " .. spec[2] .. "+ studs long and 3+ deep, each riser exactly 1 stud, inner edge at |x| 21..23 (the flight)", okRisers, detail)
+	check(spec[1] .. ": 4 seating tiers, " .. spec[2] .. "+ studs long and 3+ deep, each riser exactly 1 stud, inner edge at |x| 25..27 (the flight, B3c-0b)", okRisers, detail)
 end
 -- Street-level access (review finding: Roads A and C end at the podium edge, so the forecourt needs side stairs, not only the front seating).
 for _, name in ipairs({ "SideStairsW", "SideStairsE" }) do
@@ -218,9 +220,9 @@ end
 for _, p in ipairs(allNamed("FenceRail")) do
 	if p.Position.X > 98 and p.Position.Z - p.Size.Z / 2 < 68 and p.Position.Z + p.Size.Z / 2 > WALL_Z then table.insert(fenceBlocks, "rail z" .. fmt(p.Position.Z)) end
 end
-check("the east fence leaves the lower plaza open toward Road C (nothing at x 99 between z 48 and 68)", #fenceBlocks == 0, table.concat(fenceBlocks, ", "))
+retired("the east fence leaves the lower plaza open toward Road C (nothing at x 99 between z 48 and 68)", #fenceBlocks == 0, table.concat(fenceBlocks, ", "))
 local stage = site:FindFirstChild("EventStage") -- the folder name is fixed by SiteData; it holds the wall steps, brick facing and side stairs
-check("round 4 (replaces 'EventStage folder holds the fountain, both flights and the seating'): EventStage holds the three flights and the seating, no gazebo stage",
+retired("round 4 (replaces 'EventStage folder holds the fountain, both flights and the seating'): EventStage holds the three flights and the seating, no gazebo stage",
 	stage ~= nil and anchor("StairFlightL") ~= nil and anchor("StairFlightL"):IsDescendantOf(stage) and anchor("StairFlightC") ~= nil and anchor("StairFlightC"):IsDescendantOf(stage)
 	and anchor("BleacherL") ~= nil and anchor("BleacherL"):IsDescendantOf(stage)
 	and anchor("StageLanding") == nil and anchor("StageCanopy") == nil and anchor("StageFascia") == nil and countNamed("StagePost") == 0)
@@ -234,8 +236,8 @@ end
 
 ------------------------------------------------------------------ Welcome Arch (P6)
 local arch = site:FindFirstChild("WelcomeArch")
-check("WelcomeArch is a direct child model with 12+ parts", arch ~= nil and arch:IsA("Model") and #arch:GetDescendants() >= 12)
-if arch then
+retired("WelcomeArch is a direct child model with 12+ parts", arch ~= nil and arch:IsA("Model") and #arch:GetDescendants() >= 12)
+if arch and false then -- B3c-0b: the WelcomeArch is gone, its three nested checks are retired
 	local top, l, r = -math.huge, math.huge, -math.huge
 	for _, p in ipairs(arch:GetDescendants()) do
 		if p:IsA("BasePart") then
@@ -350,10 +352,10 @@ end
 -- B3c-0 (owner's colour markup; replaces the three old open-plaza boxes "the spawn (0,70) has 8x8 studs of clear ground", "the CreditsBoard strip (x +-30, z 90..98) is clear of
 -- Site01 geometry" and "the lower plaza has a wide open centre (x -34..30, z 64..88 ...)"): the mound and the stage now stand on the centre line, so walking room is
 -- measured round them instead. The real CreditsBoard keep-out (4+ studs round the board itself) is unchanged further down.
-local moundN = blockers(CFrame.new(0, 5, 57.3), Vector3.new(20, 8, 1.8))
+local moundN = blockers(CFrame.new(0, 5, 62.2), Vector3.new(20, 8, 2.0))
 local moundE = blockers(CFrame.new(14, 5, 70), Vector3.new(4.4, 8, 16))
 local moundW = blockers(CFrame.new(-14, 5, 70), Vector3.new(4.4, 8, 16))
-check("B3c-0 walking room round the mound: clear boxes between the foot of the middle flight and the mound (x -10..10, z 56.4..58.2) and on both sides (|x| 11.8..16.2, z 62..78)",
+check("B3c-0 walking room round the mound: clear boxes in front of the statue (x -10..10, z 61.2..63.2; B3c-0b) and on both sides (|x| 11.8..16.2, z 62..78)",
 	#moundN + #moundE + #moundW == 0, table.concat(moundN, ", ", 1, math.min(#moundN, 2)) .. table.concat(moundE, ", ", 1, math.min(#moundE, 2)) .. table.concat(moundW, ", ", 1, math.min(#moundW, 2)))
 local laneE = blockers(CFrame.new(19.5, 5, 91), Vector3.new(9, 8, 15.6))
 local laneW = blockers(CFrame.new(-19.5, 5, 91), Vector3.new(9, 8, 15.6))
@@ -496,7 +498,7 @@ do
 			end
 		end
 	end
-	check("CATEDRAL labels (wing entrance, welcome arch): 3+ found, fixed TextSize, fit the face and fill 60%+ of it", seen >= 3 and #problems == 0,
+	check("B3c-0b CATEDRAL label (the wing entrance; the welcome arch is gone): 1 found, fixed TextSize, fit the face and fill 60%+ of it", seen == 1 and #problems == 0,
 		seen .. " labels; " .. table.concat(problems, "; "))
 end
 
@@ -504,8 +506,8 @@ end
 local cc = anchor("CulturalCenterBody")
 -- Step B round 2 (replaces "Lipa Cultural Center: a cream block 14+ studs wide and 20-30 tall at x 78..99, z 64..84, ..."): the old box was too small to read at blueprint-view scale.
 -- Step B round 4 (replaces "a cream block 26+ wide, 14+ deep ... at x 68..99, z 64..84"): the drawing's Cultural Center is a long block down the EAST edge of the plaza.
-check("round 4 Lipa Cultural Center: a cream block 18+ wide and 28+ long (N-S, along the east edge), 22-30 tall, x 70..99, z 64..95, on the lower plaza, flat top",
-	cc ~= nil and cc.Size.X >= 18 and cc.Size.Z >= 28 and cc.Size.Y >= 22 and cc.Size.Y <= 30 and cc.Position.X - cc.Size.X / 2 >= 70 and cc.Position.X + cc.Size.X / 2 <= 99
+check("round 4 Lipa Cultural Center: a cream block 18+ wide and 28+ long (N-S, along the east edge), 22-30 tall, x -99..-70 (B3c-0b: the west edge), z 64..95, on the lower plaza, flat top",
+	cc ~= nil and cc.Size.X >= 18 and cc.Size.Z >= 28 and cc.Size.Y >= 22 and cc.Size.Y <= 30 and cc.Position.X - cc.Size.X / 2 >= -99 and cc.Position.X + cc.Size.X / 2 <= -70
 		and cc.Position.Z - cc.Size.Z / 2 >= 64 and cc.Position.Z + cc.Size.Z / 2 <= 95 and cc.Position.Y - cc.Size.Y / 2 < 0.6
 		and cc.Color.R * 255 >= 215 and cc.Color.B * 255 >= 130 and (cc.Color.R - cc.Color.B) * 255 <= 90,
 	cc and string.format("x %s z %s w %s d %s h %s", fmt(cc.Position.X), fmt(cc.Position.Z), fmt(cc.Size.X), fmt(cc.Size.Z), fmt(cc.Size.Y)) or "missing")
@@ -588,7 +590,7 @@ do
 			nearest = math.min(nearest, math.sqrt(dx * dx + dz * dz))
 		end
 	end
-	check("B3c-0 round mound (3+ cylinder tiers, ribbon) centred within 4 studs of x 0 on the lower plaza, 22+ wide, no D-shaped flat blocks, south of the stair flights and not overlapping them (2+ studs of ground between the biggest tier and the nearest flight)",
+	retired("B3c-0 round mound (3+ cylinder tiers, ribbon) centred within 4 studs of x 0 on the lower plaza, 22+ wide, no D-shaped flat blocks, south of the stair flights and not overlapping them (2+ studs of ground between the biggest tier and the nearest flight)",
 		#tiersM >= 3 and #flats == 0 and #mBad == 0 and math.abs(cxm) <= 4 and zlo >= 56 and widest >= 22 and zhi - zlo >= 22 and countNamed("MoundTier", Enum.PartType.Cylinder) >= 3 and nearest - widest / 2 >= 2,
 		string.format("centre (%s, %s) x %s..%s z %s..%s wide %s flats %d bad %d clear %s", fmt(cxm), fmt(czm), fmt(xlo), fmt(xhi), fmt(zlo), fmt(zhi), fmt(widest), #flats, #mBad, fmt(nearest - widest / 2)))
 	check("round 4 mound: ribbon sculpture of 28+ bars rising 14+ studs above the ground with bars 0.8+ thick", #ribbons >= 28 and ribTop >= 14 and ribMax >= 0.8,
@@ -731,8 +733,8 @@ do
 	local okW1, dW1 = fenceRun(function(p) return math.abs(p.Position.X + 119.5) < 0.6 and p.Position.Y >= RAISE and p.Position.Z < 20.5 end, "z", -99, 19)
 	local okW2, dW2 = fenceRun(function(p) return math.abs(p.Position.X + 119.5) < 0.6 and p.Position.Y >= RAISE and p.Position.Z > 32.5 end, "z", 33, 47)
 	local okN, dN = fenceRun(function(p) return math.abs(p.Position.Z + 99.5) < 0.6 and p.Position.Y >= RAISE and p.Position.X < -50 end, "x", -119.5, -52)
-	local okK, dK = fenceRun(function(p) return math.abs(p.Position.X + 100.5) < 0.6 and p.Position.Y < RAISE end, "z", 58, 99.6)
-	check("B3c-0 iron fence runs the west podium edge (x -119.5, z -99..19 and 33..47), the north edge (z -99.5, x -119.5..-52) and the plaza west kerb (x -100.5, z 58..99.6; the gate gap z 49..58 beside the retaining wall keeps the spawn -> Guide route under its 510 cap), posts every 6 studs or less",
+	local okK, dK = fenceRun(function(p) return math.abs(p.Position.X + 100.5) < 0.6 and p.Position.Y < RAISE end, "z", 49.5, 99.6)
+	check("B3c-0 iron fence runs the west podium edge (x -119.5, z -99..19 and 33..47), the north edge (z -99.5, x -119.5..-52) and the plaza west kerb (x -100.5, z 49.5..99.6; the gate gap is closed, B3c-0b), posts every 6 studs or less",
 		okW1 and okW2 and okN and okK, "west " .. dW1 .. " / " .. dW2 .. "; north " .. dN .. "; kerb " .. dK)
 	local fenceBad, gapHit = {}, {}
 	for _, p in ipairs(fencePosts) do
@@ -751,12 +753,12 @@ do
 		if r.Position.X < -118 and r.Position.Z + r.Size.Z / 2 > 20.2 and r.Position.Z - r.Size.Z / 2 < 31.8 then table.insert(gapHit, "rail z" .. fmt(r.Position.Z)) end
 	end
 	for _, p in ipairs(fencePosts) do
-		if math.abs(p.Position.X + 100.5) < 0.6 and p.Position.Y < RAISE and p.Position.Z < 57.6 then table.insert(gapHit, "gate post z" .. fmt(p.Position.Z)) end
+		if math.abs(p.Position.X + 100.5) < 0.6 and p.Position.Y < RAISE and p.Position.Z < 49 then table.insert(gapHit, "gate post z" .. fmt(p.Position.Z)) end
 	end
 	for _, r in ipairs(fenceRails) do
-		if math.abs(r.Position.X + 100.5) < 0.6 and r.Position.Y < RAISE and r.Position.Z - r.Size.Z / 2 < 57.6 then table.insert(gapHit, "gate rail z" .. fmt(r.Position.Z)) end
+		if math.abs(r.Position.X + 100.5) < 0.6 and r.Position.Y < RAISE and r.Position.Z - r.Size.Z / 2 < 49 then table.insert(gapHit, "gate rail z" .. fmt(r.Position.Z)) end
 	end
-	check("B3c-0 iron fence is 3 studs tall and black like the garden fence, 40+ posts, and the stair gap (SideStairsW, z 20..32) and the plaza gate gap (z 49..58) stay open", #fenceBad == 0 and #gapHit == 0 and #fencePosts >= 40 and #fenceRails >= 6,
+	check("B3c-0 iron fence is 3 studs tall and black like the garden fence, 40+ posts, and the stair gap (SideStairsW, z 20..32) stays open (the plaza gate gap is closed, B3c-0b)", #fenceBad == 0 and #gapHit == 0 and #fencePosts >= 40 and #fenceRails >= 6,
 		#fencePosts .. " posts, " .. #fenceRails .. " rails; " .. table.concat(fenceBad, ", ", 1, math.min(#fenceBad, 3)) .. table.concat(gapHit, ", ", 1, math.min(#gapHit, 3)))
 	-- 1b. B3c-0: the ChurchAnnex (magenta mark): one straight-edged 2-storey block on the green lawn between the east transept and the long east wing. Measured box (journal): x 45.4..94, z -99..-42.
 	do
@@ -818,7 +820,7 @@ do
 	local a0, a1 = Vector3.zero, Vector3.zero
 	if apron then a0, a1 = aabb(apron) end
 	-- B3c-0 (replaces "round 4 lot: the asphalt spans from the wing (x <= -103) to the garden wall (x >= 62)"): the wing is gone, so the asphalt runs on west to the new fence (x -119.5).
-	check("B3c-0 lot: the asphalt spans from the west fence (x <= -119) to the garden wall (x >= 62)", apron ~= nil and a0.X <= -119 and a1.X >= 62, string.format("x %s..%s", fmt(a0.X), fmt(a1.X)))
+	check("B3c-0 lot: the asphalt spans from x -117.5 (two corner pieces take it on to the west fence at x -119.5, leaving the stair strip z 20..32 bare: B3c-0b) to the garden wall (x >= 62)", apron ~= nil and a0.X <= -117.4 and a1.X >= 62 and anchor("ApronPavingWestN") ~= nil and anchor("ApronPavingWestS") ~= nil, string.format("x %s..%s", fmt(a0.X), fmt(a1.X)))
 	check("round 4 lot: 36+ parked cars, yellow bay lines still 40+", carCount >= 36 and #allNamed("ParkingBayLine") >= 40, carCount .. " cars, " .. #allNamed("ParkingBayLine") .. " lines")
 	local nw = anchor("ApronPavingNW")
 	-- B3c-0 (replaces "round 4 lot: the bare lawn and palms west of the tower are gone (no PodiumLawn or upper PalmTrunk1 at x < -48); asphalt (ApronPavingNW) takes their place"): the
@@ -836,8 +838,204 @@ do
 			and nw ~= nil and nw.Position.X < -70 and nw.Position.X - nw.Size.X / 2 <= -119 and nw.Material == Enum.Material.Asphalt,
 		(lawnW and "lawn ok" or "no WestLawn") .. ", " .. palmW .. " palms, " .. palmBad .. " off the lawn")
 	-- 3. The plaza: Cultural Center E. B3c-0 (owner markup; replaces "round 4 plaza: the stage pavilion is on the west (dais x < -70) and the Cultural Center on the east"): the stage moved to the centre line, the Cultural Center stays east.
-	check("B3c-0 plaza: the stage pavilion is on the centre line (dais |x| <= 4) and the Cultural Center on the east (centre x > 40, east face x >= 96)",
-		dais ~= nil and cc ~= nil and math.abs(dais.Position.X) <= 4 and cc.Position.X > 40 and cc.Position.X + cc.Size.X / 2 >= 96,
+	check("B3c-0 plaza: the stage pavilion is on the centre line (dais |x| <= 4) and the Cultural Center on the west (centre x < -70, west face x <= -96; B3c-0b)",
+		dais ~= nil and cc ~= nil and math.abs(dais.Position.X) <= 4 and cc.Position.X < -70 and cc.Position.X - cc.Size.X / 2 <= -96,
 		dais and cc and string.format("dais %s, cc %s..%s", fmt(dais.Position.X), fmt(cc.Position.X - cc.Size.X / 2), fmt(cc.Position.X + cc.Size.X / 2)) or "missing")
+end
+------------------------------------------------------------------ B3c-0b (the owner's second colour markup, 2026-10-27; briefs/site01.md "B3c-0b")
+do
+	local function overlaps(p, x0, x1, z0, z1)
+		local a, b = aabb(p)
+		return b.X > x0 and a.X < x1 and b.Z > z0 and a.Z < z1
+	end
+	local function listed(t) return table.concat(t, ", ", 1, math.min(#t, 3)) end
+	-- Magenta: the asphalt west of the tower holds two staggered rows of cars with bay lines and a drive aisle between them.
+	local nBox, outBox, onLane, rowZ = 0, {}, {}, {}
+	if vehicles then
+		for _, v in ipairs(vehicles:GetChildren()) do
+			local body = v:FindFirstChild("VehicleBody", true)
+			if body and body.Position.Y >= RAISE then
+				local a, b = aabb(body)
+				if body.Position.Z < 10 then
+					nBox += 1
+					rowZ[math.floor(body.Position.Z + 0.5)] = true
+					if a.X < -115 or b.X > -55 or a.Z < -42 or b.Z > 6 then table.insert(outBox, v.Name) end
+				end
+				if overlaps(body, -121, -98.5, 20, 32) or overlaps(body, 91, 121, 20, 32) then table.insert(onLane, v.Name) end
+			end
+		end
+	end
+	local nwBays, nRows = 0, 0
+	for _, b in ipairs(allNamed("ParkingBayLine")) do
+		if b.Position.Z < 10 and b.Position.X > -116 and b.Position.X < -54 then nwBays += 1 end
+	end
+	local zs = {}
+	for z in pairs(rowZ) do table.insert(zs, z) nRows += 1 end
+	table.sort(zs)
+	check("B3c-0b magenta lot: 16+ cars stand inside x -115..-55, z -42..6 (none outside), in 2 rows with a drive aisle 12+ studs wide between them, and 16+ yellow bay lines there",
+		nBox >= 16 and #outBox == 0 and nwBays >= 16 and nRows == 2 and (zs[2] - zs[1]) - 10 >= 12, nBox .. " cars, " .. #outBox .. " outside, " .. nwBays .. " bay lines, rows " .. table.concat(zs, "/"))
+	check("B3c-0b no parked car stands on an entrance lane (x +-98.5..121, z 20..32)", #onLane == 0, listed(onLane))
+	-- Orange: the gateway arch, the east stair and EAST_ENTRY (and the west stair and WEST_ENTRY) share z 26; a pale walkway runs from each stair top into the lot.
+	local RoadData = require(game.ReplicatedStorage.LipaShared.RoadData:Clone())
+	local roadZ = {}
+	for _, road in ipairs(RoadData.NEW_ROADS) do
+		if road.name == "WEST_ENTRY" or road.name == "EAST_ENTRY" then roadZ[road.name] = { road.pts[1][2], road.pts[#road.pts][2] } end
+	end
+	local stairZ = { SideStairsW = {}, SideStairsE = {} }
+	for name, list in pairs(stairZ) do for _, s in ipairs(allNamed(name)) do table.insert(list, s.Position.Z) end end
+	local gzMid = (gl and gr) and (gl.Position.Z + gr.Position.Z) / 2 or math.huge
+	local function near26(t) if #t == 0 then return false end for _, z in ipairs(t) do if math.abs(z - 26) > 1 then return false end end return true end
+	check("B3c-0b east entrance: the gateway arch (post midpoint z), SideStairsE and the EAST_ENTRY road all stand on z 26 (within 1 stud)",
+		math.abs(gzMid - 26) <= 1 and near26(stairZ.SideStairsE) and roadZ.EAST_ENTRY ~= nil and near26(roadZ.EAST_ENTRY), "arch z " .. fmt(gzMid))
+	check("B3c-0b west entrance: SideStairsW and the WEST_ENTRY road stand on z 26 (within 1 stud)", near26(stairZ.SideStairsW) and roadZ.WEST_ENTRY ~= nil and near26(roadZ.WEST_ENTRY), "")
+	local function walk(side)
+		local ivs, widthOk = {}, true
+		for _, nm in ipairs({ "EntryWalkW", "EntryWalkE", "GatewayPath" }) do
+			for _, p in ipairs(allNamed(nm)) do
+				local c = p.Color
+				if p.Position.X * side > 0 and math.abs(p.Position.Z - 26) <= 1 and math.abs(c.R * 255 - 214) < 2 and math.abs(c.G * 255 - 206) < 2 then
+					table.insert(ivs, { p.Position.X - p.Size.X / 2, p.Position.X + p.Size.X / 2 })
+					if p.Size.Z < 8 or p.Size.Z > 12.1 then widthOk = false end
+				end
+			end
+		end
+		table.sort(ivs, function(a, b) return a[1] < b[1] end)
+		local lo, hi = math.huge, -math.huge
+		for i, iv in ipairs(ivs) do
+			if i > 1 and iv[1] > hi + 0.05 then return false, "gap" end
+			lo, hi = math.min(lo, iv[1]), math.max(hi, iv[2])
+		end
+		if side < 0 then return widthOk and #ivs > 0 and lo <= -117.4 and hi >= -100.1, string.format("x %s..%s", fmt(lo), fmt(hi)) end
+		return widthOk and #ivs > 0 and lo <= 100.1 and hi >= 117.9, string.format("x %s..%s", fmt(lo), fmt(hi))
+	end
+	local okWalkW, dWalkW = walk(-1)
+	local okWalkE, dWalkE = walk(1)
+	check("B3c-0b pale stone walkways (STONE_LIGHT, 8..12 wide, on z 26) run from the west stair top (x -120) to x -100 and from the east stair top (x 120) to x 100 without a gap", okWalkW and okWalkE, "west " .. dWalkW .. " / east " .. dWalkE)
+	local walkHits = {}
+	for _, nm in ipairs({ "EntryWalkW", "EntryWalkE" }) do
+		for _, w in ipairs(allNamed(nm)) do
+			local a, b = aabb(w)
+			for _, other in ipairs({ "ParkingBayLine", "LampBase", "LampPole", "StatuePlinth", "ParkingAisleLine" }) do
+				for _, o in ipairs(allNamed(other)) do
+					if overlaps(o, a.X, b.X, a.Z, b.Z) then table.insert(walkHits, nm .. " x " .. other) end
+				end
+			end
+		end
+	end
+	check("B3c-0b the entry walkways are clear of bay lines, lamps, statues and aisle lines", #allNamed("EntryWalkW") >= 1 and #allNamed("EntryWalkE") >= 1 and #walkHits == 0, listed(walkHits))
+	local edgeHits = {}
+	for _, d in ipairs(site:GetDescendants()) do
+		if d:IsA("BasePart") and not isRig(d) then
+			local a, b = aabb(d)
+			if b.Y > RAISE + 0.05 and b.Z > 20 and a.Z < 32 and ((b.X > 118 and a.X < 120.2) or (a.X < -118 and b.X > -120.2)) and d.Parent.Name ~= "JeepStop" then table.insert(edgeHits, d.Name .. " top " .. fmt(b.Y - RAISE)) end
+		end
+	end
+	check("B3c-0b nothing rises more than 0.05 above the podium on the stair edge strip (|x| 118..120.2, z 20..32): the last side step stays 1 stud (routes_check)", #edgeHits == 0, listed(edgeHits))
+	local openHits = {}
+	for _, p in ipairs(allNamed("GardenFencePost")) do
+		if p.Position.X > 88 and p.Position.Z > 12.5 and p.Position.Z < 33.5 then table.insert(openHits, "post z" .. fmt(p.Position.Z)) end
+	end
+	check("B3c-0b the garden's east side stays open from z 12.5 to 33.5 (no GardenFencePost) in front of the moved gateway", #openHits == 0, listed(openHits))
+	-- Green: the Cultural Center stands on the plaza's west side and faces east.
+	local door, steps = anchor("CCDoor_Pane"), anchor("CulturalCenterSteps")
+	local eastWins, beds, bedsEast = 0, 0, 0
+	if cc then
+		for _, w in ipairs(allNamed("CCWin_Pane")) do if w.Position.X >= cc.Position.X + cc.Size.X / 2 then eastWins += 1 end end
+		for _, b in ipairs(allNamed("FlowerBed")) do
+			if b.Position.X > cc.Position.X + cc.Size.X / 2 and b.Position.X < cc.Position.X + cc.Size.X / 2 + 6 then beds += 1 end
+			if b.Position.X > 0 then bedsEast += 1 end
+		end
+	end
+	check("B3c-0b Cultural Center: on the west (x < -70), door, steps and 3+ east-face CCWin_Pane windows all east of the body centre, 4+ flower beds just east of it, none left on the east side",
+		cc ~= nil and cc.Position.X < -70 and door ~= nil and door.Position.X > cc.Position.X + cc.Size.X / 2 - 0.5 and steps ~= nil and steps.Position.X > cc.Position.X + cc.Size.X / 2
+			and eastWins >= 3 and beds >= 4 and bedsEast == 0 and countNamed("CCDoor_Pane") == 1,
+		cc and string.format("door %s steps %s eastWins %d beds %d/%d", fmt(door and door.Position.X), fmt(steps and steps.Position.X), eastWins, beds, bedsEast) or "missing")
+	local stripHits = {}
+	if cc then
+		for _, nm in ipairs({ "GreenStrip", "StripHedge" }) do
+			for _, s in ipairs(allNamed(nm)) do
+				if s.Position.X < 0 then
+					for _, other in ipairs({ "CulturalCenterBody", "CulturalCenterSteps", "FlowerBed", "CulturalCenterPlinth" }) do
+						for _, o in ipairs(allNamed(other)) do
+							local a, b = aabb(o)
+							if overlaps(s, a.X, b.X, a.Z, b.Z) then table.insert(stripHits, nm .. " x " .. other) end
+						end
+					end
+				end
+			end
+		end
+		for _, t in ipairs(allNamed("PalmTrunk1")) do
+			if t.Position.Y < 1 and t.Position.X < -66 and t.Position.X > -100 and t.Position.Z > 56 then table.insert(stripHits, "palm " .. fmt(t.Position.X)) end
+		end
+	end
+	check("B3c-0b the west palm strip, its hedges and the plaza palms leave the Cultural Center, its steps and beds alone", #stripHits == 0, listed(stripHits))
+	-- Blue: every plaza fence is black (LAMP_METAL), none white.
+	local fenceColor = {}
+	for _, nm in ipairs({ "FencePost", "FenceRail" }) do
+		for _, p in ipairs(allNamed(nm)) do
+			local c = p.Color
+			if math.max(c.R, c.G, c.B) * 255 > 70 then table.insert(fenceColor, nm .. " " .. tostring(c)) end
+		end
+	end
+	check("B3c-0b FencePost / FenceRail are black (every channel <= 70), none white, 20+ posts kept", #fenceColor == 0 and countNamed("FencePost") >= 20 and countNamed("FenceRail") >= 4, #fenceColor .. " not black, " .. countNamed("FencePost") .. " posts")
+	-- Red: the arch is gone and its gap, the west gate and the east side are closed with the same fence.
+	local function lineGap(alongX, fixed, lo, hi)
+		local ivs = {}
+		for _, nm in ipairs({ "FenceRail", "IronFenceRail" }) do
+			for _, r in ipairs(allNamed(nm)) do
+				if math.abs((alongX and r.Position.Z or r.Position.X) - fixed) < 0.6 and r.Position.Y < RAISE then
+					local a, b = aabb(r)
+					table.insert(ivs, alongX and { a.X, b.X } or { a.Z, b.Z })
+				end
+			end
+		end
+		table.sort(ivs, function(a, b) return a[1] < b[1] end)
+		local cur, worst = lo, 0
+		for _, iv in ipairs(ivs) do
+			if iv[1] > cur then worst = math.max(worst, iv[1] - cur) end
+			cur = math.max(cur, iv[2])
+		end
+		return math.max(worst, hi - cur), #ivs
+	end
+	local gS, nS = lineGap(true, 99.6, -96, 96)
+	local gW, nWk = lineGap(false, -100.5, 49, 99.6)
+	local gE, nE = lineGap(false, 99.4, 49, 99.6)
+	check("B3c-0b the plaza has no gap on its south (x -96..96 at z 99.6), west (z 49..99.6 at x -100.5) or east (z 49..99.6 at x 99.4) fence line: no open stretch longer than 1 stud",
+		nS > 0 and nWk > 0 and nE > 0 and gS <= 1 and gW <= 1 and gE <= 1, string.format("gaps S %s W %s E %s", fmt(gS), fmt(gW), fmt(gE)))
+	local archLeft = {}
+	for _, d in ipairs(workspace:GetDescendants()) do
+		local n = d.Name
+		if n == "WelcomeArch" or n == "GatepostL" or n == "GatepostR" or n == "GatepostCap" or n == "GatepostPlinth" or n == "ArchIron" or n == "ArchSign" or n == "ArchCrossV" or n == "ArchCrossH" or n == "ArchYearL" or n == "ArchYearR"
+			or (d:IsA("TextLabel") and d.Text:find("10 de ABRIL", 1, true)) then
+			table.insert(archLeft, n)
+		end
+	end
+	check("B3c-0b no WelcomeArch component or arch parts (gateposts, ArchIron, ArchSign, sign text) remain anywhere in the workspace", #archLeft == 0 and site:FindFirstChild("WelcomeArch") == nil, #archLeft .. " left: " .. listed(archLeft))
+	-- Black: the statue stands in the middle of the stairs, D-shaped, flat back on the wall; the side flights moved out.
+	do
+		local tiersM, flats = allNamed("MoundTier"), allNamed("MoundTierFlat")
+		local widest, cxm, flatBad, leak = 0, 0, 0, {}
+		for _, t in ipairs(tiersM) do widest, cxm = math.max(widest, t.Size.Y), t.Position.X end
+		for _, f in ipairs(flats) do
+			if math.abs(f.Position.Z - f.Size.Z / 2 - WALL_Z) > 1.5 or math.abs(f.Position.X) > 1 then flatBad += 1 end
+		end
+		for _, nm in ipairs({ "MoundTier", "MoundTierFlat", "MoundBase", "MoundRibbon" }) do
+			for _, m in ipairs(allNamed(nm)) do
+				local a, b = aabb(m)
+				if a.Z < 47.5 and b.Y > RAISE + 0.1 then table.insert(leak, nm) end
+			end
+		end
+		local clearL, clearR = math.huge, math.huge
+		for _, s in ipairs(allNamed("StairFlightL")) do clearL = math.min(clearL, -(s.Position.X + s.Size.X / 2) - widest / 2) end
+		for _, s in ipairs(allNamed("StairFlightR")) do clearR = math.min(clearR, (s.Position.X - s.Size.X / 2) - widest / 2) end
+		check("B3c-0b statue (black mark): D-shaped (3+ round tiers and 3 MoundTierFlat blocks) centred on x 0 within 1 stud, 22+ wide, flat back within 1.5 studs of the wall (z 48), nothing above the podium top north of z 47.5, side flights 1+ stud clear of it, no StairFlightC",
+			#tiersM >= 3 and #flats == 3 and flatBad == 0 and math.abs(cxm) <= 1 and widest >= 22 and #leak == 0 and clearL >= 0.99 and clearR >= 0.99 and #allNamed("StairFlightC") == 0,
+			string.format("tiers %d flats %d (bad %d) centre x %s wide %s leaks %d clear %s/%s StairFlightC %d", #tiersM, #flats, flatBad, fmt(cxm), fmt(widest), #leak, fmt(clearL), fmt(clearR), #allNamed("StairFlightC")))
+		check("B3c-0b the stage dais stays 6+ studs from the moved statue (dais north edge vs statue front)", dais ~= nil and tiersM[1] ~= nil and (dais.Position.Z - dais.Size.Z / 2) - (tiersM[1].Position.Z + widest / 2) >= 6,
+			dais and tiersM[1] and fmt((dais.Position.Z - dais.Size.Z / 2) - (tiersM[1].Position.Z + widest / 2)) or "missing")
+		check("B3c-0b EventStage holds StairFlightL, StairFlightR and the seating (no StairFlightC, no gazebo stage)", stage ~= nil and anchor("StairFlightL") ~= nil and anchor("StairFlightL"):IsDescendantOf(stage)
+			and anchor("StairFlightR") ~= nil and anchor("StairFlightR"):IsDescendantOf(stage) and anchor("BleacherL") ~= nil and anchor("BleacherL"):IsDescendantOf(stage) and anchor("StairFlightC") == nil
+			and anchor("StageLanding") == nil and anchor("StageCanopy") == nil and anchor("StageFascia") == nil and countNamed("StagePost") == 0, "")
+	end
 end
 return HttpService:JSONEncode(results)
