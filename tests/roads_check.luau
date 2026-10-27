@@ -419,6 +419,21 @@ do
 	check("control: the cells just outside the repainted ground are not Pavement", #spill == 0, table.concat(spill, " "))
 end
 
+-- 6b. The stretched Cathedral plaza (Slice 4 B3c-1): the ground under x -100..100, z 100..200 is repainted Pavement (builders/roads_extra.luau PAVED). Sampled OFF the old Road E
+-- asphalt strip (x -6..6), which stays Asphalt: ReplaceMaterial Grass -> Pavement leaves it alone (the ForecourtPaving part covers it).
+do
+	local bad = {}
+	for _, p in ipairs({ { -60, 120 }, { 60, 150 }, { -90, 190 }, { 90, 120 }, { -40, 190 }, { 40, 190 } }) do
+		if cellMaterial(p[1], p[2]) ~= Enum.Material.Pavement then table.insert(bad, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
+	end
+	check("B3c-1 Cathedral plaza ground (x -100..100, z 100..200) is Pavement at 6 points off the old Road E strip", #bad == 0, #bad .. " not pavement: " .. table.concat(bad, " ", 1, math.min(#bad, 3)))
+	local spill = {}
+	for _, p in ipairs({ { -108, 150 }, { 108, 150 }, { -60, 208 } }) do
+		if cellMaterial(p[1], p[2]) == Enum.Material.Pavement then table.insert(spill, string.format("(%d,%d)", p[1], p[2])) end
+	end
+	check("B3c-1 control: the cells just outside the repainted plaza ground are not Pavement", #spill == 0, table.concat(spill, " "))
+end
+
 -- 7. Entrance roads to the Cathedral side stairs (Slice 4 B3c-0b, owner markup) ---------------------------------------------------
 -- WEST_ENTRY / EAST_ENTRY run from each bypass centre line straight along the stairs' centre z to the foot of SideStairsW / SideStairsE
 -- (the lowest tread is the part with the largest |x|; its outer edge is the foot). They are the only roads allowed inside the slot's 10 percent

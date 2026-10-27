@@ -10,7 +10,9 @@
 -- steps, a round pergola garden, a vaulted covered court with a shade tree; no market tents and no vans on the lower plaza.
 local HttpService = game:GetService("HttpService")
 local RAISE = 5 -- podium top (upper level), studs above the ground; must equal builders/site01.luau RAISE
-local WALL_Z = 48 -- the podium's south face, the retaining wall
+local WALL_Z = 112 -- the podium's south face, the retaining wall (B3c-1: moved south from 48)
+local PLAZA_S = 195.0 -- B3c-1: the lower plaza's south fence line (post centres; the brief said 198, moved to 195 for the Road E walk: the fence stays 4+ studs clear of the board's keep-out line z 199.8); the paving runs to PLAZA_S + 0.4, the south kerb to PLAZA_S + 1.1
+local STAGE_Z = PLAZA_S - 11.5 -- B3c-1: the stage dais centre z
 
 local results = { passed = 0, failed = 0, failures = {} }
 local function check(name, cond, detail)
@@ -69,6 +71,20 @@ local function fmt(v) return v and string.format("%.1f", v) or "nil" end
 local function topY(p) return p.Position.Y + p.Size.Y / 2 end
 -- B3c-0b: an assertion the owner's second markup contradicts is retired by renaming its call to retired(...), which does nothing. The old text stays in this file as the record; the reason and the replacement are logged in briefs/site01.md "B3c-0b".
 local function retired() end
+
+------------------------------------------------------------------ B3c-1: nothing is buried (the first real check)
+-- Moving the retaining wall south from z 48 to z 112 puts every absolute z literal of the old lower plaza inside the podium. Every part (and every visitor rig's HumanoidRootPart)
+-- whose centre is within |x| < 120 and z < WALL_Z must stand on or above the podium top (centre y >= RAISE). The only part allowed a lower centre is the Podium itself.
+do
+	local buried = {}
+	for _, p in ipairs(site:GetDescendants()) do
+		if p:IsA("BasePart") and p.Name ~= "Podium" and math.abs(p.Position.X) < 120 and p.Position.Z < WALL_Z and p.Position.Y < RAISE - 0.001 and (not isRig(p) or p.Name == "HumanoidRootPart") then
+			table.insert(buried, string.format("%s (%.0f, %.1f, %.0f)", p.Name, p.Position.X, p.Position.Y, p.Position.Z))
+		end
+	end
+	check("B3c-1 nothing is buried: no part (or visitor HumanoidRootPart) with its centre at |x| < 120, z < WALL_Z sits below the podium top (only the Podium itself)", #buried == 0,
+		#buried .. " buried: " .. table.concat(buried, "; ", 1, math.min(#buried, 4)))
+end
 
 ------------------------------------------------------------------ Proportions (OSM + P3)
 local facade, tower = anchor("FacadeWall"), anchor("TowerBody")
@@ -148,7 +164,7 @@ end)())
 ------------------------------------------------------------------ Two levels: podium, retaining wall, stairs, landing (P1 crop: wall with stairs down to the plaza)
 local podium = anchor("Podium")
 check("Podium top is RAISE studs above the ground", podium ~= nil and math.abs(topY(podium) - RAISE) < 0.06, podium and fmt(topY(podium)) or "missing")
-check("Podium south face (the retaining wall) is at z 48", podium ~= nil and math.abs(podium.Position.Z + podium.Size.Z / 2 - WALL_Z) < 0.5,
+check("Podium south face (the retaining wall) is at WALL_Z (z 112, B3c-1)", podium ~= nil and math.abs(podium.Position.Z + podium.Size.Z / 2 - WALL_Z) < 0.5,
 	podium and fmt(podium.Position.Z + podium.Size.Z / 2) or "missing")
 check("Podium carries the whole church: spans x +-120 and back to z <= -99", podium ~= nil and podium.Size.X >= 238 and podium.Position.Z - podium.Size.Z / 2 <= -99,
 	podium and string.format("x %s back %s", fmt(podium.Size.X), fmt(podium.Position.Z - podium.Size.Z / 2)) or "missing")
@@ -289,8 +305,8 @@ end
 
 ------------------------------------------------------------------ Lower plaza (P1: paved plaza below the wall, the gabled pavilion, palms, fence)
 local paving = anchor("ForecourtPaving")
-check("lower plaza paving (ForecourtPaving) is at ground level and spans z 48..100", paving ~= nil and paving.Position.Y <= 0.6
-	and math.abs(paving.Position.Z - paving.Size.Z / 2 - WALL_Z) < 1 and paving.Position.Z + paving.Size.Z / 2 >= 99,
+check("lower plaza paving (ForecourtPaving) is at ground level and spans z WALL_Z..PLAZA_S+0.4 (112..198.4, B3c-1)", paving ~= nil and paving.Position.Y <= 0.6
+	and math.abs(paving.Position.Z - paving.Size.Z / 2 - WALL_Z) < 1 and math.abs(paving.Position.Z + paving.Size.Z / 2 - (PLAZA_S + 0.4)) < 0.3,
 	paving and string.format("y %s z %s..%s", fmt(paving.Position.Y), fmt(paving.Position.Z - paving.Size.Z / 2), fmt(paving.Position.Z + paving.Size.Z / 2)) or "missing")
 local pr, prCol = paving, paving and paving.Color
 -- Step B round 2 (replaces "lower paving is terracotta, as in the ground photo (R >= 180, R - B >= 60)"; the plaza drawing shows grey grid pavers)
@@ -304,8 +320,8 @@ check("the vaulted CoveredCourt is gone: no CoveredCourt, VaultPanel, CourtPost 
 	and countNamed("CourtPost") == 0 and anchor("VaultRidge") == nil, countNamed("VaultPanel") .. " vault panels")
 check("no gabled CivicBuildingS / CivicRoof left (the gabled hall is replaced by the vault)", anchor("CivicBuildingS") == nil and anchor("CivicRoof") == nil)
 local trunk = anchor("ShadeTreeTrunk")
-check("ShadeTree: a trunk at x 31..60, z 60..70 (clear of the open centre and the court) with 4+ canopy balls whose bottoms are above y 11.5",
-	trunk ~= nil and trunk.Position.X >= 31 and trunk.Position.X <= 60 and trunk.Position.Z >= 60 and trunk.Position.Z <= 70 and countNamed("ShadeTreeCanopy") >= 4 and (function()
+check("ShadeTree: a trunk at x 31..60, z WALL_Z+20..PLAZA_S-30 (the middle band, B3c-1; clear of the open centre and the court) with 4+ canopy balls whose bottoms are above y 11.5",
+	trunk ~= nil and trunk.Position.X >= 31 and trunk.Position.X <= 60 and trunk.Position.Z >= WALL_Z + 20 and trunk.Position.Z <= PLAZA_S - 30 and countNamed("ShadeTreeCanopy") >= 4 and (function()
 		for _, c in ipairs(allNamed("ShadeTreeCanopy")) do if c.Position.Y - c.Size.Y / 2 < 11.5 then return false end end
 		return true
 	end)(), trunk and string.format("trunk (%s, %s), canopies %d", fmt(trunk.Position.X), fmt(trunk.Position.Z), countNamed("ShadeTreeCanopy")) or "missing")
@@ -352,17 +368,17 @@ end
 -- B3c-0 (owner's colour markup; replaces the three old open-plaza boxes "the spawn (0,70) has 8x8 studs of clear ground", "the CreditsBoard strip (x +-30, z 90..98) is clear of
 -- Site01 geometry" and "the lower plaza has a wide open centre (x -34..30, z 64..88 ...)"): the mound and the stage now stand on the centre line, so walking room is
 -- measured round them instead. The real CreditsBoard keep-out (4+ studs round the board itself) is unchanged further down.
-local moundN = blockers(CFrame.new(0, 5, 62.2), Vector3.new(20, 8, 2.0))
-local moundE = blockers(CFrame.new(14, 5, 70), Vector3.new(4.4, 8, 16))
-local moundW = blockers(CFrame.new(-14, 5, 70), Vector3.new(4.4, 8, 16))
-check("B3c-0 walking room round the mound: clear boxes in front of the statue (x -10..10, z 61.2..63.2; B3c-0b) and on both sides (|x| 11.8..16.2, z 62..78)",
+local moundN = blockers(CFrame.new(0, 5, WALL_Z + 14.2), Vector3.new(20, 8, 2.0))
+local moundE = blockers(CFrame.new(14, 5, WALL_Z + 22), Vector3.new(4.4, 8, 16))
+local moundW = blockers(CFrame.new(-14, 5, WALL_Z + 22), Vector3.new(4.4, 8, 16))
+check("B3c-0 walking room round the mound: clear boxes in front of the statue (x -10..10, z WALL_Z+13.2..15.2; B3c-1) and on both sides (|x| 11.8..16.2, z WALL_Z+14..30)",
 	#moundN + #moundE + #moundW == 0, table.concat(moundN, ", ", 1, math.min(#moundN, 2)) .. table.concat(moundE, ", ", 1, math.min(#moundE, 2)) .. table.concat(moundW, ", ", 1, math.min(#moundW, 2)))
-local laneE = blockers(CFrame.new(19.5, 5, 91), Vector3.new(9, 8, 15.6))
-local laneW = blockers(CFrame.new(-19.5, 5, 91), Vector3.new(9, 8, 15.6))
-check("B3c-0 walkers pass round both sides of the stage: lanes x +-(15..24), z 83.2..98.8 are clear of Site01 geometry", #laneE + #laneW == 0,
+local laneE = blockers(CFrame.new(19.5, 5, STAGE_Z + 2.5), Vector3.new(9, 8, 15.6))
+local laneW = blockers(CFrame.new(-19.5, 5, STAGE_Z + 2.5), Vector3.new(9, 8, 15.6))
+check("B3c-0 walkers pass round both sides of the stage: lanes x +-(15..24), z STAGE_Z-5.3..STAGE_Z+10.3 (B3c-1) are clear of Site01 geometry", #laneE + #laneW == 0,
 	table.concat(laneE, ", ", 1, math.min(#laneE, 2)) .. " | " .. table.concat(laneW, ", ", 1, math.min(#laneW, 2)))
-local corridor = blockers(CFrame.new(0, 5, 81.6), Vector3.new(30, 8, 1.4))
-check("B3c-0 a corridor (x -15..15, z 80.9..82.3) separates the mound from the stage", #corridor == 0, table.concat(corridor, ", ", 1, math.min(#corridor, 3)))
+local corridor = blockers(CFrame.new(0, 5, STAGE_Z - 6.9), Vector3.new(30, 8, 1.4))
+check("B3c-0 a corridor (x -15..15, z STAGE_Z-7.6..-6.2; B3c-1) separates the mound from the stage", #corridor == 0, table.concat(corridor, ", ", 1, math.min(#corridor, 3)))
 -- Upper-level keep-clear: nothing the builder made may stand where a visitor meets the Guide or reads the InfoPanel.
 local keptNames = { Guide = true, InfoPanel = true, JeepStop = true, JeepSignPole = true, JeepSign = true, Jeepney = true }
 local function builtBlockers(cf, size)
@@ -386,12 +402,12 @@ for _, p in ipairs(site:GetDescendants()) do
 	if p:IsA("BasePart") and not isRig(p) and p.Size.Y <= 0.5 and p.Position.Y <= 0.6 and p.Parent.Name ~= "JeepStop" then
 		local x0, x1 = p.Position.X - p.Size.X / 2, p.Position.X + p.Size.X / 2
 		local z0, z1 = p.Position.Z - p.Size.Z / 2, p.Position.Z + p.Size.Z / 2
-		if p.Size.X > 3 and p.Size.Z > 3 and (x0 < -100.7 or x1 > 100.7 or z0 < WALL_Z - 0.6 or z1 > 100.7) then
+		if p.Size.X > 3 and p.Size.Z > 3 and (x0 < -100.7 or x1 > 100.7 or z0 < WALL_Z - 0.6 or z1 > PLAZA_S + 1.1) then
 			table.insert(stray, string.format("%s x[%.0f,%.0f] z[%.0f,%.0f]", p.Name, x0, x1, z0, z1))
 		end
 	end
 end
-check("flat ground-level parts lie on the lower plaza only (x +-100, z 48..100: the repainted Pavement; the podium covers the rest)", #stray == 0,
+check("flat ground-level parts lie on the lower plaza only (x +-100, z WALL_Z..PLAZA_S+1.1: the repainted Pavement, B3c-1; the podium covers the rest)", #stray == 0,
 	table.concat(stray, "; ", 1, math.min(#stray, 3)))
 
 ------------------------------------------------------------------ Slice 4 step B: the plaza and its surroundings follow the plaza blueprint
@@ -464,7 +480,7 @@ do
 			end
 		end
 	end
-	check("the CreditsBoard keeps 4+ studs clear on every side (nothing taller than 0.5 inside x +-61.5, z 88.8..99.2)", board ~= nil and #bad == 0,
+	check("the CreditsBoard keeps 4+ studs clear on every side (nothing taller than 0.5 inside the board's bounds + 4: x -70..70, z 199.8..210.2 for the board at z 203.8..206.2)", board ~= nil and #bad == 0,
 		board and table.concat(bad, ", ", 1, math.min(#bad, 4)) or "CreditsBoard missing")
 end
 -- Sign rule: a long label uses a fixed TextSize (never TextScaled) and the text must fill the face (a green check once passed a sign drawn at a
@@ -506,15 +522,15 @@ end
 local cc = anchor("CulturalCenterBody")
 -- Step B round 2 (replaces "Lipa Cultural Center: a cream block 14+ studs wide and 20-30 tall at x 78..99, z 64..84, ..."): the old box was too small to read at blueprint-view scale.
 -- Step B round 4 (replaces "a cream block 26+ wide, 14+ deep ... at x 68..99, z 64..84"): the drawing's Cultural Center is a long block down the EAST edge of the plaza.
-check("round 4 Lipa Cultural Center: a cream block 18+ wide and 28+ long (N-S, along the east edge), 22-30 tall, x -99..-70 (B3c-0b: the west edge), z 64..95, on the lower plaza, flat top",
+check("round 4 Lipa Cultural Center: a cream block 18+ wide and 28+ long (N-S, along the east edge), 22-30 tall, x -99..-70 (B3c-0b: the west edge), z WALL_Z+16..PLAZA_S-3 (B3c-1), on the lower plaza, flat top",
 	cc ~= nil and cc.Size.X >= 18 and cc.Size.Z >= 28 and cc.Size.Y >= 22 and cc.Size.Y <= 30 and cc.Position.X - cc.Size.X / 2 >= -99 and cc.Position.X + cc.Size.X / 2 <= -70
-		and cc.Position.Z - cc.Size.Z / 2 >= 64 and cc.Position.Z + cc.Size.Z / 2 <= 95 and cc.Position.Y - cc.Size.Y / 2 < 0.6
+		and cc.Position.Z - cc.Size.Z / 2 >= WALL_Z + 16 and cc.Position.Z + cc.Size.Z / 2 <= PLAZA_S - 3 and cc.Position.Y - cc.Size.Y / 2 < 0.6
 		and cc.Color.R * 255 >= 215 and cc.Color.B * 255 >= 130 and (cc.Color.R - cc.Color.B) * 255 <= 90,
 	cc and string.format("x %s z %s w %s d %s h %s", fmt(cc.Position.X), fmt(cc.Position.Z), fmt(cc.Size.X), fmt(cc.Size.Z), fmt(cc.Size.Y)) or "missing")
 check("Cultural Center has a flat parapet cap, a cornice and 10+ arched windows (CCWin_Pane)", anchor("CulturalCenterParapet") ~= nil and anchor("CulturalCenterCornice") ~= nil
 	and countNamed("CCWin_Pane") >= 10, tostring(countNamed("CCWin_Pane")) .. " windows")
-check("Cultural Center leaves the road gap open: nothing of it at z < 64 (Road C reaches the plaza between the seating and the building)",
-	cc ~= nil and cc.Position.Z - cc.Size.Z / 2 >= 64)
+check("Cultural Center leaves the road gap open: nothing of it at z < WALL_Z+16 (B3c-1; Road C reaches the plaza between the seating and the building)",
+	cc ~= nil and cc.Position.Z - cc.Size.Z / 2 >= WALL_Z + 16)
 
 -- Open-air stage pavilion with a dark peaked roof, plaza south-east, apart from the vaulted CoveredCourt (which stays).
 local roofL, roofR, dais = anchor("StageRoofL"), anchor("StageRoofR"), anchor("StageDais")
@@ -522,14 +538,14 @@ local function tilt(p) local rx = p.CFrame:ToEulerAnglesXYZ() return math.deg(rx
 -- B3c-0 (owner's colour markup; replaces the round 4 clause "over a raised dais at the SOUTH-WEST (x -99..-72, z 80..96)", old text kept in briefs/site01.md): the dais centre is within
 -- 4 studs of the plaza centre line (x 0) near the south edge (z 80..96), the open side faces NORTH (the white back wall is on the south long side), and the lane from the
 -- dais's south edge to the south fence line (z 99.3) is 4.5+ studs, so a walker (agent radius 2) can slide round it. The roof, colour and dais-thickness clauses are unchanged.
-check("B3c-0 StagePavilion: two dark roof slopes, tilted 15+ degrees in opposite senses, over a raised dais centred within 4 studs of the plaza centre line near the south edge (z 80..96), open side facing NORTH (back wall on the south), 4.5+ studs to the south fence",
+check("B3c-0 StagePavilion: two dark roof slopes, tilted 15+ degrees in opposite senses, over a raised dais centred within 4 studs of the plaza centre line near the south edge (z PLAZA_S-18..PLAZA_S-2; B3c-1), open side facing NORTH (back wall on the south), 4.5+ studs to the south fence",
 	roofL ~= nil and roofR ~= nil and dais ~= nil and tilt(roofL) * tilt(roofR) < 0 and math.abs(tilt(roofL)) >= 15 and math.abs(tilt(roofR)) >= 15
 		and roofL.Color.R * 255 <= 90 and roofL.Color.G * 255 <= 90 and roofL.Color.B * 255 <= 90 and roofR.Color.R * 255 <= 90
-		and math.abs(dais.Position.X) <= 4 and dais.Position.Z >= 80 and dais.Position.Z <= 96 and dais.Size.Y >= 1 and dais.Size.Y <= 2.5
+		and math.abs(dais.Position.X) <= 4 and dais.Position.Z >= PLAZA_S - 18 and dais.Position.Z <= PLAZA_S - 2 and dais.Size.Y >= 1 and dais.Size.Y <= 2.5
 		and roofL.Position.Y >= 12
 		and anchor("StageBackWall") ~= nil and anchor("StageBackWall").Position.Z > dais.Position.Z + 4 and anchor("StageBackWall").Size.X >= 20
-		and 99.3 - (dais.Position.Z + dais.Size.Z / 2) >= 4.5,
-	roofL and roofR and dais and string.format("tilt %s / %s, dais (%s, %s) south lane %s", fmt(tilt(roofL)), fmt(tilt(roofR)), fmt(dais.Position.X), fmt(dais.Position.Z), fmt(99.3 - (dais.Position.Z + dais.Size.Z / 2))) or "missing")
+		and (PLAZA_S - 0.3) - (dais.Position.Z + dais.Size.Z / 2) >= 4.5,
+	roofL and roofR and dais and string.format("tilt %s / %s, dais (%s, %s) south lane %s", fmt(tilt(roofL)), fmt(tilt(roofR)), fmt(dais.Position.X), fmt(dais.Position.Z), fmt((PLAZA_S - 0.3) - (dais.Position.Z + dais.Size.Z / 2))) or "missing")
 check("StagePavilion has 4+ posts and a white back wall", countNamed("StagePavilionPost") >= 4 and anchor("StageBackWall") ~= nil, tostring(countNamed("StagePavilionPost")))
 
 -- Red-brick retaining wall and brick steps along the forecourt's plaza side.
@@ -731,10 +747,10 @@ do
 		return true, #vals .. " posts"
 	end
 	local okW1, dW1 = fenceRun(function(p) return math.abs(p.Position.X + 119.5) < 0.6 and p.Position.Y >= RAISE and p.Position.Z < 20.5 end, "z", -99, 19)
-	local okW2, dW2 = fenceRun(function(p) return math.abs(p.Position.X + 119.5) < 0.6 and p.Position.Y >= RAISE and p.Position.Z > 32.5 end, "z", 33, 47)
+	local okW2, dW2 = fenceRun(function(p) return math.abs(p.Position.X + 119.5) < 0.6 and p.Position.Y >= RAISE and p.Position.Z > 32.5 end, "z", 33, WALL_Z - 1)
 	local okN, dN = fenceRun(function(p) return math.abs(p.Position.Z + 99.5) < 0.6 and p.Position.Y >= RAISE and p.Position.X < -50 end, "x", -119.5, -52)
-	local okK, dK = fenceRun(function(p) return math.abs(p.Position.X + 100.5) < 0.6 and p.Position.Y < RAISE end, "z", 49.5, 99.6)
-	check("B3c-0 iron fence runs the west podium edge (x -119.5, z -99..19 and 33..47), the north edge (z -99.5, x -119.5..-52) and the plaza west kerb (x -100.5, z 49.5..99.6; the gate gap is closed, B3c-0b), posts every 6 studs or less",
+	local okK, dK = fenceRun(function(p) return math.abs(p.Position.X + 100.5) < 0.6 and p.Position.Y < RAISE end, "z", WALL_Z + 1.5, PLAZA_S)
+	check("B3c-0 iron fence runs the west podium edge (x -119.5, z -99..19 and 33..WALL_Z-1), the north edge (z -99.5, x -119.5..-52) and the plaza west kerb (x -100.5, z WALL_Z+1.5..PLAZA_S; the gate gap is closed, B3c-0b; B3c-1), posts every 6 studs or less",
 		okW1 and okW2 and okN and okK, "west " .. dW1 .. " / " .. dW2 .. "; north " .. dN .. "; kerb " .. dK)
 	local fenceBad, gapHit = {}, {}
 	for _, p in ipairs(fencePosts) do
@@ -753,10 +769,10 @@ do
 		if r.Position.X < -118 and r.Position.Z + r.Size.Z / 2 > 20.2 and r.Position.Z - r.Size.Z / 2 < 31.8 then table.insert(gapHit, "rail z" .. fmt(r.Position.Z)) end
 	end
 	for _, p in ipairs(fencePosts) do
-		if math.abs(p.Position.X + 100.5) < 0.6 and p.Position.Y < RAISE and p.Position.Z < 49 then table.insert(gapHit, "gate post z" .. fmt(p.Position.Z)) end
+		if math.abs(p.Position.X + 100.5) < 0.6 and p.Position.Y < RAISE and p.Position.Z < WALL_Z + 1 then table.insert(gapHit, "gate post z" .. fmt(p.Position.Z)) end
 	end
 	for _, r in ipairs(fenceRails) do
-		if math.abs(r.Position.X + 100.5) < 0.6 and r.Position.Y < RAISE and r.Position.Z - r.Size.Z / 2 < 49 then table.insert(gapHit, "gate rail z" .. fmt(r.Position.Z)) end
+		if math.abs(r.Position.X + 100.5) < 0.6 and r.Position.Y < RAISE and r.Position.Z - r.Size.Z / 2 < WALL_Z + 1 then table.insert(gapHit, "gate rail z" .. fmt(r.Position.Z)) end
 	end
 	check("B3c-0 iron fence is 3 studs tall and black like the garden fence, 40+ posts, and the stair gap (SideStairsW, z 20..32) stays open (the plaza gate gap is closed, B3c-0b)", #fenceBad == 0 and #gapHit == 0 and #fencePosts >= 40 and #fenceRails >= 6,
 		#fencePosts .. " posts, " .. #fenceRails .. " rails; " .. table.concat(fenceBad, ", ", 1, math.min(#fenceBad, 3)) .. table.concat(gapHit, ", ", 1, math.min(#gapHit, 3)))
@@ -965,7 +981,7 @@ do
 			end
 		end
 		for _, t in ipairs(allNamed("PalmTrunk1")) do
-			if t.Position.Y < 1 and t.Position.X < -66 and t.Position.X > -100 and t.Position.Z > 56 then table.insert(stripHits, "palm " .. fmt(t.Position.X)) end
+			if t.Position.Y < 1 and t.Position.X < -66 and t.Position.X > -100 and t.Position.Z > WALL_Z + 8 then table.insert(stripHits, "palm " .. fmt(t.Position.X)) end
 		end
 	end
 	check("B3c-0b the west palm strip, its hedges and the plaza palms leave the Cultural Center, its steps and beds alone", #stripHits == 0, listed(stripHits))
@@ -997,10 +1013,10 @@ do
 		end
 		return math.max(worst, hi - cur), #ivs
 	end
-	local gS, nS = lineGap(true, 99.6, -96, 96)
-	local gW, nWk = lineGap(false, -100.5, 49, 99.6)
-	local gE, nE = lineGap(false, 99.4, 49, 99.6)
-	check("B3c-0b the plaza has no gap on its south (x -96..96 at z 99.6), west (z 49..99.6 at x -100.5) or east (z 49..99.6 at x 99.4) fence line: no open stretch longer than 1 stud",
+	local gS, nS = lineGap(true, PLAZA_S, -96, 96)
+	local gW, nWk = lineGap(false, -100.5, WALL_Z + 1.5, PLAZA_S)
+	local gE, nE = lineGap(false, 99.4, WALL_Z + 1.5, PLAZA_S)
+	check("B3c-0b the plaza has no gap on its south (x -96..96 at z PLAZA_S), west (z WALL_Z+1.5..PLAZA_S at x -100.5) or east (same at x 99.4) fence line: no open stretch longer than 1 stud (B3c-1: the lines moved with the stretch)",
 		nS > 0 and nWk > 0 and nE > 0 and gS <= 1 and gW <= 1 and gE <= 1, string.format("gaps S %s W %s E %s", fmt(gS), fmt(gW), fmt(gE)))
 	local archLeft = {}
 	for _, d in ipairs(workspace:GetDescendants()) do
@@ -1022,13 +1038,13 @@ do
 		for _, nm in ipairs({ "MoundTier", "MoundTierFlat", "MoundBase", "MoundRibbon" }) do
 			for _, m in ipairs(allNamed(nm)) do
 				local a, b = aabb(m)
-				if a.Z < 47.5 and b.Y > RAISE + 0.1 then table.insert(leak, nm) end
+				if a.Z < WALL_Z - 0.5 and b.Y > RAISE + 0.1 then table.insert(leak, nm) end
 			end
 		end
 		local clearL, clearR = math.huge, math.huge
 		for _, s in ipairs(allNamed("StairFlightL")) do clearL = math.min(clearL, -(s.Position.X + s.Size.X / 2) - widest / 2) end
 		for _, s in ipairs(allNamed("StairFlightR")) do clearR = math.min(clearR, (s.Position.X - s.Size.X / 2) - widest / 2) end
-		check("B3c-0b statue (black mark): D-shaped (3+ round tiers and 3 MoundTierFlat blocks) centred on x 0 within 1 stud, 22+ wide, flat back within 1.5 studs of the wall (z 48), nothing above the podium top north of z 47.5, side flights 1+ stud clear of it, no StairFlightC",
+		check("B3c-0b statue (black mark): D-shaped (3+ round tiers and 3 MoundTierFlat blocks) centred on x 0 within 1 stud, 22+ wide, flat back within 1.5 studs of the wall (z 48), nothing above the podium top north of z WALL_Z-0.5, side flights 1+ stud clear of it, no StairFlightC",
 			#tiersM >= 3 and #flats == 3 and flatBad == 0 and math.abs(cxm) <= 1 and widest >= 22 and #leak == 0 and clearL >= 0.99 and clearR >= 0.99 and #allNamed("StairFlightC") == 0,
 			string.format("tiers %d flats %d (bad %d) centre x %s wide %s leaks %d clear %s/%s StairFlightC %d", #tiersM, #flats, flatBad, fmt(cxm), fmt(widest), #leak, fmt(clearL), fmt(clearR), #allNamed("StairFlightC")))
 		check("B3c-0b the stage dais stays 6+ studs from the moved statue (dais north edge vs statue front)", dais ~= nil and tiersM[1] ~= nil and (dais.Position.Z - dais.Size.Z / 2) - (tiersM[1].Position.Z + widest / 2) >= 6,
@@ -1038,4 +1054,95 @@ do
 			and anchor("StageLanding") == nil and anchor("StageCanopy") == nil and anchor("StageFascia") == nil and countNamed("StagePost") == 0, "")
 	end
 end
+------------------------------------------------------------------ B3c-1: the compound is stretched onto the grown slot (the wall at z 112, the plaza to the fence at z 198)
+do
+	local function zr(p) if not p then return math.huge, -math.huge end local a, b = aabb(p) return a.Z, b.Z end
+	-- the real south fence line, measured on the two long FenceRail runs (not read back from the constants)
+	local fz, nSouth, fzMax, flatMax = nil, 0, -math.huge, -math.huge
+	for _, nm in ipairs({ "FenceRail", "FencePost", "IronFenceRail", "IronFencePost" }) do
+		for _, r in ipairs(allNamed(nm)) do
+			if nm == "FenceRail" and r.Size.X > 100 then fz, nSouth = r.Position.Z, nSouth + 1 end
+			fzMax = math.max(fzMax, select(2, zr(r)))
+		end
+	end
+	for _, nm in ipairs({ "KerbSouthW", "KerbSouthE", "ForecourtPaving" }) do
+		for _, p in ipairs(allNamed(nm)) do flatMax = math.max(flatMax, select(2, zr(p))) end
+	end
+	check("B3c-1 the south fence line is at PLAZA_S (195) within 0.5, measured on the real rails (two long rails on one line)", fz ~= nil and nSouth == 2 and math.abs(fz - PLAZA_S) <= 0.5, fz and fmt(fz) or "no long rail")
+	local board = workspace:FindFirstChild("World") and workspace.World:FindFirstChild("CreditsBoard")
+	local bcf, bsz
+	if board then bcf, bsz = board:GetBoundingBox() end
+	check("B3c-1 the plaza's south fence (posts and rails) stays 4+ studs clear of the CreditsBoard's keep-out line (board min z - 4): max z <= board min z - 8; the kerb and paving (0.3 thick) stay under the keep-out line (max z <= board min z - 4.4)",
+		board ~= nil and fzMax > PLAZA_S - 1 and fzMax <= bcf.Z - bsz.Z / 2 - 8 + 0.001 and flatMax <= bcf.Z - bsz.Z / 2 - 4.4 + 0.001,
+		board and string.format("fence max z %s, kerb/paving max z %s, board min z %s", fmt(fzMax), fmt(flatMax), fmt(bcf.Z - bsz.Z / 2)) or "CreditsBoard missing")
+	-- the three bands: the church z -100..10 is unchanged; the lot runs on to the wall; the plaza runs from the wall to the fence
+	local az0, az1 = zr(apron)
+	local ea, wsA = anchor("ApronPavingEast"), anchor("ApronPavingWestS")
+	local ez0, ez1 = zr(ea)
+	local wz0, wz1 = zr(wsA)
+	local gz0, gz1 = zr(anchor("GardenApron"))
+	local eA, eB = Vector3.zero, Vector3.zero
+	if ea then eA, eB = aabb(ea) end
+	check("B3c-1 the lot is 90+ deep and runs on to the wall: ApronPaving z <= 12 .. WALL_Z; ApronPavingEast (x 64..119.5, z 48..WALL_Z, Asphalt) and ApronPavingWestS (z <= 32.1 .. WALL_Z) reach it too; GardenApron keeps its old stone extent (z <= 48.3)",
+		apron ~= nil and az1 - az0 >= 90 and math.abs(az1 - WALL_Z) <= 0.3 and ea ~= nil and eA.X <= 64.1 and eB.X >= 119.4 and math.abs(ez0 - 48) <= 0.3 and math.abs(ez1 - WALL_Z) <= 0.3
+			and ea.Material == Enum.Material.Asphalt and wsA ~= nil and wz0 <= 32.1 and math.abs(wz1 - WALL_Z) <= 0.3 and gz1 <= 48.3,
+		string.format("apron z %s..%s east %s..%s westS %s..%s garden to %s", fmt(az0), fmt(az1), fmt(ez0), fmt(ez1), fmt(wz0), fmt(wz1), fmt(gz1)))
+	local pz0, pz1 = zr(paving)
+	check("B3c-1 the plaza is 80+ deep (ForecourtPaving z WALL_Z .. PLAZA_S+0.4, measured on the part) and the three bands are each about a third of the length (church 110, lot 90+, plaza 80+)",
+		paving ~= nil and pz1 - pz0 >= 80 and math.abs(pz0 - WALL_Z) <= 0.3 and pz1 - pz0 <= 90, paving and string.format("z %s..%s", fmt(pz0), fmt(pz1)) or "missing")
+	-- the layout on the new geometry
+	local mid = (WALL_Z + (fz or PLAZA_S)) / 2
+	local tiersM = allNamed("MoundTier")
+	local ccz = cc and cc.Position.Z or 0
+	local door = anchor("CCDoor_Pane")
+	check("B3c-1 statue: first tier centre within 0.5 of (0, WALL_Z+2), on the middle of the stairs, its flat back on the wall",
+		#tiersM >= 1 and math.abs(tiersM[1].Position.Z - (WALL_Z + 2)) <= 0.5 and math.abs(tiersM[1].Position.X) <= 1, tiersM[1] and fmt(tiersM[1].Position.Z) or "no tier")
+	check("B3c-1 stage: dais centre within 4 studs of x 0 and within 15 of the measured south fence line, still open to the north", dais ~= nil and fz ~= nil and math.abs(dais.Position.X) <= 4 and math.abs(fz - dais.Position.Z) <= 15
+		and anchor("StageBackWall") ~= nil and anchor("StageBackWall").Position.Z > dais.Position.Z + 4, dais and fz and string.format("dais z %s fence %s", fmt(dais.Position.Z), fmt(fz)) or "missing")
+	check("B3c-1 Cultural Center: on the west, inside the plaza z range (z0 >= WALL_Z+8, z1 <= fence-4), centred within 8 studs of the plaza's middle, its door on its east face inside its z range",
+		cc ~= nil and cc.Position.X < -70 and cc.Position.Z - cc.Size.Z / 2 >= WALL_Z + 8 and cc.Position.Z + cc.Size.Z / 2 <= (fz or PLAZA_S) - 4 and math.abs(ccz - mid) <= 8
+			and door ~= nil and door.Position.X > cc.Position.X + cc.Size.X / 2 - 0.5 and math.abs(door.Position.Z - ccz) <= cc.Size.Z / 2,
+		cc and string.format("cc z %s mid %s door z %s", fmt(ccz), fmt(mid), fmt(door and door.Position.Z)) or "missing")
+	-- the middle band is filled, not just stretched
+	local strip, stripE, lawnSq = anchor("GreenStrip"), anchor("GreenStripE"), anchor("LawnSquare")
+	local trunkT = anchor("ShadeTreeTrunk")
+	local midLamps = 0
+	for _, l in ipairs(allNamed("LampPole")) do
+		if l.Position.Z >= WALL_Z + 25 and l.Position.Z <= PLAZA_S - 25 then midLamps += 1 end
+	end
+	local benchOk = 0
+	for _, b in ipairs(allNamed("BenchSeat")) do
+		if b.Position.Y < RAISE and b.Position.Z >= WALL_Z + 10 and b.Position.Z <= WALL_Z + 18 then benchOk += 1 end
+	end
+	local plantersOk, nPl = true, 0
+	for _, p in ipairs(allNamed("PlanterWall")) do
+		nPl += 1
+		if not fz or p.Position.Z < fz - 6 or p.Position.Z > fz - 1 then plantersOk = false end
+	end
+	check("B3c-1 the plaza middle band is spread over the depth: both palm strips 40+ long, the lawn square 30+ deep, 3+ lamps in the middle band (z WALL_Z+25..PLAZA_S-25), 5 benches in the row at the foot of the seating, the shade tree in the middle third, planter walls along the south fence",
+		strip ~= nil and strip.Size.Z >= 40 and stripE ~= nil and stripE.Size.Z >= 40 and lawnSq ~= nil and lawnSq.Size.Z >= 30 and midLamps >= 3 and benchOk >= 5
+			and trunkT ~= nil and math.abs(trunkT.Position.Z - mid) <= (PLAZA_S - WALL_Z) / 6 and nPl >= 2 and plantersOk,
+		string.format("strip %s stripE %s lawn %s lamps %d benches %d tree z %s planters %d/%s", fmt(strip and strip.Size.Z), fmt(stripE and stripE.Size.Z), fmt(lawnSq and lawnSq.Size.Z), midLamps, benchOk, fmt(trunkT and trunkT.Position.Z), nPl, tostring(plantersOk)))
+	-- visitors: two on the lot (on the podium), two on the plaza (on the ground, inside the fence)
+	local onLot, onPlaza, badRig = 0, 0, {}
+	local people = site:FindFirstChild("PlazaPeople")
+	if people then
+		for _, rig in ipairs(people:GetChildren()) do
+			local hrp = rig:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				if hrp.Position.Z < WALL_Z then
+					onLot += 1
+					if hrp.Position.Y < RAISE then table.insert(badRig, rig.Name .. " buried") end
+				elseif hrp.Position.Z < (fz or PLAZA_S) - 2 then
+					onPlaza += 1
+					if hrp.Position.Y > 5 then table.insert(badRig, rig.Name .. " floats") end
+				else
+					table.insert(badRig, rig.Name .. " outside")
+				end
+			end
+		end
+	end
+	check("B3c-1 visitors: 2 on the lot (above the podium top) and 2 on the plaza (on the ground, inside the fence)", onLot == 2 and onPlaza == 2 and #badRig == 0, string.format("%d lot, %d plaza, %s", onLot, onPlaza, table.concat(badRig, ", ")))
+end
+
 return HttpService:JSONEncode(results)
