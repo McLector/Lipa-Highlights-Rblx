@@ -1,4 +1,4 @@
--- roads_extra.luau: paves the three new roads (RoadData.NEW_ROADS: SPUR, WEST_BYPASS, EAST_BYPASS) and repaints the ground under
+-- roads_extra.luau: paves the new roads (RoadData.NEW_ROADS: SPUR, WEST_BYPASS, EAST_BYPASS, WEST_LINK, EAST_LINK) and repaints the ground under
 -- City Hall's forecourt (Slice 3b). Run in Edit via execute_luau:
 --   return require(game.ServerStorage.Builders.roads_extra:Clone())()      -- returns { cellsBefore, cellsAfter, roads, regions }
 -- IDEMPOTENT: it only fills Asphalt and replaces Grass with Pavement, so a second run leaves every terrain voxel as it was.

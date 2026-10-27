@@ -39,7 +39,7 @@ local function site(id, key, name, category, x, groundY, z, facing, sx, sz, mass
 end
 
 SiteData.sites = {
-	site(1, "Cathedral", "Plaza Independencia & Metropolitan Cathedral", "Pray", 0, 0, 0, "S", 240, 200, 2.0,
+	site(1, "Cathedral", "Plaza Independencia & Metropolitan Cathedral", "Pray", 0, 0, 57.5, "S", 240, 315, 2.0,
 		"Plaza Guide",
 		{
 			"Welcome to the Metropolitan Cathedral of San Sebastian, the center of Lipa's religious life. Down the steps from this forecourt is Plaza Independencia, where the city gathers for events.",
@@ -48,7 +48,11 @@ SiteData.sites = {
 		},
 		"Plaza Independencia and the Cathedral connect religious life, public gatherings and the city's historic center.",
 		{ "commons.wikimedia.org", "lipacitybatangas.blogspot.com" },
-		{ "PlazaPeople", "Benches", "Lamps", "Flagpole", "EventStage" }),
+		{ "PlazaPeople", "Benches", "Lamps", "Flagpole", "EventStage" },
+		-- Cathedral south growth (Slice 4 B3b): the slot grew from z -100..100 to z -100..215, so its centre moved to (0, 57.5). The locals keep the
+		-- WORLD positions of the Guide (0,30), the jeep stop (default: guide + 20 to the right = (-20,30)) and the InfoPanel (12,24) unchanged.
+		-- Facing S: forward +Z, right -X. Guide lx = 30 - 57.5; panel lx = 24 - 57.5, lz = -12 (world x +12).
+		{ guideLocal = Vector2.new(-27.5, 0), panelLocal = Vector2.new(-33.5, -12) }),
 	site(2, "Market", "Candido B. Lopez Memorial Public Market", "Eat", -330, 0, 160, "E", 200, 160, 3.0,
 		"Market Vendor",
 		{

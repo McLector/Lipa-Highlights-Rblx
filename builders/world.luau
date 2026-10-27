@@ -16,11 +16,11 @@ local ROADS = {
 	{ name = "D_to_Malarayat", w = 12, joinStart = true, pts = { { 450, 240 }, { 450, 560 } } },
 	-- Slice 11: Road E used to stop at (-480, 450), the footprint's NE corner, 127 studs short of the Guide. It now runs on south to
 	-- z 526 and west to x -548, the east edge of the Tagbakin Guide plaza (PAVED below). Keep in step with briefs/site09.md.
-	{ name = "E_to_Tagbakin", w = 12, pts = { { 0, 100 }, { 0, 350 }, { -480, 350 }, { -480, 526 }, { -548, 526 } } },
+	{ name = "E_to_Tagbakin", w = 12, pts = { { 0, 225 }, { 0, 350 }, { -480, 350 }, { -480, 526 }, { -548, 526 } } },
 	-- Slice 14: the three core shops were pushed out from the Cathedral (Market -330, Lomi 292, Cafe 272). F, G and H are now straight
 	-- spurs off Road E (x 0, z 160 and 140) and Road A (x 0, z -160) that end exactly where each shop's paving begins (see PAVED).
-	{ name = "F_to_Market", w = 8, joinStart = true, pts = { { 0, 160 }, { -228, 160 } } },
-	{ name = "G_to_Lomi", w = 8, joinStart = true, pts = { { 0, 140 }, { 240, 140 } } },
+	{ name = "F_to_Market", w = 8, joinStart = true, pts = { { -170, 160 }, { -228, 160 } } },
+	{ name = "G_to_Lomi", w = 8, joinStart = true, pts = { { 165, 140 }, { 240, 140 } } },
 	{ name = "H_to_Cafe", w = 8, joinStart = true, pts = { { 0, -160 }, { 224, -160 } } },
 }
 

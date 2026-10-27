@@ -20,3 +20,9 @@ Rules for each application:
 - Human-scale parts stay fixed.
 - `roads_check`, `routes_check`, `qa_check`, `sites_check` and `placeholders_check` stay green (re-derive expected numbers with a reason in `EXPECTED`).
 - World part budget: 20,000 cap, 8312 today; the cap is raised only deliberately.
+
+## Cathedral south growth (Slice 4 B3b, data and roads)
+- `SiteData` row 1 is now centre (0, 57.5), size 240 x 315 (z -100..215; x kept at 240 so Road C's start at x 120 stays outside the slot). `guideLocal` (-27.5, 0) and `panelLocal` (-33.5, -12) keep the Guide (0,30), the JeepStop (-20,30) and the InfoPanel (12,24) where they were; a unit test pins the literal world values.
+- The model's WorldPivot is written to (0, 0, 57.5), facing +Z, by a property write (no part moves). `site01_check` expects that pivot. Do not run `placeholders({only={1}})`: it would rebuild site 1.
+- Roads: E starts at (0,225), F starts at the west bypass end (-170,160), G at the east bypass end (165,140). New `WEST_LINK` and `EAST_LINK` (NEW_ROADS) join the bypass ends to Road E at z 260, clear of the slot's margin zone (z to 246.5). `roads_check` section 6 keeps every road out of the slot and its 10 percent margin except the first segments of A, C and E.
+- The old asphalt under the new compound area (Road E z 100..215, F and G from x 0 to the bypasses) is not repainted.
