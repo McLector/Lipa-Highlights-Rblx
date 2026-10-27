@@ -332,3 +332,26 @@ Checks that mention things the builder touched but were NOT edited: "12+ palm tr
 
 ### Numbers
 Site parts 2331 -> 2121 (built 2051): removed the parish wing (342), the LongBuildingW block (107) and the 3 mound flats; added `ChurchAnnex` (153), `WestFence` (66), `WestLawn` and two palms. `site01_check` 115 -> 117. `build 01 parts` 2331 -> 2121. World parts 8960 -> 8750. Church pin unchanged (5 children, 763 parts, box (-48.2, 5, -100.8)..(121.2, 89.5, 9.8)). `routes_check` 15/0: spawn 476 (cap 510), Road E 203 (cap 320, was 279), Road A 381 (400), Road C 154 (170). Idempotent: a second build gives the same child and part list.
+
+## B3c-0b roads (2026-10-27)
+
+Owner markup: a paved way must run from each bypass straight to the foot of each Cathedral side stair (SideStairsW / SideStairsE, centre z 26, treads at |x| 121..128, foot |x| 128). Added WEST_ENTRY (-170,26)->(-128,26) and EAST_ENTRY (165,26)->(128,26), both 12 wide with joinStart, to RoadData.NEW_ROADS only (ROADS and builders/world.luau untouched; roads_match.js still passes). Paved with builders/roads_extra.luau.
+
+### Exception to an existing assertion (tests/roads_check.luau section 6)
+- Old text: `if not (EDGE_STARTS[road.name] and i == 1) then` (every road except the edge starts of A, C and E is checked against the slot's 10 percent margin zone, x -144..144).
+- Why: the entrance roads must cross x 128..144 to reach the stairs, so they are inside that zone by design. The slot itself (|x| < 128) stays forbidden.
+- New text: `if not (EDGE_STARTS[road.name] and i == 1) and not ENTRY_ROADS[road.name] then`, with `ENTRY_ROADS = { WEST_ENTRY = true, EAST_ENTRY = true }`. Every other road is still checked, and the slot check just above applies to the entrance roads too.
+- Compensating assertions (new section 7 of roads_check): each entry ends within 1 stud of the stair foot (|x| 128, same side) and on the stair's centre z, starts on the bypass centre line (axis-aligned, one segment), keeps every point at |x| >= 128, does not touch any tread, and its terrain is Asphalt at the mid-point (x -149 / 146) and at |x| 129 on z 26.
+
+### Further road-rule exceptions (orchestrator decision, owner-visible)
+The same two roads also contradicted four more existing assertions in tests/roads_check.luau. They were replaced for WEST_ENTRY and EAST_ENTRY ONLY, all through one shared table at the top of the file, `local ENTRY_ROADS = { WEST_ENTRY = true, EAST_ENTRY = true }` (the section 6 exception above reads the same table). Every other road is checked exactly as before. These are owner-visible exceptions to the road rules.
+
+1. Section 1, margin rule (road widened to w/2+4 must clear every site's real bounds +10 percent; line ~99). Old: `check(road.name .. " seg " .. i .. " margin (w/2+4) clears " .. name .. " bounds +10%", not hit, ...)`. Why: the entrances end at the stair foot, which is inside the Cathedral's +10 percent margin (x -153.6..153.6) by design. Replacement for ENTRY_ROADS against Site01_Cathedral only: the road body (sides w/2, no end caps) must be clear of the Cathedral's real bounds (x -128..128): `not overlap(body, r)`. Against every other site the original margin test still runs.
+2. Section 3, "ends on a road centre line" (line ~165). Old: `check(road.name .. " ends on a road centre line", endOn ~= nil, ...)`. Why: an entrance ends at the foot of a stair, on no road. Replacement for ENTRY_ROADS: `ends at the stair foot (|x| 128, z 26)`: `math.abs(last[1]) == 128 and last[2] == 26` (section 7 ties the end to the real stair parts). The "starts on a road centre line" check is unchanged and applies.
+3. Section 3, "touches an original road" (line ~175). Old: `check(road.name .. " touches an original road", touchesOriginal)`. Why: both entrances start on a NEW bypass, so neither touches an original road directly. Replacement for ENTRY_ROADS: the road it starts on must be a non-entry new road that itself touches an original road (WEST_BYPASS ends on Road F, EAST_BYPASS on Road G).
+4. Section 3, count assertion (line ~185). Old: "RoadData.all() lists the 8 original roads then the 5 new ones (SPUR, two bypasses, two south links)" with `#RoadData.NEW_ROADS == 5`. Why: there are now 7 new roads. Replacement, not a looser number: 8 originals, then exactly these 7 new roads by name and order: SPUR, WEST_BYPASS, EAST_BYPASS, WEST_LINK, EAST_LINK, WEST_ENTRY, EAST_ENTRY.
+
+Guard for the entries is the new section 7 (|x| >= 128, ends at the stair foot on the stair's centre z, starts on the bypass centre line, axis-aligned single segment, no tread contact, Asphalt at the mid-point and at |x| 129).
+
+### Numbers
+roads_check 207 -> 260 passed, 0 failed (+53: section 7 adds 19; the rest are the existing per-road checks now also running for the two new roads; every replaced assertion keeps one check per road). Terrain cells 1793852 -> 1793870 (+18, the two 12-wide asphalt strips; run_all EXPECTED not edited, so its cell row and the roads_check count row show MISMATCH until the integrator updates them). roads_extra is idempotent: second and third runs add 0. Measured PathfindingService lengths: spawn -> Cathedral Guide 475.8 (cap 510), Road E 203.1 (320), Road A 381.1 (400), Road C 153.9 (170).

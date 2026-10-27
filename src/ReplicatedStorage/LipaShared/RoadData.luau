@@ -35,6 +35,10 @@ RoadData.NEW_ROADS = {
 	-- (slot z -100..215, zone to z 246.5, road edge 254). They are the only new paving of this step.
 	{ name = "WEST_LINK", w = 12, joinStart = true, pts = { { -170, 160 }, { -170, 260 }, { 0, 260 } } },
 	{ name = "EAST_LINK", w = 12, joinStart = true, pts = { { 165, 140 }, { 165, 260 }, { 0, 260 } } },
+	-- Owner markup, Slice 4 B3c-0b: the entrances line up on z 26 with the Cathedral side stairs (SideStairsW/E centre z 26), so a paved
+	-- way runs from each bypass straight to the foot of each stair (the lowest tread's outer edge, |x| 128).
+	{ name = "WEST_ENTRY", w = 12, joinStart = true, pts = { { -170, 26 }, { -128, 26 } } },
+	{ name = "EAST_ENTRY", w = 12, joinStart = true, pts = { { 165, 26 }, { 128, 26 } } },
 }
 RoadData.ROADS = ROADS
 

@@ -18,7 +18,7 @@ local EXPECTED = {
 		guides_check = 123, -- 111 + 12: Ate Joy wears the tour uniform (the 11 per-guide checks and the dressed count), Slice 3b
 		site10_check = 52, -- City Hall fidelity check, Slice 3a
 		placeholders_check = 30, -- placeholders({only={10}}) result on Site10_CityHall: props, reserved zones, no Block, Slice 3b; +1 real-SpawnLocation-on-forecourt check
-		roads_check = 207, -- 94 + 113 (Slice 4 B3b: section 6 keeps every road segment out of the Cathedral slot z -100..215 and its 10 percent margin, E starts at the south edge, F and G join the bypass ends, WEST_LINK and EAST_LINK; the all-roads count is 13). Earlier: SPUR, WEST_BYPASS, EAST_BYPASS: margins, clearances, junctions, reachability, asphalt and forecourt ground, Slice 3b
+		roads_check = 260, -- 207 + 53 (Slice 4 B3c-0b, owner markup: the entrance roads WEST_ENTRY and EAST_ENTRY run from the bypasses to the foot of the Cathedral side stairs at z 26; new section 7 adds 19 assertions, the rest are the existing per-road checks now also running for the two new roads; five old road rules are replaced for those two roads only, logged in briefs/site01.md). Earlier 94 + 113 (Slice 4 B3b: section 6 keeps every road segment out of the Cathedral slot z -100..215 and its 10 percent margin, E starts at the south edge, F and G join the bypass ends, WEST_LINK and EAST_LINK; the all-roads count is 13). Earlier: SPUR, WEST_BYPASS, EAST_BYPASS: margins, clearances, junctions, reachability, asphalt and forecourt ground, Slice 3b
 	},
 	unitRun = 227, -- 226 + 1: SiteData case pinning the Cathedral Guide (0,30), JeepStop (-20,30) and InfoPanel (12,24) world positions after the slot moved to centre (0,57.5), Slice 4 B3b. Earlier: 127 + TourContent_Test (46) + QuizKey_Test (11), Slice 2; + 5 owner-decision cases, Slice 3a; Slice 3b step 1: +25 City Hall data/layout/credits cases; Slice 3b step 3: +12 CertificateLogic.cellRects cases (226)
 	-- BuildCheck per site id: { passed, parts }. Parts include each site's LocalNPCs (builders/npcs.luau, 337 parts in all for sites 1..9)
@@ -32,7 +32,7 @@ local EXPECTED = {
 		[10] = { 16, 1206 },
 	},
 	worldParts = 8750, -- 8960 - 210 (Site01 change of Slice 4 B3c-0, see build 01); 8960 was 8312 + 648 (Cathedral plaza pass, Slice 4); 8312 was 7100 + 1104 City Hall parts (wing 276, blocks 432, steps 57, forecourt 105, landscape 234), Slice 3a; + 102 (Ate Joy, panel, jeep stop and jeepney, 4 locals), Slice 3b; + 6 (credits board 9 to 15 parts for six panels), Slice 3b step 3 (8312)
-	cells = 1793852, -- 1793696 + 156: builders/roads_extra.luau paves WEST_LINK and EAST_LINK (Asphalt FillBlock), Slice 4 B3b; a second run gives the same count. Earlier: 1793270 + 426: builders/roads_extra.luau paves the SPUR and the two bypasses (Asphalt FillBlock) and repaints the City Hall forecourt ground, Slice 3b
+	cells = 1793870, -- 1793852 + 18: builders/roads_extra.luau paves WEST_ENTRY and EAST_ENTRY (two 12-wide Asphalt strips from the bypasses to the Cathedral side stairs), Slice 4 B3c-0b; a second and third run add 0. Earlier 1793696 + 156: builders/roads_extra.luau paves WEST_LINK and EAST_LINK (Asphalt FillBlock), Slice 4 B3b; a second run gives the same count. Earlier: 1793270 + 426: builders/roads_extra.luau paves the SPUR and the two bypasses (Asphalt FillBlock) and repaints the City Hall forecourt ground, Slice 3b
 	pivotY = { [8] = 19.8 }, -- every other site sits at y = 0
 }
 
