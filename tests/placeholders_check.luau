@@ -4,12 +4,12 @@
 -- run_all reads r.passed / r.failed. Requiring it is READ-ONLY: it checks the state that placeholders({ only = { 10 } }) leaves
 -- Site10_CityHall in (Guide with GuidePrompt, InfoPanel, JeepStop with JeepPrompt, JeepSignPole, JeepSign, Jeepney, no Block),
 -- and that those props honour the reserved zones (local frame: lx along the facing E = world +X, lz = world +Z; origin = the
--- site pos (-250, 0, -260)).
+-- site pos (-270, 0, -305) since Step C; the zones are the same WORLD boxes as before, re-expressed in this frame).
 -- r.proveOnly() is the MUTATING proof, run by hand only after the builder has opts.only: it snapshots the other nine site models
 -- and Site10's Wing / Blocks / Steps / Forecourt / Landscape (part counts + sorted name lists), calls placeholders({ only = { 10 } }),
 -- compares, calls it a second time (idempotent) and compares again. It leaves the Guide undressed: re-run builders/guides.luau.
 -- Spawn-pad distance: measured against the REAL Workspace.SpawnLocation (builders/spawn.luau puts it at world x -214..-202,
--- z -266..-254) and the Guide at local (27, 0) = world (-223, -260), 9 studs west of the pad edge. The check requires >= 6.
+-- z -266..-254) and the Guide at local (47, 45) = world (-223, -260), 9 studs west of the pad edge. The check requires >= 6.
 -- (Slice 3b first loosened this to 2.9 against the reserved zone lx 30..50; the smaller 12 x 12 pad restored the 6 studs.)
 local HttpService = game:GetService("HttpService")
 local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
@@ -31,7 +31,7 @@ if spawnPart then
 	PAD = { x0 = spawnPart.Position.X - spawnPart.Size.X / 2, x1 = spawnPart.Position.X + spawnPart.Size.X / 2,
 		z0 = spawnPart.Position.Z - spawnPart.Size.Z / 2, z1 = spawnPart.Position.Z + spawnPart.Size.Z / 2 }
 end
-local ORIGIN = Vector3.new(-250, 0, -260)
+local ORIGIN = Vector3.new(-270, 0, -305) -- Step C frame (SiteData row 10 pos); the world positions of the pins did not move
 local function toLocal(p) return p.X - ORIGIN.X, p.Z - ORIGIN.Z end -- facing E: lx = dx, lz = dz
 local function padDistance(p)
 	local dx = math.max(PAD.x0 - p.X, 0, p.X - PAD.x1)
@@ -115,12 +115,17 @@ if m then
 	end
 	if stop then
 		local lx, lz = toLocal(stop.Position)
-		check("JeepStop is inside the curb zone (lx 90..100, lz 20..40, tolerance 2)", lx >= 88 and lx <= 102 and lz >= 18 and lz <= 42,
-			fmt(lx) .. ", " .. fmt(lz))
+		check("JeepStop is inside the curb zone (lx 110..120, lz 65..85 = world x -160..-150, z -240..-220, tolerance 2)",
+			lx >= 108 and lx <= 122 and lz >= 63 and lz <= 87, fmt(lx) .. ", " .. fmt(lz))
+		check("JeepStop is at world (-155, -230) within 2 studs", Vector3.new(stop.Position.X + 155, 0, stop.Position.Z + 230).Magnitude <= 2,
+			tostring(stop.Position))
 	end
 	if panel then
 		local lx, lz = toLocal(panel.Position)
-		check("InfoPanel is inside its zone (lx 28..38, lz -30..-15)", lx >= 28 and lx <= 38 and lz >= -30 and lz <= -15, fmt(lx) .. ", " .. fmt(lz))
+		check("InfoPanel is inside its zone (lx 48..58, lz 15..30 = world x -222..-212, z -290..-275)", lx >= 48 and lx <= 58 and lz >= 15 and lz <= 30,
+			fmt(lx) .. ", " .. fmt(lz))
+		check("InfoPanel is at world (-217, -282) within 2 studs", Vector3.new(panel.Position.X + 217, 0, panel.Position.Z + 282).Magnitude <= 2,
+			tostring(panel.Position))
 		local hits = workspace:GetPartBoundsInBox(panel.CFrame, panel.Size, op)
 		local solid = {}
 		for _, h in ipairs(hits) do

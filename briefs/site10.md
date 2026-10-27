@@ -49,3 +49,47 @@ At most 2,500 parts, about 1,500 targeted: wing about 550, blocks about 400, ste
 
 ## Checks
 `tests/site10_check.luau` (written first, red) covers: pivot and facing, real bounds inside the slot, 72 blocks in a 6 by 12 grid and walk-under clearance, 4 floors, canopy cantilever, open atrium, glazed bays, steps, flagpole, trees, gardens, cars, door and railing heights, zero image instances, no long TextScaled labels, reserved zones empty, all parts anchored, part count.
+
+## Step C (blueprint rebuild)
+
+The model is rebuilt from the blueprint drawing; `scratch/site10/layout.md` and `scratch/site10/model.py` are the design. The sections above describe the OLD design (72 raised blocks) and are kept as history. `tests/site10_check.luau` was rewritten tests-first for the new design. Nothing below was loosened silently: every retired assertion is listed with its replacement.
+
+New frame: slot centre (-270, 0, -305), 240 x 286, faces E, model pivot at (-270, 0, -305), `world = ORIGIN + (lx, ly, lz)`. Real model bounds about x -322..-150, z -446..-188; the check requires x -323..-149, z -447..-187 (keeps `roads_check` green). SiteData row 10 local offsets: guideLocal (47, 45), jeepLocal (115, 75), panelLocal (53, 23); the world positions did not move (Guide -223/-260, JeepStop -155/-230, InfoPanel -217/-282, spawn pad x -214..-202, z -266..-254).
+
+Spawn clash (owner decision): the faceted canopy stays as drawn and may overhang the spawn pad at height (underside about y 45). Nothing solid below the canopy may come within 2 studs (2D) of the pad, the Guide or the InfoPanel; nothing solid below y 20 within 4 studs of JeepStop or Jeepney. Canopy parts whose lowest point is 30 or more studs up are exempt.
+
+### Retired assertions (old text -> why -> replacement)
+
+Retired by the owner's list:
+
+| Old assertion | Why retired | Replaced by |
+|---|---|---|
+| `exactly 72 ElevatedBlock` | the 72 blocks are gone; the drawing has staggered white-brick boxes | `at least 14 WhiteBrickBox, class Part, Brick, cream-white`; negative control `no ElevatedBlock or BlockPilotis from the old design remain` |
+| `blocks form 6 rows (along x)` and `blocks form 12 columns (along z)` (the 6 x 12 grid) | no grid in the drawing | `boxes on the long wing are staggered: at least 3 distinct front-face x offsets`; `... at least 2 distinct heights` |
+| `every block underside is at least 9 studs up`; `every block is about 7 x 6 x 7`; `blocks are brick clad` | belonged to the identical 72 blocks | cream brick check on every WhiteBrickBox; `clearance under the raised brick boxes is at least 10 studs` |
+| `a 4 x 6 stud clearance under every block centre is empty` (walk-under box at each block centre) | the boxes are not walk-under blocks any more | `a 4 x 8 stud box on the base of every Pilotis overlaps no non-pilotis part`; the 10-stud clearance rule above |
+| `each block stands on 4 pilotis (288)` (BlockPilotis) | BlockPilotis do not exist in the new design | `at least 20 Pilotis exist` plus the pilotis clearance rule |
+| `pivot is at (-250, 0, -260), facing East (+X)` (old pivot) | slot moved | `pivot is at (-270, 0, -305), facing East (+X)` (tolerance 0.5) and `WorldPivot is at (-270, 0, -305) with LookVector +X` |
+| `real bounds stay inside the slot x -350..-150, z -330..-190` (old slot bounds) | slot moved and grew | `real model bounds are inside x -323..-149, z -447..-187`, `structure containers stay inside ...`, `structure spans at least 150 studs in x and 220 in z` |
+| layout-zone assertions in the old lx frame: `reserved zone SpawnPad / JeepCurb / BillboardSpot is clear` (lx 30..50, 90..100, 28..38) | encoded the old local frame; the pins did not move in the world | five world-space pin rules: pad, Guide, InfoPanel (2 studs) and JeepStop, Jeepney (4 studs below y 20) |
+| reserved zones expressed in the old local frame in `tests/placeholders_check.luau` (ORIGIN (-250, 0, -260), JeepStop lx 88..102 / lz 18..42, InfoPanel lx 28..38 / lz -30..-15) | same | ORIGIN (-270, 0, -305); the same world boxes re-expressed (JeepStop lx 108..122 / lz 63..87, InfoPanel lx 48..58 / lz 15..30) plus literal world pins (-155, -230) and (-217, -282) within 2 studs. The Guide-to-pad distance of at least 6 is unchanged (it is 9). |
+
+Retired because the old part names or numbers belong to the old wing, atrium and landscape (NOT on the owner's list: please confirm):
+
+| Old assertion | Replaced by |
+|---|---|
+| `wing has 4 floor slabs` (WingFloor), `floor-to-floor is 13..15 studs`, `ground level of the wing is open on pilotis (first floor at least 9 up)`, `wing has pilotis` (WingPilotis >= 6) | `long wing has 4 storey lines (at least 6 apart) from y 10 to y 40 or more`, `long wing roof top is between 38 and 50`, `at least 20 Pilotis exist`, pilotis clearance box (layout storey pitch is 7.2, not 13..15) |
+| `at least 6 glazed bays, all Glass` (GlazedBay) | `at least 8 GlassBand parts ... spanning at least 15 studs` |
+| `brick-clad projecting volumes (at least 6 WingBrick)` | `at least 14 WhiteBrickBox` |
+| `wing balconies with railings (at least 6 WingRailing, 3 tall)` | `balconies carry railings (at least 6 parts named *Rail*, each 3 tall)` (name widened) |
+| `open-air atrium floor exists (OpenLobby)`, `AtriumCanopy exists`, `canopy has supports` (CanopySupport), `canopy overhangs its supports by at least 10 studs`, `atrium is open to the sky apart from the canopy` | `Wing contains a model named Atrium / Canopy`, `Atrium is angled`, 5 facet planes in 3 directions, canopy 30 up, `canopy cantilevers at least 10 studs past the Columns`, 3 RoofBox on the canopy, 6 round Columns. The old "open to the sky" rule has NO replacement: the drawn atrium sits under the canopy. |
+| `planted terraces (at least 6 TerraceLawn)` | `at least 4 grass TerraceStrip, each at least 20 studs long` and `at least 4 TerraceWall` |
+| `trees` by TreeCanopy and TreeTrunk >= 12 | Tree units >= 12 (Tree, WalkTree) and Trunk parts >= 12; plus Palm >= 2 |
+| `at least 8 parked cars (CarBody)` | `at least 12 parked cars` (ParkedCar or Car_*) |
+| `own part count is 1000..2500` | `800..2500` (the layout estimates 953 parts; the cap 2500 is unchanged) |
+
+Kept with a wider name or a re-anchored number (not retired): steps (6 treads, riser at most 1.2, tread at least 2: StepTread or StairTread, risers read from tread tops when solid), doors at least 8 tall (EntranceDoor or Door1..3), Flagpole at least 30 tall, loop of at least 8 asphalt ring segments, forecourt paving (any `*Paving`), 12 BayLine, wheels 4 per car, no car on the flag island, pocket gardens >= 3 (`Landscape.PocketGardens`), anchored, zero image instances, no long TextScaled labels, no seal or brand text (now also LIPA), nothing below the ground. New: no direct child `Block`, the builder never creates the six placeholders inside its containers.
+
+### Names the new check expects (owner names, plus the layout's item names where they differ)
+
+WhiteBrickBox (or WB01..WB11, AB1..AB5), GlassBand (no alias), BalconySlab (or CoreBalcony1..3), TerraceStrip (or TerraceS1..5, TerraceN1..5), TerraceWall (no alias), LoopRing (or LoopRoad), LoopIsland, Flagpole, Flag, BayLine, ParkedCar (or Car_A1 ...), Tree (or WalkTree1..), Palm, Column1.., RoofBox1.. (wing) and *RoofBox* (canopy), Pilotis (or PilotiA1.., Pilotis_WB03), CanopyFacet* (any name containing Facet), Wing.Atrium, Wing.Canopy, Landscape.PocketGardens.

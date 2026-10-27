@@ -50,7 +50,7 @@ return function(t)
 			[1] = { 0, 57.5, "S" }, [2] = { -330, 160, "E" }, [3] = { 292, 140, "W" },
 			[4] = { 272, -160, "W" }, [5] = { -300, -600, "S" }, [6] = { 550, -650, "SW" },
 			[7] = { 700, 240, "W" }, [8] = { 560, 720, "NW" }, [9] = { -600, 550, "NE" },
-			[10] = { -250, -260, "E" },
+			[10] = { -270, -305, "E" }, -- Step C: the blueprint rebuild moved the slot centre (was -250, -260)
 		}
 		for id, e in pairs(expected) do
 			local s = SiteData.byId(id)
@@ -304,7 +304,7 @@ return function(t)
 
 	-- ---- Slice 3b: New Lipa City Hall (id 10) ----
 
-	t.test("byId(10) is New Lipa City Hall, key CityHall, Welcome, Ate Joy, size 200x140", function()
+	t.test("byId(10) is New Lipa City Hall, key CityHall, Welcome, Ate Joy, size 240x286 (Step C)", function()
 		local c = SiteData.byId(10)
 		expect.truthy(c)
 		expect.equal(c.id, 10)
@@ -312,7 +312,9 @@ return function(t)
 		expect.equal(c.name, "New Lipa City Hall")
 		expect.equal(c.category, "Welcome")
 		expect.equal(c.guideName, "Ate Joy")
-		expect.equal(c.size, Vector2.new(200, 140))
+		expect.equal(c.size, Vector2.new(240, 286))
+		expect.near(c.pos.X, -270, 1e-6)
+		expect.near(c.pos.Z, -305, 1e-6)
 		expect.equal(c.facing, "E")
 		expect.equal(c.groundY, 0)
 	end)
@@ -351,9 +353,9 @@ return function(t)
 
 	-- Local frame of a site: lx along the facing (forward), lz to the right of the facing (-f.Z, 0, f.X), origin = site pos.
 	t.test("localToWorld follows the documented frame (+x forward, lz right)", function()
-		local p = SiteData.localToWorld(10, 27, 5) -- facing E: forward +X, right +Z
-		expect.near(p.X, -250 + 27, 1e-6)
-		expect.near(p.Z, -260 + 5, 1e-6)
+		local p = SiteData.localToWorld(10, 47, 45) -- facing E: forward +X, right +Z; origin (-270, -305) since Step C
+		expect.near(p.X, -270 + 47, 1e-6)
+		expect.near(p.Z, -305 + 45, 1e-6)
 		local q = SiteData.localToWorld(1, 30, 0) -- facing S: forward +Z, origin (0, 57.5) since Cathedral south growth
 		expect.near((q - Vector3.new(0, 0, 87.5)).Magnitude, 0, 1e-6)
 		expect.equal(SiteData.localToWorld(11, 0, 0), nil)
@@ -380,8 +382,8 @@ return function(t)
 		expect.near(c.pos.Z + c.size.Y / 2, 215, 1e-6)
 	end)
 
-	-- Reserved zones in City Hall's local frame: steps lx 5..25, spawn pad lx 30..50 / lz -10..10,
-	-- InfoPanel lx 28..38 / lz -30..-15, jeep curb lx 90..100 / lz 20..40.
+	-- Reserved zones in City Hall's local frame (origin (-270, -305) since Step C; the same WORLD boxes as before):
+	-- spawn pad lx 56..68 / lz 39..51 (world -214..-202, -266..-254), InfoPanel lx 48..58 / lz 15..30, jeep curb lx 110..120 / lz 65..85.
 	local function inBox(v, x0, x1, z0, z1)
 		return v.X >= x0 and v.X <= x1 and v.Y >= z0 and v.Y <= z1
 	end
@@ -395,10 +397,32 @@ return function(t)
 
 	t.test("row 10 jeep stop and panel sit inside their reserved zones; guide clears steps and spawn pad", function()
 		local c = SiteData.byId(10)
-		expect.truthy(inBox(c.jeepLocal, 90, 100, 20, 40))
-		expect.truthy(inBox(c.panelLocal, 28, 38, -30, -15))
-		expect.falsy(inBox(c.guideLocal, 30, 50, -10, 10)) -- not on the spawn pad
-		expect.truthy(c.guideLocal.X > 25 and c.guideLocal.X < 30) -- between the steps and the pad
+		expect.truthy(inBox(c.jeepLocal, 110, 120, 65, 85))
+		expect.truthy(inBox(c.panelLocal, 48, 58, 15, 30))
+		expect.falsy(inBox(c.guideLocal, 56, 68, 39, 51)) -- not on the spawn pad
+		expect.truthy(c.guideLocal.X >= 44 and c.guideLocal.X <= 50) -- 6..12 studs west of the pad edge (lx 56)
+	end)
+
+	-- Literal values, on purpose: the local offsets changed with the slot so the WORLD positions stay put. If both sides of the
+	-- localToWorld comparison drifted together, only these pinned numbers would catch it.
+	t.test("row 10 local offsets are (47,45), (115,75), (53,23) and the world positions stay put", function()
+		local c = SiteData.byId(10)
+		expect.equal(c.guideLocal, Vector2.new(47, 45))
+		expect.equal(c.jeepLocal, Vector2.new(115, 75))
+		expect.equal(c.panelLocal, Vector2.new(53, 23))
+		expect.near((SiteData.guidePos(10) - Vector3.new(-223, 0, -260)).Magnitude, 0, 1e-6)
+		expect.near((SiteData.jeepStopPos(10) - Vector3.new(-155, 0, -230)).Magnitude, 0, 1e-6)
+		local pp = SiteData.localToWorld(10, c.panelLocal.X, c.panelLocal.Y)
+		expect.near((pp - Vector3.new(-217, 0, -282)).Magnitude, 0, 1e-6)
+		-- the slot still holds all three and the spawn pad (-214..-202, -266..-254)
+		local x0, x1, z0, z1 = footprint(c)
+		expect.near(x0, -390, 1e-6)
+		expect.near(x1, -150, 1e-6)
+		expect.near(z0, -448, 1e-6)
+		expect.near(z1, -162, 1e-6)
+		for _, v in ipairs({ SiteData.guidePos(10), SiteData.jeepStopPos(10), pp, Vector3.new(-214, 0, -266), Vector3.new(-202, 0, -254) }) do
+			expect.truthy(v.X >= x0 and v.X <= x1 and v.Z >= z0 and v.Z <= z1)
+		end
 	end)
 
 	t.test("row 10 guidePos and jeepStopPos honour the local offsets", function()
@@ -434,7 +458,7 @@ return function(t)
 		expect.truthy(#c.panelText > 0)
 		local joined = table.concat(c.requiredProps, "|")
 		-- BuildCheck matches requiredProps against DIRECT children of the site model, so they are the City Hall model names
-		-- (Blocks = the raised walk-under blocks, Landscape = pocket gardens, Wing = open lobby, Forecourt = front plaza,
+		-- (Blocks = the staggered white-brick boxes, Landscape = pocket gardens, Wing = open lobby, Forecourt = front plaza,
 		-- JeepStop = the jeepney stop), not the PDF display words (those stay in TourContent displayProps).
 		expect.truthy(string.find(joined, "Blocks", 1, true))
 		expect.truthy(string.find(joined, "JeepStop", 1, true))

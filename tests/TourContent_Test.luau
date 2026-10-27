@@ -136,6 +136,71 @@ return function(t)
 		end
 	end)
 
+	-- ===== Step C (blueprint rebuild): the blocks are no longer raised and nobody walks under them. RED until the wording is changed. =====
+	-- Only the wording that describes the old model goes; the sourced fact (72 blocks for 72 barangays) and the quiz stay as they are.
+	local function leaves(v, out)
+		if type(v) == "string" then
+			table.insert(out, v)
+		elseif type(v) == "table" then
+			for _, x in pairs(v) do leaves(x, out) end
+		end
+		return out
+	end
+	local OLD_MODEL_WORDING = { "walk under", "those raised blocks", "see all those", "raised walk-under" }
+
+	t.test("real content: site 10 text (SiteData row 10 dialogue and TourContent site 10) drops the walk-under wording", function()
+		needTenSites()
+		local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
+		local s10 = TourContent.sites[10]
+		local fields = {
+			["SiteData row 10 dialogue"] = SiteData.byId(10).dialogue,
+			["TourContent 10 trivia"] = s10.trivia,
+			["TourContent 10 firstTalk"] = s10.firstTalk,
+			["TourContent 10 talkAgain"] = s10.talkAgain,
+			["TourContent 10 quiz.wrong"] = s10.quiz.wrong,
+			["TourContent 10 lookAt"] = s10.lookAt,
+			["TourContent 10 displayProps"] = s10.displayProps,
+		}
+		local found = {}
+		for where, value in pairs(fields) do
+			for _, text in ipairs(leaves(value, {})) do
+				local lower = string.lower(text)
+				for _, bad in ipairs(OLD_MODEL_WORDING) do
+					if string.find(lower, bad, 1, true) then table.insert(found, where .. ' has "' .. bad .. '"') end
+				end
+			end
+		end
+		table.sort(found)
+		expect.equal(table.concat(found, " | "), "")
+	end)
+
+	t.test("real content: the sourced 72 facts survive in SiteData row 10 and TourContent site 10 trivia", function()
+		needTenSites()
+		local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
+		local dialogue = table.concat(SiteData.byId(10).dialogue, " ")
+		local trivia = table.concat(TourContent.sites[10].trivia, " ")
+		for where, text in pairs({ ["SiteData row 10 dialogue"] = dialogue, ["TourContent 10 trivia"] = trivia }) do
+			expect.truthy(string.find(text, "72 elevated blocks", 1, true), where .. " lost '72 elevated blocks'")
+			expect.truthy(string.find(text, "72 barangays", 1, true), where .. " lost '72 barangays'")
+		end
+	end)
+
+	t.test("real content: the site 10 quiz question and right answer are unchanged", function()
+		needTenSites()
+		local q = TourContent.sites[10].quiz
+		expect.equal(q.question, "What do the 72 elevated blocks at the New Lipa City Hall stand for?")
+		expect.equal(q.options[2], "The 72 barangays of Lipa")
+		expect.equal(q.pdfRef, 2)
+		expect.equal(q.right, "Yes! The 72 elevated blocks stand for Lipa's 72 barangays, one for each.")
+	end)
+
+	t.test("real content: site 10 lookAt still names the shape and the rhythm (eight elements of art)", function()
+		needTenSites()
+		local look = string.lower(TourContent.sites[10].lookAt)
+		expect.truthy(string.find(look, "%f[%a]shape%f[%A]"), "site 10 lookAt lost 'shape'")
+		expect.truthy(string.find(look, "%f[%a]rhythm%f[%A]"), "site 10 lookAt lost 'rhythm'")
+	end)
+
 	t.test("real content: shared lists meet their minimum sizes", function()
 		expect.truthy(#TourContent.cityHallFacts >= 5)
 		expect.truthy(#TourContent.jeepLines >= 3)
