@@ -202,4 +202,177 @@ return function(t)
 			expect.truthy(entry.url == nil or ascii(entry.url))
 		end
 	end)
+
+	-- APA 7 references (job credits-a): CreditsData.references = 78 { text, marked, url, aliases, sites, tour } in author order;
+	-- `text` is the plain APA line, `marked` the same line with <i>..</i> around italic titles and &amp; &lt; &gt; escapes;
+	-- referenceLines(marked) lists the `marked` (true) or `text` (false/nil) strings in order; noticeLines = 4 licence/notice lines.
+	local REFERENCE_COUNT = 78
+	local function refs()
+		expect.equal(type(CreditsData.references), "table")
+		return CreditsData.references
+	end
+
+	local function unmark(s)
+		s = string.gsub(s, "<i>", "")
+		s = string.gsub(s, "</i>", "")
+		return s
+	end
+
+	t.test("references holds the 78 APA 7 entries as tables", function()
+		local list = refs()
+		expect.equal(#list, REFERENCE_COUNT)
+		for _, ref in ipairs(list) do
+			expect.equal(type(ref), "table")
+		end
+	end)
+
+	t.test("every reference has non-empty text and marked, an https url, and aliases, sites and tour tables", function()
+		for _, ref in ipairs(refs()) do
+			expect.truthy(type(ref.text) == "string" and #ref.text > 0)
+			expect.truthy(type(ref.marked) == "string" and #ref.marked > 0)
+			expect.truthy(type(ref.url) == "string" and string.sub(ref.url, 1, 8) == "https://")
+			expect.falsy(string.find(ref.url, "%s"))
+			expect.equal(type(ref.aliases), "table")
+			expect.equal(type(ref.sites), "table")
+			expect.equal(type(ref.tour), "table")
+			for _, alias in ipairs(ref.aliases) do
+				expect.truthy(type(alias) == "string" and string.sub(alias, 1, 8) == "https://")
+			end
+		end
+	end)
+
+	t.test("reference text, marked and the notice lines are ASCII, and text carries no angle brackets", function()
+		for _, ref in ipairs(refs()) do
+			expect.truthy(ascii(ref.text))
+			expect.truthy(ascii(ref.marked))
+			expect.truthy(ascii(ref.url))
+			expect.falsy(string.find(ref.text, "[<>]"))
+		end
+		expect.equal(type(CreditsData.noticeLines), "table")
+		for _, line in ipairs(CreditsData.noticeLines) do
+			expect.truthy(ascii(line))
+		end
+	end)
+
+	t.test("marked equals text once <i> tags are removed and &amp; &lt; &gt; are unescaped, with no other markup characters", function()
+		for _, ref in ipairs(refs()) do
+			local bare = unmark(ref.marked)
+			expect.falsy(string.find(bare, "[<>]"))
+			local noEntities = string.gsub(string.gsub(string.gsub(bare, "&amp;", ""), "&lt;", ""), "&gt;", "")
+			expect.falsy(string.find(noEntities, "&", 1, true))
+			local plain = string.gsub(string.gsub(string.gsub(bare, "&lt;", "<"), "&gt;", ">"), "&amp;", "&")
+			expect.equal(plain, ref.text)
+		end
+	end)
+
+	t.test("every board url and every tour source url is the url or an alias of exactly one reference", function()
+		local count = {}
+		for _, ref in ipairs(refs()) do
+			count[ref.url] = (count[ref.url] or 0) + 1
+			for _, alias in ipairs(ref.aliases) do
+				count[alias] = (count[alias] or 0) + 1
+			end
+		end
+		for _, n in pairs(count) do
+			expect.equal(n, 1) -- no url or alias is claimed by two references (or twice by one)
+		end
+		for _, entry in ipairs(CreditsData.sites) do
+			for _, url in ipairs(entry.urls) do
+				expect.equal(count[url], 1)
+			end
+		end
+		for _, source in ipairs(CreditsData.tourSources) do
+			if source.url ~= nil then
+				expect.equal(count[source.url], 1)
+			end
+		end
+	end)
+
+	t.test("every tour source ref 1..25 appears in exactly one reference's tour list", function()
+		local count = {}
+		for _, ref in ipairs(refs()) do
+			for _, n in ipairs(ref.tour) do
+				count[n] = (count[n] or 0) + 1
+			end
+		end
+		for _, source in ipairs(CreditsData.tourSources) do
+			expect.equal(count[source.ref], 1)
+		end
+		for n in pairs(count) do
+			expect.truthy(n >= 1 and n <= #CreditsData.tourSources) -- no tour number outside the 25 sources
+		end
+	end)
+
+	t.test("every site id 1..10 owns at least one reference, and only valid site ids are used", function()
+		local owned = {}
+		for _, ref in ipairs(refs()) do
+			for _, id in ipairs(ref.sites) do
+				owned[id] = true
+				expect.truthy(id >= 1 and id <= #CreditsData.sites)
+			end
+		end
+		for _, entry in ipairs(CreditsData.sites) do
+			expect.truthy(owned[entry.id])
+		end
+	end)
+
+	t.test("references follow the APA 7 order: author part letter by letter (lower case letters and digits only), nondecreasing, and n.d. before dated for one author; no trailing-period workaround", function()
+		local function author(text)
+			local cut = string.find(text, " (", 1, true)
+			expect.truthy(cut ~= nil) -- every APA line has "Author. (year"
+			return (string.gsub(string.lower(string.sub(text, 1, cut - 1)), "[^%l%d]", ""))
+		end
+		local prevName, prevUndated = nil, false
+		for _, ref in ipairs(refs()) do
+			local name = author(ref.text)
+			local undated = string.find(ref.text, " (n.d.", 1, true) ~= nil
+			if prevName ~= nil then
+				expect.truthy(prevName <= name)
+				if prevName == name and undated then
+					expect.truthy(prevUndated) -- an undated work must not follow a dated one by the same author
+				end
+			end
+			prevName, prevUndated = name, undated
+		end
+	end)
+
+	t.test("one reference is the Gemini entry, written exactly", function()
+		local found = 0
+		for _, ref in ipairs(refs()) do
+			if ref.text == "Google. (n.d.-a). Gemini [Large language model]. https://gemini.google.com/" then found += 1 end
+		end
+		expect.equal(found, 1)
+	end)
+
+	t.test("referenceLines(true) and referenceLines(false) each list the 78 references in order", function()
+		local list = refs()
+		expect.equal(type(CreditsData.referenceLines), "function")
+		local marked = CreditsData.referenceLines(true)
+		local plain = CreditsData.referenceLines(false)
+		expect.equal(#marked, REFERENCE_COUNT)
+		expect.equal(#plain, REFERENCE_COUNT)
+		for i, ref in ipairs(list) do
+			expect.equal(marked[i], ref.marked)
+			expect.equal(plain[i], ref.text)
+		end
+	end)
+
+	t.test("referenceLines with no argument gives the plain text, and returns a fresh list each call", function()
+		local first = CreditsData.referenceLines()
+		expect.equal(#first, REFERENCE_COUNT)
+		expect.equal(first[1], refs()[1].text)
+		first[1] = "changed"
+		expect.equal(CreditsData.referenceLines()[1], refs()[1].text) -- editing a returned list must not touch the data
+		expect.equal(CreditsData.references[1].text, refs()[1].text)
+	end)
+
+	t.test("noticeLines has the four notice lines, exactly", function()
+		local lines = CreditsData.noticeLines
+		expect.equal(type(lines), "table")
+		expect.equal(#lines, 4)
+		expect.equal(lines[1], "Map data (c) OpenStreetMap contributors, available under the Open Database License (ODbL 1.0): https://www.openstreetmap.org/copyright")
+		expect.equal(lines[2], "Imagery and map data from Google Maps, Google Earth and Street View belong to Google and its data providers.")
+		expect.equal(lines[3], "Wikimedia Commons photographs keep the licence named in their reference (CC BY-SA 3.0, CC BY-SA 4.0 or CC0).")
+		expect.equal(lines[4], "Reference photos also come from the sites themselves and public web pages; they were used only as visual reference and no photo is used as a texture in the experience.")
+	end)
 end
