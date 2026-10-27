@@ -1,9 +1,11 @@
 -- site10: New Lipa City Hall, Brgy. Areza (Slice 3a) ASSEMBLER. Studio copy: ServerStorage.Builders.site10; run with
 --   require(game.ServerStorage.Builders.site10:Clone())()
 -- Brief: briefs/site10.md. Check: tests/site10_check.luau (ServerStorage.Checks.site10_check).
--- HARDCODED (SiteData has no row 10): model Workspace.Sites.Site10_CityHall, ORIGIN (-250, 0, -260), slot x -350..-150, z -330..-190.
--- FRAME: world-aligned. Local axes = world axes, world = ORIGIN + (lx, ly, lz). Local x -100..100, z -70..70, y = height above ground
---   (ground is y 0; the assembler raycasts and asserts it within 0.6). The building faces +X (East).
+-- Rebuilt from the blueprint (Step C). HARDCODED (kept in step with SiteData row 10): model Workspace.Sites.Site10_CityHall,
+--   ORIGIN (-270, 0, -305), SLOT 240 x 286 = world x -390..-150, z -448..-162.
+-- FRAME: world-aligned. Local axes = world axes, world = ORIGIN + (lx, ly, lz). The slot is local x -120..120, z -143..143; the real
+--   model fills local x -52..120 (world -322..-150) and z -141..117 (world -446..-188), which keeps roads_check's 10 percent margin
+--   rule green. y = height above ground (ground is y 0; the assembler raycasts and asserts it within 0.6). The model faces +X (East).
 -- IDEMPOTENT: replaces Wing, Blocks, Steps, Forecourt, Landscape on every run. NEVER touches or creates Guide, InfoPanel, JeepStop,
 --   JeepSignPole, JeepSign, Jeepney. No terrain writes. A container only exists if a module asked for it (stubs build nothing).
 -- Fail-safe order (same as site09): everything is planned unparented first, so an error leaves the old children untouched; then the
@@ -19,13 +21,13 @@
 --     Blocks               site10_blocks       "blocks"
 --     Steps AND Forecourt  site10_forecourt    "forecourt"
 --     Landscape            site10_landscape    "landscape"
--- Part budgets per module (env.budget() starts at these): wing 800, blocks 600, forecourt 500, landscape 400. The global cap 2500 is
+-- Part budgets per module (env.budget() starts at these): wing 900, blocks 500, forecourt 650, landscape 450. The global cap 2500 is
 -- asserted by the assembler before anything is parented.
 --
 -- env fields (all coordinates LOCAL, relative to ORIGIN; y is height above ground):
 --   env.V, env.CF, env.ANG   Vector3.new, CFrame.new, CFrame.Angles
 --   env.PI                   math.pi
---   env.ORIGIN               Vector3 (-250, 0, -260)
+--   env.ORIGIN               Vector3 (-270, 0, -305)
 --   env.BuildKit             the BuildKit module (ctx:part / wedge / cyl / ball / gable / window / arch ... see src/ServerStorage/BuildKit.luau)
 --   env.GROUND               measured ground height (number, ~0)
 --   env.box(ctx, name, x0, x1, y0, y1, z0, z1, color, material)    axis-aligned box from min/max corners
@@ -47,24 +49,25 @@
 --   env.used()      parts planned so far across all modules (own parts; the kept children are not counted)
 --   env.budget()    parts this module may still add: min(module budget - module used, 2500 - env.used())
 -- Rules: only Anchored parts (BuildKit does it), no Decals/Textures/ImageLabels, text only on signs (see brief), never shrink human
--- scale (doors >= 8, railings 3), keep the reserved zones clear (spawn pad lx 30..50 lz -10..10; jeep curb lx 90..100 lz 20..40;
--- billboard lx 28..38 lz -30..-15), stay inside local x -100..100, z -70..70.
+-- scale (doors >= 8, railings 3), keep the pinned WORLD positions clear (spawn pad x -214..-202, z -266..-254; Guide (-223, -260);
+-- InfoPanel (-217, -282); JeepStop (-155, -230); Jeepney (-155, -216); see tests/site10_check.luau for the exact clearances and
+-- the canopy exemption), stay inside the real bounds world x -323..-149, z -447..-187 (local x -53..121, z -142..118).
 -- ===========================================================================================================
 return function()
 	local BuildKit = require(game.ServerStorage.BuildKit:Clone())
 	local V, CF, ANG = Vector3.new, CFrame.new, CFrame.Angles
 	local PI = math.pi
 
-	local ORIGIN = V(-250, 0, -260)
+	local ORIGIN = V(-270, 0, -305)
 	local PART_BUDGET = 2500
 	local MODEL_NAME = "Site10_CityHall"
 	local REPLACED = { Wing = true, Blocks = true, Steps = true, Forecourt = true, Landscape = true }
 	-- module name -> { containers it owns, part budget }
 	local MODULES = {
-		{ name = "site10_wing", owns = { Wing = true }, budget = 800 },
-		{ name = "site10_blocks", owns = { Blocks = true }, budget = 600 },
-		{ name = "site10_forecourt", owns = { Steps = true, Forecourt = true }, budget = 500 },
-		{ name = "site10_landscape", owns = { Landscape = true }, budget = 400 },
+		{ name = "site10_wing", owns = { Wing = true }, budget = 900 },
+		{ name = "site10_blocks", owns = { Blocks = true }, budget = 500 },
+		{ name = "site10_forecourt", owns = { Steps = true, Forecourt = true }, budget = 650 },
+		{ name = "site10_landscape", owns = { Landscape = true }, budget = 450 },
 	}
 
 	local sites = workspace:FindFirstChild("Sites")

@@ -282,16 +282,16 @@ Blurb: Lipa's new seat of local government, inaugurated April 8, 2026, sits insi
 Quiz: What do the 72 elevated blocks at the New Lipa City Hall stand for?
 - Options: 1. 72 hectares of the Areza estate; 2. The 72 barangays of Lipa; 3. 72 years of Lipa's history
 - Right: Yes! The 72 elevated blocks stand for Lipa's 72 barangays, one for each.
-- Wrong: Not quite. Look at the raised blocks again and think about what Lipa has 72 of.
+- Wrong: Not quite. Think about what Lipa has 72 of.
 - PDF ref: 2
 - NPC: Ate Joy, City tourism guide
 - Trivia:
-  - The complex has 72 elevated blocks, one for each of Lipa's 72 barangays.
+  - The real building has 72 elevated blocks, one for each of Lipa's 72 barangays.
   - Designed by architect Royal Pineda, whose stated goal was to bring back the land to the people.
   - It was the first locator in Areza, built on a 5-hectare site.
 - First talk:
   - Hiii, welcome to Lipa! I'm Joy, your tour guide for today.
-  - See all those raised blocks? There are 72, one for every barangay, which is like a neighborhood.
+  - The real building has 72 elevated blocks, one for every barangay, which is like a neighborhood.
   - Oh, fun fact: 'Lipa' is actually the name of a tree with stinging twigs. Don't touch it, okay?
 - Talk again:
   - First time in Batangas? Ala eh, that's how we say oh wow here, and you'll hear it a lot.
@@ -299,14 +299,14 @@ Quiz: What do the 72 elevated blocks at the New Lipa City Hall stand for?
   - Where should you go first? Food, always food first, so let's get you some lomi.
   - A barangay's like a neighborhood. So yeah, we've got a lot of neighbors.
 - Goodbye: Balik ka ha! That means come back, okay?
-- Look at: Look at the shape of those raised blocks, repeating in a steady rhythm, and walk under one to feel the space beneath.
+- Look at: Look at the shape of the huge faceted canopy on its tall round columns. Then follow the white brick boxes stepping along the wing in a steady rhythm.
 - Display props:
-  - raised walk-under blocks
+  - white brick boxes and atrium canopy
   - pocket gardens
   - open lobby
   - front plaza with welcome billboard and tour map
   - jeepney stop
-- Sources: PDF [1] (inaugurated April 8, 2026; Areza estate; open lobbies, gardens and shaded walkways; about 23,000 square meters of floor area and a 2,160 square meter plaza), [2] (72 elevated blocks, one for each barangay), [3] (architect Royal Pineda, stated goal), [4] (first locator on a 5-hectare site); PDF Ate Joy section (dialogue, trimmed to two sentences a line). Look at line: new, from the PDF display list; no City Hall brief or SiteData entry was found. [VERIFY] Look at line against the built model.
+- Sources: PDF [1] (inaugurated April 8, 2026; Areza estate; open lobbies, gardens and shaded walkways; about 23,000 square meters of floor area and a 2,160 square meter plaza), [2] (72 elevated blocks, one for each barangay), [3] (architect Royal Pineda, stated goal), [4] (first locator on a 5-hectare site); PDF Ate Joy section (dialogue, trimmed to two sentences a line). Look at line and display prop 1: from the blueprint rebuild (Step C); the 72-block fact describes the real building (PDF [2]). [VERIFY] Look at line against the built model.
 
 ## Shared lines
 - City Hall facts (cityHallFacts):

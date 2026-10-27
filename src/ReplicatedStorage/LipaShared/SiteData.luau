@@ -135,23 +135,24 @@ SiteData.sites = {
 		"Tagbakin, in Barangay Halang, introduces Lipa's lakeside identity.",
 		{ "www.wowbatangas.com" },
 		{ "LocationMapPanel", "FishingActivity", "Dock", "Bancas" }),
-	-- Row 10: New Lipa City Hall, the Welcome gateway. Pivot (-250, 0, -260), facing E, 1104 parts (Slice 3a). The dialogue is
-	-- PROVISIONAL: derived from TourContent site 10 (firstTalk / trivia / lookAt) in the Slice 3b data step, until Slice 11 makes
-	-- GuideClient read TourContent directly. Local offsets keep Ate Joy off the spawn pad and the steps (steps lx 5..25, spawn pad
-	-- lx 30..50 / lz -10..10): guide at lx 27, jeep stop on the curb (lx 90..100, lz 20..40), InfoPanel at lx 28..38 / lz -30..-15.
-	site(10, "CityHall", "New Lipa City Hall", "Welcome", -250, 0, -260, "E", 200, 140, 2.0,
+	-- Row 10: New Lipa City Hall, the Welcome gateway. Pivot (-270, 0, -305), facing E, slot 240 x 286 (x -390..-150, z -448..-162),
+	-- rebuilt from the blueprint (Step C). The dialogue is PROVISIONAL: derived from TourContent site 10 (firstTalk / trivia / lookAt)
+	-- in the Slice 3b data step, until Slice 11 makes GuideClient read TourContent directly. The local offsets keep Ate Joy, the jeep
+	-- stop and the InfoPanel where they were in the WORLD (Guide -223/-260, JeepStop -155/-230, InfoPanel -217/-282; the spawn pad is
+	-- world x -214..-202, z -266..-254): guide at local (47, 45), jeep stop at (115, 75), InfoPanel at (53, 23).
+	site(10, "CityHall", "New Lipa City Hall", "Welcome", -270, 0, -305, "E", 240, 286, 2.0,
 		"Ate Joy",
 		{
 			"Hiii, welcome to Lipa! This is the New Lipa City Hall, inaugurated April 8, 2026 in Ayala Land's Areza estate. I'm Joy, your tour guide today.",
-			"Did you know? The complex has 72 elevated blocks, one for each of Lipa's 72 barangays, which are like neighborhoods.",
-			"Look at the shape of those raised blocks, repeating in a steady rhythm, and walk under one to feel the space beneath.",
+			"Did you know? The real building has 72 elevated blocks, one for each of Lipa's 72 barangays, which are like neighborhoods.",
+			"Look at the shape of the huge faceted canopy on its tall round columns. Then follow the white brick boxes stepping along the wing in a steady rhythm.",
 		},
 		"Lipa's new seat of local government, inaugurated April 8, 2026, with open lobbies, gardens and shaded walkways.",
 		{ "www.google.com" },
-		-- requiredProps are direct child names of the model (BuildCheck): Blocks = raised walk-under blocks, Landscape = pocket gardens,
+		-- requiredProps are direct child names of the model (BuildCheck): Blocks = the staggered white-brick boxes, Landscape = pocket gardens,
 		-- Wing = open lobby, Forecourt = front plaza (billboard and tour map spot), JeepStop = the jeepney stop.
 		{ "Blocks", "Landscape", "Wing", "Forecourt", "JeepStop" },
-		{ guideLocal = Vector2.new(27, 0), jeepLocal = Vector2.new(95, 30), panelLocal = Vector2.new(33, -22) }),
+		{ guideLocal = Vector2.new(47, 45), jeepLocal = Vector2.new(115, 75), panelLocal = Vector2.new(53, 23) }),
 }
 
 local byIdMap = {}

@@ -376,7 +376,7 @@ TourContent.sites = {
 		headline = "Welcome to Lipa! This is the New Lipa City Hall.",
 		blurb = "Lipa's new seat of local government, inaugurated April 8, 2026, sits inside Ayala Land's 92-hectare Areza estate, with open lobbies, gardens and shaded walkways.",
 		trivia = {
-			"The complex has 72 elevated blocks, one for each of Lipa's 72 barangays.",
+			"The real building has 72 elevated blocks, one for each of Lipa's 72 barangays.",
 			"Designed by architect Royal Pineda, whose stated goal was to bring back the land to the people.",
 			"It was the first locator in Areza, built on a 5-hectare site.",
 		},
@@ -388,13 +388,13 @@ TourContent.sites = {
 				"72 years of Lipa's history",
 			},
 			right = "Yes! The 72 elevated blocks stand for Lipa's 72 barangays, one for each.",
-			wrong = "Not quite. Look at the raised blocks again and think about what Lipa has 72 of.",
+			wrong = "Not quite. Think about what Lipa has 72 of.",
 			pdfRef = 2,
 		},
 		npc = { name = "Ate Joy", role = "City tourism guide" },
 		firstTalk = {
 			"Hiii, welcome to Lipa! I'm Joy, your tour guide for today.",
-			"See all those raised blocks? There are 72, one for every barangay, which is like a neighborhood.",
+			"The real building has 72 elevated blocks, one for every barangay, which is like a neighborhood.",
 			"Oh, fun fact: 'Lipa' is actually the name of a tree with stinging twigs. Don't touch it, okay?",
 		},
 		talkAgain = {
@@ -404,9 +404,9 @@ TourContent.sites = {
 			"A barangay's like a neighborhood. So yeah, we've got a lot of neighbors.",
 		},
 		goodbye = "Balik ka ha! That means come back, okay?",
-		lookAt = "Look at the shape of those raised blocks, repeating in a steady rhythm, and walk under one to feel the space beneath.",
+		lookAt = "Look at the shape of the huge faceted canopy on its tall round columns. Then follow the white brick boxes stepping along the wing in a steady rhythm.",
 		displayProps = {
-			"raised walk-under blocks",
+			"white brick boxes and atrium canopy",
 			"pocket gardens",
 			"open lobby",
 			"front plaza with welcome billboard and tour map",

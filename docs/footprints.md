@@ -13,7 +13,9 @@ The owner approved growing footprints to fit the blueprints ("the bigger the bet
 | 7 Farm | oval of 39 zones, about 52 ha, no printed size | 260 x 260 at (700,240) | about 400 x 320 at (770,240), oval | west edge stays x 570 (Road C end); east edge x 970; far below true scale |
 | 8 Malarayat | not to scale | 400 x 320 | keep, or modest growth toward z 880 | world edge at z 1000 |
 | 9 Tagbakin | photos only | 240 x 200 | keep | |
-| 10 City Hall | 180 x 120 m (2.0): 360 along z, 240 along x | 200 x 140 at (-250,-260) | 240 x 286 at about (-270,-305) | full 360 width would need the west bypass removed; z -448..-162 stays clear of the Carmel road (z -460) and the bypass leg (z -150); east edge stays x -150 |
+| 10 City Hall | 180 x 120 m (2.0): 360 along z, 240 along x | 200 x 140 at (-250,-260) | 240 x 286 at (-270,-305), applied in Step C (blueprint rebuild) | full 360 width would need the west bypass removed; z -448..-162 stays clear of the Carmel road (z -460) and the bypass leg (z -150); east edge stays x -150 |
+
+Site 10 (Step C, applied): slot 240 x 286 at (-270,-305) as approved (x -390..-150, z -448..-162, facing E). The model is built at one uniform plan scale of about 1.43 studs per metre, so that the drawing's 3:2 proportion holds and `roads_check`'s margin rule (real bounds +10 percent against road width/2 + 4) stays green with no road change. Real bounds x -322..-150, z -446..-188 (the check allows x -323..-149, z -447..-187). The pinned world positions are unchanged (Guide -223/-260, JeepStop -155/-230, InfoPanel -217/-282, spawn pad x -214..-202, z -266..-254); only the local offsets changed to (47,45), (115,75) and (53,23). The canopy overhangs the spawn pad at height (owner decision: canopy as drawn); nothing solid stands below it near the pad, the Guide or the InfoPanel.
 
 Rules for each application:
 - Pinned world positions (Guide, JeepStop, InfoPanel, spawn pad) keep their world coordinates where the sites checks require it; the local offsets (`guideLocal`, `jeepLocal`, `panelLocal`) are adjusted for the new centre.
