@@ -43,7 +43,7 @@ local CC_Z0, CC_Z1 = MIDZ - 15, MIDZ + 15 -- the Cultural Center's z range, cent
 	local UPPER = CF(0, RAISE, 0) -- origin of every component that stands on the podium
 	local REPLACED = {
 		Block = true, Structure = true, Plaza = true, PlazaBuildings = true, PlazaPeople = true, ParkedVehicles = true,
-		WelcomeArch = true, Benches = true, Lamps = true, Flagpole = true, EventStage = true, Podium = true, PlazaLower = true, ParishWing = true, ChurchAnnex = true, WestFence = true, -- ParishWing is gone (B3c-0) but its name stays here so old copies are cleaned
+		WelcomeArch = true, Benches = true, Lamps = true, Flagpole = true, EventStage = true, Podium = true, PlazaLower = true, ParishWing = true, ChurchAnnex = true, WestFence = true, LotMarkings = true, EastGarden = true, -- ParishWing is gone (B3c-0) but its name stays here so old copies are cleaned
 	}
 
 	-- Colours. Walls and trim: Lipa_Cathedral_2024-03-27 / facade_2023-04-05 (butter yellow, mauve-grey). Domes: the
@@ -85,6 +85,12 @@ local CC_Z0, CC_Z1 = MIDZ - 15, MIDZ + 15 -- the Cultural Center's z range, cent
 	local PAVER_JOINT = Color3.fromRGB(118, 120, 126)
 	-- B3c-0b (owner's magenta mark): two staggered rows of cars on the asphalt west of the tower, inside x -115..-55, z -42..6 (aisle z -31..-13); n = last car index, x0 = first car x
 	local NW_ROWS = { { z = -36, x0 = -112, n = 9, yaw = 0 }, { z = -8, x0 = -109, n = 8, yaw = PI } }
+	-- B3c-2: two more staggered rows of cars in the south lot (bare south of z 48 after B3c-1), the lamps down the Walkway and the east garden strip. SOUTH_EMPTY lists the bays left empty ("row:j"):
+	-- 41 cars instead of 44 keep the site at 2498 parts (cap 2500) and ParkedVehicles at 388 of its 400-part batch.
+	local SOUTH_ROWS = { { z = 65, yaw = 0 }, { z = 87, yaw = PI } }
+	local SOUTH_EMPTY = { ["1:6"] = true, ["2:11"] = true, ["2:23"] = true }
+	local LOT_LAMPS = { { -10, 58 }, { 10, 58 }, { -10, 80 }, { 10, 80 }, { -10, 102 }, { 10, 102 } }
+	local EAST_GARDEN = { x0 = 70, x1 = 110, z0 = 52, z1 = 104, gapX = 86, gapW = 8 }
 	local STATUES = { { -9, 16 }, { -9, 24 }, { -9, 32 }, { 9, 16 }, { 9, 24 }, { 9, 32 }, { 9, 40 } } -- x, z (clear of the Guide, JeepStop and InfoPanel)
 	-- Plaza Independencia from the ground photo: terracotta paving, salmon walls, orange kiosk roofs, a pale vaulted roof.
 	local TERRACOTTA = Color3.fromRGB(205, 142, 116)
@@ -865,6 +871,49 @@ local CC_Z0, CC_Z1 = MIDZ - 15, MIDZ + 15 -- the Cultural Center's z range, cent
 	end
 
 	------------------------------------------------------------------ Benches, lamps, flagpole (upper level, origin raised)
+	-- B3c-2: the painted bays of the two south rows, like the north ones (a yellow line either side of every bay, open at the Walkway and its lamps), and an aisle line either side of the drive aisle.
+	local function buildLotMarkings(ctx)
+		for _, row in ipairs(SOUTH_ROWS) do
+			for i = 0, 27 do
+				local lx = -98 + i * 6
+				if lx <= -14 or lx >= 16 then ctx:part("ParkingBayLine", V(0.3, 0.1, 10), CF(lx, 0.15, row.z), YELLOW, PLAS) end
+			end
+		end
+		for _, z in ipairs({ SOUTH_ROWS[1].z + 5.2, SOUTH_ROWS[2].z - 5.2 }) do
+			ctx:part("ParkingAisleLine", V(84, 0.1, 0.3), CF(-56, 0.15, z), YELLOW, PLAS)
+			ctx:part("ParkingAisleLine", V(48, 0.1, 0.3), CF(40, 0.15, z), YELLOW, PLAS)
+		end
+	end
+
+	-- B3c-2: the east garden strip along the lot's east edge (the plaza drawing's tree-and-monument strip): a lawn slab over ApronPavingEast, a hedge ring with a walk-in gap in the south side, a path
+	-- through the gap to the monument, and a long row of trees. The GardenTree / Monument recipes under their own names (EastGarden*, EastMonument*): the older checks pin GardenHedge and GardenTreeCanopy
+	-- to x 36..100 and MonumentPlinth is an anchor. 36 parts.
+	local function buildEastGarden(ctx)
+		local g = EAST_GARDEN
+		local gw, gd = g.x1 - g.x0, g.z1 - g.z0
+		local gcx, gcz = (g.x0 + g.x1) / 2, (g.z0 + g.z1) / 2
+		ctx:part("EastGardenLawn", V(gw, 0.14, gd), CF(gcx, 0.07, gcz), LAWN, Enum.Material.Grass)
+		ctx:part("EastGardenHedge", V(gw + 1.6, 1.8, 1.6), CF(gcx, 0.9, g.z0), HEDGE, Enum.Material.Grass)
+		ctx:part("EastGardenHedge", V(1.6, 1.8, gd + 1.6), CF(g.x0, 0.9, gcz), HEDGE, Enum.Material.Grass)
+		ctx:part("EastGardenHedge", V(1.6, 1.8, gd + 1.6), CF(g.x1, 0.9, gcz), HEDGE, Enum.Material.Grass)
+		local gl, gr = g.gapX - g.gapW / 2, g.gapX + g.gapW / 2
+		ctx:part("EastGardenHedge", V(gl - g.x0, 1.8, 1.6), CF((g.x0 + gl) / 2, 0.9, g.z1), HEDGE, Enum.Material.Grass)
+		ctx:part("EastGardenHedge", V(g.x1 - gr, 1.8, 1.6), CF((gr + g.x1) / 2, 0.9, g.z1), HEDGE, Enum.Material.Grass)
+		ctx:part("EastGardenPath", V(4, 0.16, 28), CF(g.gapX, 0.08, 91), STONE_LIGHT, CONC) -- z 77..105: from the walk-in gap to the monument
+		local mx, mz = g.gapX, 74
+		ctx:part("EastMonumentPlinth", V(5.4, 1.4, 5.4), CF(mx, 0.7, mz), STONE_DARK, CONC)
+		ctx:part("EastMonument", V(3.4, 5, 3.4), CF(mx, 3.9, mz), STONE_LIGHT, CONC)
+		ctx:part("EastMonumentCap", V(4.2, 0.6, 4.2), CF(mx, 6.7, mz), STONE_DARK, CONC)
+		ctx:part("EastMonumentStatue", V(1.4, 3.6, 1.0), CF(mx, 8.8, mz), WHITE, CONC)
+		ctx:ball("EastMonumentHead", 1.3, CF(mx, 11.3, mz), WHITE, CONC)
+		for k = 0, 7 do
+			local tx, tz = 102, 58 + 6 * k
+			post(ctx, "EastGardenTreeTrunk", 1.4, 5, tx, 0, tz, TRUNK, WOOD)
+			ctx:ball("EastGardenTreeCanopy", 8, CF(tx, 8.5, tz), GREEN, Enum.Material.Grass)
+			ctx:ball("EastGardenTreeCanopy", 6, CF(tx + 1.6, 11.5, tz - 1), Color3.fromRGB(58, 118, 62), Enum.Material.Grass)
+		end
+	end
+
 	local function buildBenches(ctx)
 		-- Round 2: the lot has no benches (asphalt bays); three benches stand on the walled garden's paths, facing each other across them.
 		local spots = { { 88, 30, 0 }, { 79, 20, PI / 2 }, { 79, 40, -PI / 2 } }
@@ -886,6 +935,7 @@ local CC_Z0, CC_Z1 = MIDZ - 15, MIDZ + 15 -- the Cultural Center's z range, cent
 		for _, p in ipairs({ { -62, 30 }, { 84, 30 }, { 79, 14 }, { 79, 45 } }) do
 			table.insert(spots, p)
 		end
+		for _, p in ipairs(LOT_LAMPS) do table.insert(spots, p) end -- B3c-2: six lamps down the Walkway in the south lot
 		for _, s in ipairs(spots) do
 			post(ctx, "LampBase", 1.8, 1.2, s[1], 0, s[2], LAMP_METAL, METAL)
 			post(ctx, "LampPole", 0.6, 10, s[1], 1.2, s[2], LAMP_METAL, METAL)
@@ -943,6 +993,8 @@ local CC_Z0, CC_Z1 = MIDZ - 15, MIDZ + 15 -- the Cultural Center's z range, cent
 		add(-62, 30, 1.4, 1.4)
 		add(-109.5, 26, 11.3, 5.8) -- B3c-0b: the entry walkways (west x -120..-99, east x 91.5..120, z 21..31) stay free of cars
 		add(105.75, 26, 14.8, 5.8)
+		for _, p in ipairs(LOT_LAMPS) do add(p[1], p[2], 1.4, 1.4) end -- B3c-2
+		add((EAST_GARDEN.x0 + EAST_GARDEN.x1) / 2, (EAST_GARDEN.z0 + EAST_GARDEN.z1) / 2, 22, 28) -- B3c-2: the east garden strip with a 2-stud margin (x 68..112, z 50..106)
 		for _, c in ipairs(site:GetChildren()) do
 			if not REPLACED[c.Name] then
 				local cf, size
@@ -977,6 +1029,19 @@ local CC_Z0, CC_Z1 = MIDZ - 15, MIDZ + 15 -- the Cultural Center's z range, cent
 					if cx + 2.4 > o[1] and cx - 2.4 < o[2] and row.z + 5.2 > o[3] and row.z - 5.2 < o[4] then blocked = true break end
 				end
 				if not blocked then table.insert(slots, { cx, row.z, row.yaw, CAR_COLORS[(j * 3 + rIdx * 5) % #CAR_COLORS + 1] }) end
+			end
+		end
+		-- B3c-2: the south lot, two staggered rows facing across the drive aisle (z 70.2..81.8), the same x pattern as the north rows (clear of the Walkway and its lamps), minus the bays in SOUTH_EMPTY.
+		for rIdx, row in ipairs(SOUTH_ROWS) do
+			for j = 0, 26 do
+				local cx = -95 + j * 6
+				if (cx <= -17 or cx >= 19) and not SOUTH_EMPTY[rIdx .. ":" .. j] then
+					local blocked = false
+					for _, o in ipairs(obs) do
+						if cx + 2.4 > o[1] and cx - 2.4 < o[2] and row.z + 5.2 > o[3] and row.z - 5.2 < o[4] then blocked = true break end
+					end
+					if not blocked then table.insert(slots, { cx, row.z, row.yaw, CAR_COLORS[(j * 5 + rIdx * 3 + 4) % #CAR_COLORS + 1] }) end
+				end
 			end
 		end
 		return slots
@@ -1044,6 +1109,8 @@ local CC_Z0, CC_Z1 = MIDZ - 15, MIDZ + 15 -- the Cultural Center's z range, cent
 		component("ChurchAnnex", "Site", buildChurchAnnex, UPPER)
 		component("WestFence", "Site", buildWestFence)
 		component("PlazaLower", "Site", buildPlazaLower)
+		component("LotMarkings", "Site", buildLotMarkings, UPPER) -- B3c-2
+		component("EastGarden", "Site", buildEastGarden, UPPER) -- B3c-2
 		component("PlazaBuildings", "Site", buildPlazaBuildings)
 		component("Benches", "Site", buildBenches, UPPER)
 		component("Lamps", "Site", buildLamps, UPPER)
