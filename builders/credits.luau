@@ -1,6 +1,11 @@
--- credits: idempotently builds Workspace.World.CreditsBoard at the south edge of Plaza Independencia (Slice 13; six panels since Slice 3b).
+-- credits: idempotently builds Workspace.World.CreditsBoard at the south end of the Cathedral plaza (Slice 13; six panels since Slice 3b;
+-- moved from z 94 to z 205 in Slice 4 B3b2, when the Cathedral slot grew south: compound edge z 215, Road E starts at (0,225)).
 -- Run via execute_luau (Edit). Destroys and rebuilds the board; touches nothing else (no terrain, no Sites).
--- Layout: six panels in a row, x -57..57 at z 94, facing north (-Z); the board stands in the Cathedral plaza (it did not move).
+-- Layout: six panels in two halves of three, facing north (-Z), at z 205. A walking aisle (clear at ground level to |x| < 8.1, the aisle-edge posts; panels start at +-9) splits the halves so the lane
+-- from Road E up to the Cathedral Guide stays open; the halves are shifted +-AISLE/2 from the old continuous layout (x 47.5 .. -47.5), so the
+-- board is 132 wide (x -66..66) instead of 115, and the panel size, text and part count (15) are unchanged.
+-- The plinth is split in two; the cap is ONE beam over both halves (a lintel over the aisle, bottom y 14.2, above the 8-stud door rule);
+-- posts: between panels (4) and one at each aisle edge (2).
 -- Seen from the front (looking south), the viewer's right is -X, so the panels run left to right as +X ... -X:
 --   panels 1-3 = sites 1-3, 4-6, 7-9; panel 4 = site 10 (City Hall) + CreditsData.projectLines; panels 5-6 = "TOUR SOURCES",
 --   the 25 CreditsData.tourSources as "[n] text (domain)" at 16 px. All 25 do not fit one panel (see the measurement in the report:
@@ -8,7 +13,6 @@
 --   and the sources are packed greedily over panels 5 and 6, measured with TextService (a source is never split or truncated).
 -- A panel's front face is its Front (-Z) side. Text comes from CreditsData (urls) and SiteData (names); the identity slot is
 -- CreditsData.identityText() (TO BE ADDED until the student fills it in). All labels have RichText off.
--- The plaza's south strip (z 90..98) is clear: lamps sit at z 80, benches at z 84..88, the kerb at z 100.
 local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 local CreditsData = require(game.ReplicatedStorage.LipaShared.CreditsData:Clone())
 
@@ -18,7 +22,8 @@ local old = world:FindFirstChild("CreditsBoard")
 if old then old:Destroy() end
 
 local V = Vector3.new
-local Z = 94
+local Z = 205
+local HALF = 8.5 -- each half shifts this far from x 0: aisle edges at x +-9 (panel faces), posts at +-8.5
 local PANEL_W, PANEL_H, PANEL_T = 18, 13, 0.6
 local PANEL_BOTTOM = 1.2
 local PPS = 40 -- pixels per stud: each panel is 720 x 520 px
@@ -42,16 +47,24 @@ local SLATE = Color3.fromRGB(24, 26, 36)
 local GOLD = Color3.fromRGB(255, 214, 102)
 local INK = Color3.fromRGB(232, 232, 238)
 
--- frame: a low plinth, one post between each pair of panels (and at both ends) and a cap beam
+-- frame: a plinth in two halves, a post between each pair of panels in a half, one post at each aisle edge, and one cap beam (lintel)
 local NPANELS = 6
 local SPACING = PANEL_W + 1
 local BOARD_W = NPANELS * SPACING + 1 -- 115
-part("Plinth", V(BOARD_W, 1, 2.4), CFrame.new(0, 0.5, Z), STONE, Enum.Material.Concrete)
-for i = 0, NPANELS do
+local HALF_W = BOARD_W / 2 -- 57.5: width of one plinth half (the old plinth, split at x 0)
+for _, sgn in ipairs({ 1, -1 }) do
+	part("Plinth", V(HALF_W, 1, 2.4), CFrame.new(sgn * (HALF + HALF_W / 2), 0.5, Z), STONE, Enum.Material.Concrete)
+end
+-- original post slots i = 0..6 were at x (3 - i) * 19; slot 3 (x 0) is the aisle. Keep the four between panels, shifted out by HALF.
+for _, i in ipairs({ 1, 2, 4, 5 }) do
 	local x = (NPANELS / 2 - i) * SPACING
+	x += (x > 0) and HALF or -HALF
 	part("Post", V(0.8, 14, 0.8), CFrame.new(x, 8, Z - 0.1), STONE, Enum.Material.Concrete) -- spans y 1..15, flush with the cap top
 end
-part("Cap", V(BOARD_W, 0.8, 1.4), CFrame.new(0, PANEL_BOTTOM + PANEL_H + 0.4, Z - 0.1), STONE, Enum.Material.Concrete)
+for _, sgn in ipairs({ 1, -1 }) do -- aisle-edge posts hold up the lintel
+	part("Post", V(0.8, 14, 0.8), CFrame.new(sgn * HALF, 8, Z - 0.1), STONE, Enum.Material.Concrete)
+end
+part("Cap", V(BOARD_W + 2 * HALF, 0.8, 1.4), CFrame.new(0, PANEL_BOTTOM + PANEL_H + 0.4, Z - 0.1), STONE, Enum.Material.Concrete)
 
 local function label(frame, text, order, size, font, color)
 	local l = Instance.new("TextLabel")
@@ -141,7 +154,7 @@ local function contentFor(k)
 end
 
 for k = 1, NPANELS do
-	local x = ((NPANELS + 1) / 2 - k) * SPACING
+	local x = ((NPANELS + 1) / 2 - k) * SPACING + ((k <= NPANELS / 2) and HALF or -HALF)
 	local panel = part("Panel" .. k, V(PANEL_W, PANEL_H, PANEL_T), CFrame.new(x, PANEL_BOTTOM + PANEL_H / 2, Z), SLATE, Enum.Material.SmoothPlastic)
 	local g = Instance.new("SurfaceGui")
 	g.Name = "CreditsGui" .. k
