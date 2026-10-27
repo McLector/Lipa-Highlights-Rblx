@@ -317,8 +317,19 @@ check("2+ PlanterWall runs along the south fence, none inside the CreditsBoard s
 	return true
 end)(), tostring(countNamed("PlanterWall")))
 check("4+ flower beds on the lower plaza", countNamed("FlowerBed") >= 4, tostring(countNamed("FlowerBed")))
-check("long arcaded building on the lower plaza's west side (LongBuildingW)", anchor("LongBuildingW") ~= nil and anchor("LongBuildingW").Position.X < -80
-	and anchor("LongBuildingW").Position.Z > WALL_Z)
+-- B3c-0 (owner's colour markup 2026-10-27; replaces "long arcaded building on the lower plaza's west side (LongBuildingW)"): red = remove the long west building, black = remove the
+-- west and north ranges (replaced by an iron fence), blue = remove the south cross range. Nothing of the parish wing is left, and no orphan from an old run either.
+do
+	local left = {}
+	for _, d in ipairs(workspace:GetDescendants()) do
+		if d.Name == "LongBuildingW" or d.Name:match("^LongBuildingW") or d.Name:match("^ParishWing") or d.Name:match("^ParishCourt") or d.Name == "PlazaSquare"
+			or d.Name == "LongRoof" or d.Name == "LongRidge" or d.Name == "LongPilaster" or d.Name == "ParishWin_Pane" or d.Name == "ParishDoor_Pane" then
+			table.insert(left, d.Name)
+		end
+	end
+	check("B3c-0 no LongBuildingW or ParishWing* parts remain (markup: red, black, blue), and no orphan PlazaSquare anywhere in the workspace", #left == 0 and site:FindFirstChild("ParishWing") == nil,
+		#left .. " left: " .. table.concat(left, ", ", 1, math.min(#left, 4)))
+end
 check("12+ palm trunks", countNamed("PalmTrunk1") >= 12, tostring(countNamed("PalmTrunk1")))
 check("no market tents or slab on the lower plaza (the ground photo shows an open paved plaza)", countNamed("PlazaTent") == 0 and countNamed("TentPost") == 0 and countNamed("PlazaSlab") == 0,
 	countNamed("PlazaTent") .. " tents")
@@ -336,12 +347,20 @@ local function blockers(cf, size)
 	end
 	return names
 end
-local spawnHits = blockers(CFrame.new(0, 5, 70), Vector3.new(8, 8, 8))
-check("the spawn (0,70) has 8x8 studs of clear ground", #spawnHits == 0, table.concat(spawnHits, ", ", 1, math.min(#spawnHits, 4)))
-local boardHits = blockers(CFrame.new(0, 8, 94.5), Vector3.new(60, 14, 8))
-check("the CreditsBoard strip (x +-30, z 90..98) is clear of Site01 geometry", #boardHits == 0, table.concat(boardHits, ", ", 1, math.min(#boardHits, 4)))
-local centreHits = blockers(CFrame.new(-2, 6, 76), Vector3.new(64, 10, 24))
-check("the lower plaza has a wide open centre (x -34..30, z 64..88 clear of Site01 geometry)", #centreHits == 0, table.concat(centreHits, ", ", 1, math.min(#centreHits, 4)))
+-- B3c-0 (owner's colour markup; replaces the three old open-plaza boxes "the spawn (0,70) has 8x8 studs of clear ground", "the CreditsBoard strip (x +-30, z 90..98) is clear of
+-- Site01 geometry" and "the lower plaza has a wide open centre (x -34..30, z 64..88 ...)"): the mound and the stage now stand on the centre line, so walking room is
+-- measured round them instead. The real CreditsBoard keep-out (4+ studs round the board itself) is unchanged further down.
+local moundN = blockers(CFrame.new(0, 5, 57.3), Vector3.new(20, 8, 1.8))
+local moundE = blockers(CFrame.new(14, 5, 70), Vector3.new(4.4, 8, 16))
+local moundW = blockers(CFrame.new(-14, 5, 70), Vector3.new(4.4, 8, 16))
+check("B3c-0 walking room round the mound: clear boxes between the foot of the middle flight and the mound (x -10..10, z 56.4..58.2) and on both sides (|x| 11.8..16.2, z 62..78)",
+	#moundN + #moundE + #moundW == 0, table.concat(moundN, ", ", 1, math.min(#moundN, 2)) .. table.concat(moundE, ", ", 1, math.min(#moundE, 2)) .. table.concat(moundW, ", ", 1, math.min(#moundW, 2)))
+local laneE = blockers(CFrame.new(19.5, 5, 91), Vector3.new(9, 8, 15.6))
+local laneW = blockers(CFrame.new(-19.5, 5, 91), Vector3.new(9, 8, 15.6))
+check("B3c-0 walkers pass round both sides of the stage: lanes x +-(15..24), z 83.2..98.8 are clear of Site01 geometry", #laneE + #laneW == 0,
+	table.concat(laneE, ", ", 1, math.min(#laneE, 2)) .. " | " .. table.concat(laneW, ", ", 1, math.min(#laneW, 2)))
+local corridor = blockers(CFrame.new(0, 5, 81.6), Vector3.new(30, 8, 1.4))
+check("B3c-0 a corridor (x -15..15, z 80.9..82.3) separates the mound from the stage", #corridor == 0, table.concat(corridor, ", ", 1, math.min(#corridor, 3)))
 -- Upper-level keep-clear: nothing the builder made may stand where a visitor meets the Guide or reads the InfoPanel.
 local keptNames = { Guide = true, InfoPanel = true, JeepStop = true, JeepSignPole = true, JeepSign = true, Jeepney = true }
 local function builtBlockers(cf, size)
@@ -498,12 +517,17 @@ check("Cultural Center leaves the road gap open: nothing of it at z < 64 (Road C
 -- Open-air stage pavilion with a dark peaked roof, plaza south-east, apart from the vaulted CoveredCourt (which stays).
 local roofL, roofR, dais = anchor("StageRoofL"), anchor("StageRoofR"), anchor("StageDais")
 local function tilt(p) local rx = p.CFrame:ToEulerAnglesXYZ() return math.deg(rx) end
-check("round 4 StagePavilion (replaces 'at x 80..99, z 82..99'): two dark roof slopes, tilted 15+ degrees in opposite senses, over a raised dais at the SOUTH-WEST (x -99..-72, z 80..96)",
+-- B3c-0 (owner's colour markup; replaces the round 4 clause "over a raised dais at the SOUTH-WEST (x -99..-72, z 80..96)", old text kept in briefs/site01.md): the dais centre is within
+-- 4 studs of the plaza centre line (x 0) near the south edge (z 80..96), the open side faces NORTH (the white back wall is on the south long side), and the lane from the
+-- dais's south edge to the south fence line (z 99.3) is 4.5+ studs, so a walker (agent radius 2) can slide round it. The roof, colour and dais-thickness clauses are unchanged.
+check("B3c-0 StagePavilion: two dark roof slopes, tilted 15+ degrees in opposite senses, over a raised dais centred within 4 studs of the plaza centre line near the south edge (z 80..96), open side facing NORTH (back wall on the south), 4.5+ studs to the south fence",
 	roofL ~= nil and roofR ~= nil and dais ~= nil and tilt(roofL) * tilt(roofR) < 0 and math.abs(tilt(roofL)) >= 15 and math.abs(tilt(roofR)) >= 15
 		and roofL.Color.R * 255 <= 90 and roofL.Color.G * 255 <= 90 and roofL.Color.B * 255 <= 90 and roofR.Color.R * 255 <= 90
-		and dais.Position.X >= -99 and dais.Position.X <= -72 and dais.Position.Z >= 80 and dais.Position.Z <= 96 and dais.Size.Y >= 1 and dais.Size.Y <= 2.5
-		and roofL.Position.Y >= 12,
-	roofL and roofR and dais and string.format("tilt %s / %s, dais (%s, %s)", fmt(tilt(roofL)), fmt(tilt(roofR)), fmt(dais.Position.X), fmt(dais.Position.Z)) or "missing")
+		and math.abs(dais.Position.X) <= 4 and dais.Position.Z >= 80 and dais.Position.Z <= 96 and dais.Size.Y >= 1 and dais.Size.Y <= 2.5
+		and roofL.Position.Y >= 12
+		and anchor("StageBackWall") ~= nil and anchor("StageBackWall").Position.Z > dais.Position.Z + 4 and anchor("StageBackWall").Size.X >= 20
+		and 99.3 - (dais.Position.Z + dais.Size.Z / 2) >= 4.5,
+	roofL and roofR and dais and string.format("tilt %s / %s, dais (%s, %s) south lane %s", fmt(tilt(roofL)), fmt(tilt(roofR)), fmt(dais.Position.X), fmt(dais.Position.Z), fmt(99.3 - (dais.Position.Z + dais.Size.Z / 2))) or "missing")
 check("StagePavilion has 4+ posts and a white back wall", countNamed("StagePavilionPost") >= 4 and anchor("StageBackWall") ~= nil, tostring(countNamed("StagePavilionPost")))
 
 -- Red-brick retaining wall and brick steps along the forecourt's plaza side.
@@ -542,23 +566,31 @@ check("a row of 6+ small statues (StatuePlinth) down the middle of the forecourt
 do
 	local tiersM, flats, ribbons = allNamed("MoundTier"), allNamed("MoundTierFlat"), allNamed("MoundRibbon")
 	local mBad, widest, zlo, zhi, xlo, xhi = {}, 0, math.huge, -math.huge, math.huge, -math.huge
+	local cxm, czm = 0, 0
 	for _, t in ipairs(tiersM) do
 		widest = math.max(widest, t.Size.Y)
-		xlo, xhi, zhi = math.min(xlo, t.Position.X - t.Size.Y / 2), math.max(xhi, t.Position.X + t.Size.Y / 2), math.max(zhi, t.Position.Z + t.Size.Z / 2)
-		if t.Position.X >= 0 or t.Position.Y >= RAISE then table.insert(mBad, "tier") end
-	end
-	for _, f in ipairs(flats) do
-		zlo = math.min(zlo, f.Position.Z - f.Size.Z / 2)
-		if f.Position.X >= 0 or f.Position.Y >= RAISE then table.insert(mBad, "flat") end
+		xlo, xhi, zhi = math.min(xlo, t.Position.X - t.Size.Y / 2), math.max(xhi, t.Position.X + t.Size.Y / 2), math.max(zhi, t.Position.Z + t.Size.Y / 2)
+		zlo = math.min(zlo, t.Position.Z - t.Size.Y / 2)
+		cxm, czm = t.Position.X, t.Position.Z
+		if t.Position.Y >= RAISE then table.insert(mBad, "tier") end
 	end
 	local ribTop, ribMax = 0, 0
 	for _, r in ipairs(ribbons) do
 		ribTop, ribMax = math.max(ribTop, topY(r)), math.max(ribMax, math.max(r.Size.Y, r.Size.Z))
-		if r.Position.X >= 0 or r.Position.Z > 75 then table.insert(mBad, "ribbon") end
 	end
-	check("round 4 mound: on the lower plaza at the west-middle (x -100..-76), straight edge on the wall (flat blocks from z 48..50), 22+ wide, 18+ deep, 3 tiers",
-		#tiersM >= 3 and #flats >= 3 and #mBad == 0 and xlo >= -100.5 and xhi <= -76 and zlo >= 48 and zlo <= 50 and widest >= 22 and zhi - zlo >= 18 and countNamed("MoundTier", Enum.PartType.Cylinder) >= 3,
-		string.format("x %s..%s z %s..%s wide %s bad %d", fmt(xlo), fmt(xhi), fmt(zlo), fmt(zhi), fmt(widest), #mBad))
+	-- B3c-0 (owner's colour markup; replaces "round 4 mound: on the lower plaza at the west-middle (x -100..-76), straight edge on the wall (flat blocks from z 48..50), 22+ wide, 18+ deep,
+	-- 3 tiers"; old text in briefs/site01.md): the mound is fully round and stands on the plaza centre line, south of the three stair flights. Tier and ribbon counts are unchanged.
+	local nearest = math.huge
+	for _, name in ipairs({ "StairFlightL", "StairFlightC", "StairFlightR" }) do
+		for _, s in ipairs(allNamed(name)) do
+			local dx = math.max(math.abs(cxm - s.Position.X) - s.Size.X / 2, 0)
+			local dz = math.max(math.abs(czm - s.Position.Z) - s.Size.Z / 2, 0)
+			nearest = math.min(nearest, math.sqrt(dx * dx + dz * dz))
+		end
+	end
+	check("B3c-0 round mound (3+ cylinder tiers, ribbon) centred within 4 studs of x 0 on the lower plaza, 22+ wide, no D-shaped flat blocks, south of the stair flights and not overlapping them (2+ studs of ground between the biggest tier and the nearest flight)",
+		#tiersM >= 3 and #flats == 0 and #mBad == 0 and math.abs(cxm) <= 4 and zlo >= 56 and widest >= 22 and zhi - zlo >= 22 and countNamed("MoundTier", Enum.PartType.Cylinder) >= 3 and nearest - widest / 2 >= 2,
+		string.format("centre (%s, %s) x %s..%s z %s..%s wide %s flats %d bad %d clear %s", fmt(cxm), fmt(czm), fmt(xlo), fmt(xhi), fmt(zlo), fmt(zhi), fmt(widest), #flats, #mBad, fmt(nearest - widest / 2)))
 	check("round 4 mound: ribbon sculpture of 28+ bars rising 14+ studs above the ground with bars 0.8+ thick", #ribbons >= 28 and ribTop >= 14 and ribMax >= 0.8,
 		string.format("ribbons %d top %s", #ribbons, fmt(ribTop)))
 end
@@ -680,68 +712,132 @@ end)(), "")
 
 ------------------------------------------------------------------ Step B round 4 (briefs/site01.md "Slice 4 step B round 4"): the stacked layout against the rotated plaza drawing
 do
-	-- 1. The long parish and archdiocese wing down the WEST edge (3 storeys beside the church, 2 along the lot and the plaza).
-	local bodies, crosses, lowerW = allNamed("ParishWingBody"), allNamed("ParishWingCrossBody"), anchor("LongBuildingW")
-	local xlo, xhi, zlo, zhi, tall, two, gapHit = math.huge, -math.huge, math.huge, -math.huge, 0, 0, {}
-	for _, b in ipairs(bodies) do
-		local a, c = aabb(b)
-		xlo, xhi, zlo, zhi = math.min(xlo, a.X), math.max(xhi, c.X), math.min(zlo, a.Z), math.max(zhi, c.Z)
-		if b.Size.Y >= 32 and b.Position.Z < -10 then tall += 1 end
-		if b.Size.Y >= 21 and b.Size.Y <= 24 then two += 1 end
-		if a.Z < 32 and c.Z > 20 then table.insert(gapHit, "z " .. fmt(a.Z) .. ".." .. fmt(c.Z)) end
-	end
-	local lw0, lw1 = 0, 0
-	if lowerW then
-		local a, c = aabb(lowerW)
-		zhi = math.max(zhi, c.Z)
-		lw0, lw1 = a.X, c.X
-	end
-	check("round 4 wing: ParishWingBody ranges on the west edge (x -121..-103), 3 storeys (32+ tall) beside the church, 2 storeys (21..24) along the lot; with LongBuildingW the wing runs 150+ studs",
-		#bodies >= 3 and xlo >= -121 and xhi <= -103 and tall >= 1 and two >= 2 and zhi - zlo >= 150,
-		string.format("%d ranges x %s..%s z %s..%s tall %d two %d", #bodies, fmt(xlo), fmt(xhi), fmt(zlo), fmt(zhi), tall, two))
-	check("round 4 wing: the side stairs stay open (no wing range between z 20 and 32)", #gapHit == 0, table.concat(gapHit, "; "))
-	local cx0, cx1, cBad = math.huge, -math.huge, 0
-	for _, b in ipairs(crosses) do
-		local a, c = aabb(b)
-		cx0, cx1 = math.min(cx0, a.X), math.max(cx1, c.X)
-		if b.Size.Y < 32 then cBad += 1 end
-	end
-	check("round 4 wing: 2+ cross ranges (ParishWingCrossBody, 3 storeys) run from the west range to within 6 studs of the tower (x -121..-52)", #crosses >= 2 and cBad == 0 and cx0 >= -121 and cx1 >= -56 and cx1 <= -50,
-		string.format("%d cross ranges x %s..%s, %d low", #crosses, fmt(cx0), fmt(cx1), cBad))
-	check("round 4 wing: LongBuildingW is the 2-storey end of the wing on the lower plaza's west edge (x -121..-103, 22+ tall, 44+ long)", lowerW ~= nil and lowerW.Size.Y >= 22 and lowerW.Size.Z >= 44
-		and lw0 >= -121 and lw1 <= -103, lowerW and string.format("x %s..%s h %s len %s", fmt(lw0), fmt(lw1), fmt(lowerW.Size.Y), fmt(lowerW.Size.Z)) or "missing")
-	local roofsW, redBad = allNamed("ParishWingRoof"), 0
-	for _, r in ipairs(allNamed("LongRoof")) do table.insert(roofsW, r) end
-	for _, r in ipairs(roofsW) do
-		if r.Color.R * 255 < 150 or r.Color.G * 255 > 70 or r.Color.B * 255 > 70 then redBad += 1 end
-	end
-	check("round 4 wing: red tile roofs (12+ roof slopes incl. LongRoof, every one R >= 150, G and B <= 70)", #roofsW >= 12 and redBad == 0, #roofsW .. " slopes, " .. redBad .. " not red")
-	local doors, doorLow = allNamed("ParishDoor_Pane"), 0
-	local doorTops = allNamed("ParishDoor_Top")
-	for _, d in ipairs(doors) do -- the opening is the pane plus the half-round top above it (9.5 tall in the builder)
-		local best = 0
-		for _, t in ipairs(doorTops) do
-			if (Vector2.new(t.Position.X, t.Position.Z) - Vector2.new(d.Position.X, d.Position.Z)).Magnitude < 0.6 then best = math.max(best, topY(t) - (d.Position.Y - d.Size.Y / 2)) end
+	-- 1. B3c-0 (owner's colour markup 2026-10-27). The parish wing is gone (red, black, blue marks) and an iron fence runs its old edges. These round 4 checks are replaced (old text and
+	-- reasons are logged in briefs/site01.md): "round 4 wing: ParishWingBody ranges on the west edge ...", "the side stairs stay open (no wing range between z 20 and 32)",
+	-- "2+ cross ranges (ParishWingCrossBody ...)", "LongBuildingW is the 2-storey end of the wing ...", "red tile roofs (12+ roof slopes incl. LongRoof ...)", "60+ arched windows (ParishWin_Pane) and 2+ ... doors".
+	local fencePosts, fenceRails = allNamed("IronFencePost"), allNamed("IronFenceRail")
+	local function fenceRun(filter, axis, lo, hi)
+		local vals = {}
+		for _, p in ipairs(fencePosts) do
+			if filter(p) then table.insert(vals, axis == "z" and p.Position.Z or p.Position.X) end
 		end
-		if best < 8 then doorLow += 1 end
+		table.sort(vals)
+		if #vals < 2 or vals[1] > lo + 1 or vals[#vals] < hi - 1 then return false, #vals .. " posts, " .. (vals[1] and (fmt(vals[1]) .. ".." .. fmt(vals[#vals])) or "none") end
+		for i = 2, #vals do
+			if vals[i] - vals[i - 1] > 6 then return false, "gap " .. fmt(vals[i - 1]) .. ".." .. fmt(vals[i]) end
+		end
+		return true, #vals .. " posts"
 	end
-	check("round 4 wing: 60+ arched windows (ParishWin_Pane) and 2+ human-scale arched doors (ParishDoor_Pane, 8+ tall)", countNamed("ParishWin_Pane") >= 60 and #doors >= 2 and doorLow == 0,
-		countNamed("ParishWin_Pane") .. " windows, " .. #doors .. " doors, " .. doorLow .. " low")
+	local okW1, dW1 = fenceRun(function(p) return math.abs(p.Position.X + 119.5) < 0.6 and p.Position.Y >= RAISE and p.Position.Z < 20.5 end, "z", -99, 19)
+	local okW2, dW2 = fenceRun(function(p) return math.abs(p.Position.X + 119.5) < 0.6 and p.Position.Y >= RAISE and p.Position.Z > 32.5 end, "z", 33, 47)
+	local okN, dN = fenceRun(function(p) return math.abs(p.Position.Z + 99.5) < 0.6 and p.Position.Y >= RAISE and p.Position.X < -50 end, "x", -119.5, -52)
+	local okK, dK = fenceRun(function(p) return math.abs(p.Position.X + 100.5) < 0.6 and p.Position.Y < RAISE end, "z", 58, 99.6)
+	check("B3c-0 iron fence runs the west podium edge (x -119.5, z -99..19 and 33..47), the north edge (z -99.5, x -119.5..-52) and the plaza west kerb (x -100.5, z 58..99.6; the gate gap z 49..58 beside the retaining wall keeps the spawn -> Guide route under its 510 cap), posts every 6 studs or less",
+		okW1 and okW2 and okN and okK, "west " .. dW1 .. " / " .. dW2 .. "; north " .. dN .. "; kerb " .. dK)
+	local fenceBad, gapHit = {}, {}
+	for _, p in ipairs(fencePosts) do
+		local base = p.Position.Y >= RAISE and RAISE or 0
+		if math.abs(topY(p) - base - 3) > 0.15 then table.insert(fenceBad, "post top " .. fmt(topY(p) - base)) end
+		if math.max(p.Color.R, p.Color.G, p.Color.B) * 255 > 70 then table.insert(fenceBad, "post colour") end
+	end
+	for _, r in ipairs(fenceRails) do
+		local base = r.Position.Y >= RAISE and RAISE or 0
+		if topY(r) - base > 3.1 or math.max(r.Color.R, r.Color.G, r.Color.B) * 255 > 70 then table.insert(fenceBad, "rail") end
+	end
+	for _, p in ipairs(fencePosts) do
+		if p.Position.X < -118 and p.Position.Z > 19.5 and p.Position.Z < 32.5 then table.insert(gapHit, "post z" .. fmt(p.Position.Z)) end
+	end
+	for _, r in ipairs(fenceRails) do
+		if r.Position.X < -118 and r.Position.Z + r.Size.Z / 2 > 20.2 and r.Position.Z - r.Size.Z / 2 < 31.8 then table.insert(gapHit, "rail z" .. fmt(r.Position.Z)) end
+	end
+	for _, p in ipairs(fencePosts) do
+		if math.abs(p.Position.X + 100.5) < 0.6 and p.Position.Y < RAISE and p.Position.Z < 57.6 then table.insert(gapHit, "gate post z" .. fmt(p.Position.Z)) end
+	end
+	for _, r in ipairs(fenceRails) do
+		if math.abs(r.Position.X + 100.5) < 0.6 and r.Position.Y < RAISE and r.Position.Z - r.Size.Z / 2 < 57.6 then table.insert(gapHit, "gate rail z" .. fmt(r.Position.Z)) end
+	end
+	check("B3c-0 iron fence is 3 studs tall and black like the garden fence, 40+ posts, and the stair gap (SideStairsW, z 20..32) and the plaza gate gap (z 49..58) stay open", #fenceBad == 0 and #gapHit == 0 and #fencePosts >= 40 and #fenceRails >= 6,
+		#fencePosts .. " posts, " .. #fenceRails .. " rails; " .. table.concat(fenceBad, ", ", 1, math.min(#fenceBad, 3)) .. table.concat(gapHit, ", ", 1, math.min(#gapHit, 3)))
+	-- 1b. B3c-0: the ChurchAnnex (magenta mark): one straight-edged 2-storey block on the green lawn between the east transept and the long east wing. Measured box (journal): x 45.4..94, z -99..-42.
+	do
+		local annex, abody = site:FindFirstChild("ChurchAnnex"), anchor("AnnexBody")
+		local wBack, wEave, aEave = anchor("WingBackWall"), anchor("WingEave"), anchor("AnnexEave")
+		local nA = 0
+		local alo, ahi = Vector3.new(1e9, 1e9, 1e9), Vector3.new(-1e9, -1e9, -1e9)
+		if annex then
+			for _, d in ipairs(annex:GetDescendants()) do
+				if d:IsA("BasePart") then
+					nA += 1
+					local a, b = aabb(d)
+					alo = Vector3.new(math.min(alo.X, a.X), math.min(alo.Y, a.Y), math.min(alo.Z, a.Z))
+					ahi = Vector3.new(math.max(ahi.X, b.X), math.max(ahi.Y, b.Y), math.max(ahi.Z, b.Z))
+				end
+			end
+		end
+		check("B3c-0 ChurchAnnex is a Site child (not under Structure) of 100+ parts", annex ~= nil and annex:IsA("Model") and annex.Parent == site and nA >= 100, annex and tostring(nA) or "missing")
+		local a0, a1 = Vector3.zero, Vector3.zero
+		if abody then a0, a1 = aabb(abody) end
+		check("B3c-0 ChurchAnnex measured box: AnnexBody x 45.4..94, z -99..-42 (within 0.3), 25+ tall (2 storeys); the whole annex inside x 44.5..95.5, z -100..-41",
+			abody ~= nil and math.abs(a0.X - 45.4) < 0.3 and math.abs(a1.X - 94) < 0.3 and math.abs(a0.Z + 99) < 0.3 and math.abs(a1.Z + 42) < 0.3 and abody.Size.Y >= 25
+				and alo.X >= 44.5 and ahi.X <= 95.5 and alo.Z >= -100 and ahi.Z <= -41,
+			abody and string.format("body x %s..%s z %s..%s h %s; all x %s..%s z %s..%s", fmt(a0.X), fmt(a1.X), fmt(a0.Z), fmt(a1.Z), fmt(abody.Size.Y), fmt(alo.X), fmt(ahi.X), fmt(alo.Z), fmt(ahi.Z)) or "missing")
+		check("B3c-0 ChurchAnnex touches the east wing's back wall (z -42, 40+ studs of shared run), its eave top is within 1 stud of the wing's eave, and it sits on the podium",
+			abody ~= nil and wBack ~= nil and wEave ~= nil and aEave ~= nil and math.abs(a1.Z - (wBack.Position.Z - wBack.Size.Z / 2)) < 0.3
+				and math.min(a1.X, wBack.Position.X + wBack.Size.X / 2) - math.max(a0.X, wBack.Position.X - wBack.Size.X / 2) >= 40
+				and math.abs(topY(aEave) - topY(wEave)) <= 1 and math.abs(a0.Y - RAISE) < 0.1,
+			abody and wEave and aEave and string.format("eave %s vs %s, south face %s", fmt(aEave and topY(aEave)), fmt(topY(wEave)), fmt(a1.Z)) or "missing")
+		local rb, ribs, redBad = allNamed("AnnexRoof"), allNamed("AnnexRib"), 0
+		for _, r in ipairs(rb) do
+			if r.Color.R * 255 < 150 or r.Color.G * 255 > 70 or r.Color.B * 255 > 70 then redBad += 1 end
+		end
+		local wc = abody and abody.Color
+		check("B3c-0 ChurchAnnex reads as one block with the church: butter-yellow walls (as WingUpper), 12+ arched windows (AnnexWin_Pane), a storey band, a red roof (2 slopes, R >= 150, G and B <= 70) with 20+ ribs",
+			abody ~= nil and anchor("WingUpper") ~= nil and wc == anchor("WingUpper").Color and countNamed("AnnexWin_Pane") >= 12 and anchor("AnnexBand") ~= nil and #rb >= 2 and redBad == 0 and #ribs >= 20,
+			countNamed("AnnexWin_Pane") .. " windows, " .. #rb .. " roof slopes, " .. redBad .. " not red, " .. #ribs .. " ribs")
+		local palmIn = 0
+		for _, t in ipairs(allNamed("PalmTrunk1")) do
+			if t.Position.Y >= RAISE and t.Position.X > 44.5 and t.Position.X < 95.5 and t.Position.Z > -100 and t.Position.Z < -41 then palmIn += 1 end
+		end
+		check("B3c-0 no palm stands inside the annex (the palm at (60,-72) moved onto the lawn east of it)", palmIn == 0, palmIn .. " palms inside")
+		local st = site:FindFirstChild("Structure")
+		local nS, slo, shi = 0, Vector3.new(1e9, 1e9, 1e9), Vector3.new(-1e9, -1e9, -1e9)
+		if st then
+			for _, d in ipairs(st:GetDescendants()) do
+				if d:IsA("BasePart") then
+					nS += 1
+					local a, b = aabb(d)
+					slo = Vector3.new(math.min(slo.X, a.X), math.min(slo.Y, a.Y), math.min(slo.Z, a.Z))
+					shi = Vector3.new(math.max(shi.X, b.X), math.max(shi.Y, b.Y), math.max(shi.Z, b.Z))
+				end
+			end
+		end
+		check("B3c-0 church Structure is untouched by the annex: still 763 parts, box (-48.2, 5, -100.8)..(121.2, 89.5, 9.8)",
+			nS == 763 and (slo - Vector3.new(-48.2, 5, -100.8)).Magnitude < 0.1 and (shi - Vector3.new(121.2, 89.5, 9.8)).Magnitude < 0.1, nS .. " parts")
+	end
 	-- 2. The lot: full width between the wing and the garden wall, 36+ cars.
 	local a0, a1 = Vector3.zero, Vector3.zero
 	if apron then a0, a1 = aabb(apron) end
-	check("round 4 lot: the asphalt spans from the wing (x <= -103) to the garden wall (x >= 62)", apron ~= nil and a0.X <= -103 and a1.X >= 62, string.format("x %s..%s", fmt(a0.X), fmt(a1.X)))
+	-- B3c-0 (replaces "round 4 lot: the asphalt spans from the wing (x <= -103) to the garden wall (x >= 62)"): the wing is gone, so the asphalt runs on west to the new fence (x -119.5).
+	check("B3c-0 lot: the asphalt spans from the west fence (x <= -119) to the garden wall (x >= 62)", apron ~= nil and a0.X <= -119 and a1.X >= 62, string.format("x %s..%s", fmt(a0.X), fmt(a1.X)))
 	check("round 4 lot: 36+ parked cars, yellow bay lines still 40+", carCount >= 36 and #allNamed("ParkingBayLine") >= 40, carCount .. " cars, " .. #allNamed("ParkingBayLine") .. " lines")
 	local nw = anchor("ApronPavingNW")
-	local lawnW = 0
-	for _, l in ipairs(allNamed("PodiumLawn")) do if l.Position.X < -48 then lawnW += 1 end end
-	local palmW = 0
-	for _, t in ipairs(allNamed("PalmTrunk1")) do if t.Position.X < -48 and t.Position.Y >= RAISE and t.Position.Z < 10 then palmW += 1 end end
-	check("round 4 lot: the bare lawn and palms west of the tower are gone (no PodiumLawn or upper PalmTrunk1 at x < -48); asphalt (ApronPavingNW) takes their place",
-		lawnW == 0 and palmW == 0 and nw ~= nil and nw.Position.X < -70 and nw.Material == Enum.Material.Asphalt, lawnW .. " lawns, " .. palmW .. " palms")
-	-- 3. The plaza: stage SW, Cultural Center E, so they stand on opposite sides.
-	check("round 4 plaza: the stage pavilion is on the west (dais x < -70) and the Cultural Center on the east (centre x > 40, east face x >= 96)",
-		dais ~= nil and cc ~= nil and dais.Position.X < -70 and cc.Position.X > 40 and cc.Position.X + cc.Size.X / 2 >= 96,
+	-- B3c-0 (replaces "round 4 lot: the bare lawn and palms west of the tower are gone (no PodiumLawn or upper PalmTrunk1 at x < -48); asphalt (ApronPavingNW) takes their place"): the
+	-- owner markup turns the old courtyard block (x -120..-52, z -99..-48) into lawn with two palms, like behind the church. Asphalt (ApronPavingNW) still covers z -46..10 up to the fence.
+	local lawnW, palmW, palmBad = anchor("WestLawn"), 0, 0
+	for _, t in ipairs(allNamed("PalmTrunk1")) do
+		if t.Position.X < -48 and t.Position.Y >= RAISE and t.Position.Z < 10 then
+			palmW += 1
+			if t.Position.Z > -50 or lawnW == nil or math.abs(t.Position.X - lawnW.Position.X) > lawnW.Size.X / 2 then palmBad += 1 end
+		end
+	end
+	check("B3c-0 lot: the old courtyard block is a lawn (WestLawn, x -119.5..-50, z -99..-46, on the podium) with exactly two palms standing on it; asphalt (ApronPavingNW) runs west to x <= -119 and takes the rest",
+		lawnW ~= nil and lawnW.Position.Y >= RAISE and lawnW.Position.X - lawnW.Size.X / 2 <= -119 and lawnW.Position.X + lawnW.Size.X / 2 >= -52 and lawnW.Position.Z - lawnW.Size.Z / 2 <= -98.5
+			and lawnW.Position.Z + lawnW.Size.Z / 2 >= -47 and lawnW.Color.G > lawnW.Color.R and palmW == 2 and palmBad == 0
+			and nw ~= nil and nw.Position.X < -70 and nw.Position.X - nw.Size.X / 2 <= -119 and nw.Material == Enum.Material.Asphalt,
+		(lawnW and "lawn ok" or "no WestLawn") .. ", " .. palmW .. " palms, " .. palmBad .. " off the lawn")
+	-- 3. The plaza: Cultural Center E. B3c-0 (owner markup; replaces "round 4 plaza: the stage pavilion is on the west (dais x < -70) and the Cultural Center on the east"): the stage moved to the centre line, the Cultural Center stays east.
+	check("B3c-0 plaza: the stage pavilion is on the centre line (dais |x| <= 4) and the Cultural Center on the east (centre x > 40, east face x >= 96)",
+		dais ~= nil and cc ~= nil and math.abs(dais.Position.X) <= 4 and cc.Position.X > 40 and cc.Position.X + cc.Size.X / 2 >= 96,
 		dais and cc and string.format("dais %s, cc %s..%s", fmt(dais.Position.X), fmt(cc.Position.X - cc.Size.X / 2), fmt(cc.Position.X + cc.Size.X / 2)) or "missing")
 end
 return HttpService:JSONEncode(results)
