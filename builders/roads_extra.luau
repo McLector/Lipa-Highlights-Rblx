@@ -12,6 +12,9 @@ local FLOOR_TOP = -2
 -- builders/site10_forecourt.luau.
 local PAVED = {
 	{ x0 = -228, x1 = -148, z0 = -332, z1 = -188 },
+	-- Slice 4 B3c-1: the stretched Cathedral plaza (ForecourtPaving x -100..100, z 112..195.4). The ground south of z 100 was grass; this repaints it Pavement.
+	-- ReplaceMaterial leaves the old Road E asphalt strip (x -6..6) alone, so only Grass changes and no terrain is cleared.
+	{ x0 = -100, x1 = 100, z0 = 100, z1 = 200 },
 }
 
 return function()
