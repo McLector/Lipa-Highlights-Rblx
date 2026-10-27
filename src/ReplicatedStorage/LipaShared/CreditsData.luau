@@ -53,10 +53,11 @@ CreditsData.sites = {
 	} },
 }
 
--- Project-level credit lines (not tied to one url): the City Hall photo source and the blueprint note. ASCII only.
+-- Project-level credit lines (not tied to one url): how the blueprints and the reference photos were made. ASCII only. The letters point at
+-- references: Google n.d.-a is the Gemini entry and Ayala Land n.d.-c is the Lipa City inaugurates... article (checked in CreditsData_Test).
 CreditsData.projectLines = {
-	"City Hall reference photos: Google Street View.",
-	"Site blueprints: AI-assisted concept drawings prepared by the group; used for massing only.",
+	"Site blueprints: AI-assisted drawings made by the group with Gemini (Google, n.d.-a).",
+	"Reference photos: public images of the sites, Google Maps, Google Earth and Street View, and the Ayala Land City Hall article (Ayala Land, n.d.-c); used only as visual reference.",
 }
 
 -- The 25 numbered References from the group's tour-script PDF (Detail Reference/more details.pdf), in the PDF's order and as
@@ -192,7 +193,8 @@ CreditsData.noticeLines = {
 }
 
 -- Student identity for the board. pending = true shows the TO BE ADDED slot; set it false once all three are filled.
-CreditsData.identity = { name = "", course = "", section = "", pending = true }
+-- Owner-only field: filled in 2026-10-27 with the values the owner supplied (ASCII, so "Nino" has no tilde).
+CreditsData.identity = { name = "Casanova, Nino Gabriel C.; Cruzat, Shana Czane M.; Gonzales, Khatrina Joice M.; Morada, Myre Lector", course = "Art Appreciation", section = "C4A", pending = false }
 
 local PENDING_TEXT = "Name / Course / Section: TO BE ADDED"
 

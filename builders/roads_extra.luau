@@ -15,6 +15,10 @@ local PAVED = {
 	-- Slice 4 B3c-1: the stretched Cathedral plaza (ForecourtPaving x -100..100, z 112..195.4). The ground south of z 100 was grass; this repaints it Pavement.
 	-- ReplaceMaterial leaves the old Road E asphalt strip (x -6..6) alone, so only Grass changes and no terrain is cleared.
 	{ x0 = -100, x1 = 100, z0 = 100, z1 = 200 },
+	-- Slice 4 credits plaza: CreditsPaving (x 24..150, z 274..346) and EntryPath (x 6..24, z 306..314) stood on grass terrain, so blades showed through the floor and hid the path.
+	-- Both regions are widened to the 4-stud grid. Road E's asphalt (x -6..6) is left alone: ReplaceMaterial only swaps Grass.
+	{ x0 = 24, x1 = 152, z0 = 272, z1 = 348 },
+	{ x0 = 4, x1 = 24, z0 = 304, z1 = 316 },
 }
 
 return function()

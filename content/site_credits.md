@@ -3,7 +3,7 @@
 Source pages come from SOURCES.csv in the Lipa_structure_Exterior_References folder. Each page is listed once per folder, in first-appearance order. Sites are sorted by site ID (1 to 10).
 
 ## Credits board identity (student name, course, section)
-PENDING (user): not yet supplied as of Slice 12. The CreditsBoard is built in Slice 13 and needs these three values. Nothing here is invented.
+Casanova, Nino Gabriel C.; Cruzat, Shana Czane M.; Gonzales, Khatrina Joice M.; Morada, Myre Lector - Art Appreciation - C4A (supplied by the owner on 2026-10-27; the board is ASCII only, so "Nino" has no tilde).
 
 ## Site 1: Plaza Independencia and Metropolitan Cathedral of San Sebastian
 Folder: 04_Cathedral_and_Plaza
@@ -86,8 +86,8 @@ City Hall reference photos: Google Street View. The Site 10 model (Slice 3a) was
 
 ## Project credit lines
 
-- City Hall reference photos: Google Street View.
-- Site blueprints: AI-assisted concept drawings prepared by the group; used for massing only.
+- Site blueprints: AI-assisted drawings made by the group with Gemini (Google, n.d.-a).
+- Reference photos: public images of the sites, Google Maps, Google Earth and Street View, and the Ayala Land City Hall article (Ayala Land, n.d.-c); used only as visual reference.
 
 ## Tour sources
 
