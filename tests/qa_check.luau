@@ -45,15 +45,21 @@ if board then
 			minZ, maxZ = math.min(minZ, c.Z), math.max(maxZ, c.Z)
 		end end
 	end
-	check("CreditsBoard sits inside the paved plaza (x -100..100, z 0..100)",
-		minX >= -100 and maxX <= 100 and minZ >= 0 and maxZ <= 100,
+	check("CreditsBoard sits inside the paved plaza at its south end (x -100..100, z 195..215)",
+		minX >= -100 and maxX <= 100 and minZ >= 195 and maxZ <= 215,
 		string.format("x %.1f..%.1f z %.1f..%.1f", minX, maxX, minZ, maxZ))
-	-- Slice 3b: the spawn moved to the City Hall forecourt, but the board still stands at z 94 (Step 3 of Slice 3b moves it). The lane it must
-	-- keep clear is the plaza's approach to the Cathedral: the OLD spawn constants (x 0, z 70, looking -Z), kept here on purpose
-	-- and no longer read from the SpawnLocation.
-	check("CreditsBoard does not block the plaza lane to the Cathedral (|x| < 8, z 0..70, the old spawn lane)",
-		maxX < -8 or minX > 8 or minZ > 70 or maxZ < 0,
-		string.format("x %.1f..%.1f z %.1f..%.1f", minX, maxX, minZ, maxZ))
+	-- Slice 4 B3b2: the Cathedral slot grew south (compound reaches z 215, Road E starts at (0,225)), so the board moved from z 94 to the plaza's
+	-- new south end (z ~205). The walking lane from Road E up to the Cathedral Guide runs through x 0, so the board has an aisle: no part below
+	-- the 8-stud door-height rule (README rule 7) may intersect |x| < 8. The cap beam (bottom y 14.2) is a lintel over the aisle and is exempt.
+	local blockers = {}
+	for _, p in ipairs(parts) do
+		local sz = p.Size
+		local hx = (math.abs(p.CFrame.RightVector.X) * sz.X + math.abs(p.CFrame.UpVector.X) * sz.Y + math.abs(p.CFrame.LookVector.X) * sz.Z) / 2
+		local bottom = p.Position.Y - (math.abs(p.CFrame.RightVector.Y) * sz.X + math.abs(p.CFrame.UpVector.Y) * sz.Y + math.abs(p.CFrame.LookVector.Y) * sz.Z) / 2
+		if bottom < 8 and p.Position.X - hx < 8 and p.Position.X + hx > -8 then table.insert(blockers, p.Name) end
+	end
+	check("CreditsBoard keeps a walking aisle open (no part under 8 studs headroom inside |x| < 8)",
+		#blockers == 0, #blockers .. " blocking: " .. table.concat(blockers, ","))
 
 	check("CreditsBoard has at least one SurfaceGui", #guis >= 1)
 	local texts, richText = {}, {}
@@ -242,7 +248,7 @@ if welcome then
 	check("WelcomeClient has a Start button", string.find(src, "Start", 1, true) ~= nil)
 	check("WelcomeClient switches its hint for touch devices", string.find(src, "TouchEnabled", 1, true) ~= nil)
 	-- Slice 3b: ten places, and the credits board directions are true from the City Hall spawn. The board stands at the south end of
-	-- the Cathedral plaza (CreditsBoard at z 94, the Cathedral jeep stop at (-20, 30)), not "south of the spawn" any more.
+	-- the Cathedral plaza (CreditsBoard at z ~205, the Cathedral jeep stop at (-20, 30)), not "south of the spawn" any more.
 	check("WelcomeClient says 'Ten places'", string.find(src, "Ten places", 1, true) ~= nil)
 	check("WelcomeClient no longer says 'Nine places'", string.find(src, "Nine places", 1, true) == nil)
 	check("WelcomeClient says 'Collect all 10 stamps'", string.find(src, "Collect all 10 stamps", 1, true) ~= nil)
