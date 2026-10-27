@@ -119,6 +119,104 @@ The 25 numbered References of the group's tour-script PDF (`Detail Reference/mor
 24. Wikipedia. "Mary, Mediatrix of All Grace." https://en.wikipedia.org/wiki/Mary,_Mediatrix_of_All_Grace
 25. Inquirer.net. "Tawilis' 2-month fishing ban in Taal Lake in Batangas ends." May 1, 2024. https://newsinfo.inquirer.net/1935763/tawilis-2-month-fishing-ban-in-taal-lake-in-batangas-ends
 
+## References (APA 7)
+
+The works this project draws on, cited in APA 7 (7th edition) style and listed alphabetically by author. Mirrored in `CreditsData.references`.
+
+Aboitiz Economic Estates. (2025a, March 4). The Outlets at Lipa rebrands as The Outlets @LIMA Estate, reinforcing synergy with Batangas' leading economic estate. https://www.aboitizeconomicestates.com/outlets-at-lima-estate/
+Aboitiz Economic Estates. (2025b, July 17). LIMA Estate as of 2025 [Photograph]. Wikimedia Commons (CC BY-SA 4.0). https://commons.wikimedia.org/wiki/File:LIMA_Estate_as_of_2025.jpg
+Architizer. (n.d.). The Outlets at Lipa [Project page]. https://architizer.com/projects/the-outlets-at-lipa/
+Artem Levy Photography. (n.d.). The Farm at San Benito project. https://artemlevy.com/project/the-farm-at-san-benito-artem-levy-projects/
+Ayala Land. (n.d.-a). Areza in New City Center Lipa. https://ayalaland.com/estates/areza
+Ayala Land. (n.d.-b). Ayala Land breaks ground on 92-hectare estate in Lipa. https://ayalaland.com/blog/ayala-land-breaks-ground-on-92-hectare-estate-in-lipa
+Ayala Land. (n.d.-c). Lipa City inaugurates new City Hall at Areza. https://ayalaland.com/blog/lipa-city-inaugurates-new-city-hall-at-areza
+Balingit, R. (2018, November 12). Our Lady of Mount Carmel Church (Lipa) [Photograph]. Wikimedia Commons (CC BY-SA 4.0). https://commons.wikimedia.org/wiki/File:Our_Lady_of_Mount_Carmel_Church_(Lipa).jpg
+Batangas History, Culture and Folklore. (n.d.-a). History and origin of Batangas lomi. https://www.batangashistory.date/2022/05/history-and-origin-of-batangas-lomi.html
+Batangas History, Culture and Folklore. (n.d.-b). Photo of the completed Lipa public market, July 1914. https://www.batangashistory.date/2022/06/photo-of-the-completed-lipa-public-market-july-1914.html
+Batangas History, Culture and Folklore. (2024). What ended Lipa's 19th century coffee boom. https://www.batangashistory.date/2024/04/what-ended-lipas-coffee-boom.html
+City Government of Lipa. (n.d.-a). Barangay profiles. https://lipa.gov.ph/barangay-profiles/
+City Government of Lipa. (n.d.-b). The City. https://lipa.gov.ph/city/
+Daily Tribune. (2026, April 13). Lipa inaugurates new City Hall in Areza. https://tribune.net.ph/2026/04/13/lipa-inaugurates-new-city-hall-in-areza
+Dimen, Y. (2012a, April 9). Cafe de Lipa: Reviving kapeng barako glory in Batangas, Philippines. The Poor Traveler Itinerary Blog. https://www.thepoortraveler.net/2012/04/cafe-de-lipa-kapeng-barako-batangas-history/
+Dimen, Y. (2012b, December 3). Lomi King: Where to eat in Lipa, Batangas, Philippines. The Poor Traveler Itinerary Blog. https://www.thepoortraveler.net/?p=3102
+Discalced Carmelites. (2021, June 24). Lipa Carmel's 75th anniversary of foundation (written by the sisters of Lipa). https://www.carmelitaniscalzi.com/en/2021/06/24/lipa-carmels-75th-anniversary-of-foundation-written-by-the-sisters-of-lipa/
+Doe, J. (2014, April 24). Sidetrip: Candido Lopez Public Market in Lipa, Batangas [Blog post]. https://jeromedoe.blogspot.com/2014/04/sidetrip-candido-lopez-public-market-in.html
+Golfsavers. (n.d.). Mt Malarayat Golf Country Club in Manila, Philippines. https://www.golfsavers.com/philippines/manila-golf-courses/mt-malarayat-golf-country-club
+Golf Today. (n.d.). Mount Malarayat Golf & Country Club. https://golftoday.co.uk/course/asia/philippines/batangas/mount-malarayat-golf-amp-country-club/
+Google. (n.d.-a). Gemini [Large language model]. https://gemini.google.com/
+Google. (n.d.-b). Google Earth [Web mapping service]. https://earth.google.com/
+Google. (n.d.-c). Google Maps [Web mapping service]. https://www.google.com/maps
+Inquirer.net. (n.d.). ALI welcomes new Lipa City Hall and trading center in Areza estate [Advertorial]. https://business.inquirer.net/353940/ali-welcomes-new-lipa-city-hall-and-trading-center-in-areza-estate
+Inquirer.net. (2024, May 1). Tawilis' 2-month fishing ban in Taal Lake in Batangas ends. https://newsinfo.inquirer.net/1935763/tawilis-2-month-fishing-ban-in-taal-lake-in-batangas-ends
+Judgefloro. (2019a, September 23). 595Lipa City Malvar Junction 21 [Photograph]. Wikimedia Commons (CC0). https://commons.wikimedia.org/wiki/File:595Lipa_City_Malvar_Junction_21.jpg
+Judgefloro. (2019b, September 23). 595Lipa City Malvar Junction 24 [Photograph]. Wikimedia Commons (CC0). https://commons.wikimedia.org/wiki/File:595Lipa_City_Malvar_Junction_24.jpg
+Judgefloro. (2019c, September 23). 595Lipa City Malvar Junction 27 [Photograph]. Wikimedia Commons (CC0). https://commons.wikimedia.org/wiki/File:595Lipa_City_Malvar_Junction_27.jpg
+Judgefloro. (2019d, September 23). 595Lipa City Malvar Junction 30 [Photograph]. Wikimedia Commons (CC0). https://commons.wikimedia.org/wiki/File:595Lipa_City_Malvar_Junction_30.jpg
+Judgefloro. (2019e, September 23). 9803Lipa City Malvar, Batangas 30 [Photograph]. Wikimedia Commons (CC0). https://commons.wikimedia.org/wiki/File:9803Lipa_City_Malvar,_Batangas_30.jpg
+Judgefloro. (2019f, September 23). 9803Lipa City Malvar, Batangas 34 [Photograph]. Wikimedia Commons (CC0). https://commons.wikimedia.org/wiki/File:9803Lipa_City_Malvar,_Batangas_34.jpg
+Judgefloro. (2019g, September 23). 9803Lipa City Malvar, Batangas 37 [Photograph]. Wikimedia Commons (CC0). https://commons.wikimedia.org/wiki/File:9803Lipa_City_Malvar,_Batangas_37.jpg
+Judgefloro. (2019h, September 23). 9803Lipa City Malvar, Batangas 40 [Photograph]. Wikimedia Commons (CC0). https://commons.wikimedia.org/wiki/File:9803Lipa_City_Malvar,_Batangas_40.jpg
+Kapeng barako. (2026, July 17). In Wikipedia. https://en.wikipedia.org/wiki/Kapeng_barako
+Lipa. (n.d.). In Wikivoyage. https://en.wikivoyage.org/wiki/Lipa
+Lipa, Batangas. (2026, October 18). In Wikipedia. https://en.wikipedia.org/wiki/Lipa,_Batangas
+Lipa Cathedral. (2026, August 8). In Wikipedia. https://en.wikipedia.org/wiki/Lipa_Cathedral
+LipaCityBlog. (n.d.). All about Lipa City Batangas [Blog post]. https://lipacitybatangas.blogspot.com/2012/10/all-about-lipa-city-batangas.html
+LMP 2001. (2023, April 5). Lipa Cathedral facade 2023-04-05 [Photograph]. Wikimedia Commons (CC BY-SA 4.0). https://commons.wikimedia.org/wiki/File:Lipa_Cathedral_facade_2023-04-05.jpg
+LMP 2001. (2024, March 27). Lipa Cathedral 2024-03-27 [Photograph]. Wikimedia Commons (CC BY-SA 4.0). https://commons.wikimedia.org/wiki/File:Lipa_Cathedral_2024-03-27.jpg
+Lomi. (2026, September 20). In Wikipedia. https://en.wikipedia.org/wiki/Lomi
+Marriott International. (n.d.-a). Experiences: The Farm at San Benito, Autograph Collection. https://www.marriott.com/en-us/hotels/mnlfs-the-farm-at-san-benito-autograph-collection/experiences/
+Marriott International. (n.d.-b). Photo gallery: The Farm at San Benito, Autograph Collection. https://www.marriott.com/en-us/hotels/mnlfs-the-farm-at-san-benito-autograph-collection/photos/
+Mary, Mediatrix of All Grace. (2026, October 22). In Wikipedia. https://en.wikipedia.org/wiki/Mary,_Mediatrix_of_All_Grace
+Menufyy. (n.d.). [Cafe de Lipa photo source page]. https://cafe-1740.menufyy.com/
+mollyboy. (2010, July 16). Street scene at Lipa public market [Photograph]. Flickr. https://www.flickr.com/photos/25609128@N07/4798040027
+mollyboy. (2011, April 1). Gulayan sa palengke [Photograph]. Flickr. https://www.flickr.com/photos/25609128@N07/5578415545
+Mount Malarayat Golf & Country Club. (n.d.-a). Amenities [Photo gallery]. https://malarayat.com/gallerycat/amenities/
+Mount Malarayat Golf & Country Club. (n.d.-b). Contact. https://malarayat.com/contact/
+Mount Malarayat Golf & Country Club. (n.d.-c). Golf club. https://malarayat.com/golf-club/
+Nacor, R. N. (2024, April 14). Lipa Cathedral Welcome Arch, Batangas, Apr 2024 [Photograph]. Wikimedia Commons (CC BY-SA 4.0). https://commons.wikimedia.org/wiki/File:Lipa_Cathedral_Welcome_Arch,_Batangas,_Apr_2024.jpg
+OpenStreetMap contributors. (n.d.-a). Candido B. Lopez - Memorial Public Market [Map data]. OpenStreetMap. https://www.openstreetmap.org/way/465374399
+OpenStreetMap contributors. (n.d.-b). Lipa Cathedral [Map data]. OpenStreetMap. https://www.openstreetmap.org/way/249138738
+OpenStreetMap contributors. (n.d.-c). Our Lady of Mt. Carmel Church (way 157078294) [Map data]. OpenStreetMap. https://www.openstreetmap.org/way/157078294
+Patrickroque01. (2025a, December 28). Lipa Poblacion, Lipa Cathedral, CM Recto Avenue drone [Photograph]. Wikimedia Commons (CC BY-SA 4.0). https://commons.wikimedia.org/wiki/File:Lipa_Poblacion,_Lipa_Cathedral,_CM_Recto_Avenue_drone_(Lipa,_Batangas;_12-28-2025).jpg
+Patrickroque01. (2025b, December 28). Lipa Poblacion, Lipa Cathedral, Public Market, CM Recto Avenue drone [Photograph]. Wikimedia Commons (CC BY-SA 4.0). https://commons.wikimedia.org/wiki/File:Lipa_Poblacion,_Lipa_Cathedral,_Public_Market,_CM_Recto_Avenue_drone_(Lipa,_Batangas;_12-28-2025).jpg
+Philippine Information Agency. (2022, October 25). Kape, lomi at pasyalan, tampok sa probinsya ng Batangas. https://mirror.pia.gov.ph/features/2022/10/25/kape-lomi-at-pasyalan-tampok-sa-probinsya-ng-batangas
+Philippine Primer. (2015, November 26). Lomi King. https://primer.com.ph/food/location/philippines/batangas/lomi-king-the-king-of-all-noodles-in-lipa-2/
+Ramon FVelasquez. (2013a, June 17). MtCarmelChurchjf1012 13 [Photograph]. Wikimedia Commons (CC BY-SA 3.0). https://commons.wikimedia.org/wiki/File:MtCarmelChurchjf1012_13.JPG
+Ramon FVelasquez. (2013b, June 17). Mt.CarmelChurchjf1068 03 [Photograph]. Wikimedia Commons (CC BY-SA 3.0). https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1068_03.JPG
+Ramon FVelasquez. (2013c, June 17). Mt.CarmelChurchjf1068 05 [Photograph]. Wikimedia Commons (CC BY-SA 3.0). https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1068_05.JPG
+Ramon FVelasquez. (2013d, June 17). Mt.CarmelChurchjf1068 11 [Photograph]. Wikimedia Commons (CC BY-SA 3.0). https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1068_11.JPG
+Ramon FVelasquez. (2013e, June 17). Mt.CarmelChurchjf1082 01 [Photograph]. Wikimedia Commons (CC BY-SA 3.0). https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1082_01.JPG
+Ramon FVelasquez. (2013f, June 17). Mt.CarmelChurchjf1082 02 [Photograph]. Wikimedia Commons (CC BY-SA 3.0). https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1082_02.JPG
+Ramon FVelasquez. (2013g, June 17). Mt.CarmelChurchjf1090 01 [Photograph]. Wikimedia Commons (CC BY-SA 3.0). https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1090_01.JPG
+Ramon FVelasquez. (2013h, June 17). Mt.CarmelChurchjf1096 14 [Photograph]. Wikimedia Commons (CC BY-SA 3.0). https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1096_14.JPG
+Ramon FVelasquez. (2013i, June 17). Mt.CarmelChurchjf1110 03 [Photograph]. Wikimedia Commons (CC BY-SA 3.0). https://commons.wikimedia.org/wiki/File:Mt.CarmelChurchjf1110_03.JPG
+The Farm at San Benito. (n.d.). [Event page: Pura healing retreat at the Farm]. https://www.thefarmatsanbenito.com/event/pura-healing-retreat-at-the-farm/
+Traveloka. (n.d.). Start the day by enjoying the scent of coffee while strolling around to enjoy the historical stories of Lipa City. https://www.traveloka.com/en-ph/explore/destination/start-the-day-by-enjoying-the-scent-of-coffee-while-strolling-around-to-enjoy-the-historical-stories-of-lipa-city/302025
+Trinidad, C. F. (2013, March 16). Our Lady of Mount Carmel Church, Lipa City, Batangas - panoramio [Photograph]. Wikimedia Commons (CC BY-SA 3.0). https://commons.wikimedia.org/wiki/File:Our_Lady_of_Mount_Carmel_Church,_Lipa_City,_Batangas_-_panoramio.jpg
+Tripadvisor. (n.d.-a). [Cafe de Lipa reviews]. https://www.tripadvisor.com.ph/Restaurant_Review-g1469074-d9810306-Reviews-Cafe_de_Lipa-Lipa_City_Batangas_Province_Calabarzon_Region_Luzon.html
+Tripadvisor. (n.d.-b). [Our Lady of Mt. Carmel Church reviews]. https://www.tripadvisor.co.uk/Attraction_Review-g1469074-d2706118-Reviews-Our_Lady_of_Mt_Carmel_Church-Lipa_City_Batangas_Province_Calabarzon_Region_Luzon.html
+Wendylicious! (2025, April 15). Our Lady of Mt Carmel Lipa City. Trip.com. https://www.trip.com/moments/detail/lipa-57532-131168270/
+Wikimedia Commons. (2024a, March 20). Category:Our Lady of Mount Carmel Church of Lipa [Photograph collection]. https://commons.wikimedia.org/wiki/Category:Our_Lady_of_Mount_Carmel_Church_of_Lipa
+Wikimedia Commons. (2024b, March 20). Category:The Outlets at Lipa [Photograph collection]. https://commons.wikimedia.org/wiki/Category:The_Outlets_at_Lipa
+Wikimedia Commons. (2026a, May 27). Category:Aerial photographs of Lipa Cathedral [Photograph collection]. https://commons.wikimedia.org/wiki/Category:Aerial_photographs_of_Lipa_Cathedral
+Wikimedia Commons. (2026b, July 9). Category:Lipa Cathedral [Photograph collection]. https://commons.wikimedia.org/wiki/Category:Lipa_Cathedral
+WOWBatangas.com. (2019, February 20). Lipa City's hidden gem: Sitio Tagbakin, Halang, Lipa City. https://www.wowbatangas.com/lipa-citys-hidden-gem-sitio-tagbakin-halang-lipa-city/
+
+## Notices
+
+Map data (c) OpenStreetMap contributors, available under the Open Database License (ODbL 1.0): https://www.openstreetmap.org/copyright
+Imagery and map data from Google Maps, Google Earth and Street View belong to Google and its data providers.
+Wikimedia Commons photographs keep the licence named in their reference (CC BY-SA 3.0, CC BY-SA 4.0 or CC0).
+Reference photos also come from the sites themselves and public web pages; they were used only as visual reference and no photo is used as a texture in the experience.
+
+## Notes for the group
+
+This section is for the group only; the game does not show it.
+
+- The two Flickr photos by mollyboy (Site 2) are marked "All rights reserved" on Flickr. They are used only as visual reference.
+- The research tool could not open these sources, so their titles and dates come from the group's own reference list or from the URL, and each needs a manual check in a browser: the tour sources Ayala Land [2] and [4], Inquirer.net [3] and [25], and the Philippine Information Agency [6], plus the Tripadvisor, Architizer and Menufyy pages.
+- The title of the Ayala Land City Hall article (Site 10) comes from its URL.
+
 ## Slice 14 rework: Cathedral and plaza reference attribution
 
 The Site 1 model was rebuilt from the photos below (Wikimedia Commons, downloaded at 2000 px width into `Lipa_structure_Exterior_References/04_Cathedral_and_Plaza/rework_2026/`, which is not in this repository) and from OpenStreetMap footprint data. The photos were used only as visual reference; no photo is used as a texture in the experience. Author, licence and page are as recorded by Commons on 2026-10-17.
