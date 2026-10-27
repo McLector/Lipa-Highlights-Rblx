@@ -183,3 +183,103 @@ Kept exactly: `RAISE = 5`, `WALL_Z = 48`, the footprint, the forecourt and churc
 
 ## Pitfall recorded
 In Studio a stray drag moved the whole Site01 model by (-57.5, 0.2, 20.3) during this pass. It surfaced only as a dozen unrelated `site01_check` failures. `site01_check` now fails first on "site pivot is at the SiteData pos (0, 0, 0), facing +Z".
+
+---
+
+# Slice 4 step B (2026-10-27): the plaza and its surroundings follow the plaza blueprint
+
+Source: `2nd Reference/cathedral/3d blueprints/Metropolitan Cathedral Blueprint Plaza Plan.png` (its label text is garbled AI text and is never a fact or signage). The church (`Structure`, including the wing) is pinned: 5 children, 763 parts, box (-48.2, 5, -100.8)..(121.2, 89.5, 9.8), five biggest parts and colours; `tests/site01_check.luau` asserts it.
+
+## Orientation (drawing to world)
+The facade faces +Z toward the forecourt, so the drawing's near side (G.A. Solis St, the tower) is -X, the far side (C.M. Recto Ave, the garden and gate) is +X, and the plaza beyond the retaining wall is +Z.
+
+## Added or changed (all inside existing replaced components)
+| Drawing | Built |
+|---|---|
+| Walled parking forecourt, many cars | 16 cars (8 added in the empty bays) |
+| Small statues down the middle | 6 `StatuePlinth` / `StatueFigure` along x +-9 |
+| Red-brick retaining wall and steps | `RetainBrick` facing (x -120..-76, 98..120), the seating tiers recoloured brick red |
+| D-shaped stepped monument mound with looped ribbon | `MoundTier` x3 + `MoundTierFlat` x3 at (108, 36), 3 steps of 1 stud, two `MoundRibbon` rings |
+| Walled garden with trees | 8 trees (`GardenTree*`) in the beds, black iron fence (`GardenFence*`) |
+| Gateway arch on the C.M. Recto side | `Gateway*` iron arch on stone piers at (110, 18) |
+| Lipa Cultural Center | `CulturalCenterBody` x 80..98, z 66..82, 2 storeys, flat parapet, arched windows |
+| Open-air stage pavilion, dark peaked roof | `StageDais`, `StageRoofL/R`, posts, white back wall at x 82..98, z 85..97 |
+| Palm-planted green strip | `GreenStrip` at x -72, z 56..90 with 5 palms |
+
+## Kept although the drawing differs (existing assertions, owner decisions)
+Terracotta paving (drawing: grey grid), the fountain and statue on the axis, the vaulted `CoveredCourt` (the new pavilion stands beside it), the pergola ring, the kiosks, and the wing's direction (it lies inside the pinned `Structure`).
+
+## Other fixes
+The CATEDRAL labels (wing entrance, welcome arch) use a fixed `TextSize` sized to the face; the CreditsBoard keeps 4+ studs clear (palms, planters, fence, arch and pergola ring moved or shortened; the arch sits at z 100.8).
+
+---
+
+# Slice 4 step B round 2 (2026-10-27): lot, paver square, stage, Cultural Center, mound, strips
+
+The owner saw round 1 and called it a partial match. Same source drawing (labels garbled, never facts). The church (`Structure`, 763 parts) is untouched and pinned.
+
+## What changed (all inside existing replaced components, so the builder stays idempotent)
+| Drawing | Built |
+|---|---|
+| Big walled asphalt parking lot, yellow bays in rows, 25+ muted cars, small statues down the middle | `ApronPaving` is asphalt (62,64,70, x -100..64, z 10..48); 48 `ParkingBayLine` in two rows plus 4 aisle lines; 35 parked cars of 4 parts each (muted colours, slots skip every lamp, statue, the monument, the kiosks and each kept prop); 7 statues; the 6 lot palms are gone |
+| Large grey grid-paver plaza with a big shade tree, lamps, lawn square, palm strips | `ForecourtPaving` grey (150,152,158), 27 `PaverJoint` grid lines, `LawnSquare` 24 x 21 ringed by 8 palms, `GreenStrip` (west) and new `GreenStripE` with 5 palms each, 6 lamp posts, `ShadeTreePlanter` and a 20-wide canopy at (45, 68) |
+| Stage pavilion (dark peaked roof), Lipa Cultural Center | `StageDais` 26 x 12, 10 posts, dark roof (rise 5, ridge 27.6 long, top about 19), `CulturalCenterBody` 28 x 15 x 24 with 15 arched windows, a door, 6 pilasters, steps (x 70..98, z 64..79) |
+| D-shaped mound with a looped ribbon, walled garden with a gateway arch | mound tiers r 11 / 8.5 / 6 (22 x 22, straight run = radius so nothing hangs over the wall), 32 ribbon bars 1.0 thick rising 17 studs; garden shrunk to x 66..92 (flag at x 72, entrance open on its east side z 12..33); gateway arch R 6.5 with 0.7-thick bars, posts 3 wide, top 16.9 |
+
+Removed from the plaza: the vaulted `CoveredCourt`, the pergola ring and its columns, the terracotta paving and cream inlay bands, the east flower bed, the lot palms.
+
+## Old assertions replaced or removed (rule 4; each replaced by a drawing-based assertion)
+| Old name and text | Reason | Replaced by |
+|---|---|---|
+| "lower paving is terracotta, as in the ground photo (R >= 180, R - B >= 60)" | drawing: grey grid pavers | "lower paving is grey grid pavers (R, G, B within 24 of each other, 120..190)" plus "ForecourtPaving is 150+ wide and 45+ deep with 20+ PaverJoint grid lines" |
+| "CoveredCourt stands on the lower plaza: z >= 70, 36+ studs wide, ground level, x >= 34 (east of the open centre)" | the drawing's plaza has no vaulted court | "the vaulted CoveredCourt is gone" |
+| "the court roof is a curved vault: 7+ VaultPanel parts at 5+ distinct tilts, each 36+ studs long" | same | folded into the same "is gone" assertion (VaultPanel, CourtPost, VaultRidge count 0) |
+| "PergolaRing is a raised round bed at ground level, 18+ studs across, on the lower plaza west of the open centre" | drawing has a lawn square, not a pergola ring | "the pergola ring is gone" plus the LawnSquare assertion |
+| "pergola: 6+ white PergolaColumn posts on the ring's south side ..., 6+ PergolaBeam and 4+ shrubs" | same | same |
+| "Lipa Cultural Center: a cream block 14+ studs wide and 20-30 tall at x 78..99, z 64..84, ..." | NOT on the owner's named list. Its x >= 78 bound forced the 18-stud box that was too small to read at blueprint scale (item 3 of this round); the owner's rule 3 and the drawing outrank it | "a cream block 26+ wide, 14+ deep and 22-30 tall at x 68..99, z 64..84 ...", same colour, flat top, z >= 64 |
+The fountain, kiosks, stairs and seating stay (owner-approved to replace but not needed); their assertions are untouched.
+
+## New assertions (all red first, 91 passed / 17 failed, then 108/0; the mound-overhang one found by the advisor was red too)
+Asphalt lot (dark grey, Asphalt material, 150+ x 36+), 40+ bay lines in two rows, 25+ cars of at most 5 parts, muted colours, no car overlaps a lamp, statue, monument, Guide, InfoPanel, JeepStop or Jeepney; paver grid; LawnSquare with 6+ palms; second strip with 4+ palms; 6+ lamps; shade tree planter and canopy 16+ wide; stage footprint, ridge and 8+ posts; mound size and ribbon; gateway size; garden at x 64..94 with the flag at x 70..74; mound stays on the podium and clears the gateway posts.
+
+## Kept although the drawing differs
+`LongBuildingW` (long arcaded building on the plaza's west side; its old assertion is not on the approved list; it hides part of the plaza in the blueprint view), the fountain and kiosks, the wing direction (inside the pinned `Structure`), the stacked layout of lot above plaza (the church faces +Z, so the drawing's side-by-side lot and plaza cannot be reproduced), the west `PodiumLawn` with palms beside the tower (no assertion protects it; left alone).
+
+## Numbers
+Site parts 1967 -> 2018 (+51); built 1948; church pin unchanged (5 children, 763 parts, box (-48.2, 5, -100.8)..(121.2, 89.5, 9.8)). routes_check: Road C 182 and Road A 409 studs failed the 170 / 400 limits when the garden's east fence closed the corridor; the fence now leaves z 12..33 open (14/14 pass).
+
+
+## Slice 4 step B round 4 (plaza and surroundings against the owner's ROTATED plan)
+
+Orientation key (confirmed on scratch/refs/cathedral-plaza-rotated.png): church at the TOP, facade facing DOWN = +Z (south). LEFT = WEST (-X): G.A. Solis St, the tower side, the long red-roofed parish and archdiocese wing (3 storeys beside the church, 2 along the lot, cream with arched windows). RIGHT = EAST (+X): C.M. Recto Ave, the walled garden and the gateway arch near the church. Stacked, north to south: church, walled asphalt lot (upper level, y 5), red-brick retaining wall with steps, lower grey-paver plaza (ground). Plaza: stage pavilion SOUTH-WEST, Lipa Cultural Center along the EAST edge, D-shaped mound at the WEST-MIDDLE against the wall, lawn square, palm strips, shade tree. Round 3 (side-by-side lot and plaza) was wrong and discarded.
+
+### What changed
+| Drawing | Built |
+|---|---|
+| Long wing down the west edge, 3 storeys by the church, 2 storeys along the lot | New component `ParishWing` (podium level): `ParishWingBody` ranges x -120..-104 (3 storeys z -98..-12, 2 storeys z -12..16 and 36..46; the gap z 16..36 keeps SideStairsW open, a deliberate deviation from the drawing), two 3-storey `ParishWingCrossBody` ranges toward the tower (x -104..-52) round a courtyard, red `ParishWingRoof`, 74 arched windows, 2 doors 9.5 tall. `LongBuildingW` moved to x -120..-104 (2 storeys, red roof, 22 windows, 2 doors) so the wing runs z -98..98 |
+| Bare grey slab and lawn with palms west of the tower | Removed (`PodiumLawn` west, 5 palms); `ApronPavingNW` asphalt x -104..-50, z -46..10 takes the place |
+| Lot full width between wing and garden wall, many cars | `ApronPaving` x -104..64; 37 cars (kiosk blockers removed); 48 bay lines; statue row unchanged |
+| Brick wall with steps | Fountain, kiosks removed; `StairFlightC` (x -8..8) joins `StairFlightL/R`; brick tiers kept |
+| Stage SW | `StageDais` mirrored to x -99..-73, z 82..94 (roof, posts, back wall on the west) |
+| Cultural Center along the east edge | `CulturalCenterBody` 22 x 24 x 30 at x 76..98, z 64..94, door and steps on the plaza face |
+| Mound west-middle | Moved from the podium NE corner to the ground at x -99..-77, z 49.3..71.3, flat side on the wall; ribbons 14+ above ground |
+| Palm strip, flower beds, lamps | Strip x -71 z 56..80; beds beside the Cultural Center; two lamps shifted 2 studs |
+
+### Old assertions replaced (rule 4; none loosened silently)
+| Old name and text | Reason | Replaced by |
+|---|---|---|
+| "FountainBasin stands on the lower plaza on the wall axis ..."; "fountain has 2+ FountainWater surfaces ..."; "FountainStatue is on the axis ..." (3) | the drawing has no fountain on the centre line | "no fountain on the wall axis" and "StairFlightC fills the wall axis" |
+| "StairFlightL / StairFlightR: ... beside the fountain (5 -> ...)" | text only: the conditions are unchanged | same conditions, text "down the wall" |
+| "EventStage folder holds the fountain, both flights and the seating ..." | no fountain | "EventStage holds the three flights and the seating" |
+| "2 kiosks (KioskBody) stand on the podium ..."; "kiosk roofs are orange and stepped ..." (2) | no kiosks in the drawing | "no kiosks (KioskBody, KioskRoof)" |
+| "Lipa Cultural Center: a cream block 26+ wide, 14+ deep ... at x 68..99, z 64..84" | the drawing's block runs N-S down the east edge | 18+ wide, 28+ long, x 70..99, z 64..95 |
+| "StagePavilion: ... at x 80..99, z 82..99" | stage moves to the south-west | same roof checks, dais x -99..-72, z 80..96 |
+| "monument mound: 3+ stepped MoundTier ... far corner x 96..120 on the podium"; "the mound is D-shaped ... straight edge on the wall"; "round 2 mound: footprint 22+ ... ribbon 14+ above the podium"; "round 2 mound stays on the podium (z <= 47.25, x <= 119.5) and clears both gateway posts" (4) | the mound is on the lower plaza at the west-middle | two round 4 mound checks (location, size, D-shape on the wall; ribbon 28+ bars rising 14+ above the ground) |
+
+Two of my own new assertions were corrected after they ran red for test reasons, not model reasons: the mound-ribbon check wrongly compared ribbon height to the podium top, and the door check measured only the rectangular pane (7.4) instead of the full arched opening (9.5).
+
+### New assertions
+Wing (ranges on x -121..-103, 3 and 2 storeys, 150+ long with LongBuildingW, side stairs gap, 2+ cross ranges reaching x -56..-50, red roofs, 60+ windows, doors 8+ tall), lot (asphalt spans x <= -100 to >= 62, 36+ cars, old west lawn and palms gone, ApronPavingNW), plaza (stage west, Cultural Center east), mound, StairFlightC, no fountain, no kiosks. Red first: 100 passed / 15 failed against the baseline model, then 115 / 0.
+
+### Numbers
+Site parts 2018 -> 2331 (+313); church pin unchanged (5 children, 763 parts, box (-48.2, 5, -100.8)..(121.2, 89.5, 9.8)). routes_check: the first build broke Road C (181 vs 170) because `GardenApron` reached the podium edge at top 5.1 and made the last side step 1.1 high; the apron now stops at x 118 and routes_check is 14/0.
