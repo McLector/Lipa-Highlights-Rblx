@@ -1,7 +1,7 @@
 # Site 10 brief: New Lipa City Hall and Government Center (Brgy. Areza)
 
 Slice 3a builds the structure only. `SiteData` has no row 10 yet, so the builder hardcodes the pivot and the model name. Slice 3b adds the row (Welcome category, guide Ate Joy, jeep stop), the roads, the spawn and the stamps.
-Proper name: **New Lipa City Hall**, inside the Areza estate, Lipa City (PDF refs 1 to 5, facts already in `TourContent` id 10). Signs are text only: **no city seal, no "BAGONG LIPA" mark, no logos, no blueprint label text** (README, Slice 2 decisions).
+Proper name: **New Lipa City Hall**, inside the Areza estate, Lipa City (PDF refs 1 to 5, facts already in `TourContent` id 10). Signs are text only: **no city seal, no "BAGONG LIPA" mark, no logos, no blueprint label text** (README, Slice 2 decisions). **Exception, owner 2026-10-28: the seal and the "BAGONG LIPA" wordmark on the seal slab (WB07) are wanted, built from parts and text, see "Logo (owner, 2026-10-28)" at the end. Every other seal, logo and brand rule stands.**
 
 ## Sources and precedence
 - Massing, layout, proportion: `2nd Reference/new_town_hall/3d Blue print/Lipa City Hall Blueprint.png` (AI-style drawing, about 180 m by 120 m; its labels are not facts).
@@ -106,3 +106,17 @@ Decisions and findings:
 - The existing "at least 14 WhiteBrickBox" counts parts (every WhiteBrickBox* part), not slabs, so fewer slabs never threatened it.
 - The south corner strip of the atrium (edge 4, u 52..59) stays bare dark glass because a slab there sits over `RailSW2` and breaks the 10-stud clearance rule; the slabs were moved instead of the rule.
 - Still different from the drawing: finer, more visible brick tiling in the drawing (darker joints would break the cream-brick check), a little more curvature on the drawing's atrium slabs, a little more glass on the wing than drawn.
+
+## Logo (owner, 2026-10-28)
+
+After the facade round the owner said it looks good, to keep following the blueprint, and not to forget the logo attached to the building. The drawing and the 300x113 photo show a round city seal with a "BAGONG LIPA" wordmark on the upper-right brick slab of the long wing (the seal slab, WB07). The earlier rule (no seal, no wordmark, no logo) is reversed for this one slab; the owner chose to build it from parts and text (no image, no upload), and also to cover the bare atrium corner strip (edge 4, u 52..59).
+
+Build: Model `SealLogo` in the Blocks container on the +X face of WB07 (concentric thin cylinder discs in white, gold, blue, red and green, a plain rim with no ring text), and a thin `LogoText` part carrying one SurfaceGui with two TextLabels (RichText stays off): `LogoBagong` "BAGONG" in red and `LogoLipa` "LIPA" in blue. ASCII, fixed TextSize, never TextScaled. The seal reproduces the one in the drawing and the photo already credited as Ayala Land (n.d.-c); no new credit source.
+
+Assertions in `tests/site10_check.luau` that conflict and are replaced (old text, reason: owner's instruction above, replacement):
+| Old assertion | Replaced by |
+|---|---|
+| `no seal or brand text (no BAGONG, LIPA, SEAL, KOPI, ABOITIZ on any label)` | SEAL, KOPI and ABOITIZ stay forbidden on every label; BAGONG only on `LogoBagong` and LIPA only on `LogoLipa`, both on WB07 |
+| `no seal or logo text on the forecourt (no BAGONG or LIPA on any TextLabel or SurfaceGui)` | the same rule scoped to the Forecourt, Steps and Landscape containers (only if its loop is site-wide today) |
+Not replaced, still true: `zero image instances`, `no long TextScaled line sits directly on a board`, and the plain-end-box guard (the lowest-lz long-wing box is WB09, the end cap, while the seal goes on WB07; the tests agent confirms which box the guard selects and leaves it alone if it is WB09).
+New assertions: SealLogo on WB07 (at least 5 concentric Cylinder discs with Size.Y equal to Size.Z and a common centre, outer diameter 6..9, white, blue, red and green or gold present, on the slab's front face and below the roof line), one `LogoBagong` and one `LogoLipa` label, and a corner-strip rule.
