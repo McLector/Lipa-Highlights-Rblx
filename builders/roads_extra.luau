@@ -1,5 +1,5 @@
 -- roads_extra.luau: paves the new roads (RoadData.NEW_ROADS: SPUR, WEST_BYPASS, EAST_BYPASS, WEST_LINK, EAST_LINK), repaints the ground under the
--- Cathedral and Credits plazas to Pavement, and repaints the ground under City Hall to Concrete (Slice 3b). Run in Edit via execute_luau:
+-- Cathedral and Credits plazas to Pavement, and repaints the ground under City Hall and the whole Market slot to Concrete (Slice 3b, Slice 4). Run in Edit via execute_luau:
 --   return require(game.ServerStorage.Builders.roads_extra:Clone())()      -- returns { cellsBefore, cellsAfter, roads, regions, concreteRegions }
 -- IDEMPOTENT: it only fills Asphalt, replaces Grass with Pavement (PAVED) and replaces Grass or Pavement with Concrete (CONCRETE), so a second run leaves every terrain voxel as it was.
 -- It never clears terrain (builders/world.luau does, and is never run). Same fill method as world.luau buildRoads: one Asphalt
@@ -22,6 +22,13 @@ local PAVED = {
 -- forecourt Pavement strip (x -228..-148, z -332..-188), so Pavement there becomes Concrete too. Asphalt and everything else is left alone.
 local CONCRETE = {
 	{ x0 = -324, x1 = -148, z0 = -448, z1 = -188 },
+	-- Market ground (owner decision 2026-10-29, Slice 4 BP1 rebuild): the WHOLE Market slot x -576..-228, z -5..325 becomes Concrete (the old Pavement region x -376..-228,
+	-- z 80..240 and the Grass around it). x is already on the 4-stud grid; z -5..325 is widened to -8..328 (the voxel [-8,-4) holds z -5, the voxel [324,328) holds z 325).
+	-- Asphalt is never touched (Road F ends flush at x -228) and nothing east of x -228 changes. Four x-chunks of about 88 studs, a task.wait() after each, so Studio is not frozen.
+	{ x0 = -576, x1 = -488, z0 = -8, z1 = 328 },
+	{ x0 = -488, x1 = -400, z0 = -8, z1 = 328 },
+	{ x0 = -400, x1 = -312, z0 = -8, z1 = 328 },
+	{ x0 = -312, x1 = -228, z0 = -8, z1 = 328 },
 }
 
 return function()
@@ -61,6 +68,7 @@ return function()
 		local region = Region3.new(Vector3.new(r.x0, -4, r.z0), Vector3.new(r.x1, 4, r.z1))
 		T:ReplaceMaterial(region, 4, Enum.Material.Grass, Enum.Material.Concrete)
 		T:ReplaceMaterial(region, 4, Enum.Material.Pavement, Enum.Material.Concrete)
+		task.wait()
 	end
 	task.wait()
 	return { cellsBefore = before, cellsAfter = T:CountCells(), roads = #RoadData.NEW_ROADS, regions = #PAVED, concreteRegions = #CONCRETE }
