@@ -722,6 +722,29 @@ local function run(opts)
 				why == nil and bareRun <= 5.0 + 0.001,
 				string.format("widest bare run %.2f studs; %s", bareRun, why or railTxt))
 		end
+
+		------------------------------------------------------------------ atrium outer-end slab proportions (owner complaint 2026-10-30)
+		-- Drawing (blueprint, atrium end, 2x crop at about 11.7 px per stud): the slabs are flat plates and two of them are TALLER than wide
+		-- (left slab 225 x 290 px, centre slab 215 x 300 px: apparent height/width 1.3 and 1.4; faces are foreshortened, so the true ratio is 0.9 or more),
+		-- one is low and wide (250 x 140 px, about 0.56), plus a small one. The model has AB1..AB5 all wide bands (height/width 0.38..0.56); only the
+		-- narrow corner strip AB6 (6.6 wide) is tall. Strips narrower than 12 studs do not count: the drawing's tall slabs are 16 studs wide or more.
+		do
+			local tallN, lowN, tallTxt = 0, 0, {}
+			for _, p in ipairs(parts("WhiteBrickBox")) do
+				if p.Name == "WhiteBrickBox" and p.ClassName == "Part" and p.Parent and string.match(p.Parent.Name, "^AB%d+$") then
+					local h, w = p.Size.Y, p.Size.Z -- height, width along the face (Size.X is the depth)
+					if w >= 12 - 0.05 and h >= 0.9 * w - 0.001 and h <= 28.8 + 0.05 then tallN += 1 end
+					if w >= 12 - 0.05 and h <= 0.7 * w + 0.001 then lowN += 1 end
+					table.insert(tallTxt, string.format("%s %.1fh x %.1fw", p.Parent.Name, h, w))
+				end
+			end
+			-- Reason: drawing-faithful atrium slabs include at least two tall plates (height at least 0.9 of width, width at least 12, height at most the 28.8 wall).
+			check("at least 2 atrium slabs (AB main WhiteBrickBox, width at least 12) are tall: height at least 0.9 x width and at most 28.8",
+				tallN >= 2, tallN .. " tall: " .. table.concat(tallTxt, ", "))
+			-- Reason: the drawing also keeps one low wide slab in front (about 0.56), so the tall ones must not replace it.
+			check("at least 1 atrium slab (AB main WhiteBrickBox, width at least 12) stays low and wide: height at most 0.7 x width",
+				lowN >= 1, lowN .. " low: " .. table.concat(tallTxt, ", "))
+		end
 	end
 
 	------------------------------------------------------------------ wing, atrium, canopy
@@ -796,6 +819,54 @@ local function run(opts)
 			if round_ and (hi.Y - lo.Y) >= 30 and (hi.X - lo.X) <= 3.05 and (hi.Z - lo.Z) <= 3.05 then cols += 1 end
 		end
 		check("at least 6 round Columns, each at least 30 tall and at most 3 across", cols >= 6, cols .. " of " .. #parts("Column"))
+
+		-- Column layout (owner complaint 2026-10-30). Drawing (blueprint, 2x crop): 4 big columns in the front plane (gaps 100, 130, 50 px: uneven)
+		-- and about 3 to 4 more standing further in (their bases sit about 230 px up the screen, roughly 15 to 20 studs behind): about 8 in all,
+		-- not one straight evenly spaced row. The model has Column1..8 on one straight line, 6 x 6.7 studs apart (all at the same depth).
+		-- Depth = distance along the outward normal of the canopy front edge (edge 2/3, direction (0.666, 0.745) in x,z; outward is (0.747, -0.666)).
+		-- Every column keeps the existing rules: at least 30 tall (they must still reach the canopy soffit at y 45, so the builder keeps them tall),
+		-- at most 3 across, and the 10-stud cantilever rule is unaffected as the front row keeps the extent.
+		do
+			local nrm = Vector3.new(0.747, 0, -0.666)
+			local list, smax = {}, -math.huge
+			for _, c in ipairs(parts("Column")) do
+				local lo, hi = wbounds(c)
+				if c.Shape == Enum.PartType.Cylinder and (hi.Y - lo.Y) >= 30 and (hi.X - lo.X) <= 3.05 and (hi.Z - lo.Z) <= 3.05 then
+					local s = c.Position:Dot(nrm)
+					table.insert(list, s)
+					smax = math.max(smax, s)
+				end
+			end
+			local front, back = 0, 0
+			for _, s in ipairs(list) do
+				if s >= smax - 3 then front += 1 elseif s <= smax - 6 then back += 1 end
+			end
+			-- Reason: the drawing shows 4 big front columns (the brief allows 4 to 6); a row of 8 or more on one line reads wrong.
+			check("front column row (within 3 studs of the front depth) has 4 to 6 round Columns", front >= 4 and front <= 6,
+				string.format("%d in the front row of %d columns (front depth %.1f)", front, #list, smax))
+			-- Reason: the drawing has 3 to 4 further columns standing behind the front row (we ask for at least 2, 6 or more studs behind; the whole set stays at most 10).
+			check("at least 2 round Columns stand 6 or more studs behind the front row, and there are at most 10 Columns",
+				back >= 2 and #list <= 10, string.format("%d behind the front row, %d columns in all", back, #list))
+		end
+
+		-- Atrium glazing grid (owner complaint 2026-10-30). Drawing (4x crop of the south end): the dark glass is a grid of panes about 14 px (2.4 studs)
+		-- wide and 2.2 high, three pane rows per band, with grey spandrel bands under each band; the model has only vertical mullions about 6 studs apart
+		-- and no horizontal bars, so the glass reads as plain navy planes. Guard: mullion spacing at most 4.0 and at least 2 horizontal Transom bars per wall.
+		do
+			for _, sfx in ipairs({ "SE", "SW" }) do
+				local wall = atrium and atrium:FindFirstChild("AtriumWall" .. sfx)
+				local mull, trans = 0, 0
+				for _, p in ipairs(partsIn(atrium)) do
+					if string.match(p.Name, "^AtriumMullion" .. sfx .. "%d+$") then mull += 1 end
+					if string.match(p.Name, "^AtriumTransom" .. sfx .. "%d+$") then trans += 1 end
+				end
+				local L = wall and wall.Size.X or 0
+				check("atrium " .. sfx .. " glazing: mullions at most 4.0 studs apart (wall length / (count + 1))",
+					wall ~= nil and L / (mull + 1) <= 4.0 + 0.001,
+					string.format("%d AtriumMullion%s on %.1f studs: %.2f apart", mull, sfx, L, L / (mull + 1)))
+				check("atrium " .. sfx .. " glazing: at least 2 horizontal AtriumTransom" .. sfx .. "N bars", wall ~= nil and trans >= 2, trans .. " transoms")
+			end
+		end
 
 		-- Long wing: 4 storeys, roof, parapet, roof boxes.
 		local lw = longWingParts()
