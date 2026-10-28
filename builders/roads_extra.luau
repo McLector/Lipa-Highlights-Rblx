@@ -1,17 +1,12 @@
--- roads_extra.luau: paves the new roads (RoadData.NEW_ROADS: SPUR, WEST_BYPASS, EAST_BYPASS, WEST_LINK, EAST_LINK) and repaints the ground under
--- City Hall's forecourt (Slice 3b). Run in Edit via execute_luau:
---   return require(game.ServerStorage.Builders.roads_extra:Clone())()      -- returns { cellsBefore, cellsAfter, roads, regions }
--- IDEMPOTENT: it only fills Asphalt and replaces Grass with Pavement, so a second run leaves every terrain voxel as it was.
+-- roads_extra.luau: paves the new roads (RoadData.NEW_ROADS: SPUR, WEST_BYPASS, EAST_BYPASS, WEST_LINK, EAST_LINK), repaints the ground under the
+-- Cathedral and Credits plazas to Pavement, and repaints the ground under City Hall to Concrete (Slice 3b). Run in Edit via execute_luau:
+--   return require(game.ServerStorage.Builders.roads_extra:Clone())()      -- returns { cellsBefore, cellsAfter, roads, regions, concreteRegions }
+-- IDEMPOTENT: it only fills Asphalt, replaces Grass with Pavement (PAVED) and replaces Grass or Pavement with Concrete (CONCRETE), so a second run leaves every terrain voxel as it was.
 -- It never clears terrain (builders/world.luau does, and is never run). Same fill method as world.luau buildRoads: one Asphalt
 -- FillBlock per segment, 4 studs thick, top at y -2 (surface 0), extended by w/2 at interior joints and at a start that joins another road.
 local FLOOR_TOP = -2
 
--- City Hall forecourt and loop (local lx 25..120, lz -70..70 of the slot, pivot (-250,0,-260), facing E): world x -225..-130, z -330..-190.
--- Clipped to the slot (the slot's east edge is x -150) and widened to the 4-stud grid that ReplaceMaterial needs, so the paving
--- (ForecourtPaving x -225..-150, z -330..-190, 0.3 thick) has pavement under it and no grass blades show through. Keep in step with
--- builders/site10_forecourt.luau.
 local PAVED = {
-	{ x0 = -228, x1 = -148, z0 = -332, z1 = -188 },
 	-- Slice 4 B3c-1: the stretched Cathedral plaza (ForecourtPaving x -100..100, z 112..195.4). The ground south of z 100 was grass; this repaints it Pavement.
 	-- ReplaceMaterial leaves the old Road E asphalt strip (x -6..6) alone, so only Grass changes and no terrain is cleared.
 	{ x0 = -100, x1 = 100, z0 = 100, z1 = 200 },
@@ -19,6 +14,14 @@ local PAVED = {
 	-- Both regions are widened to the 4-stud grid. Road E's asphalt (x -6..6) is left alone: ReplaceMaterial only swaps Grass.
 	{ x0 = 24, x1 = 152, z0 = 272, z1 = 348 },
 	{ x0 = 4, x1 = 24, z0 = 304, z1 = 316 },
+}
+
+-- City Hall ground (owner decision 2026-10-29): grass blades (the swaying terrain Grass decoration) poked through the steps, plaza and terraces of City Hall.
+-- Blades grow only on Grass terrain, so the ground under the whole site is repainted light Concrete (152,152,152), a neutral grey like the drawing's plaza.
+-- The extents are the model's real bounds x -322..-150, z -446..-188 widened to the 4-stud grid that ReplaceMaterial needs. This region replaces the old
+-- forecourt Pavement strip (x -228..-148, z -332..-188), so Pavement there becomes Concrete too. Asphalt and everything else is left alone.
+local CONCRETE = {
+	{ x0 = -324, x1 = -148, z0 = -448, z1 = -188 },
 }
 
 return function()
@@ -54,6 +57,11 @@ return function()
 	for _, r in ipairs(PAVED) do
 		T:ReplaceMaterial(Region3.new(Vector3.new(r.x0, -4, r.z0), Vector3.new(r.x1, 4, r.z1)), 4, Enum.Material.Grass, Enum.Material.Pavement)
 	end
+	for _, r in ipairs(CONCRETE) do
+		local region = Region3.new(Vector3.new(r.x0, -4, r.z0), Vector3.new(r.x1, 4, r.z1))
+		T:ReplaceMaterial(region, 4, Enum.Material.Grass, Enum.Material.Concrete)
+		T:ReplaceMaterial(region, 4, Enum.Material.Pavement, Enum.Material.Concrete)
+	end
 	task.wait()
-	return { cellsBefore = before, cellsAfter = T:CountCells(), roads = #RoadData.NEW_ROADS, regions = #PAVED }
+	return { cellsBefore = before, cellsAfter = T:CountCells(), roads = #RoadData.NEW_ROADS, regions = #PAVED, concreteRegions = #CONCRETE }
 end
