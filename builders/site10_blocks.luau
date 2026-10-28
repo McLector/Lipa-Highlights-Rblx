@@ -117,6 +117,7 @@ return function(env)
 				local mid = (A + B) / 2
 				if m then mid = A + (B - A) / L * m end
 				local c = mid + Xs * (COURSE_T / 2) + V(0, y, 0)
+				if spec.skipLine and spec.skipLine(c.X, c.Z, y - (h or COURSE_H) / 2) then return nil end
 				return ctx:part("WhiteBrickBoxC", V(COURSE_T, h or COURSE_H, len or L), CFrame.fromMatrix(c, Xs, UP, Zs), COURSE, MBRICK)
 			end
 
@@ -163,6 +164,74 @@ return function(env)
 		end, dest)
 	end
 
+	------------------------------------------------------------------ city seal and wordmark on the seal slab WB07 (owner decision 2026-10-28)
+	-- Parts and text only. WB07 faces +X; its centre facet front is lx 29.5. Every disc stands on lx 29.36 (a little inside the facet) and comes out to its own
+	-- front x, so the stack reads as rings from the east. A Cylinder part has its circular faces on local +/-X: no rotation is needed.
+	local LOGO_CY, LOGO_CZ, LOGO_X0 = 38.0, -96.0, 29.36
+	local LOGO_WHITE, LOGO_CREAM = C3(250, 248, 240), C3(244, 238, 222)
+	local LOGO_GOLD, LOGO_BLUE = C3(212, 170, 60), C3(35, 75, 165)
+	local LOGO_RED, LOGO_GREEN = C3(205, 40, 45), C3(45, 150, 70)
+	-- name, front x, dy, dz (from the seal centre), diameter, colour
+	local LOGO_DISCS = {
+		{ "SealRimWhite", 29.74, 0, 0, 7.2, LOGO_WHITE },
+		{ "SealRingGold", 29.78, 0, 0, 6.7, LOGO_GOLD },
+		{ "SealBandCream", 29.82, 0, 0, 6.3, LOGO_CREAM },
+		{ "SealLineGold", 29.86, 0, 0, 5.9, LOGO_GOLD },
+		{ "SealFieldBlue", 29.90, 0, 0, 5.5, LOGO_BLUE },
+		{ "SealHillGreen", 29.96, -1.0, 0, 3.0, LOGO_GREEN },
+		{ "SealShieldRed", 29.96, 1.35, 0, 1.5, LOGO_RED },
+		{ "SealStarGoldL", 29.96, 0.2, -1.9, 0.7, LOGO_GOLD },
+		{ "SealStarGoldR", 29.96, 0.2, 1.9, 0.7, LOGO_GOLD },
+	}
+	-- the wordmark plate: x depth, height, width, centre y, front x
+	local WM_DEPTH, WM_H, WM_W, WM_CY, WM_PPS = 0.5, 2.0, 11.0, 32.7, 50
+	local LOGO_SUPPORTS = {}
+	for _, d in ipairs(LOGO_DISCS) do
+		table.insert(LOGO_SUPPORTS, { x0 = LOGO_X0, x1 = d[2], cz = LOGO_CZ + d[4], hz = d[5] / 2, top = LOGO_CY + d[3] + d[5] / 2 })
+	end
+	table.insert(LOGO_SUPPORTS, { x0 = LOGO_X0, x1 = LOGO_X0 + WM_DEPTH, cz = LOGO_CZ, hz = WM_W / 2, top = WM_CY + WM_H / 2 })
+
+	local function buildLogo(wb07)
+		local logo = env.newChild(wb07, "SealLogo")
+		env.section("Blocks", function(ctx)
+			for _, d in ipairs(LOGO_DISCS) do
+				local t = d[2] - LOGO_X0
+				ctx:cyl(d[1], V(t, d[5], d[5]), CF(LOGO_X0 + t / 2, LOGO_CY + d[3], LOGO_CZ + d[4]), d[6], Enum.Material.SmoothPlastic)
+			end
+			local plate = ctx:part("LogoText", V(WM_DEPTH, WM_H, WM_W), CF(LOGO_X0 + WM_DEPTH / 2, WM_CY, LOGO_CZ), LOGO_WHITE, Enum.Material.SmoothPlastic)
+			local gui = Instance.new("SurfaceGui")
+			gui.Name = "LogoGui"
+			gui.Face = Enum.NormalId.Right
+			gui.Adornee = plate
+			gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			gui.PixelsPerStud = WM_PPS
+			gui.LightInfluence = 1
+			gui.AlwaysOnTop = false
+			gui.Enabled = true
+			local function label(name, text, color, xs, xp, align)
+				local l = Instance.new("TextLabel")
+				l.Name = name
+				l.Text = text
+				l.TextColor3 = color
+				l.Font = Enum.Font.GothamBlack
+				l.TextScaled = false
+				l.RichText = false
+				l.TextSize = 85
+				l.BackgroundTransparency = 1
+				l.BorderSizePixel = 0
+				l.Size = UDim2.new(xs, 0, 1, 0)
+				l.Position = UDim2.new(xp, 0, 0, 0)
+				l.TextXAlignment = align
+				l.TextYAlignment = Enum.TextYAlignment.Center
+				l.Parent = gui
+			end
+			-- canvas 550 x 100 px; GothamBlack 85 is 335 px for BAGONG and 174 px for LIPA, so the pair is centred with a 14 px gap
+			label("LogoBagong", "BAGONG", C3(200, 40, 40), 0.636, 0, Enum.TextXAlignment.Right)
+			label("LogoLipa", "LIPA", C3(30, 70, 170), 0.34, 0.658, Enum.TextXAlignment.Left)
+			gui.Parent = plate
+		end, logo)
+	end
+
 	------------------------------------------------------------------ long-wing slabs
 	-- label, lz a (north) .. b (south), depth D (back to front, centre facet included), y0, y1, flags.
 	-- back = the x of the back face: 23.5 (the face of the glass mullions) or 24 (the end of the roof slab) for the slabs at the roof line.
@@ -188,9 +257,21 @@ return function(env)
 			piles = { { D - s - 1.0, -(W / 2 - 1.6) }, { D - s - 1.0, W / 2 - 1.6 } }
 		end
 		local m = env.newChild(wingBoxes, label)
+		local skipLine
+		if label == "WB07" then
+			-- bed lines and joints that would sit behind the seal or its wordmark are left out: the logo covers them, and a logo part
+			-- standing in the 2 x 2 column under a raised line would count as a support for the 10-stud clearance rule
+			skipLine = function(px, pz, loY)
+				for _, q in ipairs(LOGO_SUPPORTS) do
+					if q.top <= loY + 0.05 and math.abs(pz - q.cz) < q.hz + 1.05 and px - 1 < q.x1 and px + 1 > q.x0 then return true end
+				end
+				return false
+			end
+		end
 		brickBox(m, {
-			label = label, cx = back, cz = (a + b) / 2, nx = 1, nz = 0, W = W, D = D, y0 = y0, y1 = y1, piles = piles,
+			label = label, cx = back, cz = (a + b) / 2, nx = 1, nz = 0, W = W, D = D, y0 = y0, y1 = y1, piles = piles, skipLine = skipLine,
 		})
+		if label == "WB07" then buildLogo(m) end
 	end
 
 	-- thin sunshade ledge over the lobby doors (floor 4 level); clear of WB04 (lz -45.5) and of WB05 (lz -64)
@@ -209,6 +290,11 @@ return function(env)
 		{ "AB3", 4, 12, 44, -5.0, 14.4, 26.4, nil },
 		{ "AB4", 5, 2, 27, -4.2, 29.4, 42.8, nil },
 		{ "AB5", 5, 12, 40, -5.0, 14.4, 26.4, nil },
+		-- the south corner of the atrium (edge 4, u 52..58.97) was bare glass: a narrow upper-tier slab wraps it. It stays away from
+		-- RailSW2 (its near end is at u 46) so the 10-stud clearance rule keeps its margin; 0.3 gap to AB1 keeps a glass joint.
+		-- No lower-tier twin: the SW wall underside AtriumUnderSW (top y 14.0) passes under the corner, so a slab starting at y 14.4 would
+		-- have 0.4 of clearance there; the lower tier of the corner stays dark glass.
+		{ "AB6", 4, 52.3, 58.9, -4.6, 29.4, 42.8, nil },
 	}
 	local BACKW = 1.5 -- back face of an atrium slab, measured inward from the pentagon edge (the glass wall starts there)
 	for _, r in ipairs(AB) do
