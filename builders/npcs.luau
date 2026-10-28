@@ -256,9 +256,9 @@ return function(opts)
 				probe = 30, wear = { Veil = WHITE, Rosary = true } },
 			{ role = "Parishioner", x = 7, z = 16, face = V(-7, 0, -12), pose = "walk", top = CREAM, skin = 3, probe = 30 },
 		},
-		[2] = { -- Market: shoppers at the stalls of Vendor2 and Vendor5, facing the vendors (west)
-			{ role = "ShopperBayong1", x = -297, z = 114, face = V(-1, 0, 0), pose = "carry", top = Color3.fromRGB(220, 120, 150), skin = 1, probe = 8, wear = { Bayong = true } },
-			{ role = "ShopperBayong2", x = -280, z = 198, face = V(-1, 0, 0), pose = "carry", top = Color3.fromRGB(110, 150, 90), skin = 4, probe = 8, wear = { Bayong = true } },
+		[2] = { -- Market (BP1 rebuild, Slice 4): shoppers in the south side-yard aisle at (-380, 255) and (-372, 258) (scratch/site02/layout.md 3.3), facing west
+			{ role = "ShopperBayong1", x = -380, z = 255, face = V(-1, 0, 0), pose = "carry", top = Color3.fromRGB(220, 120, 150), skin = 1, probe = 8, wear = { Bayong = true } },
+			{ role = "ShopperBayong2", x = -372, z = 258, face = V(-1, 0, 0), pose = "carry", top = Color3.fromRGB(110, 150, 90), skin = 4, probe = 8, wear = { Bayong = true } },
 		},
 		[3] = { -- Lomi King: a cook in the kitchen strip (x 320..326) beside the stove (z 127..131), facing it; two diners at the table at (292, 147.5)
 			{ role = "Cook", x = 323, z = 134.2, face = V(0, 0, -1), pose = "ladle", top = WHITE, legs = Color3.fromRGB(40, 40, 45), skin = 2, probe = 5,

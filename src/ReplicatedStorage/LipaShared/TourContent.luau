@@ -78,7 +78,7 @@ TourContent.sites = {
 		talkAgain = {
 			"Fresh veggies, fish, coffee, sweets... if Lipa eats it, it's here.",
 			"Don't be shy to haggle. Just say tawad po, which means can I get a discount?",
-			"Our facade photo is from 2014, so the building may look different today.",
+			"Our model follows a plan drawing and recent street photos, so some details may differ.",
 		},
 		goodbye = "Balik ka ha, come back, okay? I'll save you the good mangoes.",
 		lookAt = "Look at the rounded arches repeating along the front in a steady rhythm, with rows of windows above them. Count the arches, and notice how the stairs break up the line.",

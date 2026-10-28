@@ -53,16 +53,20 @@ SiteData.sites = {
 		-- WORLD positions of the Guide (0,30), the jeep stop (default: guide + 20 to the right = (-20,30)) and the InfoPanel (12,24) unchanged.
 		-- Facing S: forward +Z, right -X. Guide lx = 30 - 57.5; panel lx = 24 - 57.5, lz = -12 (world x +12).
 		{ guideLocal = Vector2.new(-27.5, 0), panelLocal = Vector2.new(-33.5, -12) }),
-	site(2, "Market", "Candido B. Lopez Memorial Public Market", "Eat", -330, 0, 160, "E", 200, 160, 3.0,
+	-- Row 2: the Market, rebuilt from BP1 (Slice 4, 2026-10-29). Slot 348 x 330 at (-402, 160), facing E (x -576..-228, z -5..325); the east edge is flush with the end of Road F.
+	-- Owner decision: the Guide and the InfoPanel stand on the forecourt at the stairs. The Market keeps no JeepStop. Facing E: forward +X, right +Z, so world = (-402 + lx, 160 + lz):
+	-- Guide (-241, 160) = local (161, 0); InfoPanel (-247, 148) = local (155, -12).
+	site(2, "Market", "Candido B. Lopez Memorial Public Market", "Eat", -402, 0, 160, "E", 348, 330, 3.0,
 		"Market Vendor",
 		{
-			"This is the Candido B. Lopez Memorial Public Market, the palengke where Lipa shops for produce, food, and daily needs. Our facade photo is from 2014, so it may look different today.",
+			"This is the Candido B. Lopez Memorial Public Market, the palengke where Lipa shops for produce, food, and daily needs. Our model follows a plan drawing and recent street photos, so some details may differ.",
 			"Did you know? Lipa's market goes back over a century. In 1914, a government report called the town's new concrete market probably the most complete of any provincial town in the islands.",
 			"Look at the rounded arches repeating along the front, with rows of windows above them. Count the arches, and notice how the stairs break up the line.",
 		},
 		"The public market shows everyday Lipa through food vendors, produce, coffee, local delicacies and small businesses.",
 		{ "jeromedoe.blogspot.com", "www.flickr.com" },
-		{ "MarketStalls", "Baskets", "Produce", "PriceSigns", "VendorNPCs" }),
+		{ "MarketStalls", "Baskets", "Produce", "PriceSigns", "VendorNPCs" },
+		{ guideLocal = Vector2.new(161, 0), panelLocal = Vector2.new(155, -12) }),
 	site(3, "Lomi", "Lomi King", "Eat", 292, 0, 140, "W", 100, 80, 3.5,
 		"Lomi Host",
 		{
