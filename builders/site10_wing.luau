@@ -26,6 +26,7 @@ return function(env)
 	local GLASS, GLASSM = C3(62, 76, 94), Enum.Material.Glass -- drawing panes: dark navy blue-grey (75,95,120 read as vivid blue in daylight)
 	local CONC, ROOFC, WHITE, SLATE = C3(190, 192, 190), C3(120, 126, 132), C3(225, 225, 220), C3(178, 180, 178)
 	local CREAM, DOORC, METAL = C3(235, 232, 222), C3(30, 40, 48), C3(70, 78, 88)
+	local BAR, SPAN = C3(205, 208, 212), C3(150, 154, 158) -- atrium glazing bars (light metal) and grey spandrel strips
 	local MCONC, MSLATE, MMETAL = Enum.Material.Concrete, Enum.Material.Slate, Enum.Material.Metal
 	local FL = { 14, 21.2, 28.4, 35.6, 42.8 }
 	local ROOF1, PARAPET = 43.8, 45.2
@@ -348,13 +349,23 @@ return function(env)
 			local L = edgeLen(PC, ei)
 			ybox(ctx, "AtriumWall" .. nm, eb(PC, ei, 0, L, 1.5, 7.0), FL[1], FL[5], GLASS, GLASSM)
 			ybox(ctx, "AtriumUnder" .. nm, eb(PC, ei, 0, L, 1.5, 7.0), 13.4, FL[1], CONC, MCONC)
-			-- mullions on the inner (court) face, every 6 studs
-			local u = 3
-			local mk = 1
-			while u < L - 1 do
-				ybox(ctx, "AtriumMullion" .. nm .. mk, eb(PC, ei, u - 0.25, u + 0.25, 7.0, 7.5), FL[1], FL[5], METAL, MMETAL)
-				u += 6
-				mk += 1
+			-- glazing grid on the inner (court) face as in the drawing: mullions about 3.7 apart (panes about 2.4 to 3.7 wide), two light
+			-- transom bars across every 7.2 high glass band (three pane rows), and a grey spandrel strip at each floor line.
+			local nmull = math.ceil(L / 3.7) - 1
+			for mk = 1, nmull do
+				local u = L * mk / (nmull + 1)
+				ybox(ctx, "AtriumMullion" .. nm .. mk, eb(PC, ei, u - 0.2, u + 0.2, 7.0, 7.5), FL[1], FL[5], BAR, MMETAL)
+			end
+			local tk = 0
+			for b = 1, 4 do
+				for r = 1, 2 do
+					tk += 1
+					local y = FL[b] + 2.4 * r
+					ybox(ctx, "AtriumTransom" .. nm .. tk, eb(PC, ei, 0, L, 7.0, 7.4), y - 0.15, y + 0.15, BAR, MMETAL)
+				end
+			end
+			for b = 2, 4 do
+				ybox(ctx, "AtriumSpandrel" .. nm .. (b - 1), eb(PC, ei, 0, L, 7.0, 7.3), FL[b] - 0.45, FL[b] + 0.45, SPAN, MCONC)
 			end
 			-- terraced balconies (lower floors project more), 3-high glass rail on the free edge
 			for lvl, dep in ipairs({ 8.0, 6.0, 4.5, 3.0 }) do
@@ -374,13 +385,16 @@ return function(env)
 
 	------------------------------------------------------------------ Canopy (as drawn: pentagon PD)
 	env.section("Wing", function(ctx)
-		-- the 8 round columns, 2 studs inside the (pulled-back) front edge of the plinth line
+		-- the 8 round columns as in the drawing (owner complaint 2026-10-30): 4 THICK columns in the front plane (2 studs inside the plinth
+		-- front edge) with uneven gaps of about 8.5, 11 and 4.3 studs along the front edge, and 4 SLIM columns standing about 16 studs further in
+		-- (along the inward normal (-0.747, 0.666)), also unevenly spaced. Local x, z, diameter, cap diameter. All run from the plinth top to the soffit.
 		local COLS = {
-			{ 2.3, 8.1 }, { 8.3, 14.9 }, { 14.3, 21.6 }, { 20.2, 28.3 }, { 26.2, 35.0 }, { 32.2, 41.7 }, { 38.2, 48.5 }, { 44.2, 55.2 },
+			{ 13.2, 20.3, 3.0, 4.2 }, { 18.9, 26.7, 3.0, 4.2 }, { 26.2, 34.9, 3.0, 4.2 }, { 29.1, 38.1, 3.0, 4.2 },
+			{ 1.7, 32.0, 1.5, 2.3 }, { 7.0, 38.6, 1.5, 2.3 }, { 12.1, 42.8, 1.5, 2.3 }, { 19.7, 52.1, 1.5, 2.3 },
 		}
 		for k, c in ipairs(COLS) do
-			vcyl(ctx, "Column" .. k, c[1], c[2], 4.4, 46, 2.4, WHITE, MCONC)
-			vcyl(ctx, "ColumnCap" .. k, c[1], c[2], 44.4, 46, 3.4, CONC, MCONC)
+			vcyl(ctx, "Column" .. k, c[1], c[2], 4.4, 46, c[3], WHITE, MCONC)
+			vcyl(ctx, "ColumnCap" .. k, c[1], c[2], 44.4, 46, c[4], CONC, MCONC)
 		end
 		-- soffit under all facets: y 45 .. 46
 		prism(ctx, "CanopySoffit", PD, 46.0, 1.0, WHITE, MCONC, false)

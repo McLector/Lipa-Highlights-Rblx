@@ -20,8 +20,9 @@
 --     end cap WB09 stay plain brick); nothing near the spawn pad, Guide or panel.
 --   Notes: stacked slabs touch (WB02 on WB03, WB05 on WB06, WB07 on WB08); Sunshade1 spans lz -62.5..-47.5 (no slab centre there);
 --     WB09 is flush with the north end of the roof slab (lz -114); the atrium slabs are big thin plates in two tiers on the SE face (edge 4,
---     59 long) and the SW face (edge 5, 43 long) of PC: upper tier y 29.4..42.8 (AB1 u 28..52, AB2 2..26, AB4 2..27), lower tier y 14.4..26.4
---     (AB3 u 12..44, AB5 12..40); a 3 stud glass strip shows between the tiers and between neighbours. AB3 and AB5 (bottom 14.4, 10 over the
+--     59 long) and the SW face (edge 5, 43 long) of PC. SE: two TALL plates AB2 (u 3..18, y 20.8..42.8) and AB1 (u 20.5..35.5, y 24.8..42.8), a small low
+--     plate AB3 (u 35.5..43, y 14.4..22.4) and the corner strip AB6. SW: upper tier y 29.4..42.8 (AB4 u 2..27), lower tier y 14.4..26.4 (AB5 u 12..40).
+--     A glass strip shows between neighbours. AB3 and AB5 (bottom 14.4, 10 over the
 --     atrium floor top 4.4) have no pilotis: they hang off the glass wall like the others.
 -- Pure function of env: nothing is read from the DataModel, so it is idempotent (the assembler replaces the Blocks container each run).
 return function(env)
@@ -285,9 +286,11 @@ return function(env)
 	local atriumBoxes = env.newFolder("Blocks", "AtriumBoxes", "Model")
 	-- label, edge, u0, u1, front w (negative = outside the wall line), y0, y1, pilotis u offsets from the slab centre
 	local AB = {
-		{ "AB1", 4, 28, 52, -4.6, 29.4, 42.8, nil },
-		{ "AB2", 4, 2, 26, -3.8, 29.4, 42.8, nil },
-		{ "AB3", 4, 12, 44, -5.0, 14.4, 26.4, nil },
+		-- Outer-end proportions of the drawing (owner complaint 2026-10-30): AB1 and AB2 are TALL plates (15 wide, 18 and 22 high, staggered
+		-- bottoms), AB3 is the small low plate beside them (it must end before u 44: BalconySW1 reaches under the SE face there), and AB4/AB5 stay the wide bands on the SW face.
+		{ "AB1", 4, 20.5, 35.5, -4.6, 24.8, 42.8, nil },
+		{ "AB2", 4, 3, 18, -3.8, 20.8, 42.8, nil },
+		{ "AB3", 4, 35.5, 43, -5.0, 14.4, 22.4, nil },
 		{ "AB4", 5, 2, 27, -4.2, 29.4, 42.8, nil },
 		{ "AB5", 5, 12, 40, -5.0, 14.4, 26.4, nil },
 		-- the south corner of the atrium (edge 4, u 52..58.97) was bare glass: a narrow upper-tier slab wraps it. It stays away from
