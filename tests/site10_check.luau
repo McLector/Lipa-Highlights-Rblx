@@ -387,6 +387,69 @@ local function run(opts)
 			if lz >= -66 and lz <= -44 then core += 1 end -- the central core, lz -64..-46
 		end
 		check("at least 3 BalconySlab parts in the central core (lz -64..-46)", core >= 3, core .. " of " .. #parts("BalconySlab"))
+
+		-- Facade guard rails (added after the first build read as small deep pods; the drawing and the photo show a few big FLAT slabs).
+		-- Main slab = the part named exactly WhiteBrickBox in a long-wing box model WB01..WB11 (WhiteBrickBoxC/F/W detail parts are ignored).
+		-- On the long wing the facade normal is +X, so Size.X is the slab depth and Size.Z its width.
+		local slabs = {}
+		for _, p in ipairs(parts("WhiteBrickBox")) do
+			if p.Name == "WhiteBrickBox" and p.ClassName == "Part" and p.Parent and string.match(p.Parent.Name, "^WB%d+$") then
+				table.insert(slabs, p)
+			end
+		end
+		-- Drawing: slabs are thin plates, about 3 to 5 studs deep and 12 to 30 wide; pods 8 to 15 deep read wrong.
+		local fat = {}
+		for _, s in ipairs(slabs) do
+			local d, w = s.Size.X, s.Size.Z
+			if d > 6.5 + 0.001 or d > 0.6 * w + 0.001 or w < 8 - 0.05 then
+				table.insert(fat, string.format("%s %.1fx%.1f", s.Parent.Name, d, w))
+			end
+		end
+		check("long wing main slabs are flat: depth at most 6.5 and at most 0.6 of width, width at least 8", #slabs >= 4 and #fat == 0,
+			#fat .. " of " .. #slabs .. " off (depth x width): " .. table.concat(fat, ", "))
+
+		-- Drawing and photo: the big slabs rise to the roof line. One-sided on purpose (slabs may stand above the glass behind them).
+		local roofTopY = -math.huge
+		for _, p in ipairs(longWingParts()) do
+			if string.match(p.Name, "^RoofSlab%d*$") then roofTopY = math.max(roofTopY, top(p)) end
+		end
+		local atRoof = 0
+		for _, s in ipairs(slabs) do
+			if top(s) >= roofTopY - 0.5 then atRoof += 1 end
+		end
+		check("at least 4 long-wing main slabs reach the roof line (top at least the highest RoofSlab top minus 0.5)",
+			roofTopY > -math.huge and atRoof >= 4, string.format("%d of %d slabs, roof slab top %.2f", atRoof, #slabs, roofTopY))
+
+		-- Drawing: glass is a mid blue-grey with a clear blue bias, not near-black (drawing panes sit at about 50,63,85 up to 97,106,121).
+		local glassBad = {}
+		local glassBands = parts("GlassBand")
+		for _, g in ipairs(glassBands) do
+			local r, gg, b = rgb(g)
+			local mx = math.max(r, gg, b)
+			if g.Material ~= Enum.Material.Glass or mx < 80 or mx > 160 or b + 0.5 < mx or b < r + 15 then
+				table.insert(glassBad, string.format("%s (%d,%d,%d) %s", g.Name, round(r), round(gg), round(b), g.Material.Name))
+			end
+		end
+		check("every GlassBand is Glass and mid blue-grey: max channel 80..160, blue largest, blue at least red + 15",
+			#glassBands > 0 and #glassBad == 0,
+			#glassBad .. " of " .. #glassBands .. " off: " .. table.concat(glassBad, "; ", 1, math.min(#glassBad, 3)))
+
+		-- Guard rail (already true): the north-end (lowest lz) long-wing box is plain. No seal, logo or label of any kind on it.
+		local endZ = math.huge
+		for _, s in ipairs(slabs) do endZ = math.min(endZ, s.Position.Z) end
+		local endBoxes, sealBad = 0, {}
+		for _, s in ipairs(slabs) do
+			if s.Position.Z <= endZ + 0.5 then
+				endBoxes += 1
+				for _, d in ipairs(s.Parent:GetDescendants()) do
+					if d:IsA("Decal") or d:IsA("Texture") or d:IsA("SurfaceGui") or d:IsA("TextLabel") or d:IsA("ImageLabel") then
+						table.insert(sealBad, s.Parent.Name .. "/" .. d.ClassName)
+					end
+				end
+			end
+		end
+		check("the north-end long-wing box carries no Decal, Texture, SurfaceGui, TextLabel or ImageLabel",
+			endBoxes >= 1 and #sealBad == 0, endBoxes .. " end boxes, " .. #sealBad .. " found: " .. table.concat(sealBad, ", ", 1, math.min(#sealBad, 4)))
 	end
 
 	------------------------------------------------------------------ wing, atrium, canopy
