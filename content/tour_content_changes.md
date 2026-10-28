@@ -29,7 +29,7 @@ Archbishop Arguelles need an outside source and a careful tone).
 ## 2. Lines kept from earlier text that are NOT in the PDF (still marked [VERIFY])
 | Site | Line | Why it is kept |
 |---|---|---|
-| Market | "Our facade photo is from 2014, so the building may look different today." | the briefs require it (model built from a 2014 photo) |
+| Market | "Our model follows a plan drawing and recent street photos, so some details may differ." (replaces "Our facade photo is from 2014, so the building may look different today."; owner approved 2026-10-29) | the Market was rebuilt from BP1 (the group's plan drawing) and recent Google Street View views, not from the 2014 photo; the model note comes from briefs/site02.md, not the PDF |
 | Lomi | "Our photo is from 2015, so the front may have changed." | same |
 | Cafe | "This model shows the Tibig/STAR branch, and its interior is a representative display." | the model note from the brief |
 | Cathedral | "Down the steps from this forecourt is Plaza Independencia ..." | describes the model layout |

@@ -54,7 +54,7 @@ Quiz: How much did Lipa's market cost to build?
 - Talk again:
   - Fresh veggies, fish, coffee, sweets... if Lipa eats it, it's here.
   - Don't be shy to haggle. Just say tawad po, which means can I get a discount?
-  - Our facade photo is from 2014, so the building may look different today.
+  - Our model follows a plan drawing and recent street photos, so some details may differ.
 - Goodbye: Balik ka ha, come back, okay? I'll save you the good mangoes.
 - Look at: Look at the rounded arches repeating along the front in a steady rhythm, with rows of windows above them. Count the arches, and notice how the stairs break up the line.
 - Display props:
@@ -64,7 +64,7 @@ Quiz: How much did Lipa's market cost to build?
   - price signs
   - coffee and delicacies
   - vendor figures
-- Sources: PDF [14] (everyday community life), [15] (1914 praise; three main buildings; 61,000 pesos). [VERIFY] Name: the headline, blurb and sign/billboard keep "Candido B. Lopez Memorial Public Market" (sign name, from the approved dialogue and briefs/site02.md); the guide's dialogue uses the PDF name "Lipa City Public Market" (owner decision 2026-10-26). [VERIFY] Photo date 2014 (model note from briefs/site02.md; not in the PDF).
+- Sources: PDF [14] (everyday community life), [15] (1914 praise; three main buildings; 61,000 pesos). [VERIFY] Name: the headline, blurb and sign/billboard keep "Candido B. Lopez Memorial Public Market" (sign name, from the approved dialogue and briefs/site02.md); the guide's dialogue uses the PDF name "Lipa City Public Market" (owner decision 2026-10-26). [VERIFY] Model basis: the Market model follows BP1 (the group's plan drawing, PublicMarketBP1.jpg) and recent Google Street View views, so the guide and the Talk again line say the model may differ in details (wording approved by the owner 2026-10-29, replacing the old 2014 facade photo sentence; from briefs/site02.md, not in the PDF).
 
 ## Site 3: Lomi King
 Headline: Lomi: Lipa's thick, hearty noodle soup.
