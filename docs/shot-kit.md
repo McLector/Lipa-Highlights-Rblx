@@ -16,10 +16,13 @@ Capture rules: one `screen_capture` at a time, twice with a wait between, look a
 | 7 The Farm | 544, 34, 162 | 700, 10, 240 |
 | 8 Mount Malarayat | 475, 66, 465 | 560, 30, 720 |
 | 9 Tagbakin | -447, 31, 499 | -600, 10, 550 |
-| 10 City Hall, front oblique (tuned Slice 3a) | -130, 45, -330 | -290, 25, -260 |
-| 10 City Hall, walk-under close-up | -225, 4, -262 | -290, 6, -262 |
-| 10 City Hall, atrium and canopy | -300, 30, -170 | -325, 28, -225 |
-| 10 City Hall, forecourt | -110, 35, -200 | -250, 8, -265 |
+| 10 City Hall, blueprint view (beside the drawing; captured after the facade round) | -95, 85, -285 | -275, 22, -300 |
+| 10 City Hall, long wing from the north-east (slabs, pilotis, central stair) | -150, 45, -330 | -250, 25, -380 |
+| 10 City Hall, atrium from the south-east | -150, 70, -190 | -250, 30, -225 |
+| 10 City Hall, top-down (fits the whole slot; compare with the drawing's inset plan) | -236, 235, -317 | -236, 0, -318 |
+| 10 City Hall, forecourt from the north-east (loop, flag, steps, wing) | -110, 60, -390 | -190, 5, -300 |
+| 10 City Hall, steps close-up | -170, 25, -335 | -215, 5, -345 |
+| 10 City Hall, under the canopy at spawn height (Ate Joy, panel, columns) | -190, 6, -262 | -240, 30, -250 |
 
 Slice 4 rows (provisional, tuned by each builder the first time it captures; the front oblique rows above were captured twice before the rebuild and are the "before" shots):
 
