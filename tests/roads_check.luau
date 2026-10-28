@@ -12,7 +12,7 @@
 -- 4. Reachability: a graph of the road centre lines (nodes where centre lines cross or touch) plus short walk links from the spawn
 --    (<= 80 studs) and each Guide (<= 175 studs) to the nearest centre line. Every Guide must be reachable from the spawn, and without
 --    the new roads the spawn must NOT reach the Cathedral Guide (negative control).
--- 5. Terrain: the new centre lines are Asphalt; the forecourt ground x -228..-148, z -332..-188 is Pavement and the cells around it are not.
+-- 5. Terrain: the new centre lines are Asphalt; the City Hall ground x -324..-148, z -448..-188 is Concrete and the cells just outside it are still Grass.
 local HttpService = game:GetService("HttpService")
 local RoadData = require(game.ReplicatedStorage.LipaShared.RoadData:Clone())
 local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
@@ -405,18 +405,29 @@ for _, road in ipairs(RoadData.NEW_ROADS) do
 	check(road.name .. " centre line is Asphalt terrain at all " .. n .. " samples", #bad == 0, #bad .. " not asphalt: " .. table.concat(bad, " ", 1, math.min(#bad, 3)))
 end
 do
+	-- Owner decision 2026-10-29: grass blades poked through the steps, plaza and terraces of City Hall, so the whole site ground is repainted Concrete.
+	-- Light concrete (152,152,152) is a neutral grey like the drawing's plaza. Sampled over the whole footprint on the 4-stud grid (the model's real bounds are x -322..-150, z -446..-188).
+	local pts = {
+		{ -320, -444 }, { -152, -444 }, { -300, -420 }, { -260, -400 }, { -200, -440 }, -- north wing and its ends
+		{ -300, -300 }, { -250, -330 }, { -250, -260 }, { -300, -224 },                 -- long wing front and rear
+		{ -200, -380 }, { -220, -340 }, { -216, -344 },                                 -- atrium and canopy area
+		{ -200, -320 }, { -190, -300 }, { -224, -300 },                                 -- steps and terraces
+		{ -170, -300 }, { -190, -260 }, { -176, -228 },                                 -- loop and island
+		{ -224, -328 }, { -224, -196 }, { -176, -196 },                                 -- old forecourt strip
+		{ -320, -196 }, { -280, -196 },                                                 -- parking
+		{ -152, -330 }, { -152, -270 },                                                 -- tree row on the east edge
+	}
 	local bad = {}
-	for _, x in ipairs({ -224, -200, -176, -152 }) do
-		for _, z in ipairs({ -328, -292, -260, -228, -196 }) do
-			if cellMaterial(x, z) ~= Enum.Material.Pavement then table.insert(bad, string.format("(%d,%d)=%s", x, z, cellMaterial(x, z).Name)) end
-		end
+	for _, p in ipairs(pts) do
+		if cellMaterial(p[1], p[2]) ~= Enum.Material.Concrete then table.insert(bad, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
 	end
-	check("City Hall forecourt ground (x -228..-148, z -332..-188) is Pavement", #bad == 0, #bad .. " not pavement: " .. table.concat(bad, " ", 1, math.min(#bad, 3)))
+	check("City Hall ground (x -324..-148, z -448..-188) is Concrete at " .. #pts .. " sample points", #bad == 0, #bad .. " not concrete: " .. table.concat(bad, " ", 1, math.min(#bad, 3)))
+	-- Control: the repaint must not spill. These cells sit just outside the region and read Grass today.
 	local spill = {}
-	for _, p in ipairs({ { -236, -260 }, { -188, -340 }, { -188, -184 }, { -140, -300 } }) do
-		if cellMaterial(p[1], p[2]) == Enum.Material.Pavement then table.insert(spill, string.format("(%d,%d)", p[1], p[2])) end
+	for _, p in ipairs({ { -332, -300 }, { -300, -452 }, { -300, -184 }, { -146, -300 } }) do
+		if cellMaterial(p[1], p[2]) ~= Enum.Material.Grass then table.insert(spill, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
 	end
-	check("control: the cells just outside the repainted ground are not Pavement", #spill == 0, table.concat(spill, " "))
+	check("control: the cells just outside the repainted ground are still Grass", #spill == 0, table.concat(spill, " "))
 end
 
 -- 6b. The stretched Cathedral plaza (Slice 4 B3c-1): the ground under x -100..100, z 100..200 is repainted Pavement (builders/roads_extra.luau PAVED). Sampled OFF the old Road E
