@@ -41,7 +41,8 @@ floorAt("NW corner", -950, -950)
 floorAt("NE corner", 950, -950)
 floorAt("SE corner", 950, 950)
 floorAt("dry shore near Tagbakin NE corner", -440, 470) -- (-480,450) is the end of road E
-floorAt("west of Market", -500, 160)
+-- REPLACED (Slice 4, Market rebuild): (-500,160) now lies inside the Market slot (x -576..-228, z -5..325), which is repainted Concrete (see the block below); the Grass control moves west of the slot.
+floorAt("west of the Market slot", -590, 160)
 
 -- Roads are asphalt at the terrain surface.
 local function roadAt(name, x, z)
@@ -226,13 +227,14 @@ do
 		check(name, #problems == 0, table.concat(problems, "; ", 1, math.min(#problems, 6)))
 	end
 
-	-- Market paving (Slice 06, moved by Slice 14): hall, stall yard and aisle (x -376..-228, z 80..240). x1 -228 is where road F's
-	-- asphalt (z 156..164, x -228..0) ends.
-	block("Market paving is Pavement and the paint stays inside the region", {
-		{ -374, 82 }, { -230, 238 }, { -374, 238 }, { -230, 82 }, -- corners
-		{ -300, 160 }, { -350, 120 }, { -270, 200 }, -- middle, hall, yard
-	}, M.Pavement, {
-		{ -380, 160, M.Grass }, { -300, 78, M.Grass }, { -300, 242, M.Grass }, { -224, 170, M.Grass }, { -224, 160, M.Asphalt },
+	-- REPLACED (Slice 4, Market rebuild, owner decision 2026-10-29). Old text: "Market paving is Pavement and the paint stays inside the region" (x -376..-228, z 80..240) with the
+	-- Grass controls (-380,160), (-300,78), (-300,242): those cells now lie INSIDE the slot. New truth: the whole slot x -576..-228, z -5..325 is Concrete; controls lie outside it.
+	-- x1 -228 is still where road F's asphalt (z 156..164, x -228..0) ends.
+	block("Market ground is Concrete over the whole slot (x -576..-228, z -5..325) and the paint stays inside it", {
+		{ -572, -1 }, { -232, -1 }, { -572, 321 }, { -232, 321 }, -- the four corner cells
+		{ -300, 160 }, { -350, 120 }, { -270, 200 }, { -380, 160 }, { -300, 78 }, { -300, 242 }, { -500, 160 }, -- old Pavement and old grass area
+	}, M.Concrete, {
+		{ -580, 160, M.Grass }, { -400, -12, M.Grass }, { -300, 332, M.Grass }, { -224, 170, M.Grass }, { -224, 160, M.Asphalt },
 	})
 
 	-- Lomi paving (Slice 07, moved by Slice 14): shophouse floor, forecourt and driveway (x 240..340, z 100..180). x0 240 is where

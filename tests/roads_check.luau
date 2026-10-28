@@ -430,6 +430,31 @@ do
 	check("control: the cells just outside the repainted ground are still Grass", #spill == 0, table.concat(spill, " "))
 end
 
+-- 6a. The Market ground (Slice 4, owner decision 2026-10-29): the whole Market slot x -576..-228, z -5..325 is repainted Concrete (the model is a BP1 market; grass blades and the old
+-- Pavement must not show). Samples sit at least 4 studs inside the slot (cells are 4-stud floored) and at x -232 or less on the east side (Road F's asphalt ends at x -228; the cell at
+-- (-232,160) read Pavement before the repaint). They cover the old Pavement area (x -376..-228, z 80..240) and the old grass area. Controls: Grass just outside, Road F asphalt at (-224,160).
+do
+	local pts = {
+		{ -572, -1 }, { -232, -1 }, { -572, 321 }, { -232, 321 }, -- the four corner cells
+		{ -400, -1 }, { -400, 321 }, { -572, 160 }, { -500, 160 }, -- north and south edges, west edge, west of the old Market
+		{ -540, 60 }, { -540, 260 }, { -450, 30 }, { -450, 300 }, { -520, 100 }, { -520, 220 }, -- Bagsakan, truck lane, side yards
+		{ -440, 130 }, { -440, 200 }, { -400, 100 }, { -400, 230 }, { -380, 160 }, -- sheds and the old grass area
+		{ -340, 120 }, { -340, 200 }, { -300, 78 }, { -300, 242 }, { -300, 160 }, -- wet markets, front arcade, old grass beside the Pavement
+		{ -374, 82 }, { -270, 200 }, { -232, 238 }, { -232, 82 }, { -232, 160 }, { -232, 140 }, -- old Pavement area, forecourt, Road F mouth
+	}
+	local bad = {}
+	for _, p in ipairs(pts) do
+		if cellMaterial(p[1], p[2]) ~= Enum.Material.Concrete then table.insert(bad, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
+	end
+	check("Market ground (x -576..-228, z -5..325) is Concrete at " .. #pts .. " sample points", #bad == 0, #bad .. " not concrete: " .. table.concat(bad, " ", 1, math.min(#bad, 3)))
+	local spill = {}
+	for _, p in ipairs({ { -580, 160 }, { -590, 160 }, { -400, -12 }, { -300, 332 }, { -224, 170 }, { -224, 150 } }) do
+		if cellMaterial(p[1], p[2]) ~= Enum.Material.Grass then table.insert(spill, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
+	end
+	check("control: the cells just outside the Market slot (west, north, south, and east beside Road F) are still Grass", #spill == 0, table.concat(spill, " "))
+	check("control: Road F's asphalt end at (-224,160) is still Asphalt", cellMaterial(-224, 160) == Enum.Material.Asphalt, cellMaterial(-224, 160).Name)
+end
+
 -- 6b. The stretched Cathedral plaza (Slice 4 B3c-1): the ground under x -100..100, z 100..200 is repainted Pavement (builders/roads_extra.luau PAVED). Sampled OFF the old Road E
 -- asphalt strip (x -6..6), which stays Asphalt: ReplaceMaterial Grass -> Pavement leaves it alone (the ForecourtPaving part covers it).
 do

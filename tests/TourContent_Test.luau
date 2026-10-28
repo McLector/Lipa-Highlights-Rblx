@@ -250,6 +250,26 @@ return function(t)
 		expect.truthy(named)
 	end)
 
+	-- Slice 4 (Market rebuild, owner approved): the 2014 facade-photo line is gone; the model follows a plan drawing and recent street photos.
+	-- The old line lived in talkAgain[3] (firstTalk never carried it), so every spoken and shown Market text field is scanned, not only firstTalk.
+	t.test("Market text: no field mentions 2014 or the facade photo, and the new plan-drawing line is spoken", function()
+		needTenSites()
+		local site = TourContent.sites[2]
+		expect.equal(site.id, 2)
+		local fields = { site.headline, site.blurb, site.lookAt, site.goodbye }
+		for _, group in ipairs({ site.firstTalk, site.talkAgain }) do
+			for _, line in ipairs(group) do table.insert(fields, line) end
+		end
+		local newLine = "Our model follows a plan drawing and recent street photos, so some details may differ."
+		local found = false
+		for _, text in ipairs(fields) do
+			expect.falsy(string.find(text, "2014", 1, true))
+			expect.falsy(string.find(text, "facade photo", 1, true))
+			if string.find(text, newLine, 1, true) then found = true end
+		end
+		expect.truthy(found)
+	end)
+
 	t.test("owner decisions: the Market headline and blurb do not take the PDF name (sign name stays Candido, [VERIFY])", function()
 		needTenSites()
 		local site = TourContent.sites[2]

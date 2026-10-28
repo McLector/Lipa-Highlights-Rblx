@@ -92,13 +92,19 @@ if sites then
 						return (p ~= nil and p:IsA("BasePart")) and p or nil
 					end
 					local hall, yard = anchor("HallBody"), anchor("YardSlab")
-					local band, deck = anchor("NameBand"), anchor("BalconyDeck")
+					-- REPLACED (Slice 4, Market rebuild from BP1): BP1 has no north balcony, so the BalconyDeck guard is retired. The mirror guard is now the rooftop scaffold, which
+					-- lies over the SOUTH wing only (z 177.6..231): a mirrored build would put it north. The other two guards are unchanged.
+					local band, deck = anchor("NameBand"), m:FindFirstChild("Scaffold", true)
 					check(label .. " yard is east of the hall", hall ~= nil and yard ~= nil and yard.Position.X > hall.Position.X + 30,
 						hall and yard and (yard.Position.X .. " vs " .. hall.Position.X) or "parts missing")
 					check(label .. " name band is on the east frontage", hall ~= nil and band ~= nil and band.Position.X > hall.Position.X + 10,
 						hall and band and (band.Position.X .. " vs " .. hall.Position.X) or "parts missing")
-					check(label .. " balcony is at the north end", hall ~= nil and deck ~= nil and deck.Position.Z < hall.Position.Z - 25,
-						hall and deck and (deck.Position.Z .. " vs " .. hall.Position.Z) or "parts missing")
+					-- Old text: check(label .. " balcony is at the north end", hall ~= nil and deck ~= nil and deck.Position.Z < hall.Position.Z - 25, ...) with deck = BalconyDeck.
+					local dz, dn = 0, 0 -- mean z of the scaffold parts (the container may be a Folder or a Model)
+					for _, q in ipairs(deck and deck:GetDescendants() or {}) do if q:IsA("BasePart") then dz += q.Position.Z dn += 1 end end
+					dz = dn > 0 and dz / dn or nil
+					check(label .. " rooftop scaffold is at the south end", hall ~= nil and dz ~= nil and dz > hall.Position.Z + 15,
+						hall and dz and (dz .. " vs " .. hall.Position.Z) or "parts missing")
 				elseif s.id == 3 then
 					-- Orientation + walkability guards (Slice 07): the pivot is yawed to W, so a build that used it as its origin is
 					-- rotated yet passes the symmetric bounds check. Anchors are ONE uniquely named BasePart each. The awning is on

@@ -47,7 +47,7 @@ return function(t)
 	-- (Market -230 -> -330, Lomi 180 -> 292, Cafe 160 -> 272; the user's call after seeing the town core crowded).
 	t.test("positions and facings match the layout", function()
 		local expected = {
-			[1] = { 0, 57.5, "S" }, [2] = { -330, 160, "E" }, [3] = { 292, 140, "W" },
+			[1] = { 0, 57.5, "S" }, [2] = { -402, 160, "E" }, [3] = { 292, 140, "W" },
 			[4] = { 272, -160, "W" }, [5] = { -300, -600, "S" }, [6] = { 550, -650, "SW" },
 			[7] = { 700, 240, "W" }, [8] = { 560, 720, "NW" }, [9] = { -600, 550, "NE" },
 			[10] = { -270, -305, "E" }, -- Step C: the blueprint rebuild moved the slot centre (was -250, -260)
@@ -126,11 +126,38 @@ return function(t)
 		end
 	end)
 
-	-- The Market moved from -220 to -230 (Slice 06) and then to -330 (Slice 14) to give the town core room.
-	t.test("market sits at -330,160", function()
+	-- The Market moved from -220 to -230 (Slice 06), to -330 (Slice 14), and in the BP1 rebuild (Slice 4, 2026-10-29) to a 348 x 330 slot at (-402, 160)
+	-- (x -576..-228, z -5..325, facing E, east edge flush with Road F's end). REPLACED "market sits at -330,160".
+	t.test("market slot is centre (-402,160), size 348 x 330, facing E: x -576..-228, z -5..325", function()
 		local m = SiteData.byId(2)
-		expect.equal(m.pos.X, -330)
-		expect.equal(m.pos.Z, 160)
+		expect.near(m.pos.X, -402, 1e-6)
+		expect.near(m.pos.Z, 160, 1e-6)
+		expect.near(m.size.X, 348, 1e-6)
+		expect.near(m.size.Y, 330, 1e-6)
+		expect.equal(m.facing, "E")
+		local x0, x1, z0, z1 = footprint(m)
+		expect.near(x0, -576, 1e-6)
+		expect.near(x1, -228, 1e-6)
+		expect.near(z0, -5, 1e-6)
+		expect.near(z1, 325, 1e-6)
+	end)
+
+	-- Literal world values, on purpose: the Guide and the InfoPanel move to the forecourt (guideLocal / panelLocal as for rows 1 and 10); the Market has no JeepStop.
+	t.test("row 2: Guide (-241,0,160) and InfoPanel (-247,148) pinned through guideLocal and panelLocal; no JeepStop", function()
+		local m = SiteData.byId(2)
+		expect.equal(typeof(m.guideLocal), "Vector2")
+		expect.equal(typeof(m.panelLocal), "Vector2")
+		expect.equal(m.jeepLocal, nil)
+		expect.near((SiteData.guidePos(2) - Vector3.new(-241, 0, 160)).Magnitude, 0, 1e-6)
+		local pp = SiteData.localToWorld(2, m.panelLocal.X, m.panelLocal.Y)
+		expect.near(pp.X, -247, 1e-6)
+		expect.near(pp.Z, 148, 1e-6)
+		expect.equal(SiteData.hasJeepStop(2), false)
+		expect.equal(SiteData.jeepStopPos(2), nil)
+		local x0, x1, z0, z1 = footprint(m)
+		for _, v in ipairs({ SiteData.guidePos(2), pp }) do
+			expect.truthy(v.X >= x0 and v.X <= x1 and v.Z >= z0 and v.Z <= z1)
+		end
 	end)
 
 	-- Slice 14: the Market, Lomi King and Cafe were 10-20 studs from the Cathedral compound, which looked crowded. The town core
@@ -267,8 +294,15 @@ return function(t)
 		expect.truthy(string.find(joined(SiteData.byId(4)), "representative", 1, true))
 	end)
 
-	t.test("Market text notes the 2014 photo date", function()
-		expect.truthy(string.find(table.concat(SiteData.byId(2).dialogue, " "), "2014", 1, true))
+	-- REPLACED (Slice 4, owner approved): the facade photo is no longer the source, so the 2014 line goes. Old text: "Market text notes the 2014 photo date".
+	t.test("Market first line says the model follows a plan drawing and recent street photos; no line mentions 2014", function()
+		local d = SiteData.byId(2).dialogue
+		expect.equal(string.sub(d[1], 1, 51), "This is the Candido B. Lopez Memorial Public Market")
+		expect.truthy(string.find(d[1], "Our model follows a plan drawing and recent street photos, so some details may differ.", 1, true))
+		for _, line in ipairs(d) do
+			expect.falsy(string.find(line, "2014", 1, true))
+			expect.falsy(string.find(line, "facade photo", 1, true))
+		end
 	end)
 
 	-- Slice 14: the Cathedral model has paired round columns (not pilasters), butter-yellow walls, and the guide stands on the
@@ -331,8 +365,9 @@ return function(t)
 	end)
 
 	-- The old formulas, restated independently: guide 30 studs ahead, jeep stop 20 studs to the right of the guide.
-	t.test("rows 2 to 9 keep the old guidePos and jeepStopPos formulas", function()
-		for id = 2, 9 do
+	-- Slice 4 (Market rebuild): row 2 now carries guideLocal / panelLocal (pinned by "row 2: Guide ..." above), so this loop starts at row 3.
+	t.test("rows 3 to 9 keep the old guidePos and jeepStopPos formulas", function()
+		for id = 3, 9 do
 			local s = SiteData.byId(id)
 			expect.equal(s.guideLocal, nil)
 			expect.equal(s.jeepLocal, nil)
