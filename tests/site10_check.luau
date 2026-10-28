@@ -228,6 +228,7 @@ local function run(opts)
 	local canopy = wing and wing:FindFirstChild("Canopy")
 	local function inCanopy(p) return canopy ~= nil and p:IsDescendantOf(canopy) end
 	local function inAtrium(p) return atrium ~= nil and p:IsDescendantOf(atrium) end
+	local wb07 = site:FindFirstChild("WB07", true) -- the seal slab (owner decision 2026-10-28: the city seal and BAGONG LIPA wordmark go here)
 	local function longWingParts()
 		return partsIn(wing, function(p) return not inCanopy(p) and not inAtrium(p) and not isRig(p) end)
 	end
@@ -301,13 +302,28 @@ local function run(opts)
 		end
 		check("no long TextScaled line sits directly on a board", #badText == 0, table.concat(badText, "; "))
 
+		-- REPLACED 2026-10-28 (owner decision: the seal slab WB07 carries the city seal and the BAGONG LIPA wordmark, built from parts and text).
+		-- Old text: check("no seal or brand text (no BAGONG, LIPA, SEAL, KOPI, ABOITIZ on any label)", #logoWords == 0, ...)
+		-- SEAL, KOPI and ABOITIZ stay forbidden on every label; BAGONG is allowed only on the TextLabel LogoBagong, LIPA only on LogoLipa, both inside WB07.
 		local logoWords = {}
+		local function logoLabelOk(d, labelName)
+			return d:IsA("TextLabel") and d.Name == labelName and wb07 ~= nil and d:IsDescendantOf(wb07)
+		end
 		for _, d in ipairs(site:GetDescendants()) do
 			local t = (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Text or ""
 			local u = t:upper()
-			if not isKept(d) and (u:find("BAGONG") or u:find("SEAL") or u:find("KOPI") or u:find("ABOITIZ") or u:find("LIPA")) then table.insert(logoWords, t) end
+			if not isKept(d) then
+				if u:find("SEAL") or u:find("KOPI") or u:find("ABOITIZ") then
+					table.insert(logoWords, t)
+				elseif u:find("BAGONG") and not logoLabelOk(d, "LogoBagong") then
+					table.insert(logoWords, t .. " (" .. d:GetFullName() .. ")")
+				elseif u:find("LIPA") and not logoLabelOk(d, "LogoLipa") then
+					table.insert(logoWords, t .. " (" .. d:GetFullName() .. ")")
+				end
+			end
 		end
-		check("no seal or brand text (no BAGONG, LIPA, SEAL, KOPI, ABOITIZ on any label)", #logoWords == 0, table.concat(logoWords, "; "))
+		check("no stray seal or brand text: SEAL, KOPI, ABOITIZ nowhere; BAGONG only on LogoBagong and LIPA only on LogoLipa, both inside WB07",
+			#logoWords == 0, table.concat(logoWords, "; "))
 
 		-- Pins in WORLD space (replace the old reserved zones, which were expressed in the old local frame).
 		-- Rule: nothing solid below the canopy within 2 studs (2D) of the spawn pad, the Guide or the InfoPanel; nothing solid below y 20 within
@@ -450,6 +466,262 @@ local function run(opts)
 		end
 		check("the north-end long-wing box carries no Decal, Texture, SurfaceGui, TextLabel or ImageLabel",
 			endBoxes >= 1 and #sealBad == 0, endBoxes .. " end boxes, " .. #sealBad .. " found: " .. table.concat(sealBad, ", ", 1, math.min(#sealBad, 4)))
+
+		------------------------------------------------------------------ logo on the seal slab WB07 (owner decision 2026-10-28)
+		-- The drawing and the photo show a round city seal with a BAGONG LIPA wordmark under it on the upper-right slab of the long wing. Built from
+		-- parts and text only (no Decal, Texture or image: the site-wide "zero image instances" check still covers that). Local frame: WB07 faces +X.
+		-- Front face: WB07's main WhiteBrickBox front is x -242.5, but the centre facet WhiteBrickBoxF reaches x -240.5 (bed lines to -240.35), so the
+		-- logo must sit in FRONT of the facet: back within 0.6 of the facet front, front face at least 0.2 proud of it.
+		do
+			local function isWhite(r, g, b) local mx, mn = math.max(r, g, b), math.min(r, g, b) return mn >= 200 and (mx - mn) <= 45 end
+			local function isBlue(r, g, b) return b >= 100 and b >= r + 40 and b >= g + 20 end
+			local function isRed(r, g, b) return r >= 120 and r >= g + 60 and r >= b + 60 end
+			local function isGreen(r, g, b) return g >= 90 and g >= r + 25 and g >= b + 25 end
+			local function isGold(r, g, b) return r >= 170 and g >= 130 and b <= 110 and r - b >= 80 and g - b >= 60 end
+			local function col3(c) return c.R * 255, c.G * 255, c.B * 255 end
+
+			local slab07
+			for _, s in ipairs(slabs) do
+				if wb07 and s.Parent == wb07 then slab07 = s end
+			end
+			local logo = wb07 and wb07:FindFirstChild("SealLogo")
+			-- Reason: the seal must be one Model named SealLogo inside the seal slab model WB07.
+			check("SealLogo is a Model inside WB07 (next to WB07's main WhiteBrickBox slab)", logo ~= nil and logo:IsA("Model") and slab07 ~= nil,
+				logo and logo.ClassName or "SealLogo missing in WB07")
+
+			local lo7, hi7, Fx = Vector3.new(0, 0, 0), Vector3.new(0, 0, 0), nil
+			if slab07 then
+				lo7, hi7 = wbounds(slab07)
+				Fx = hi7.X
+				for _, d in ipairs(wb07:GetChildren()) do
+					if d:IsA("BasePart") and d.Name == "WhiteBrickBoxF" then
+						local _, h = wbounds(d)
+						Fx = math.max(Fx, h.X)
+					end
+				end
+			end
+
+			local discs, logoParts = {}, {}
+			for _, d in ipairs(logo and logo:GetDescendants() or {}) do
+				if d:IsA("BasePart") then
+					table.insert(logoParts, d)
+					if d.ClassName == "Part" and d.Shape == Enum.PartType.Cylinder and math.abs(d.Size.Y - d.Size.Z) <= 0.05 then table.insert(discs, d) end
+				end
+			end
+			local outer
+			for _, d in ipairs(discs) do
+				if not outer or d.Size.Y > outer.Size.Y then outer = d end
+			end
+			local conc, diam, nDiam = {}, {}, 0
+			if outer then
+				for _, d in ipairs(discs) do
+					if math.abs(d.Position.Y - outer.Position.Y) <= 0.1 and math.abs(d.Position.Z - outer.Position.Z) <= 0.1 then
+						table.insert(conc, d)
+						local k = round(d.Size.Y, 0.1)
+						if not diam[k] then diam[k] = true nDiam += 1 end
+					end
+				end
+			end
+			-- Reason: a seal is concentric rings; five discs in three or more diameters is the least that can show ring, field and details.
+			check("SealLogo has at least 5 concentric Cylinder discs (Size.Y = Size.Z, centres within 0.1 in Y and Z) in at least 3 diameters",
+				#conc >= 5 and nDiam >= 3, #discs .. " cylinder discs, " .. #conc .. " concentric, " .. nDiam .. " diameters")
+			-- Reason: the drawing's seal is about half the slab's height; 6..9 studs on a 15.4 high slab, and discs must stay thin plates.
+			local thick = 0
+			for _, d in ipairs(discs) do thick = math.max(thick, d.Size.X) end
+			check("seal outer diameter is 6..9 studs and no disc is thicker than 0.6",
+				outer ~= nil and outer.Size.Y >= 6 and outer.Size.Y <= 9 and thick <= 0.6 + 0.001,
+				outer and string.format("outer %.2f, thickest %.2f", outer.Size.Y, thick) or "no discs")
+
+			-- Reason: the drawing seal is a white or gold ring, a blue field, red and green details.
+			local hasW, hasB, hasR, hasG, hasGold = false, false, false, false, false
+			for _, d in ipairs(logoParts) do
+				if d.Name ~= "LogoText" then
+					local r, g, b = col3(d.Color)
+					hasW = hasW or isWhite(r, g, b)
+					hasB = hasB or isBlue(r, g, b)
+					hasR = hasR or isRed(r, g, b)
+					hasG = hasG or isGreen(r, g, b)
+					hasGold = hasGold or isGold(r, g, b)
+				end
+			end
+			check("seal colours: white or cream, blue, red, and green or gold are all present",
+				hasW and hasB and hasR and (hasG or hasGold),
+				string.format("white %s blue %s red %s green %s gold %s", tostring(hasW), tostring(hasB), tostring(hasR), tostring(hasG), tostring(hasGold)))
+
+			-- Reason: the discs must be visible on the slab: facing +X, proud of the centre facet, whole disc inside the slab, inside the outer disc.
+			local misplaced = {}
+			for _, d in ipairs(discs) do
+				local why
+				local lo, hi = wbounds(d)
+				if math.abs(d.CFrame.RightVector.X) < 0.99 then
+					why = "axis not X"
+				elseif Fx == nil then
+					why = "no slab"
+				elseif lo.X < Fx - 0.3 or lo.X > Fx + 0.6 then
+					why = string.format("back x %.2f outside %.2f..%.2f", lo.X, Fx - 0.3, Fx + 0.6)
+				elseif hi.X < Fx + 0.2 then
+					why = string.format("front x %.2f buried (needs at least %.2f)", hi.X, Fx + 0.2)
+				elseif lo.Y < lo7.Y or hi.Y > hi7.Y or lo.Z < lo7.Z or hi.Z > hi7.Z then
+					why = "sticks out of the slab y/z extent"
+				elseif outer and math.sqrt((d.Position.Y - outer.Position.Y) ^ 2 + (d.Position.Z - outer.Position.Z) ^ 2) + d.Size.Y / 2 > outer.Size.Y / 2 + 0.1 then
+					why = "outside the outer disc"
+				end
+				if why then table.insert(misplaced, d.Name .. ": " .. why) end
+			end
+			check("every seal disc faces +X, sits on WB07's front face (back within 0.6 of the centre facet, 0.2 proud), and lies inside the slab and the outer disc",
+				#discs >= 1 and #misplaced == 0, #misplaced .. " off of " .. #discs .. ": " .. table.concat(misplaced, "; ", 1, math.min(#misplaced, 3)))
+
+			local logoTop = -math.huge
+			for _, p in ipairs(logoParts) do logoTop = math.max(logoTop, top(p)) end
+			check("the logo stays below the roof line: top at most the highest RoofSlab top minus 1",
+				#logoParts > 0 and roofTopY > -math.huge and logoTop <= roofTopY - 1,
+				string.format("logo top %.2f, roof slab top %.2f", logoTop, roofTopY))
+
+			-- Wordmark: one thin plain part LogoText inside SealLogo, one SurfaceGui, two TextLabels.
+			local lt = logo and logo:FindFirstChild("LogoText", true)
+			local labels, bag, lip = {}, {}, {}
+			for _, d in ipairs(logo and logo:GetDescendants() or {}) do
+				if d:IsA("TextLabel") then
+					table.insert(labels, d)
+					if d.Name == "LogoBagong" then table.insert(bag, d) elseif d.Name == "LogoLipa" then table.insert(lip, d) end
+				end
+			end
+			-- Reason: the wordmark carrier must be a thin plain block part; labels need a SurfaceGui that faces +X and belongs to it.
+			local ltOk = lt ~= nil and lt.ClassName == "Part" and lt.Shape == Enum.PartType.Block and lt.Size.X <= 0.6 + 0.001 and lt:IsDescendantOf(logo)
+			check("LogoText is a thin plain Part (Block, at most 0.6 deep) inside SealLogo", ltOk,
+				lt and string.format("%s size %s", lt.ClassName, tostring(lt.Size)) or "LogoText missing")
+			-- Reason: exactly the two words of the wordmark, nothing else written on the seal (no ring text, no SEAL label).
+			local sitebag, sitelip = 0, 0
+			for _, d in ipairs(site:GetDescendants()) do
+				if d:IsA("TextLabel") and d.Name == "LogoBagong" then sitebag += 1 end
+				if d:IsA("TextLabel") and d.Name == "LogoLipa" then sitelip += 1 end
+			end
+			check("exactly one TextLabel LogoBagong reading BAGONG and one LogoLipa reading LIPA, and no other TextLabel in SealLogo",
+				#bag == 1 and #lip == 1 and #labels == 2 and bag[1].Text == "BAGONG" and lip[1].Text == "LIPA" and sitebag == 1 and sitelip == 1,
+				string.format("%d LogoBagong, %d LogoLipa, %d labels in SealLogo, %d/%d on the site", #bag, #lip, #labels, sitebag, sitelip))
+			local two = (#bag == 1 and #lip == 1) and { bag[1], lip[1] } or {}
+			local guiBad = {}
+			for _, d in ipairs(two) do
+				local gui = d:FindFirstAncestorWhichIsA("SurfaceGui")
+				if not (gui and lt and gui.Face == Enum.NormalId.Right and gui.Enabled and (gui.Adornee == lt or (gui.Adornee == nil and gui.Parent == lt))) then
+					table.insert(guiBad, d.Name)
+				end
+			end
+			check("both wordmark labels sit in an enabled SurfaceGui on LogoText with Face Right (+X)",
+				#two == 2 and #guiBad == 0 and lt ~= nil and lt.CFrame.RightVector.X > 0.99,
+				#two == 2 and (#guiBad .. " bad: " .. table.concat(guiBad, ",")) or "the two labels are missing")
+			-- Reason: README rule 7 (fixed TextSize, never TextScaled), plain ASCII, no rich text, the drawing's red BAGONG and blue LIPA.
+			local styleBad = {}
+			for _, d in ipairs(two) do
+				if d.TextScaled or d.RichText or type(d.TextSize) ~= "number" or d.TextSize < 20 or d.Text:find("[^\32-\126]") then
+					table.insert(styleBad, string.format("%s scaled=%s rich=%s size=%s", d.Name, tostring(d.TextScaled), tostring(d.RichText), tostring(d.TextSize)))
+				end
+			end
+			check("wordmark labels: TextScaled false, RichText false, fixed TextSize at least 20, ASCII only",
+				#two == 2 and #styleBad == 0, #two == 2 and (#styleBad .. " bad: " .. table.concat(styleBad, "; ")) or "the two labels are missing")
+			local rr, rg, rb = col3(bag[1] and bag[1].TextColor3 or Color3.new(0, 0, 0))
+			local br, bg, bb = col3(lip[1] and lip[1].TextColor3 or Color3.new(0, 0, 0))
+			check("BAGONG is red-dominant and LIPA is blue-dominant", #two == 2 and isRed(rr, rg, rb) and isBlue(br, bg, bb),
+				string.format("BAGONG (%.0f,%.0f,%.0f) LIPA (%.0f,%.0f,%.0f)", rr, rg, rb, br, bg, bb))
+			-- Reason: in the drawing the wordmark sits under the seal on the same slab face.
+			local wmWhy = "LogoText or seal missing"
+			if lt and outer and Fx ~= nil then
+				local lo, hi = wbounds(lt)
+				local sealBottom = outer.Position.Y - outer.Size.Y / 2
+				wmWhy = nil
+				if lt.Position.Y > sealBottom + 0.5 then
+					wmWhy = string.format("centre y %.2f is above the seal bottom %.2f", lt.Position.Y, sealBottom)
+				elseif lo.Y < lo7.Y + 0.3 or hi.Y > hi7.Y or lo.Z < lo7.Z or hi.Z > hi7.Z then
+					wmWhy = "outside the slab extent"
+				elseif lo.X < Fx - 0.3 or lo.X > Fx + 0.6 or hi.X < Fx + 0.2 then
+					wmWhy = string.format("x %.2f..%.2f not on the front face (%.2f)", lo.X, hi.X, Fx)
+				end
+			end
+			check("LogoText sits under the seal, inside WB07's extent and on its front face", wmWhy == nil, wmWhy)
+
+			-- Reason: the logo must not collide with a roof box or a rail.
+			local hit = {}
+			for _, p in ipairs(ownParts()) do
+				if (string.find(p.Name, "RoofBox", 1, true) or string.find(p.Name, "Rail", 1, true)) and not (logo and p:IsDescendantOf(logo)) then
+					local plo, phi = wbounds(p)
+					for _, l in ipairs(logoParts) do
+						local llo, lhi = wbounds(l)
+						if llo.X < phi.X and lhi.X > plo.X and llo.Y < phi.Y and lhi.Y > plo.Y and llo.Z < phi.Z and lhi.Z > plo.Z then
+							table.insert(hit, l.Name .. "x" .. p.Name)
+							break
+						end
+					end
+				end
+			end
+			check("no SealLogo part intersects a RoofBox or a *Rail* part", #logoParts > 0 and #hit == 0,
+				#logoParts == 0 and "no logo parts" or (#hit .. " hits: " .. table.concat(hit, ", ", 1, math.min(#hit, 3))))
+		end
+
+		------------------------------------------------------------------ atrium south corner strip (owner decision 2026-10-28)
+		-- The atrium's south corner (edge 4, u 52..L, L = 58.97, y 14.4..42.8) was bare dark glass: a slab there made the centre column of AB1 sit over
+		-- RailSW2 and the 10-stud clearance rule (wing group) fell to 5.20. Rule: the strip face is at least 35 percent covered by the main slabs
+		-- (parts named WhiteBrickBox) standing in front of the glass, and no uncovered run along the strip is wider than 5 studs. Measured today: 0 percent, bare run 6.75 (the strip is 6.97 wide).
+		-- A faithful value: upper tier AB1 reaching u 58.97 covers 47 percent with no bare run. The 10-stud clearance rule must keep passing.
+		do
+			local wall = atrium and atrium:FindFirstChild("AtriumWallSE")
+			local function mainOf(label)
+				local m = site:FindFirstChild(label, true)
+				return m and m:FindFirstChild("WhiteBrickBox")
+			end
+			local ab1, ab2 = mainOf("AB1"), mainOf("AB2")
+			local railSW2 = atrium and atrium:FindFirstChild("RailSW2")
+			local railTxt = railSW2 and string.format("RailSW2 at (%.2f, %.2f, %.2f)", railSW2.Position.X, railSW2.Position.Y, railSW2.Position.Z) or "RailSW2 missing"
+			local frac, bareRun, why = 0, math.huge, nil
+			if wall and ab1 and ab2 then
+				local t = wall.CFrame.RightVector
+				if (ab1.Position - ab2.Position):Dot(t) < 0 then t = -t end
+				local out = ab1.CFrame.RightVector
+				if out:Dot(Vector3.new(1, 0, 0)) < 0 then out = -out end
+				local L = wall.Size.X
+				local U0, U1, Y0, Y1 = 52, L, 14.4, 42.8
+				local rects = {}
+				for _, p in ipairs(parts("WhiteBrickBox")) do
+					if p.Name == "WhiteBrickBox" and p.ClassName == "Part" and (p.Position - wall.Position):Dot(out) >= 2.0 then
+						local cf, h = p.CFrame, p.Size / 2
+						local u0, u1, y0, y1 = math.huge, -math.huge, math.huge, -math.huge
+						for _, sx in ipairs({ -1, 1 }) do
+							for _, sy in ipairs({ -1, 1 }) do
+								for _, sz in ipairs({ -1, 1 }) do
+									local w = cf * Vector3.new(sx * h.X, sy * h.Y, sz * h.Z)
+									local u = (w - wall.Position):Dot(t) + L / 2
+									u0, u1, y0, y1 = math.min(u0, u), math.max(u1, u), math.min(y0, w.Y), math.max(y1, w.Y)
+								end
+							end
+						end
+						table.insert(rects, { u0, u1, y0, y1 })
+					end
+				end
+				local du, dy = 0.25, 0.2
+				local nu, ny = math.floor((U1 - U0) / du), math.floor((Y1 - Y0) / dy)
+				local covered, run, longest = 0, 0, 0
+				for i = 1, nu do
+					local u = U0 + (i - 0.5) * du
+					local colHit = false
+					for j = 1, ny do
+						local y = Y0 + (j - 0.5) * dy
+						for _, r in ipairs(rects) do
+							if u >= r[1] and u <= r[2] and y >= r[3] and y <= r[4] then covered += 1 colHit = true break end
+						end
+					end
+					if colHit then run = 0 else run += du longest = math.max(longest, run) end
+				end
+				frac, bareRun = covered / (nu * ny), longest
+			else
+				why = "AtriumWallSE, AB1 or AB2 missing"
+			end
+			-- Reason: a bare dark panel 14 tall at the atrium corner is not in the drawing; slabs wrap the atrium faces. Keep RailSW2 clear (clearance rule).
+			check("atrium south corner strip (edge 4, u 52..59, y 14.4..42.8) is at least 35 percent covered by WhiteBrickBox slabs in front of the glass",
+				why == nil and frac >= 0.35,
+				string.format("%.1f percent covered; %s; keep 'clearance under the raised brick boxes' at 10 or more", frac * 100, why or railTxt))
+			check("no bare run wider than 5 studs along the atrium south corner strip (no slab at any height over that stretch)",
+				why == nil and bareRun <= 5.0 + 0.001,
+				string.format("widest bare run %.2f studs; %s", bareRun, why or railTxt))
+		end
 	end
 
 	------------------------------------------------------------------ wing, atrium, canopy
@@ -680,13 +952,19 @@ local function run(opts)
 		for _, p in ipairs(partsIn(site:FindFirstChild("Forecourt"))) do if string.match(p.Name, "Paving$") then paving += 1 end end
 		check("forecourt paving exists", paving >= 1, tostring(paving))
 		check("parking bay lines (at least 12 BayLine)", #parts("BayLine") >= 12, tostring(#parts("BayLine")))
+		-- REPLACED 2026-10-28 (owner decision: the logo text lives on WB07 in Blocks; the old loop scanned the whole site and would trip it).
+		-- Old text: check("no seal or logo text on the forecourt (no BAGONG or LIPA on any TextLabel or SurfaceGui)", #seal == 0, ...), loop over site:GetDescendants().
+		-- Same rule, scoped to the containers where it still holds: Forecourt, Steps and Landscape.
 		local seal = {}
-		for _, d in ipairs(site:GetDescendants()) do
-			if not isKept(d) and (d:IsA("TextLabel") or d:IsA("TextButton")) and (d.Text:upper():find("BAGONG") or d.Text:upper():find("LIPA")) then
-				table.insert(seal, d.Text)
+		for _, cn in ipairs({ "Forecourt", "Steps", "Landscape" }) do
+			local c = site:FindFirstChild(cn)
+			for _, d in ipairs(c and c:GetDescendants() or {}) do
+				if not isKept(d) and (d:IsA("TextLabel") or d:IsA("TextButton")) and (d.Text:upper():find("BAGONG") or d.Text:upper():find("LIPA")) then
+					table.insert(seal, d.Text)
+				end
 			end
 		end
-		check("no seal or logo text on the forecourt (no BAGONG or LIPA on any TextLabel or SurfaceGui)", #seal == 0, table.concat(seal, "; "))
+		check("no seal or logo text in Forecourt, Steps or Landscape (no BAGONG or LIPA on any TextLabel or TextButton)", #seal == 0, table.concat(seal, "; "))
 	end
 
 	------------------------------------------------------------------ landscape
