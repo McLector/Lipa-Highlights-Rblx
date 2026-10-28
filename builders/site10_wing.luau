@@ -23,7 +23,7 @@ return function(env)
 	local C3 = Color3.fromRGB
 	local rad = math.rad
 
-	local GLASS, GLASSM = C3(40, 50, 60), Enum.Material.Glass
+	local GLASS, GLASSM = C3(62, 76, 94), Enum.Material.Glass -- drawing panes: dark navy blue-grey (75,95,120 read as vivid blue in daylight)
 	local CONC, ROOFC, WHITE, SLATE = C3(190, 192, 190), C3(120, 126, 132), C3(225, 225, 220), C3(178, 180, 178)
 	local CREAM, DOORC, METAL = C3(235, 232, 222), C3(30, 40, 48), C3(70, 78, 88)
 	local MCONC, MSLATE, MMETAL = Enum.Material.Concrete, Enum.Material.Slate, Enum.Material.Metal
