@@ -93,3 +93,16 @@ Kept with a wider name or a re-anchored number (not retired): steps (6 treads, r
 ### Names the new check expects (owner names, plus the layout's item names where they differ)
 
 WhiteBrickBox (or WB01..WB11, AB1..AB5), GlassBand (no alias), BalconySlab (or CoreBalcony1..3), TerraceStrip (or TerraceS1..5, TerraceN1..5), TerraceWall (no alias), LoopRing (or LoopRoad), LoopIsland, Flagpole, Flag, BayLine, ParkedCar (or Car_A1 ...), Tree (or WalkTree1..), Palm, Column1.., RoofBox1.. (wing) and *RoofBox* (canopy), Pilotis (or PilotiA1.., Pilotis_WB03), CanopyFacet* (any name containing Facet), Wing.Atrium, Wing.Canopy, Landscape.PocketGardens.
+
+## Facade round (after Step C)
+
+Everything above "Step C" describes the old 72-block design and is history. The facade was redone from the drawing: nine thin long-wing slabs (WB01..WB09, five reaching the roof line at y 43.8) and five atrium slabs (AB1..AB5, two tiers on the pentagon faces) replace the 16 pods; the GlassBand colour moves from (40,50,60) to (62,76,94), still Glass. Blocks went from 401 to 348 parts (build 10 is 1216, world 9183).
+
+No assertion was loosened or retired. Four were added to the `blocks` group of `tests/site10_check.luau` (73 in all): long-wing main slabs are flat (depth at most 6.5 and at most 0.6 of width, width at least 8), at least 4 slabs reach the roof line (one-sided: top at least the roof slab top minus 0.5), every GlassBand is Glass and blue-grey (max channel 80..160, blue largest, blue at least red + 15), and the seal-box guard (no decal, texture or text on the right-end boxes).
+
+Decisions and findings:
+- The glass floor is 80, not 90: sampled panes in the drawing have a median of about (50,64,86), so 90 would fail the drawing itself. The photo's glass is greyer and greenish; the drawing wins.
+- A rule that the north half of the long wing shows more glass was dropped: the drawing shows the opposite (white brick covers about 0.69 of the north half at the upper storeys against 0.28 in the south half, crude and perspective-distorted).
+- The existing "at least 14 WhiteBrickBox" counts parts (every WhiteBrickBox* part), not slabs, so fewer slabs never threatened it.
+- The south corner strip of the atrium (edge 4, u 52..59) stays bare dark glass because a slab there sits over `RailSW2` and breaks the 10-stud clearance rule; the slabs were moved instead of the rule.
+- Still different from the drawing: finer, more visible brick tiling in the drawing (darker joints would break the cream-brick check), a little more curvature on the drawing's atrium slabs, a little more glass on the wing than drawn.
