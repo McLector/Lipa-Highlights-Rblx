@@ -322,3 +322,14 @@ BP2's iso crops (`bp2_iso_leantos_left.png`, `bp2_iso_vendors_tricycles.png`, au
 | Exactly 5 `StreetStall` on the five rows z 244, 254, 264, 62, 52 at x -241..-235 | BP2 draws dense umbrella and tent clusters at the hall's front corners, about 10..12 tents, not five in a line | 10..12 `StreetStall` units in two clusters (4+ in x -248..-231, z 36..60 and 4+ in x -248..-231, z 250..274), each on the ground, 6.5..11 tall, 3+ parts, none elsewhere, no two overlapping |
 | (none) | BP2 draws 5..6 thin lamp posts with a head along the kerb and beside the stairs | 6..8 `LampPost` (8..14 tall, on the ground, x -250.4..-229, outside z 148..172) each with a `LampHead` on top, as many heads as posts |
 Left out on purpose (honest DIFF): the two zebra crossings of BP2 lie on the street east of x -228, outside the slot, and would break the slot and margin rules; the standing crowd of BP2 is not modelled beyond the vendor rigs (R5b).
+
+### Slice 4 Market, side yards, props, boards and vendors (R5b), 2026-10-30
+Owner decisions this session: the north side yard is a hybrid of BP1's two readings (plan crop: two narrow columns of small stalls; iso `iso_northyard`: one row of pyramid-roof booths with a long low awning on the shed wall and vans at the kerb): a row of 11 booths in front of a low awning that carries 11 counters, vans at the kerb in R5c. The south yard is two rows of 5 booths either side of the shoppers' aisle (BP1's plan reads about 7 blocks of 2x2 stalls: logged DIFF), 2 vans at the west end in R5c. Nothing replaced: new guard rails in the `yard` group, shown red against the model without side yards, props, boards or vendors (yard 16 passed / 9 failed, 6 of the 9 new).
+| Item | Source | Spec in the check |
+|---|---|---|
+| Side booths | BP1 `iso_northyard` and `iso_shedsA` (pyramid-roof canopy booths), BP2 `bp2_plan_whole` | exactly 21 `SideStallN/S` units (11 north, 10 south), each on the ground, 7..11 tall, 3+ parts including a `Counter` and a `SideCanopy` |
+| North awning | BP1 `iso_northyard` (continuous low awning on the shed wall) | 7+ `SideAwningN` parts including a slab 100+ long, top y 7.2..8.2, z 62..71.1, with 11+ counters under it |
+| Vendors | BP2 `bp2_iso_vendors_tricycles` (street vendors beside the stalls) | 6..9 rigs in `VendorNPCs`, feet on the ground, within 2.5 studs of a `Counter` or `Table`, outside the Guide, aisle and InfoPanel boxes, not inside any part |
+| Price boards | brief section "Price signs" (illustrative prices) | 28+ `PriceBoard`, each within 3 studs of a counter, every label a fixed TextSize |
+| `SampleBoard` | old brief, README rule 7 | one label "SAMPLE PRICES - FOR ILLUSTRATION", TextScaled off, inside the slot, clear of the wide Guide box |
+| Goods | task wording "baskets, price signs, food" | `Produce` 40+ parts, `Baskets` 20+ parts, 80 percent of each within 4 studs of a counter; `MarketStalls` 15+ parts |

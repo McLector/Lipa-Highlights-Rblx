@@ -737,6 +737,108 @@ local function run(opts)
 		local okS2, dS2 = yardOk("^SideStallS%d+$", 232.4, 276.3)
 		local okN2, dN2 = yardOk("^SideStallN%d+$", 33.3, 71.1)
 		check("side yards: 10+ stall blocks in the south yard (z 232.4..276.3) and 10+ in the north yard (z 33.3..71.1), x -471.4..-311.2", okS2 and okN2, dS2 .. " / " .. dN2)
+		-- R5b guard rails (BP1 iso_northyard and iso_shedsA, BP2 iso_vendors_tricycles): the side booths are canopied counter stalls, the north yard has its low awning on the
+		--   shed wall, vendors stand at counters, price boards stand at counters, goods lie on counters, the sample board carries fixed-size text.
+		local function gapXZ(alo, ahi, blo, bhi)
+			local dx = math.max(0, alo.X - bhi.X, blo.X - ahi.X)
+			local dz = math.max(0, alo.Z - bhi.Z, blo.Z - ahi.Z)
+			return math.sqrt(dx * dx + dz * dz)
+		end
+		local counterBoxes = {} -- Counter parts (side booths, wet markets) and the street stalls' Table counters
+		for _, p in ipairs(own) do
+			if p.Name:match("^Counter%d*$") or p.Name:match("^Table%d*$") then
+				local clo, chi = wb(p)
+				table.insert(counterBoxes, { clo, chi })
+			end
+		end
+		local function nearCounter(lo, hi, d)
+			for _, c in ipairs(counterBoxes) do if gapXZ(lo, hi, c[1], c[2]) <= d then return true end end
+			return false
+		end
+		do
+			local sideUnits, badSide = units("^SideStallN%d+$"), 0
+			for _, u in ipairs(units("^SideStallS%d+$")) do table.insert(sideUnits, u) end
+			for _, u in ipairs(sideUnits) do
+				local ps = partsIn(u)
+				local lo, hi = ub(u)
+				local hasCanopy, hasCounter = false, false
+				for _, p in ipairs(ps) do
+					if p.Name:match("^SideCanopy%d*$") then hasCanopy = true end
+					if p.Name:match("^Counter%d*$") then hasCounter = true end
+				end
+				if not (#ps >= 3 and hasCanopy and hasCounter and between(hi.Y, 7, 11) and lo.Y <= 0.6) then badSide += 1 end
+			end
+			check("side booths: 21 units (11 north, 10 south), each on the ground, 7..11 tall, 3+ parts with a Counter and a SideCanopy (BP1 pyramid-roof booths)",
+				#sideUnits == 21 and badSide == 0, #sideUnits .. " units, " .. badSide .. " off")
+		end
+		do
+			local aw, slab, counters = named("^SideAwningN%d+$"), false, 0
+			for _, p in ipairs(aw) do
+				local lo, hi = wb(p)
+				if hi.X - lo.X >= 100 and between(hi.Y, 7.2, 8.2) and lo.Z >= 62 and hi.Z <= 71.1 then slab = true end
+			end
+			for _, c in ipairs(counterBoxes) do
+				local cx, cz = (c[1].X + c[2].X) / 2, (c[1].Z + c[2].Z) / 2
+				if between(cx, -460, -310) and between(cz, 63, 71) then counters += 1 end
+			end
+			check("north yard awning (BP1 iso_northyard): a long low slab (100+ long, top y 7.2..8.2, z 62..71.1) on posts (7+ SideAwningN parts) over 11 counters",
+				#aw >= 7 and slab and counters >= 11, #aw .. " parts, slab " .. tostring(slab) .. ", " .. counters .. " counters under it")
+		end
+		do
+			local vf, nV, badV = site:FindFirstChild("VendorNPCs"), 0, {}
+			for _, r in ipairs(vf and vf:GetChildren() or {}) do
+				local h = r:FindFirstChild("HumanoidRootPart")
+				if h then
+					nV += 1
+					local p = h.Position
+					local pt = Vector3.new(p.X, 0, p.Z)
+					local inBox = (between(p.X, -250, -229) and between(p.Z, 148, 172)) or (between(p.X, -250.4, -228) and between(p.Z, 154, 166)) or (between(p.X, -247, -235) and between(p.Z, 142, 154))
+					local inside = #blockers(Vector3.new(p.X, 3, p.Z), Vector3.new(1.5, 4, 1.5)) > 0
+					if not (between(p.Y, 2, 4.5) and nearCounter(pt, pt, 2.5) and not inBox and not inside) then table.insert(badV, r.Name) end
+				end
+			end
+			check("vendors (6..9 rigs) stand on the ground within 2.5 studs of a counter, outside the Guide, aisle and InfoPanel boxes and not inside any part",
+				nV >= 6 and nV <= 9 and #badV == 0, nV .. " rigs, off: " .. table.concat(badV, ", "))
+		end
+		do
+			local bd, badB, badLab = named("^PriceBoard%d*$"), 0, 0
+			for _, b in ipairs(bd) do
+				local lo, hi = wb(b)
+				if not nearCounter(lo, hi, 3) then badB += 1 end
+				for _, l in ipairs(b:GetDescendants()) do if l:IsA("TextLabel") and l.TextScaled then badLab += 1 end end
+			end
+			check("price boards: 28+, each within 3 studs of a counter, every label a fixed TextSize (TextScaled off)", #bd >= 28 and badB == 0 and badLab == 0,
+				#bd .. " boards, " .. badB .. " away from a counter, " .. badLab .. " scaled labels")
+		end
+		do
+			local sb, lab = named("^SampleBoard$")[1], nil
+			for _, l in ipairs(sb and sb:GetDescendants() or {}) do if l:IsA("TextLabel") then lab = l end end
+			local ok = false
+			if sb and lab then
+				local lo, hi = wb(sb)
+				local t = lab.Text:upper()
+				ok = (not lab.TextScaled) and t:find("SAMPLE PRICES", 1, true) ~= nil and t:find("ILLUSTRATION", 1, true) ~= nil and hi.X <= -227.95
+					and not (hi.X > -250 and lo.X < -229 and hi.Z > 148 and lo.Z < 172) -- clear of the wide Guide box
+			end
+			check("SampleBoard reads SAMPLE PRICES - FOR ILLUSTRATION in a fixed TextSize, inside the slot and clear of the Guide box", ok, sb and (lab and lab.Text or "no label") or "missing")
+		end
+		do
+			local function goods(folderName, minParts, frac)
+				local f, n, onC = site:FindFirstChild(folderName), 0, 0
+				for _, d in ipairs(f and f:GetDescendants() or {}) do
+					if d:IsA("BasePart") then
+						n += 1
+						local lo, hi = wb(d)
+						if nearCounter(lo, hi, 4) then onC += 1 end
+					end
+				end
+				return n >= minParts and onC >= frac * n, folderName .. " " .. n .. " parts, " .. onC .. " near a counter"
+			end
+			local okP, dP = goods("Produce", 40, 0.8)
+			local okB, dB = goods("Baskets", 20, 0.8)
+			local okM, dM = goods("MarketStalls", 15, 0)
+			check("goods are visible and lie on counters: Produce 40+ parts and Baskets 20+ parts, 80 percent of them within 4 studs of a counter; MarketStalls 15+ parts", okP and okB and okM, dP .. " / " .. dB .. " / " .. dM)
+		end
 	end)
 
 	------------------------------------------------------------------ block: corner block (BP2) and service block (BP1 plan, BP2 plan)
