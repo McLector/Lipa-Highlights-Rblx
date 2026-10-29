@@ -43,5 +43,8 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | corner block east face straight-on (checkerboard hoarding, louvres, doors) | -470, 22, 290 | -545, 14, 284 |
 | 2 Market | corner block isometric from the north-east (BP2 style; Bagsakan roof stays below the camera) | -478, 80, 200 | -558, 15, 286 |
 | 2 Market | service block and annex from the north-east | -470, 40, 5 | -525, 6, 58 |
+| 2 Market | street front north: lean-tos on the north strip and a vendor cluster (beside bp2_iso_leantos_left.png) | -205, 32, 20 | -262, 8, 66 |
+| 2 Market | lean-to in front of the north wing, lamp post and stalls (close-up) | -226, 20, 108 | -258, 8, 76 |
+| 2 Market | street front south: vendor cluster and the south end of the hall | -205, 30, 305 | -252, 6, 258 |
 
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.
