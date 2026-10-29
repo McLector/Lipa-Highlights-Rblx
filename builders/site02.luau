@@ -23,6 +23,7 @@
 --     site02_sheds  Sheds/Gabled, Sheds/Markets, Bagsakan           450
 --     site02_block   CornerBlock, ServiceBlock                      200
 --     site02_yard   Forecourt, Yard                                 550
+--     site02_vehicles  Yard                                          160
 --     site02_props  MarketStalls, Baskets, Produce, PriceSigns,     380  (parts; the VendorNPCs rigs are outside this budget)
 --                   VendorNPCs
 --   Every container holds at most 400 parts in its subtree (hard error at plan time); the site (built + kept parts) at most 2000.
@@ -60,6 +61,7 @@ return function()
 		{ name = "site02_sheds", owns = { ["Sheds/Gabled"] = true, ["Sheds/Markets"] = true, Bagsakan = true }, budget = 450 },
 		{ name = "site02_block", owns = { CornerBlock = true, ServiceBlock = true }, budget = 200 },
 		{ name = "site02_yard", owns = { Forecourt = true, Yard = true }, budget = 550 },
+		{ name = "site02_vehicles", owns = { Yard = true }, budget = 160 },
 		{ name = "site02_props", owns = { MarketStalls = true, Baskets = true, Produce = true, PriceSigns = true, VendorNPCs = true }, budget = 380 },
 	}
 	-- path -> { parent path ("" is the site), class, grouping }

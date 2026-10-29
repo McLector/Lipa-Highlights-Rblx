@@ -52,5 +52,6 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | south side yard top-down (beside plan_sheds1.png) | -390, 140, 256 | -390, 0, 255 |
 | 2 Market | sample board close-up and the south stair foot (beside iso_stairN.png) | -212, 12, 178 | -231, 6, 190 |
 | 2 Market | vehicles and tricycle queue at the north stair foot (beside bp2_iso_vendors_tricycles.png) | -205, 28, 70 | -236, 3, 105 |
+| 2 Market | south stair foot: tricycle queue and jeepneys on the apron (beside iso_stairN.png) | -205, 28, 262 | -236, 3, 215 |
 
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.
