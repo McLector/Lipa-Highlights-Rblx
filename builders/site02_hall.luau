@@ -22,9 +22,10 @@ return function(env)
 	local XW, XE = -299.7, -262.6 -- west and east wall faces of the wings
 	local Z0, Z1, ZP0, ZP1 = 71.4, 249.3, 145.6, 174.4 -- building ends and the pavilion's sides
 	local PITCH, PH = 9.25, 0.7 -- BP1 and BP2: every wing arch repeats at 9.25; pilasters are 1.4 wide (half PH)
+	local ZE = 244.2 -- centre of the south end pilaster: it stands in from the building end, leaving a short railed strip (ZE + PH .. Z1) beyond it
 
 	------------------------------------------------------------------ bays: { z start, z end, kind [, tall arch centre, tall arch outer width] }
-	-- The 13 wing bays are exactly one pitch wide; the end tall bays take what is left (north 9.45, south 19.4), so their tall arch is placed by hand.
+	-- The 13 wing bays are exactly one pitch wide; the end tall bays take what is left (north 9.45, south 14.3), so their tall arch is placed by hand.
 	local bays = {}
 	local function addBay(a, b, kind, c, w) bays[#bays + 1] = { a, b, kind, c, w } end
 	local zn = ZP0 - 7 * PITCH -- 80.85, where the north end bay stops and the 7 wing arches begin
@@ -34,7 +35,7 @@ return function(env)
 	addBay(ZP0 + 9.6, ZP0 + 19.2, "mid")
 	addBay(ZP0 + 19.2, ZP1, "ptall")
 	for k = 0, 5 do addBay(ZP1 + PITCH * k, ZP1 + PITCH * (k + 1), "s") end
-	addBay(ZP1 + 6 * PITCH, Z1, "tall", 243.3, 8.5) -- 19.4 wide bay, the tall arch sits at the drawn z 243.3
+	addBay(ZP1 + 6 * PITCH, ZE, "tall", (ZP1 + 6 * PITCH + ZE) / 2, 8.5) -- 14.3 wide bay between pilaster 18 and the end pilaster, the tall arch centred in it (z 237.05, about 2 of wall each side)
 	assert(#bays == 18, "site02_hall: expected 18 bays")
 
 	------------------------------------------------------------------ roof plates (world points, thin plates whose top face is the roof plane)
@@ -81,9 +82,9 @@ return function(env)
 		-- wall blocks (ONE part each, same colour and material so the shared faces do not show)
 		wbox(ctx, "HallBody", XW, XE, 0, 30.5, Z0, Z1, WALL, MCON)
 		wbox(ctx, "PavilionBody", -303.3, XE, 0, 30.5, ZP0, ZP1, WALL, MCON)
-		-- 19 red pilasters (1.4 wide) at the bay boundaries, full height; the two end ones sit flush with the building ends
+		-- 19 red pilasters (1.4 wide) at the bay boundaries, full height; the north end one sits flush with the building end, the south one closes the last bay at ZE
 		for i = 0, 18 do
-			local z = (i < 18) and bays[i + 1][1] or Z1
+			local z = (i < 18) and bays[i + 1][1] or ZE
 			z = math.max(Z0 + PH, math.min(Z1 - PH, z))
 			wbox(ctx, "Pilaster" .. (i + 1), XE, -261.0, 0, 30.0, z - PH, z + PH, RED, MSMO)
 		end
@@ -94,7 +95,7 @@ return function(env)
 			wbox(ctx, "GroundBay" .. i, XE, -262.3, 0.05, 9.0, b[1] + 1.2, b[2] - 1.2, DARK, MCON)
 			if doorAt[i] then
 				d += 1
-				local dc = (i == 18) and 243.3 or (b[1] + b[2]) / 2 -- the wide south end bay gets a normal 8.5 door under its tall arch
+				local dc = (b[1] + b[2]) / 2 -- the south end bay (14.3 wide) gets a normal 8.5 door under its tall arch
 				local dh = math.min((b[2] - b[1]) / 2 - 1.3, 4.25)
 				wbox(ctx, "Door" .. d, -262.3, -261.95, 0.05, 8.45, dc - dh, dc + dh, SHUT, Enum.Material.Metal)
 			end
@@ -133,9 +134,10 @@ return function(env)
 		wbox(ctx, "Cornice3", -300.9, XE, 29.9, 30.5, Z1, Z1 + 1.0, DRED, MSMO)
 		wbox(ctx, "Cornice4", -300.9, XW, 29.9, 30.5, Z0, Z1, DRED, MSMO)
 		wbox(ctx, "Cornice5", -304.5, -303.3, 29.9, 30.5, ZP0 - 1.0, ZP1 + 1.0, DRED, MSMO)
-		-- balustrades: rail top 12.5 (floor 2) and 21.5 (floor 3), low rail, posts 3.0 tall every 4.6 or so
+		-- balustrades: rail top 12.5 (floor 2) and 21.5 (floor 3), low rail, posts 3.0 tall every 4.6 or so. BP1 and BP2 draw no rail across the two tall end arches:
+		-- the north rail starts past pilaster 2, the south rail stops at pilaster 18, and the plain strip beyond the south end pilaster (E) has its own short rail
 		local post = 0
-		for _, wing in ipairs({ { "N", Z0, ZP0 }, { "S", ZP1, Z1 } }) do
+		for _, wing in ipairs({ { "N", zn + PH, ZP0 }, { "S", ZP1, bays[18][1] + PH }, { "E", ZE + PH, Z1 } }) do
 			for _, fl in ipairs({ { 2, 9.5, -259.9 }, { 3, 18.5, -260.5 } }) do
 				local y0, xc = fl[2], fl[3]
 				wbox(ctx, "Balustrade" .. fl[1] .. wing[1], xc - 0.3, xc + 0.3, y0 + 2.6, y0 + 3.0, wing[2], wing[3], WALL, MCON)
