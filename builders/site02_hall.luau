@@ -6,8 +6,10 @@
 -- assembler's local frame (local = world - ORIGIN, y unchanged). Pure function of env: nothing read from the DataModel.
 -- Storeys: ground (open rectangular bays, no arches) y 0..9.5, floor 2 to 18.5, floor 3 to the cornice at 30.5; arches on floor 3 only.
 -- Bays (north to south): 1 tall end bay, 7 north-wing bays, 3 pavilion bays (tall, ordinary, tall), 6 south-wing bays, 1 tall end bay = 18.
--- Roofs: low hips over each wing (eave 30.5, ridge 34.5, ridge along z), taller hip over the pavilion body (apex 36, ridge along x) that
--- stops at the body face x -262.6: BP1 draws the portico as an open terrace (job 4b) with no roof over it. Each roof face is a thin plate (rectangle or right-triangle wedge).
+-- Roofs: SOUTH wing a low hip (eave 30.5, ridge 34.5, ridge along z); NORTH wing BP2's huge broad ribbed hip (hybrid: the 7 BP1 arches stay under it):
+-- eave 30.5, ridge 35.4, z 66..145.6, overhanging the walls by 4, hipped only at the north end, a vertical gable plate flush with the pavilion's north face,
+-- RoofRib strips (darker red) up the slopes. Taller hip over the pavilion body (apex 36, ridge along x) that stops at the body face x -262.6: BP1 draws
+-- the portico as an open terrace (job 4b) with no roof over it. Each roof face is a thin plate (rectangle or right-triangle wedge).
 return function(env)
 	local V, ANG, PI = env.V, env.ANG, env.PI
 	local W, wbox = env.W, env.wbox
@@ -146,7 +148,49 @@ return function(env)
 		local function alongZ(u, v, y) return V(v, y, u) end
 		local function alongX(u, v, y) return V(u, y, v) end
 		local wn = namer("WingRoof")
-		hip(ctx, wn, Z0, ZP0, XW, XE, 30.5, 34.5, alongZ)
+		-- north wing: BP2's big roof. Ridge line x XC, half depth HD (4 past each wall face), flat ridge z ZH..ZP0, hip run HD at the north end only, so
+		-- ZN = ZH - HD. The south end is a vertical cut at ZP0 closed by a thin gable plate. Long slopes are cut into 4 plates a side to keep every plate short.
+		local XC, HD, ZN, YE, YR = (XW + XE) / 2, 22.5, 66.0, 30.5, 35.4
+		local ZH = ZN + HD
+		local xa, xb = XC - HD, XC + HD
+		for _, sv in ipairs({ xa, xb }) do
+			local segs = 4
+			local dz = (ZP0 - ZH) / segs
+			for k = 0, segs - 1 do
+				local O = alongZ(ZH + dz * k, sv, YE)
+				local r = alongZ(ZH + dz * (k + 1), sv, YE) - O
+				local s = alongZ(ZH + dz * k, XC, YR) - O
+				local n = r:Cross(s).Unit
+				if n.Y < 0 then n = -n end
+				local rx = r.Unit
+				ctx:part(wn(), V(r.Magnitude, TH, s.Magnitude), CFrame.fromMatrix(lv(O + r / 2 + s / 2 - n * (TH / 2)), rx, n, rx:Cross(n)), ROOF, MMET)
+			end
+			wedgeAt(ctx, wn, alongZ(ZH, sv, YE), alongZ(ZN, sv, YE), alongZ(ZH, XC, YR)) -- the slope's triangle over the hip run
+		end
+		tri(ctx, wn, alongZ(ZN, xa, YE), alongZ(ZN, xb, YE), alongZ(ZH, XC, YR)) -- the north hip face
+		-- gable plate in the plane z ZP0 (argument order puts the plate on its north side, so nothing pokes into the pavilion)
+		wedgeAt(ctx, wn, alongZ(ZP0, XC, YE), alongZ(ZP0, XC, YR), alongZ(ZP0, xa, YE))
+		wedgeAt(ctx, wn, alongZ(ZP0, XC, YE), alongZ(ZP0, xb, YE), alongZ(ZP0, XC, YR))
+		-- ribs: thin darker-red strips lying on the faces, running up the slope (a few long ones, not dozens of small parts)
+		local RIB = C3(160, 64, 60)
+		local rn = namer("RoofRib")
+		local function rib(A, B, n) -- surface points A (low) to B (high), n the face's upward normal
+			local rx = (B - A).Unit
+			ctx:part(rn(), V((B - A).Magnitude, 0.2, 0.35), CFrame.fromMatrix(lv((A + B) / 2 + n * 0.07), rx, n, rx:Cross(n)), RIB, MMET)
+		end
+		for _, zc in ipairs({ 95, 108, 121, 134 }) do
+			for _, sv in ipairs({ xa, xb }) do
+				local A, B = alongZ(zc, sv + (XC - sv) * 0.04, YE + (YR - YE) * 0.04), alongZ(zc, sv + (XC - sv) * 0.96, YE + (YR - YE) * 0.96)
+				local n = (B - A):Cross(Vector3.new(0, 0, 1)).Unit
+				rib(A, B, n.Y < 0 and -n or n)
+			end
+		end
+		local hipN = Vector3.new(0, HD, -(YR - YE)).Unit -- the hip face leans north
+		for _, d in ipairs({ -9, 0, 9 }) do -- on the hip face only: at x offset d it ends where the side slope takes over, z ZN + |d|
+			local zb = (d == 0) and ZH - 0.6 or ZN + math.abs(d) - 1.0
+			local function onHip(z) return alongZ(z, XC + d, YE + (YR - YE) * (z - ZN) / HD) end
+			rib(onHip(ZN + 1.0), onHip(zb), hipN)
+		end
 		hip(ctx, wn, ZP1, Z1, XW, XE, 30.5, 34.5, alongZ)
 		hip(ctx, namer("PavilionRoof"), -303.3, XE, ZP0, ZP1, 30.5, 36.0, alongX)
 	end)
