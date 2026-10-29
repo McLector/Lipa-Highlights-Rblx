@@ -26,16 +26,16 @@
 --   widgets (the InfoPanel label comes from builders/placeholders and is TextScaled); a Frame around the label does not exempt it (README rule 7: long labels use a
 --   fixed TextSize; a two-line board "KAMATIS" / "P 80/kg" is fine). No brand words, zero images.
 -- HALL (Structure/Hall/Shell, Structure/Hall/Windows):
---   Pilaster%d+            19 red (176,62,50) strips, 1.6 wide, full height (>= 28), centre x -267..-258, z from the south end to the north end.
+--   Pilaster%d+            19 red (176,62,50) strips, 1.4 wide, full height (>= 28), centre x -267..-258, z from the south end to the north end.
 --   GroundBay%d+ [unit]    18 open rectangular bays of the ground storey (7 south, 3 pavilion, 8 north), bottom <= 1, height 8..10.3. NO arches below y 9.
 --   Door%d+                ground-storey doors, 8..9.6 tall.
 --   ArchWindow%d+ [unit]   floor-3 arched openings (14): each a Model or part, bottom >= 18, top <= 27, centre x -268..-258.
---   ArchWindowTall%d+ [unit] tall double-height arched grid windows (4): bottom 9..10.8, top >= 23.5; at the two end bays (z about 77.4 and 243.3) and
+--   ArchWindowTall%d+ [unit] tall double-height arched grid windows (4): bottom 9..10.8, top >= 23.5; at the two end bays (z about 77.4 and 237.0) and
 --                          the two pavilion flanks (z about 150.4 and 169.6). The pavilion centre arch (z 160) is an ordinary ArchWindow. 18 arches in all.
 --   Window2_%d+            floor-2 rectangular windows, y 12..19.5.
 --   FloorSlab2%u?%d* / FloorSlab3%u?%d*   top y 9.5 and 18.5 (+-0.7).  Cornice%u?%d*   top y 30.5 (+-1.2), at least 2.
 --   Balustrade2%u?%d* / Balustrade3%u?%d*  rail top y 12.5 and 21.5 (+-0.7).  RailPost%d+  posts of EVERY railing, 3.0 tall (2.9..3.4).
---   WingRoof%u?%d*         low red hip roofs (172,78,72), at least 8 parts, highest top (ridge) 34.5 +-1.0, z union covers 74..247.
+--   WingRoof%u?%d*         low red hip roofs (172,78,72), at least 8 parts, highest top (ridge) 34.5 +-1.0 (the north wing's broad hip reaches 35.4, see its own assertion), z union covers 74..247.
 --   PavilionRoof%u?%d*     red hip roof, at least 4 parts, apex 36 +-1.0 and higher than the wing ridge by at least 0.5. A roof lantern is named PavilionLantern:
 --                          any name matching this pattern (PavilionRoofL, PavilionRoof2) counts as roof and its top would be the apex.
 --   PorticoDeck            ONE part, the terrace: top y 9.5 (+-0.7), x -262.6..-250.4, z 145.6..174.4. BP1: a low terrace on slim posts with a balustrade
@@ -258,8 +258,8 @@ local function run(opts)
 			#norm == 14 and #tall == 4 and badN == 0 and badT == 0,
 			#norm .. " arches + " .. #tall .. " tall, off " .. badN .. "/" .. badT)
 		local function hasAt(list, z, tol) for _, u in ipairs(list) do if near(cen(u).Z, z, tol) then return true end end return false end
-		check("tall windows sit at the two end bays (z 77.4 and 243.3) and on both flanks of the pavilion (z 150.4 and 169.6); the pavilion centre arch (z 160) is ordinary",
-			hasAt(tall, 77.4, 4) and hasAt(tall, 243.3, 4) and hasAt(tall, 150.4, 5) and hasAt(tall, 169.6, 5) and hasAt(norm, 160, 3))
+		check("tall windows sit at the two end bays (north z 77.4, south z 237.0: centred between the last two pilasters) and on both flanks of the pavilion (z 150.4 and 169.6); the pavilion centre arch (z 160) is ordinary",
+			hasAt(tall, 77.4, 4) and hasAt(tall, 237.0, 2.5) and hasAt(tall, 150.4, 5) and hasAt(tall, 169.6, 5) and hasAt(norm, 160, 3))
 		-- BP1 and BP2 agree (audit_bp2 A6, A8): the arches on both wings repeat at pitch 9.25 and are 7.9 wide (outer frame), the two pavilion flank arches are 5.0 wide
 		local function wingArches(z0, z1)
 			local t = {}
@@ -292,6 +292,41 @@ local function run(opts)
 			end
 		end
 		check("pavilion flank arches (ArchWindowTall between z 146 and 174): exactly 2, each 5.0 wide (+-0.5), double height kept", #flank == 2 and badFlank == 0, #flank .. " flank arches, " .. badFlank .. " off width")
+		-- R1b (BP1 elevation crops elev_left and elev_right, BP2 elevation): the tall end arch bay carries no rail across it on either floor, the arch stands
+		-- centred between its two pilasters (the drawing leaves about 2 studs of wall each side), and the south end keeps a short railed strip beyond its end pilaster
+		local endArch = {}
+		for _, u in ipairs(tall) do local c = cen(u) if c.Z < 100 or c.Z > 200 then table.insert(endArch, u) end end
+		local crossed, gapBad, gapDetail = {}, 0, {}
+		local pilLoHi = {}
+		for _, p in ipairs(pil) do local lo, hi = wb(p) table.insert(pilLoHi, { lo = lo.Z, hi = hi.Z }) end
+		for _, u in ipairs(endArch) do
+			local alo, ahi = ub(u)
+			for _, p in ipairs(named("^Balustrade[23]%u?%d*$")) do
+				local rlo, rhi = wb(p)
+				if rlo.Z < ahi.Z - 0.5 and rhi.Z > alo.Z + 0.5 then table.insert(crossed, p.Name .. "@" .. sx(cen(u).Z)) end
+			end
+			for _, p in ipairs(named("^RailPost%d+$")) do
+				if p.Position.Z > alo.Z and p.Position.Z < ahi.Z and p.Position.X > -266 then table.insert(crossed, p.Name .. "@" .. sx(cen(u).Z)) end
+			end
+			local gL, gR = math.huge, math.huge
+			for _, q in ipairs(pilLoHi) do
+				if q.hi <= alo.Z + 0.5 then gL = math.min(gL, alo.Z - q.hi) end
+				if q.lo >= ahi.Z - 0.5 then gR = math.min(gR, q.lo - ahi.Z) end
+			end
+			if gL > 3.5 or gR > 3.5 then gapBad += 1 end
+			table.insert(gapDetail, sx(cen(u).Z) .. ": " .. sx(gL) .. "/" .. sx(gR))
+		end
+		check("end arch bays have no balustrade or rail post across them (floor 2 and floor 3), as BP1 and BP2 draw the tall grid arch clear of rails",
+			#endArch == 2 and #crossed == 0, #crossed .. " crossings: " .. table.concat(crossed, ", ", 1, math.min(#crossed, 4)))
+		check("each end arch stands centred in its bay: at most 3.5 studs of bare wall to the pilaster on either side (BP1 shows about 2)",
+			#endArch == 2 and gapBad == 0, table.concat(gapDetail, " | "))
+		local stripOk = { [2] = false, [3] = false }
+		for _, p in ipairs(named("^Balustrade[23]E%d*$")) do
+			local lo, hi = wb(p)
+			if lo.Z >= 243.5 and hi.Z <= 249.6 and hi.Z - lo.Z >= 3 then stripOk[tonumber(p.Name:match("^Balustrade(%d)"))] = true end
+		end
+		check("south end strip beyond the end pilaster (z 243.5..249.6) carries a rail on floor 2 and on floor 3 (Balustrade2E / Balustrade3E, 3+ long)",
+			stripOk[2] and stripOk[3], "floor 2 " .. tostring(stripOk[2]) .. ", floor 3 " .. tostring(stripOk[3]))
 		local w2 = named("^Window2_%d+$")
 		local badW = 0
 		for _, w in ipairs(w2) do local lo, hi = wb(w) if not (lo.Y >= 12 and hi.Y <= 19.5) then badW += 1 end end

@@ -273,3 +273,14 @@ Owner decision 2026-10-29: the Bagsakan roof stays red (BP2 does not fill it red
 | Old | Why | New |
 |---|---|---|
 | (none: arch width and pitch were not asserted; model had north pitch 8.9 / 6.6 wide, south pitch 10.5 / 7.6 wide, flank arches 7.4 wide) | BP1 and BP2 agree (audit_bp2 A6, A8): the wing arches repeat at pitch 9.25 and read 7.9 wide, the pavilion flank arches 4.9..5.0 wide | 7 north and 6 south `ArchWindow` units with outer frame width 7.9 (+-0.5), consecutive centre pitch 9.25 (+-0.4) in each wing; exactly 2 `ArchWindowTall` between z 146 and 174, each 5.0 wide (+-0.5). Double height kept: the existing `ArchWindowTall` bottom 9..10.8 and top 23.5+ stay |
+
+### Slice 4 Market, end arch bays (R1b), 2026-10-29
+Close-ups of the south wing and the pavilion flanks (beside `elev_left.png`, `elev_right.png`) showed two DIFFs. BP1's elevation draws each tall end arch clear of rails on both floors, centred between its two pilasters (about 2 studs of wall each side), and keeps a short railed strip beyond the end pilaster (about 4.0 studs at the south end, about 3 at the north end). The model ran one balustrade and its posts across both end arches, and its south arch sat against the end pilaster with 8.5 studs of bare wall on the other side.
+| Old | Why | New |
+|---|---|---|
+| Tall windows at the end bays: `hasAt(tall, 243.3, 4)` (south) | BP1 crop `elev_left.png`: the arch (8.6 wide) is centred in an 11.2 clear bay, with the end pilaster and a 4.0 strip beyond it; at the fixed frontage (hall end z 249.3, last wing pilaster z 229.9) that puts the arch centre at about z 237.0 | `hasAt(tall, 237.0, 2.5)` for the south end; the north end keeps `hasAt(tall, 77.4, 4)` (its end region is only 9.45 wide, so no outer strip fits) |
+| (none: rails across the end arches were not asserted) | BP1 and BP2 draw no rail across the tall end arch bay | No `Balustrade2*` or `Balustrade3*` part and no `RailPost` crosses either end arch |
+| (none) | BP1 crop: each end arch is centred in its bay | At most 3.5 studs of bare wall between each end arch and the nearest pilaster on either side |
+| (none) | BP1 crop `elev_left.png`: railed strip beyond the end pilaster, both floors | `Balustrade2E` and `Balustrade3E` (3+ long) inside z 243.5..249.6 |
+Not matched (honest DIFF): the north end has no outer strip (9.45 between the last wing pilaster and the hall end, the drawing implies about 14); the drawing also runs rails across the pavilion centre bay.
+Stale header comments fixed in the same commit: pilasters "1.6 wide" is 1.4 wide, the north wing roof reaches 35.4.
