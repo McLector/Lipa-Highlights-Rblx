@@ -4,7 +4,7 @@
 --   SideStallN1..11 and SideStallS1..10 Models, the north awning SideAwningN1..9 with 11 Counter parts under it).
 -- NOT built here (later jobs): tricycle queues (x -237..-231), vans. Those strips stay free: tricycles z 100..136 and 184..220, vans z 62..96 and 224..248, north yard kerb z 33..46,
 --   south yard x -470..-428 z 262..270. The south yard aisle z 247..263 stays open (two shoppers stand in it).
--- Side yards (R5b-2, BP1 iso_northyard and iso_shedsA, plain Concrete ground y 0): 21 pyramid-roof booths, 7 parts each (Counter, SidePole1..4, SideCanopy1 / SideCanopy2 as a stepped roof).
+-- Side yards (R5b-2, BP1 iso_northyard and iso_shedsA, plain Concrete ground y 0): 21 pyramid-roof booths, 9 parts each (Counter, SidePole1..4, SideCanopy1..4 as four corner-wedge quarters of a pyramid roof).
 --   BOOTHS below is the layout table; builders/site02_props.luau keeps a COPY (price boards, goods, vendors): keep the two in step.
 --   North row SideStallN1..11: centres x -455 + 14 (i - 1), roof z 50..57, counter z 53..55 (open front to the north kerb).
 --   South shed row SideStallS1..5: centres x -450, -420, -390, -360, -330, roof z 234..241, counter z 238..240 (customers come from the aisle, south).
@@ -146,7 +146,7 @@ return function(env)
 		env.section("Forecourt", function(ctx)
 			local cx, zm = B.cx, (B.z0 + B.z1) / 2
 			local A, A2 = UMB[(i - 1) % #UMB + 1], UMB[i % #UMB + 1]
-			-- counter 3.5 high (cloth-skirt colour), four thin wooden poles to y 7.6, a stepped pyramid roof of two flat plates (8 x 7 below, 5 x 4 above)
+			-- counter 3.5 high (cloth-skirt colour), four thin wooden poles to y 7.6, a pyramid roof of four corner-wedge quarters (8 x 7 base at y 7.6, apex y 9.4 over the centre)
 			wbox(ctx, "Counter", cx - 3, cx + 3, 0, 3.5, B.c0, B.c1, A:Lerp(COUNTER, 0.3), MCON)
 			local k = 0
 			for _, sx in ipairs({ -1, 1 }) do
@@ -155,8 +155,12 @@ return function(env)
 					wvcyl(ctx, "SidePole" .. k, cx + sx * 3.6, z, 0, 7.6, 0.4, WOOD, MWOO)
 				end
 			end
-			wbox(ctx, "SideCanopy1", cx - 4, cx + 4, 7.6, 7.95, B.z0, B.z1, A, MFAB)
-			wbox(ctx, "SideCanopy2", cx - 2.5, cx + 2.5, 7.95, 8.45, zm - 2, zm + 2, A2, MFAB)
+			-- BuildKit has no cornerWedge; _make takes any class, so the shared module stays untouched. Four quarters make a true pyramid (BP1 iso_northyard / iso_shedsA):
+			-- each CornerWedgePart is turned so its apex corner meets the others over the booth centre; opposite quarters share an umbrella colour
+			for q, Q in ipairs({ { 1, 1, 90, A }, { -1, -1, 270, A }, { 1, -1, 180, A2 }, { -1, 1, 0, A2 } }) do
+				local size = Q[3] % 180 == 0 and V(4, 1.8, 3.5) or V(3.5, 1.8, 4)
+				ctx:_make("CornerWedgePart", "SideCanopy" .. q, size, CFrame.new(lv(V(cx + Q[1] * 2, 8.5, zm + Q[2] * 1.75))) * CFrame.Angles(0, math.rad(Q[3]), 0), Q[4], MFAB)
+			end
 		end, model)
 	end
 	env.section("Forecourt", function(ctx)
