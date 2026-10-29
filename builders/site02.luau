@@ -20,7 +20,7 @@
 --     site02_hall   Hall/Shell, Hall/Windows                        420  (two containers, each at most 400 parts)
 --     site02_front  Hall/Shell (portico), Stairs, Scaffold          200
 --     site02_sheds  Sheds/Gabled, Sheds/Markets, Bagsakan           450
---     site02_block   CornerBlock, ServiceBlock                      150
+--     site02_block   CornerBlock, ServiceBlock                      200
 --     site02_yard   Forecourt, Yard                                 550
 --   Every container holds at most 400 parts in its subtree (hard error at plan time); the site (built + kept parts) at most 2000.
 -- env fields (LOCAL coordinates unless the name starts with w; y is height above ground):
@@ -52,7 +52,7 @@ return function()
 		{ name = "site02_hall", owns = { ["Hall/Shell"] = true, ["Hall/Windows"] = true }, budget = 420 },
 		{ name = "site02_front", owns = { ["Hall/Shell"] = true, Stairs = true, Scaffold = true }, budget = 200 },
 		{ name = "site02_sheds", owns = { ["Sheds/Gabled"] = true, ["Sheds/Markets"] = true, Bagsakan = true }, budget = 450 },
-		{ name = "site02_block", owns = { CornerBlock = true, ServiceBlock = true }, budget = 150 },
+		{ name = "site02_block", owns = { CornerBlock = true, ServiceBlock = true }, budget = 200 },
 		{ name = "site02_yard", owns = { Forecourt = true, Yard = true }, budget = 550 },
 	}
 	-- path -> { parent path ("" is the site), class, grouping }
