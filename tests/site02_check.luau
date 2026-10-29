@@ -699,6 +699,125 @@ local function run(opts)
 		check("side yards: 10+ stall blocks in the south yard (z 232.4..276.3) and 10+ in the north yard (z 33.3..71.1), x -471.4..-311.2", okS2 and okN2, dS2 .. " / " .. dN2)
 	end)
 
+	------------------------------------------------------------------ block: corner block (BP2) and service block (BP1 plan, BP2 plan)
+	-- CornerBlock (Structure/CornerBlock): BP2's louvred 4-storey block with the black-and-white checkerboard hoarding, long face parallel to the hall front, hoarding facing
+	--   east. Parts: ONE CornerBlockBody; 12 Checker%d+ (3 wide x 4 high squares of 8 x 6 on the east face); 10+ Louvre%d+; 3+ BlockBand%d+; 2+ BlockDoor%d+ (8..9.6 tall).
+	--   Bounds x -574..-540, z 244..324 (BP2 draws it about 100 long; the slot allows 80 without touching the Bagsakan), top 29..32. No text, no decals.
+	-- ServiceBlock (Structure/ServiceBlock): BP1 plan z 33..60 plus annex z 60..85 at the Bagsakan's north-west, flat roofs. Parts: ONE ServiceBlockBody, ONE ServiceAnnex,
+	--   4+ ServiceRoofEdge%d+, 2+ ServiceDoor%d+ (8..9.6 tall, README rule 7). BP1 reads the height at about 7; a door 8 tall needs a body of at least 9, so the top is 9..10.5.
+	pcallGroup("block", function()
+		local function noText(root)
+			local n = 0
+			for _, d in ipairs(root:GetDescendants()) do
+				if d:IsA("SurfaceGui") or d:IsA("BillboardGui") or d:IsA("TextLabel") or d:IsA("Decal") or d:IsA("Texture") then n += 1 end
+			end
+			return n
+		end
+		local function touching(root, lo, hi) -- own parts outside root that come within 1 stud of the box
+			local hit = {}
+			for _, p in ipairs(own) do
+				if not p:IsDescendantOf(root) then
+					local a, b = wb(p)
+					if a.X < hi.X + 1 and b.X > lo.X - 1 and a.Y < hi.Y + 1 and b.Y > lo.Y - 1 and a.Z < hi.Z + 1 and b.Z > lo.Z - 1 then table.insert(hit, p.Name) end
+				end
+			end
+			return hit
+		end
+		local function tallDoors(pat)
+			local l, bad = named(pat), 0
+			for _, d in ipairs(l) do local lo, hi = wb(d) if not (between(hi.Y - lo.Y, 8, 9.6) and lo.Y <= 0.6) then bad += 1 end end
+			return l, bad
+		end
+		-- corner block
+		local cb = container("Structure/CornerBlock")
+		local cbN = cb and #partsIn(cb) or 0
+		check("Structure/CornerBlock exists and holds 40..120 parts (BP2 louvred block with the checkerboard hoarding)", cbN >= 40 and cbN <= 120, cb and tostring(cbN) or "missing")
+		if cb then
+			local clo, chi = ub(cb)
+			check("CornerBlock bounds: x -574..-540 (+-2), z 244..324 (+-2), top y 29..32, nothing below y -0.5, inside the slot",
+				near(clo.X, -574, 2) and near(chi.X, -540, 2) and near(clo.Z, 244, 2) and near(chi.Z, 324, 2) and between(chi.Y, 29, 32) and clo.Y >= -0.5 and clo.X >= -576 and chi.Z <= 325,
+				string.format("x %s..%s y %s..%s z %s..%s", sx(clo.X), sx(chi.X), sx(clo.Y), sx(chi.Y), sx(clo.Z), sx(chi.Z)))
+			local body, bodyOk, bodyD = single("CornerBlockBody")
+			check("CornerBlockBody is ONE unique part: x -574..-540 (+-1.5), z 244..324 (+-2), top y 29..31.5", bodyOk and body ~= nil and (function()
+				local lo, hi = wb(body)
+				return near(lo.X, -574, 1.5) and near(hi.X, -540, 1.5) and near(lo.Z, 244, 2) and near(hi.Z, 324, 2) and between(hi.Y, 29, 31.5)
+			end)(), bodyD)
+			-- checkerboard hoarding on the east face
+			local chk = named("^Checker%d+$")
+			local badChk = 0
+			for _, p in ipairs(chk) do
+				local lo, hi = wb(p)
+				if not (between(hi.X, -541, -538) and near(hi.Z - lo.Z, 8, 1) and near(hi.Y - lo.Y, 6, 1)) then badChk += 1 end
+			end
+			local klo, khi = union(chk)
+			check("checkerboard hoarding: exactly 12 Checker squares of 8 x 6 on the east face (x -541..-538), covering z 272..296 (+-2) and y 3..27 (+-1)",
+				#chk == 12 and badChk == 0 and near(klo.Z, 272, 2) and near(khi.Z, 296, 2) and near(klo.Y, 3, 1) and near(khi.Y, 27, 1),
+				#chk .. " squares, " .. badChk .. " off" .. (#chk > 0 and string.format(", z %s..%s y %s..%s", sx(klo.Z), sx(khi.Z), sx(klo.Y), sx(khi.Y)) or ""))
+			local flat, badAlt = 0, 0
+			for i = 1, #chk do
+				local ci = chk[i].Position
+				for j = i + 1, #chk do
+					local cj = chk[j].Position
+					local dz, dy = math.abs(ci.Z - cj.Z), math.abs(ci.Y - cj.Y)
+					if (near(dz, 8, 1) and dy < 1) or (near(dy, 6, 1) and dz < 1) then
+						local bi, bj = chk[i].Color.R + chk[i].Color.G + chk[i].Color.B, chk[j].Color.R + chk[j].Color.G + chk[j].Color.B
+						flat += 1
+						if math.abs(bi - bj) < 1.0 then badAlt += 1 end -- channels are 0..1, so 1.0 is a third of the white-to-dark range
+					end
+				end
+			end
+			check("checkerboard alternates: every pair of neighbouring squares differs strongly in brightness (white against blue-grey), 17 neighbour pairs in a 3 x 4 grid",
+				flat == 17 and badAlt == 0, flat .. " pairs, " .. badAlt .. " too alike")
+			-- louvres on the north and south ends and beside the hoarding
+			local lv = named("^Louvre%d+$")
+			local lvN, lvS, lvE = 0, 0, 0
+			for _, p in ipairs(lv) do
+				local lo, hi = wb(p)
+				local c = (lo + hi) / 2
+				if c.Z <= 247 then lvN += 1 elseif c.Z >= 321 then lvS += 1 elseif hi.X >= -541.5 and (hi.Z <= 271 or lo.Z >= 297) then lvE += 1 end
+			end
+			check("louvres: 10+ Louvre parts, 3+ on the north end (z <= 247), 3+ on the south end (z >= 321) and 3+ on the east face beside the hoarding",
+				#lv >= 10 and lvN >= 3 and lvS >= 3 and lvE >= 3, #lv .. " louvres: " .. lvN .. " north, " .. lvS .. " south, " .. lvE .. " east")
+			local bands = named("^BlockBand%d+$")
+			local bLo, bHi = 1e9, -1e9
+			for _, p in ipairs(bands) do bLo, bHi = math.min(bLo, p.Position.Y), math.max(bHi, p.Position.Y) end
+			check("storey bands: 3+ BlockBand parts whose heights spread over at least 7 studs (four storeys read as four)", #bands >= 3 and bHi - bLo >= 7, #bands .. " bands, spread " .. (#bands > 0 and sx(bHi - bLo) or "n/a"))
+			local bd, badBd = tallDoors("^BlockDoor%d+$")
+			check("corner block doors: 2+ BlockDoor parts on the ground, each 8..9.6 tall (human scale)", #bd >= 2 and badBd == 0, #bd .. " doors, " .. badBd .. " off")
+			check("corner block carries no text, gui or decal (the street sign and ring logo of BP2 stay off)", noText(cb) == 0, noText(cb) .. " found")
+			local hit = touching(cb, clo, chi)
+			check("corner block stands clear of everything else (Bagsakan, side yards, props): nothing within 1 stud of it", #hit == 0, #hit .. ": " .. table.concat(hit, ", ", 1, math.min(#hit, 4)))
+		end
+		-- service block and annex
+		local sb = container("Structure/ServiceBlock")
+		local sbN = sb and #partsIn(sb) or 0
+		check("Structure/ServiceBlock exists and holds 12..60 parts (BP1 plan block and annex at the Bagsakan's north-west)", sbN >= 12 and sbN <= 60, sb and tostring(sbN) or "missing")
+		if sb then
+			local sbody, sbOk, sbD = single("ServiceBlockBody")
+			check("ServiceBlockBody is ONE unique part: x -552..-497 (+-2), z 33..60 (+-2), top y 9..10.5", sbOk and sbody ~= nil and (function()
+				local lo, hi = wb(sbody)
+				return near(lo.X, -552, 2) and near(hi.X, -497, 2) and near(lo.Z, 33, 2) and near(hi.Z, 60, 2) and between(hi.Y, 9, 10.5)
+			end)(), sbD)
+			local ann, annOk, annD = single("ServiceAnnex")
+			check("ServiceAnnex is ONE unique part south of the block: x inside -553..-496, z 60..83 (+-2.5), top y 8..10.5, built against the block (z gap at most 1)", annOk and ann ~= nil and sbody ~= nil and (function()
+				local lo, hi = wb(ann)
+				local blo, bhi = wb(sbody)
+				return lo.X >= -553 and hi.X <= -496 and near(lo.Z, 60, 2.5) and near(hi.Z, 83, 2.5) and between(hi.Y, 8, 10.5) and math.abs(lo.Z - bhi.Z) <= 1
+			end)(), annD)
+			local re = named("^ServiceRoofEdge%d+$")
+			check("service block roof edge: 4+ ServiceRoofEdge parts (flat roof with a low parapet)", #re >= 4, tostring(#re))
+			local sd, badSd = tallDoors("^ServiceDoor%d+$")
+			check("service block doors: 2+ ServiceDoor parts on the ground, each 8..9.6 tall (human scale)", #sd >= 2 and badSd == 0, #sd .. " doors, " .. badSd .. " off")
+			local slo, shi = ub(sb)
+			check("service block bounds: x -553..-496, z 32..84 (nothing reaches the Bagsakan walls at z 84), nothing below y -0.5, top at most 10.5",
+				slo.X >= -553 and shi.X <= -496 and slo.Z >= 32 and shi.Z <= 84 and slo.Y >= -0.5 and shi.Y <= 10.5,
+				string.format("x %s..%s y %s..%s z %s..%s", sx(slo.X), sx(shi.X), sx(slo.Y), sx(shi.Y), sx(slo.Z), sx(shi.Z)))
+			check("service block carries no text, gui or decal", noText(sb) == 0, noText(sb) .. " found")
+			local sHit = touching(sb, slo, shi)
+			check("service block stands clear of everything else (Bagsakan, truck lane, north side yard): nothing within 1 stud of it", #sHit == 0, #sHit .. ": " .. table.concat(sHit, ", ", 1, math.min(#sHit, 4)))
+		end
+	end)
+
 	------------------------------------------------------------------ general: whole-site rules
 	pcallGroup("general", function()
 		local pv = site:GetPivot()
