@@ -30,7 +30,7 @@ Previous: 038-handoff.md (then 037 to 029 for the environment and rules). This f
 3. Corner block (+55 parts), service block + annex at the Bagsakan's north-west (+25; BP1 z 33..60 / annex 60..85, h 7).
 4. Street-edge red lean-to roofs: BP2 draws about 5 on the left side street and 3 at the front-left corner (each about 24..30 long, 12..14 deep, eave 8..9 at the kerb rising to 12..13); only 3 fit. Contradicts the check "4 LeanRoof, tin, x -265..-253, z 70..91 or 229..250": replace with BP2's numbers and a logged reason.
 5. Street vendors (10..12 umbrella stalls, people) and parked vehicles: contradicts "exactly 5 StreetStall" (replace). Lamp posts (6), two zebra crossings, kerb radius about 30 (small).
-6. Bagsakan: BP2 does not fill its roof red and shows a stepped dock canopy band (+4 parts): **ask the owner** (grey/galvanised vs red; the check says 2+ red slopes).
+6. Bagsakan: BP2 does not fill its roof red and shows a stepped dock canopy band (+4 parts). **Owner decided: the roof stays RED** (check "2+ red slopes" unchanged); the optional dock canopy strip may still be added.
 7. Scaffold re-lay (7 posts, 9 rails, 2 big X per panel; geometry already matches, 0 parts); BP2's iso draws a third frame on an end face (not legible, skip).
 8. Minor items still open from 037: floor-2 windows y 12.7..16.5, ground bays 7.3 wide, pilaster top 26.8 (test says 28+), name sign only on the pavilion in BP2 (keep the frieze).
 Kept deliberately: flat tarps (both drawings show an open grid but the contract wants 28+ canopies), stair run 52, 2 scaffold panels.
@@ -41,7 +41,7 @@ Own parts now 944 (883 built + 61 kept). The guard in `site02_check` is own part
 ## Pending on you (the owner)
 1. Save a NEW backup before the next rebuild (never Ctrl+S), for example `backups\slice-36-wip4.rbxl` (the hall roof changed since wip3).
 2. Send your more specific notes when you have looked again (what stands out most).
-3. Answer: should the Bagsakan roof stay red or turn grey as BP2 shows? And do you want the north-wing arches deleted to match BP2's tall roof (I recommend not)?
+3. Answered: Bagsakan roof stays red. Still open: do you want the north-wing arches deleted to match BP2's tall roof (I recommend not)?
 4. Pushing: not asked yet, ask before pushing. Look-at line (still to apply, test first): "Look at the rounded arches repeating along the top floor in a steady rhythm. Count the arches, and notice how the two stairs climb toward the middle."
 
 ## Next steps
