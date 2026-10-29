@@ -201,6 +201,11 @@ return function(t)
 		expect.truthy(string.find(look, "%f[%a]rhythm%f[%A]"), "site 10 lookAt lost 'rhythm'")
 	end)
 
+	t.test("real content: site 2 lookAt is the approved top-floor line (arches in a steady rhythm, the two stairs climb toward the middle)", function()
+		needTenSites()
+		expect.equal(TourContent.sites[2].lookAt, "Look at the rounded arches repeating along the top floor in a steady rhythm. Count the arches, and notice how the two stairs climb toward the middle.")
+	end)
+
 	t.test("real content: shared lists meet their minimum sizes", function()
 		expect.truthy(#TourContent.cityHallFacts >= 5)
 		expect.truthy(#TourContent.jeepLines >= 3)

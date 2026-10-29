@@ -305,6 +305,12 @@ return function(t)
 		end
 	end)
 
+	-- Look-at line (owner approved 2026-10-30; the model follows BP1 and BP2): arches run along the top floor, and the two mirrored stairs climb toward the middle.
+	t.test("Market look-at line (last dialogue line) names the top-floor arches and the two stairs climbing toward the middle", function()
+		local d = SiteData.byId(2).dialogue
+		expect.equal(d[#d], "Look at the rounded arches repeating along the top floor in a steady rhythm. Count the arches, and notice how the two stairs climb toward the middle.")
+	end)
+
 	-- Slice 14: the Cathedral model has paired round columns (not pilasters), butter-yellow walls, and the guide stands on the
 	-- forecourt above Plaza Independencia, down a flight of steps.
 	t.test("Cathedral dialogue describes the reworked model: columns, yellow walls, the steps down to the plaza", function()
