@@ -55,10 +55,10 @@
 -- SHEDS (Structure/Sheds/Gabled, Structure/Sheds/Markets): Models ShedA, ShedB, ShedC, ShedD (x -471.4..-415.6; A z 196.7..232.0, B 158.6..190.2,
 --   C 115.0..157.8, D 72.2..107.4, +-3). Inside each: Shed<L>Wall%d+, Shed<L>Column%d+, Shed<L>Roof%d+ (>= 2 red slopes (172,78,72) +-25), Shed<L>Ridge,
 --   Shed<L>Clerestory%d+ (>= 1, top >= roof top + 2, centre z inside the shed). Shed top 16..23. Models WetMarket1 (x -376..-312.3, z 190.6..231.6) and WetMarket2
---   (z 107.8..158.6), DryGoods (x -379.6..-311.2, z 159.6..189.5), parts CrossAisle%a*%d* (x -311.2..-299.7, z 71.4..249.3), MidBand%d+ roofs (optional).
---   Counter%d+  stall counters (top y 3.5 +-0.2), at least 8 inside each WetMarket. Canopy%d* tarps: at least 28 in all, 3+ colours.
+--   (z 112..153, BP1), DryGoods (x -379.6..-311.2, z 159.6..189.5), parts CrossAisle%a*%d* (x -311.2..-299.7, z 71.4..249.3), MidBand%d+ roofs (optional).
+--   Counter%d+  stall counters (top y 3.5 +-0.2), at least 24 inside WetMarket1 and 30 inside WetMarket2 (BP1: 28 and 35 stalls). Canopy%d* tarps: at least 28 in all, 3+ colours.
 -- BAGSAKAN (Structure/Bagsakan): parts Bagsakan%a+%d* (BagsakanWall, BagsakanRoof (>= 2 red slopes), BagsakanDoor) forming the long shed x -556..-506.3,
---   z 84..240.6 (+-3), ridge 19 (+-2.5); TruckBay%d+ (6: centres x -505..-488, three with z <= 136, three with z >= 188) and Truck%d+ (Models, one on each bay,
+--   z 84..240.6 (+-3), ridge 16 (+-2.5, BP1 pitch); TruckBay%d+ (6: centres x -505..-488, three with z <= 136, three with z >= 188) and Truck%d+ (Models, one on each bay,
 --   within 6 studs in z and inside the bay's x range).
 -- FORECOURT (Structure/Forecourt, Yard): LeanRoof%d+ (4, tin colours, x -265..-253, z 70..91 or 229..250), TricycleBody%d+ (8) with TricycleWheel%d+ (>= 24) and
 --   TricycleRoof%d+ (>= 8), x -237..-231, z 100..136 (4) and 184..220 (4); StreetStall%d+ Models (5) x -241..-235, z 244, 254, 264 and 62, 52 (+-3.5).
@@ -470,14 +470,16 @@ local function run(opts)
 					#slopes >= 2 and redN == #slopes and clereOk and #named("^Shed" .. letter .. "Ridge$") >= 1, #slopes .. " slopes (" .. redN .. " red), " .. #clere .. " clerestory")
 			end
 		end
-		for name, z in pairs({ WetMarket1 = { 190.6, 231.6 }, WetMarket2 = { 107.8, 158.6 } }) do
+		-- BP1 plan and iso (audit 2026-10-29): wet market 1 has 28 stalls (2x3 + 2x3 over 2x4 + 2x4 round a plus-shaped aisle), wet market 2 has 35 (3x3 + 2x3 over 3x4 + 2x4);
+		-- WetMarket2's stall field is z 115..150, not 107.8..158.6 (old text), so its bounds become z 112..153 (+-4 covers a canopy overhang)
+		for name, z in pairs({ WetMarket1 = { 190.6, 231.6, 24 }, WetMarket2 = { 112, 153, 30 } }) do
 			local u = units("^" .. name .. "$")[1]
 			local lo, hi
 			if u then lo, hi = ub(u) end
 			local n = 0
 			if u then for _, p in ipairs(partsIn(u)) do if p.Name:match("^Counter%d*$") then n += 1 end end end
-			check(name .. " is an open stall grid: x -376..-312.3, z " .. z[1] .. ".." .. z[2] .. " (+-4), 8+ Counter stalls inside",
-				u ~= nil and near(lo.X, -376, 4) and near(hi.X, -312.3, 4) and near(lo.Z, z[1], 4) and near(hi.Z, z[2], 4) and n >= 8, u and (n .. " counters") or "missing")
+			check(name .. " is an open stall grid: x -376..-312.3, z " .. z[1] .. ".." .. z[2] .. " (+-4), " .. z[3] .. "+ Counter stalls inside (BP1: 28 and 35 stalls)",
+				u ~= nil and near(lo.X, -376, 4) and near(hi.X, -312.3, 4) and near(lo.Z, z[1], 4) and near(hi.Z, z[2], 4) and n >= z[3], u and (n .. " counters") or "missing")
 		end
 		local dg = units("^DryGoods$")[1]
 		local dlo, dhi
@@ -491,8 +493,9 @@ local function run(opts)
 		local blo, bhi = union(bag)
 		local broof, redB = named("^BagsakanRoof%d+$"), 0
 		for _, p in ipairs(broof) do if roofRed(p) then redB += 1 end end
-		check("Bagsakan long shed: x -556..-506.3 (+-3), z 84..240.6 (+-3), ridge y 19 (+-2.5), 2+ red roof slopes",
-			#bag > 0 and near(blo.X, -556, 3) and near(bhi.X, -506.3, 3) and near(blo.Z, 84, 3) and near(bhi.Z, 240.6, 3) and near(bhi.Y, 19, 2.5) and #broof >= 2 and redB == #broof,
+		-- BP1 iso (audit 2026-10-29): the Bagsakan pitch is very low and the ridge reads about 15.5, not 19 (old text), so the ridge becomes 16 (+-2.5)
+		check("Bagsakan long shed: x -556..-506.3 (+-3), z 84..240.6 (+-3), ridge y 16 (+-2.5), 2+ red roof slopes",
+			#bag > 0 and near(blo.X, -556, 3) and near(bhi.X, -506.3, 3) and near(blo.Z, 84, 3) and near(bhi.Z, 240.6, 3) and near(bhi.Y, 16, 2.5) and #broof >= 2 and redB == #broof,
 			#bag > 0 and string.format("x %s..%s z %s..%s top %s", sx(blo.X), sx(bhi.X), sx(blo.Z), sx(bhi.Z), sx(bhi.Y)) or "missing")
 		local bays, trucks = units("^TruckBay%d+$"), units("^Truck%d+$")
 		local nN, nS, badBay, hasTruck = 0, 0, 0, 0

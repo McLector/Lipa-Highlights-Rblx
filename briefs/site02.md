@@ -252,3 +252,9 @@ Replaced or added assertions (group `hall`), each mirroring the blueprint; the o
 | (none) | BP1 shows a small flight of ground steps at the terrace's front corner | exactly 4 `PorchStep1..4`, each 0.2..0.6 above the one before, south of the deck (z 174..184), east edge at most x -250.39, top at most 2.5. Not named `Step[NS]` (those groups keep exactly 10) or `Portico...` (east-face rule) |
 
 Decision for the yard job (vehicles, owner: "you decide; my concern is only that we match the blueprint"): BP1 draws jeepney- and van-sized vehicles beside both stair feet and in both side yards, and trucks at the Bagsakan bays; it draws nothing tricycle sized. The old assertion "exactly 8 `TricycleBody` ..." came from the 2014 photo layout, not from BP1, and is to be replaced when the yard is built by parked-vehicle assertions (`ParkedVehicle%d+` Models with a `Kind` attribute Jeepney or Van, human scale, 10 parts or fewer each, outside the aisle and Guide boxes). Vehicle counts shrink to fit the part budget; the vehicles never shrink (README rule 7).
+
+### Slice 4 Market, sheds assertions replaced, 2026-10-29 (BP1 audit)
+| Old | Why | New |
+|---|---|---|
+| Bagsakan ridge 19 (+-2.5) | BP1 iso: the Bagsakan pitch is very low and the ridge reads about 15.5 | ridge 16 (+-2.5) |
+| WetMarket2 z 107.8..158.6 (+-4), 8+ `Counter` inside each WetMarket | BP1 plan: wet market 2's stall field is z 115..150; wet market 1 has 28 stalls (2x3 + 2x3 over 2x4 + 2x4 round a plus-shaped aisle), wet market 2 has 35 (3x3 + 2x3 over 3x4 + 2x4) | WetMarket2 z 112..153 (+-4); `Counter` at least 24 inside WetMarket1 and at least 30 inside WetMarket2 |
