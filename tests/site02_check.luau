@@ -772,6 +772,57 @@ local function run(opts)
 				#sideUnits == 21 and badSide == 0, #sideUnits .. " units, " .. badSide .. " off")
 		end
 		do
+			-- R5d (BP1 iso_northyard and iso_shedsA): the canopy is one pyramid, not stacked plates. Rays straight down onto each booth (Include filter on that booth only), any part class.
+			--   Rise = hit height above the pole tops. Apex (one ray per quarter, 0.25 off the seams) 1.2+, eaves and corners (0.4 inside the edge) 0..0.6, diagonal mid-points 0.6..1.3.
+			local rp = RaycastParams.new()
+			rp.FilterType = Enum.RaycastFilterType.Include
+			local HX, HZ = 4, 3.5 -- the 8 x 7 canopy base
+			local booths, nBad, worst = units("^SideStallN%d+$"), 0, ""
+			for _, u in ipairs(units("^SideStallS%d+$")) do table.insert(booths, u) end
+			for _, u in ipairs(booths) do
+				local poles, roofs, px, pz, top = 0, 0, 0, 0, 0
+				for _, p in ipairs(partsIn(u)) do
+					if p.Name:match("^SidePole%d+$") then
+						local _, phi = wb(p)
+						poles += 1
+						px += p.Position.X
+						pz += p.Position.Z
+						top = math.max(top, phi.Y)
+					elseif p.Name:match("^SideCanopy%d+$") then
+						roofs += 1
+					end
+				end
+				local why
+				if poles ~= 4 or roofs < 4 then
+					why = poles .. " poles, " .. roofs .. " SideCanopy parts (want 4 and 4+)"
+				else
+					local cx, cz = px / 4, pz / 4
+					rp.FilterDescendantsInstances = { u }
+					local function probe(label, dx, dz, lo, hi)
+						if why then return end
+						local hit = workspace:Raycast(Vector3.new(cx + dx, top + 30, cz + dz), Vector3.new(0, -60, 0), rp)
+						local rise = hit and hit.Position.Y - top
+						if not between(rise, lo, hi) then why = label .. " rise " .. (rise and sx(rise) or "no hit") .. " (want " .. lo .. ".." .. hi .. ")" end
+					end
+					for _, a in ipairs({ -1, 1 }) do
+						for _, b in ipairs({ -1, 1 }) do
+							probe("apex", a * 0.25, b * 0.25, 1.2, 4)
+							probe("corner", a * (HX - 0.4), b * (HZ - 0.4), 0, 0.6)
+							probe("diagonal", a * HX / 2, b * HZ / 2, 0.6, 1.3)
+						end
+						probe("x edge", a * (HX - 0.4), 0.25, 0, 0.6)
+						probe("z edge", 0.25, a * (HZ - 0.4), 0, 0.6)
+					end
+				end
+				if why then
+					nBad += 1
+					if worst == "" then worst = u.Name .. ": " .. why end
+				end
+			end
+			check("side booths (BP1 iso_northyard, iso_shedsA): each of the 21 canopies is a pyramid - 4 SideCanopy parts, apex 1.2+ over the pole tops, eaves and corners within 0.6, diagonals 0.6..1.3 (rays down, any part class)",
+				#booths == 21 and nBad == 0, #booths .. " booths, " .. nBad .. " off" .. (worst ~= "" and (", first " .. worst) or ""))
+		end
+		do
 			local aw, slab, counters = named("^SideAwningN%d+$"), false, 0
 			for _, p in ipairs(aw) do
 				local lo, hi = wb(p)

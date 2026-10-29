@@ -328,6 +328,7 @@ Owner decisions this session: the north side yard is a hybrid of BP1's two readi
 | Item | Source | Spec in the check |
 |---|---|---|
 | Side booths | BP1 `iso_northyard` and `iso_shedsA` (pyramid-roof canopy booths), BP2 `bp2_plan_whole` | exactly 21 `SideStallN/S` units (11 north, 10 south), each on the ground, 7..11 tall, 3+ parts including a `Counter` and a `SideCanopy` |
+| Side booth pyramid roofs (R5d, new assertion) | BP1 `iso_northyard` and `iso_shedsA` (hipped pyramid canopies, not stepped slabs) | each of the 21 booths has 4+ `SideCanopy%d+` parts; rays straight down (Include filter on that booth, any part class) rise over the pole tops: apex 1.2..4 (4 rays, one per quarter, 0.25 off the seams), eaves and corners 0.4 inside the edge 0..0.6, diagonal mid-points 0.6..1.3. Added beside the 21-unit check, which is unchanged. Reason: the flat two-plate roof read as a stepped slab (apex rise 0.85) where both blueprints show a pyramid. |
 | North awning | BP1 `iso_northyard` (continuous low awning on the shed wall) | 7+ `SideAwningN` parts including a slab 100+ long, top y 7.2..8.2, z 62..71.1, with 11+ counters under it |
 | Vendors | BP2 `bp2_iso_vendors_tricycles` (street vendors beside the stalls) | 6..9 rigs in `VendorNPCs`, feet on the ground, within 2.5 studs of a `Counter` or `Table`, outside the Guide, aisle and InfoPanel boxes, not inside any part |
 | Price boards | brief section "Price signs" (illustrative prices) | 28+ `PriceBoard`, each within 3 studs of a counter, every label a fixed TextSize |
