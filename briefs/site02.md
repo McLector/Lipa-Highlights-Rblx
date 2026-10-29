@@ -284,3 +284,8 @@ Close-ups of the south wing and the pavilion flanks (beside `elev_left.png`, `el
 | (none) | BP1 crop `elev_left.png`: railed strip beyond the end pilaster, both floors | `Balustrade2E` and `Balustrade3E` (3+ long) inside z 243.5..249.6 |
 Not matched (honest DIFF): the north end has no outer strip (9.45 between the last wing pilaster and the hall end, the drawing implies about 14); the drawing also runs rails across the pavilion centre bay.
 Stale header comments fixed in the same commit: pilasters "1.6 wide" is 1.4 wide, the north wing roof reaches 35.4.
+
+### Slice 4 Market, part guard (R4), 2026-10-29
+| Old | Why | New |
+|---|---|---|
+| Own parts (rigs excluded) 950..1500 | The model is 956 parts today; the corner block (about 60), service block (about 25), yard and vehicles (about 550 to 700) cannot fit under 1500. Owner, 2026-10-29: "raise it as much as u need" | Own parts 950..1800; the site total (rigs included) at most 2000 and the coordinator's hard cap stay unchanged. Nothing goes red from this change (956 is inside both bounds) |

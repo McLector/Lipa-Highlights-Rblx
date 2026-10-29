@@ -770,7 +770,7 @@ local function run(opts)
 			if plo.Y < lowest then lowest, lowName = plo.Y, p:GetFullName():sub(#site:GetFullName() + 2) end
 		end
 		check("no part anywhere in the site (rigs excluded) goes below y -0.6 (domes and heaps sink at most 0.6)", #own > 0 and lowest >= -0.601, sx(lowest) .. " at " .. lowName)
-		check("part count (rigs excluded) is between 950 and 1500 (the old model had 960)", #own >= 950 and #own <= 1500, tostring(#own))
+		check("part count (rigs excluded) is between 950 and 1800 (the old model had 960; raised from 1500 for the corner block, service block, yard and vehicles)", #own >= 950 and #own <= 1800, tostring(#own))
 		local all = 0
 		for _, d in ipairs(site:GetDescendants()) do if d:IsA("BasePart") then all += 1 end end
 		check("site total (rigs included) is at most " .. CAP.total, all <= CAP.total, tostring(all))
