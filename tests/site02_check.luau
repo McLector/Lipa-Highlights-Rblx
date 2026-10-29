@@ -744,9 +744,9 @@ local function run(opts)
 			local dz = math.max(0, alo.Z - bhi.Z, blo.Z - ahi.Z)
 			return math.sqrt(dx * dx + dz * dz)
 		end
-		local counterBoxes = {} -- Counter parts (side booths, wet markets) and the street stalls' Table counters
+		local counterBoxes = {} -- Counter parts (side booths, wet markets) and the street stalls' counters (the yard names them Stall<i>Table)
 		for _, p in ipairs(own) do
-			if p.Name:match("^Counter%d*$") or p.Name:match("^Table%d*$") then
+			if p.Name:match("^Counter%d*$") or p.Name:match("^Stall%d+Table$") then
 				local clo, chi = wb(p)
 				table.insert(counterBoxes, { clo, chi })
 			end
@@ -838,6 +838,40 @@ local function run(opts)
 			local okB, dB = goods("Baskets", 20, 0.8)
 			local okM, dM = goods("MarketStalls", 15, 0)
 			check("goods are visible and lie on counters: Produce 40+ parts and Baskets 20+ parts, 80 percent of them within 4 studs of a counter; MarketStalls 15+ parts", okP and okB and okM, dP .. " / " .. dB .. " / " .. dM)
+		end
+		-- R5c (BP1 iso_stairN and iso_northyard: jeepney and van sized vehicles beside both stair feet and in both side yards; BP2 bp2_iso_vendors_tricycles: a kerb row of boxy van forms).
+		--   The 8 tricycles above stay (BP2 labels the queue); these are the jeepneys and vans. Human scale: a jeepney or van is 9..14 long, 5..7.5 wide, 5..8 tall.
+		do
+			local vs, badV, nStairN, nStairS, nYardN, nYardS, hit = units("^ParkedVehicle%d+$"), 0, 0, 0, 0, 0, {}
+			local aisleBoxes = { { -250, -229, 148, 172 }, { -250.4, -228, 154, 166 }, { -247, -235, 142, 154 } }
+			for i, u in ipairs(vs) do
+				local lo, hi = ub(u)
+				local c = (lo + hi) / 2
+				local dx, dz, dy = hi.X - lo.X, hi.Z - lo.Z, hi.Y - lo.Y
+				local long, wide = math.max(dx, dz), math.min(dx, dz)
+				local kind = u:GetAttribute("Kind")
+				local inBox = false
+				for _, bx in ipairs(aisleBoxes) do if lo.X < bx[2] and hi.X > bx[1] and lo.Z < bx[4] and hi.Z > bx[3] then inBox = true end end
+				if not ((kind == "Jeepney" or kind == "Van") and #partsIn(u) >= 4 and #partsIn(u) <= 10 and between(long, 9, 14) and between(wide, 5, 7.5) and between(dy, 5, 8) and lo.Y <= 0.6 and not inBox) then badV += 1 end
+				if between(c.X, -240, -228) and between(c.Z, 60, 98) then nStairN += 1
+				elseif between(c.X, -240, -228) and between(c.Z, 222, 258) then nStairS += 1
+				elseif between(c.X, -470, -310) and between(c.Z, 33.3, 72) then nYardN += 1
+				elseif between(c.X, -470, -310) and between(c.Z, 232, 277) then nYardS += 1 end
+				for j = i + 1, #vs do
+					local a, b = ub(vs[j])
+					if lo.X < b.X - 0.2 and hi.X > a.X + 0.2 and lo.Z < b.Z - 0.2 and hi.Z > a.Z + 0.2 then table.insert(hit, u.Name .. "/" .. vs[j].Name) end
+				end
+				for _, p in ipairs(own) do -- nothing else stands where a vehicle stands (the apron slab and other thin ground parts are fine)
+					if not p:IsDescendantOf(u) and not isKept(p) then
+						local a, b = wb(p)
+						if b.Y > 0.6 and lo.X < b.X - 0.1 and hi.X > a.X + 0.1 and lo.Y < b.Y - 0.1 and hi.Y > a.Y + 0.1 and lo.Z < b.Z - 0.1 and hi.Z > a.Z + 0.1 then table.insert(hit, u.Name .. "/" .. p.Name) end
+					end
+				end
+			end
+			check("parked jeepneys and vans: 11 ParkedVehicle Models (Kind Jeepney or Van, 4..10 parts, 9..14 long, 5..7.5 wide, 5..8 tall, on the ground, out of the Guide, aisle and InfoPanel boxes): 2+ at each stair foot, 4+ in the north yard, 2+ in the south yard",
+				#vs == 11 and badV == 0 and nStairN >= 2 and nStairS >= 2 and nYardN >= 4 and nYardS >= 2,
+				#vs .. " vehicles, " .. badV .. " off; stairs " .. nStairN .. "N/" .. nStairS .. "S, yards " .. nYardN .. "N/" .. nYardS .. "S")
+			check("parked vehicles overlap no other vehicle and no other built part", #vs > 0 and #hit == 0, #hit .. ": " .. table.concat(hit, ", ", 1, math.min(#hit, 4)))
 		end
 	end)
 

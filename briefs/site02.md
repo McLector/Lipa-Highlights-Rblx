@@ -333,3 +333,12 @@ Owner decisions this session: the north side yard is a hybrid of BP1's two readi
 | Price boards | brief section "Price signs" (illustrative prices) | 28+ `PriceBoard`, each within 3 studs of a counter, every label a fixed TextSize |
 | `SampleBoard` | old brief, README rule 7 | one label "SAMPLE PRICES - FOR ILLUSTRATION", TextScaled off, inside the slot, clear of the wide Guide box |
 | Goods | task wording "baskets, price signs, food" | `Produce` 40+ parts, `Baskets` 20+ parts, 80 percent of each within 4 studs of a counter; `MarketStalls` 15+ parts |
+
+### Slice 4 Market, parked jeepneys and vans (R5c), 2026-10-30
+Decision 2026-10-29 (owner, "you decide; my concern is only that we match the blueprint"): the 8-tricycle assertion stays (BP2 labels a TRICYCLE QUEUE) and BP1's jeepney and van sized vehicles are added next to it. BP1 `iso_stairN` draws 4 to 5 vehicles beside each stair foot, `iso_northyard` 6 to 8 boxy forms at the north kerb, `iso_shedsA` 3 to 4 in the south yard; BP2 draws a kerb row of 12 vans. Counts shrink to the part budget (11 vehicles), the vehicles never shrink (README rule 7). Nothing replaced.
+| Item | Source | Spec in the check |
+|---|---|---|
+| `ParkedVehicle%d+` Models | BP1 `iso_stairN`, `iso_northyard`, `iso_shedsA`; BP2 `bp2_iso_vendors_tricycles` | exactly 11; attribute `Kind` Jeepney or Van; 4..10 parts; 9..14 long, 5..7.5 wide, 5..8 tall; on the ground; clear of the Guide, aisle and InfoPanel boxes; 2+ at each stair foot (centre x -240..-228, z 60..98 and 222..258), 4+ in the north yard, 2+ in the south yard |
+| Overlap | BP1 plan | no vehicle overlaps another vehicle or any other built part above the ground slab |
+Planned slots: apron north z 68 and 80, apron south z 229 and 241 (x -233.5, 11 long along z, beside the tricycle strips z 100..136 and 184..220 and clear of the stall clusters); north yard kerb x -450, -420, -390, -360, -330 at z 36..42; south yard west end x -455 and -435 at z 263..269.
+Counter naming (R5b-1 finding): the yard names each street-stall counter `Stall<i>Table`, not `Table`. The R5b guard rails first matched `^Table%d*$` and so saw no street counter; they now match `^Counter%d*$` or `^Stall%d+Table$`. The agent's workaround (11 thin cloth parts named `Table1..11`) was dropped from `site02_props` because it added nothing the blueprints show.
