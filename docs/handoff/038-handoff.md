@@ -7,7 +7,7 @@ Previous: 037-handoff.md (then 036 to 029 for the environment and rules). This f
 - NOT built yet: `builders/site02_yard.luau` (job 5b: forecourt, `YardSlab`, lean-tos, street stalls, side yards, props with visible goods, price signs, `SampleBoard`, vendors) and the parked vehicles (job 5c); the look-at line; the Play walks and `EXPECTED`; the shot-kit rows; the owner's side-by-side look at BP1 against the model.
 - Backup saved this session: `backups\slice-36-wip2.rbxl` (579,744 bytes), taken before the portico rebuild. The sheds are built since then: ask the owner for `slice-36-wip3.rbxl` before the next coordinator run.
 
-## Commits (local, no attribution trailer; nothing pushed, origin `095f6de`, 19 commits ahead after this file)
+## Commits (local, no attribution trailer; nothing pushed, origin `095f6de`, 20 commits ahead with this file)
 `96ae45c` test(site02): require the portico as a low terrace, as BP1 draws it
 `3420dfb` feat(site02): build the portico as an open terrace on slim posts
 `bcf75f9` test(site02): match the sheds assertions to the BP1 stall counts and ridge
