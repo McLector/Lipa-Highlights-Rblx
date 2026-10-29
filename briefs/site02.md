@@ -258,3 +258,5 @@ Decision for the yard job (vehicles, owner: "you decide; my concern is only that
 |---|---|---|
 | Bagsakan ridge 19 (+-2.5) | BP1 iso: the Bagsakan pitch is very low and the ridge reads about 15.5 | ridge 16 (+-2.5) |
 | WetMarket2 z 107.8..158.6 (+-4), 8+ `Counter` inside each WetMarket | BP1 plan: wet market 2's stall field is z 115..150; wet market 1 has 28 stalls (2x3 + 2x3 over 2x4 + 2x4 round a plus-shaped aisle), wet market 2 has 35 (3x3 + 2x3 over 3x4 + 2x4) | WetMarket2 z 112..153 (+-4); `Counter` at least 24 inside WetMarket1 and at least 30 inside WetMarket2 |
+
+| ShedC z 115.0..157.8 (+-3) | BP1 plan (audit 2026-10-29, confidence medium): sheds B and C are separated by a roof-free aisle at z 150.5..159, so C ends at 150.5. The old 157.8 swallowed the aisle. The builder left the model true to the drawing and the check red until this change | ShedC z 115.0..150.5 (+-3) |

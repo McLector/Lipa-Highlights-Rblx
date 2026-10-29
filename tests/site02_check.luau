@@ -53,7 +53,7 @@
 --   Truss), steel pipe, rusty (128,98,82), pipe thin (two smallest dimensions <= 1.2), z 177.6..231 (P1 205.3..231, P2 177.6..203.8, +-3), y 30.5..51, x -274..-263.
 --   40..80 parts. NO SurfaceGui, BillboardGui, TextLabel, Decal or Texture anywhere under it and no gui adorned to it.
 -- SHEDS (Structure/Sheds/Gabled, Structure/Sheds/Markets): Models ShedA, ShedB, ShedC, ShedD (x -471.4..-415.6; A z 196.7..232.0, B 158.6..190.2,
---   C 115.0..157.8, D 72.2..107.4, +-3). Inside each: Shed<L>Wall%d+, Shed<L>Column%d+, Shed<L>Roof%d+ (>= 2 red slopes (172,78,72) +-25), Shed<L>Ridge,
+--   C 115.0..150.5 (BP1: roof-free aisle z 150.5..159 between B and C), D 72.2..107.4, +-3). Inside each: Shed<L>Wall%d+, Shed<L>Column%d+, Shed<L>Roof%d+ (>= 2 red slopes (172,78,72) +-25), Shed<L>Ridge,
 --   Shed<L>Clerestory%d+ (>= 1, top >= roof top + 2, centre z inside the shed). Shed top 16..23. Models WetMarket1 (x -376..-312.3, z 190.6..231.6) and WetMarket2
 --   (z 112..153, BP1), DryGoods (x -379.6..-311.2, z 159.6..189.5), parts CrossAisle%a*%d* (x -311.2..-299.7, z 71.4..249.3), MidBand%d+ roofs (optional).
 --   Counter%d+  stall counters (top y 3.5 +-0.2), at least 24 inside WetMarket1 and 30 inside WetMarket2 (BP1: 28 and 35 stalls). Canopy%d* tarps: at least 28 in all, 3+ colours.
@@ -444,7 +444,7 @@ local function run(opts)
 
 	------------------------------------------------------------------ sheds: gabled sheds, wet markets, Bagsakan
 	pcallGroup("sheds", function()
-		local spec = { A = { 196.7, 232.0 }, B = { 158.6, 190.2 }, C = { 115.0, 157.8 }, D = { 72.2, 107.4 } }
+		local spec = { A = { 196.7, 232.0 }, B = { 158.6, 190.2 }, C = { 115.0, 150.5 }, D = { 72.2, 107.4 } }
 		local found = 0
 		for letter, z in pairs(spec) do
 			local u = units("^Shed" .. letter .. "$")[1]
