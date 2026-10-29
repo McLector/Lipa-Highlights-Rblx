@@ -1,7 +1,7 @@
 -- site02_front: the front of Site 02 (Candido B. Lopez Memorial Public Market), rebuilt from PublicMarketBP1.jpg (Slice 4, job 4b).
 -- Studio copy: ServerStorage.Builders.site02_front. Assembler: builders/site02.luau. Check: tests/site02_check.luau, group "hall".
 -- Owns: the portico of the pavilion (inside Structure/Hall/Shell), the two stairs (Structure/Stairs) and the rooftop pipe scaffold over the
--- south wing (Structure/Scaffold). The hip roof over the pavilion (built by site02_hall) reaches x -250.4, so the 4 portico columns carry it.
+-- south wing (Structure/Scaffold). The portico is a low terrace on 4 slim posts, open above (BP1); the pavilion hip roof (site02_hall) stops at the body.
 -- All numbers are WORLD (x east, z south, y up); env.wbox / env.wvcyl / env.W convert to the assembler's local frame (local = world - ORIGIN).
 -- Pure function of env: nothing is read from the DataModel. Naming contract: briefs/site02.md.
 return function(env)
@@ -19,20 +19,38 @@ return function(env)
 	end
 
 	------------------------------------------------------------------ portico (Structure/Hall/Shell)
-	-- 4 round red columns across the pavilion front, east edge at x -250.6 (centre -251.8, radius 1.2); an entablature and side beams carry the
-	-- pavilion roof (eave y 30.5). Every Portico part stops at x -250.4: the aisle box (x -250.4..-228) and the Guide boxes stay free.
+	-- BP1: the pavilion's projection is a low terrace at floor-2 height (deck top y 9.5) on 4 slim round red posts, with a balustrade round the front
+	-- and both sides, open above and with no roof over it (the pavilion hip roof stops at the body, x -262.6). The two stairs land on the deck at its
+	-- north and south ends, so the side rails stop at x -256.5. A short flight of 4 ground steps stands at the terrace's south-front corner.
+	-- Every Portico part stops at x -250.4: the aisle box (x -250.4..-228) and the Guide boxes stay free.
 	env.section("Hall/Shell", function(ctx)
 		local XC, XW0, XE0 = -251.8, -253.2, -250.4
 		wbox(ctx, "PorticoBase1", -262.6, XE0, 0, 0.45, 145.6, 174.4, PAVE, MCON)
 		for i, z in ipairs({ 148, 156, 164, 172 }) do
 			wbox(ctx, "PorticoPlinth" .. i, XW0, XE0, 0, 0.9, z - 1.4, z + 1.4, WALL, MCON)
-			wvcyl(ctx, "PorticoColumn" .. i, XC, z, 0, 28.0, 2.4, RED, MSMO)
-			wbox(ctx, "PorticoCapital" .. i, XW0, XE0, 27.6, 28.4, z - 1.4, z + 1.4, WALL, MCON)
+			wvcyl(ctx, "PorticoColumn" .. i, XC, z, 0, 9.3, 1.8, RED, MSMO) -- top 9.3 hides inside the deck slab (8.5..9.5)
 		end
-		wbox(ctx, "PorticoEntablature1", XW0, XE0, 28.4, 30.0, 145.6, 174.4, WALL, MCON)
-		wbox(ctx, "PorticoCornice1", -253.4, XE0, 30.0, 30.5, 145.6, 174.4, DRED, MSMO)
-		wbox(ctx, "PorticoBeam1", -262.6, XW0, 28.4, 30.0, 146.6, 149.4, WALL, MCON)
-		wbox(ctx, "PorticoBeam2", -262.6, XW0, 28.4, 30.0, 170.6, 173.4, WALL, MCON)
+		wbox(ctx, "PorticoDeck", -262.6, XE0, 8.5, 9.5, 145.6, 174.4, WALL, MCON)
+		wbox(ctx, "PorticoFascia1", -251.0, XE0, 7.9, 8.5, 145.6, 174.4, DRED, MSMO)
+		-- balustrade: front rail along x -251.0, side rails from the landings' end (x -256.5) to the front; rail top 12.5, posts 3.0 tall
+		wbox(ctx, "Balustrade2P1", -251.3, -250.7, 12.1, 12.5, 145.6, 174.4, WALL, MCON)
+		wbox(ctx, "Balustrade2P2", -256.5, -250.7, 12.1, 12.5, 145.6, 146.2, WALL, MCON)
+		wbox(ctx, "Balustrade2P3", -256.5, -250.7, 12.1, 12.5, 173.8, 174.4, WALL, MCON)
+		local post = 100
+		local function railPost(x, z)
+			post += 1
+			wbox(ctx, "RailPost" .. post, x - 0.25, x + 0.25, 9.5, 12.5, z - 0.25, z + 0.25, WALL, MCON)
+		end
+		for k = 0, 10 do railPost(-251.0, 146.0 + 28.0 * k / 10) end
+		for _, x in ipairs({ -256.2, -254.2, -252.2 }) do
+			railPost(x, 145.9)
+			railPost(x, 174.1)
+		end
+		-- ground flight: step 4 touches the deck's south edge, step 1 is the lowest and farthest south; each rises 0.5, depth 1.5
+		for i = 1, 4 do
+			local z0 = 174.6 + (4 - i) * 1.5
+			wbox(ctx, "PorchStep" .. i, -255.0, -250.6, 0, 0.5 * i, z0, z0 + 1.5, STEP, MCON)
+		end
 	end)
 
 	------------------------------------------------------------------ stairs (Structure/Stairs)

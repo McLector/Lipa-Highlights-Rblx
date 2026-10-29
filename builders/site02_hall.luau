@@ -1,13 +1,13 @@
 -- site02_hall: the front arcade of Site 02 (Candido B. Lopez Memorial Public Market), rebuilt from PublicMarketBP1.jpg (Slice 4, job 4a).
 -- Studio copy: ServerStorage.Builders.site02_hall. Assembler: builders/site02.luau. Check: tests/site02_check.luau, group "hall".
 -- Owns Structure/Hall/Shell (walls, pilasters, bays, doors, slabs, cornices, railings, roofs, NameBand) and Structure/Hall/Windows
--- (ArchWindow / ArchWindowTall Models, Window2_n). NOT built here (job 4b, module site02_front): portico columns and roof, stairs, scaffold.
+-- (ArchWindow / ArchWindowTall Models, Window2_n). NOT built here (job 4b, module site02_front): portico terrace, stairs, scaffold.
 -- Numbers: scratch/site02/layout.md 3.1. All coordinates below are WORLD (frame x east, z south, y up); wbox / W convert to the
 -- assembler's local frame (local = world - ORIGIN, y unchanged). Pure function of env: nothing read from the DataModel.
 -- Storeys: ground (open rectangular bays, no arches) y 0..9.5, floor 2 to 18.5, floor 3 to the cornice at 30.5; arches on floor 3 only.
 -- Bays (north to south): 1 tall end bay, 7 north-wing bays, 3 pavilion bays (tall, ordinary, tall), 6 south-wing bays, 1 tall end bay = 18.
--- Roofs: low hips over each wing (eave 30.5, ridge 34.5, ridge along z), taller hip over the pavilion (apex 36, ridge along x) that
--- reaches x -250.4 so that the portico of job 4b has a roof overhead. Each roof face is a thin plate (rectangle or right-triangle wedge).
+-- Roofs: low hips over each wing (eave 30.5, ridge 34.5, ridge along z), taller hip over the pavilion body (apex 36, ridge along x) that
+-- stops at the body face x -262.6: BP1 draws the portico as an open terrace (job 4b) with no roof over it. Each roof face is a thin plate (rectangle or right-triangle wedge).
 return function(env)
 	local V, ANG, PI = env.V, env.ANG, env.PI
 	local W, wbox = env.W, env.wbox
@@ -142,13 +142,13 @@ return function(env)
 				end
 			end
 		end
-		-- roofs: low hip over each wing (ridge along z), taller hip over the pavilion (ridge along x, reaches the portico line x -250.4)
+		-- roofs: low hip over each wing (ridge along z), taller hip over the pavilion body (ridge along x, stops at the body face; the portico is an open terrace)
 		local function alongZ(u, v, y) return V(v, y, u) end
 		local function alongX(u, v, y) return V(u, y, v) end
 		local wn = namer("WingRoof")
 		hip(ctx, wn, Z0, ZP0, XW, XE, 30.5, 34.5, alongZ)
 		hip(ctx, wn, ZP1, Z1, XW, XE, 30.5, 34.5, alongZ)
-		hip(ctx, namer("PavilionRoof"), -303.3, -250.4, ZP0, ZP1, 30.5, 36.0, alongX)
+		hip(ctx, namer("PavilionRoof"), -303.3, XE, ZP0, ZP1, 30.5, 36.0, alongX)
 	end)
 
 	------------------------------------------------------------------ Structure/Hall/Windows
