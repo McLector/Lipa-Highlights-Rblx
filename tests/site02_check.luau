@@ -260,6 +260,38 @@ local function run(opts)
 		local function hasAt(list, z, tol) for _, u in ipairs(list) do if near(cen(u).Z, z, tol) then return true end end return false end
 		check("tall windows sit at the two end bays (z 77.4 and 243.3) and on both flanks of the pavilion (z 150.4 and 169.6); the pavilion centre arch (z 160) is ordinary",
 			hasAt(tall, 77.4, 4) and hasAt(tall, 243.3, 4) and hasAt(tall, 150.4, 5) and hasAt(tall, 169.6, 5) and hasAt(norm, 160, 3))
+		-- BP1 and BP2 agree (audit_bp2 A6, A8): the arches on both wings repeat at pitch 9.25 and are 7.9 wide (outer frame), the two pavilion flank arches are 5.0 wide
+		local function wingArches(z0, z1)
+			local t = {}
+			for _, u in ipairs(norm) do local c = cen(u) if c.Z > z0 and c.Z < z1 then table.insert(t, u) end end
+			table.sort(t, function(a, b) return cen(a).Z < cen(b).Z end)
+			return t
+		end
+		local function archDims(t)
+			local badW, badP = 0, 0
+			for i, u in ipairs(t) do
+				local lo, hi = ub(u)
+				if not near(hi.Z - lo.Z, 7.9, 0.5) then badW += 1 end
+				if i > 1 and not near(cen(u).Z - cen(t[i - 1]).Z, 9.25, 0.4) then badP += 1 end
+			end
+			return badW, badP
+		end
+		local archN, archS = wingArches(80, 146), wingArches(174, 240)
+		local nW, nP = archDims(archN)
+		local sW, sP = archDims(archS)
+		check("wing arches follow both drawings: 7 north and 6 south ArchWindow, each 7.9 wide (+-0.5), repeating at pitch 9.25 (+-0.4)",
+			#archN == 7 and #archS == 6 and nW + sW == 0 and nP + sP == 0,
+			#archN .. " north, " .. #archS .. " south, " .. (nW + sW) .. " off width, " .. (nP + sP) .. " off pitch")
+		local flank, badFlank = {}, 0
+		for _, u in ipairs(tall) do
+			local c = cen(u)
+			if between(c.Z, 146, 174) then
+				table.insert(flank, u)
+				local lo, hi = ub(u)
+				if not near(hi.Z - lo.Z, 5.0, 0.5) then badFlank += 1 end
+			end
+		end
+		check("pavilion flank arches (ArchWindowTall between z 146 and 174): exactly 2, each 5.0 wide (+-0.5), double height kept", #flank == 2 and badFlank == 0, #flank .. " flank arches, " .. badFlank .. " off width")
 		local w2 = named("^Window2_%d+$")
 		local badW = 0
 		for _, w in ipairs(w2) do local lo, hi = wb(w) if not (lo.Y >= 12 and hi.Y <= 19.5) then badW += 1 end end
