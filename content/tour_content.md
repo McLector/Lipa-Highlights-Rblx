@@ -56,7 +56,7 @@ Quiz: How much did Lipa's market cost to build?
   - Don't be shy to haggle. Just say tawad po, which means can I get a discount?
   - Our model follows a plan drawing and recent street photos, so some details may differ.
 - Goodbye: Balik ka ha, come back, okay? I'll save you the good mangoes.
-- Look at: Look at the rounded arches repeating along the front in a steady rhythm, with rows of windows above them. Count the arches, and notice how the stairs break up the line.
+- Look at: Look at the rounded arches repeating along the top floor in a steady rhythm. Count the arches, and notice how the two stairs climb toward the middle.
 - Display props:
   - market stalls
   - baskets

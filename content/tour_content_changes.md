@@ -99,7 +99,7 @@ Decision: your wording or mine.
 | Site | Elements | Origin |
 |---|---|---|
 | Cathedral | form, space | approved line, edited (tower tiers; plaza space); paired columns and warm walls removed (not in the current build) |
-| Market | rhythm, line | approved line plus "in a steady rhythm" |
+| Market | rhythm, line | reworded 2026-10-30 (owner approved): arches along the top floor, the two stairs climb toward the middle; source is the PublicMarketBP1 and BP2 blueprints the model is built from |
 | Lomi King | color, texture | approved line; bamboo screen is built |
 | Cafe | line, texture | approved line; fascia line and slatted chairs |
 | Carmel | emphasis, space | rewritten: the old line said "tall arched windows above the entry", which does not match the built facade (rose window and niche above the portico) |

@@ -61,7 +61,7 @@ SiteData.sites = {
 		{
 			"This is the Candido B. Lopez Memorial Public Market, the palengke where Lipa shops for produce, food, and daily needs. Our model follows a plan drawing and recent street photos, so some details may differ.",
 			"Did you know? Lipa's market goes back over a century. In 1914, a government report called the town's new concrete market probably the most complete of any provincial town in the islands.",
-			"Look at the rounded arches repeating along the front, with rows of windows above them. Count the arches, and notice how the stairs break up the line.",
+			"Look at the rounded arches repeating along the top floor in a steady rhythm. Count the arches, and notice how the two stairs climb toward the middle.",
 		},
 		"The public market shows everyday Lipa through food vendors, produce, coffee, local delicacies and small businesses.",
 		{ "jeromedoe.blogspot.com", "www.flickr.com" },
