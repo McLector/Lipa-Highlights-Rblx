@@ -293,6 +293,20 @@ local function run(opts)
 			#wr .. " parts (" .. wrRed .. " red), ridge " .. (#wr > 0 and sx(whi.Y) or "n/a") .. ", z " .. (#wr > 0 and (sx(wlo.Z) .. ".." .. sx(whi.Z)) or "n/a"))
 		check("central pavilion hip roof: 4+ red parts, apex y 36 (+-1) and higher than the wing ridge", #pr >= 4 and prRed == #pr and #wr > 0 and near(phi.Y, 36, 1) and phi.Y >= whi.Y + 0.5,
 			#pr .. " parts, apex " .. (#pr > 0 and sx(phi.Y) or "n/a") .. " vs wing ridge " .. (#wr > 0 and sx(whi.Y) or "n/a"))
+		-- BP2 (audit_bp2 A1/D1, owner chose the hybrid): the NORTH wing keeps its 7 arches but carries BP2's huge broad ribbed hip roof: it starts flush at the
+		-- pavilion's north face, runs 5.4 past the north end, overhangs 4 each side and has a long flat ridge (eave 30.5, ridge 35.4, still 0.6 under the pavilion apex)
+		local nwr = {}
+		for _, p in ipairs(wr) do if p.Position.Z < 146 then table.insert(nwr, p) end end
+		local nlo, nhi = union(nwr)
+		check("north wing roof is BP2's huge broad hip: 12+ WingRoof parts north of the pavilion, x -303.7..-258.6 (+-1.5), z 66..145.6 (+-1.5), ridge y 35.4 (+-0.5)",
+			#nwr >= 12 and near(nlo.X, -303.7, 1.5) and near(nhi.X, -258.6, 1.5) and near(nlo.Z, 66, 1.5) and near(nhi.Z, 145.6, 1.5) and near(nhi.Y, 35.4, 0.5),
+			#nwr .. " parts" .. (#nwr > 0 and string.format(", x %s..%s z %s..%s ridge %s", sx(nlo.X), sx(nhi.X), sx(nlo.Z), sx(nhi.Z), sx(nhi.Y)) or ""))
+		local ribs, badRib = named("^RoofRib%d+$"), 0
+		for _, p in ipairs(ribs) do
+			local lo, hi = wb(p)
+			if not (lo.X >= -304.2 and hi.X <= -258.1 and lo.Z >= 65.5 and hi.Z <= 146.1 and lo.Y >= 30.4 and hi.Y <= 36.0 and redTrim(p)) then badRib += 1 end
+		end
+		check("BP2 ribbed roof: 6+ RoofRib strips on the north hip, all inside its extent (y 30.4..36), red", #ribs >= 6 and badRib == 0, #ribs .. " ribs, " .. badRib .. " off")
 		-- portico
 		local por, cols = named("^Portico%a*%d*$"), named("^PorticoColumn%d+$")
 		local _, porHi = union(por)
