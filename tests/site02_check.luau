@@ -38,7 +38,10 @@
 --   WingRoof%u?%d*         low red hip roofs (172,78,72), at least 8 parts, highest top (ridge) 34.5 +-1.0, z union covers 74..247.
 --   PavilionRoof%u?%d*     red hip roof, at least 4 parts, apex 36 +-1.0 and higher than the wing ridge by at least 0.5. A roof lantern is named PavilionLantern:
 --                          any name matching this pattern (PavilionRoofL, PavilionRoof2) counts as roof and its top would be the apex.
---   Portico%a*%d*          portico parts; max east face -250.4 (+-2). PorticoColumn%d+ (exactly 4): round (Cylinder), red, 9+ tall, standing on the ground,
+--   PorticoDeck            ONE part, the terrace: top y 9.5 (+-0.7), x -262.6..-250.4, z 145.6..174.4. BP1: a low terrace on slim posts with a balustrade
+--                          (Balustrade2P%d rails, RailPost%d+ posts, 3 tall), open above, no roof over it: no PorticoEntablature/Capital/Cornice/Beam, no
+--                          PorticoColumn top above y 12, PavilionRoof east edge at most x -262. PorchStep1..4: a short ground flight at the terrace's south-front corner.
+--   Portico%a*%d*          portico parts; max east face -250.4 (+-2). PorticoColumn%d+ (exactly 4): round (Cylinder), red, 9+ tall (9.3), standing on the ground,
 --                          centre x -260 or further east, z 146..174, and the EAST EDGE (centre + radius) at most -250.39 so that no column reaches the aisle box
 --                          (x -250.4..-228) or the wide Guide box (x -250..-229): with radius 1.2 that is a centre of -251.6 or further west.
 -- STAIRS (Structure/Stairs): two stairs, mirror-symmetric about z 160. North stair N, south stair S.
@@ -301,6 +304,40 @@ local function run(opts)
 		end
 		check("portico: front face x -250.4 (+-2), exactly 4 round red PorticoColumn parts (9+ tall, on the ground, east edge at most x -250.39)", #por > 0 and near(porHi.X, -250.4, 2) and #cols == 4 and badCol == 0,
 			#cols .. " columns, " .. badCol .. " off, front " .. (#por > 0 and sx(porHi.X) or "n/a"))
+		-- BP1 (audit 2026-10-29, crop iso_portico): the pavilion's projection is a LOW TERRACE at floor-2 height on slim posts with a balustrade, open above, no roof over it
+		local deck, deckOk, deckD = single("PorticoDeck")
+		check("PorticoDeck is ONE unique part", deckOk, deckD)
+		if deck then
+			local lo, hi = wb(deck)
+			check("PorticoDeck: top y 9.5 (+-0.7), x -262.6..-250.4 (+-1), z 145.6..174.4 (+-1.5)",
+				near(hi.Y, 9.5, 0.7) and near(lo.X, -262.6, 1) and near(hi.X, -250.4, 1) and hi.X <= -250.39 and near(lo.Z, 145.6, 1.5) and near(hi.Z, 174.4, 1.5),
+				string.format("x %s..%s z %s..%s top %s", sx(lo.X), sx(hi.X), sx(lo.Z), sx(hi.Z), sx(hi.Y)))
+		end
+		local tallCol = 0
+		for _, c in ipairs(cols) do local _, hi = wb(c) if hi.Y > 12 then tallCol += 1 end end
+		check("portico posts are slim terrace posts: no PorticoColumn top above y 12", #cols == 4 and tallCol == 0, tallCol .. " of " .. #cols .. " rise above y 12")
+		local oldTop = #named("^PorticoEntablature%d*$") + #named("^PorticoCapital%d*$") + #named("^PorticoCornice%d*$") + #named("^PorticoBeam%d*$")
+		check("no portico entablature, capitals, cornice or beams (BP1: open above the terrace)", oldTop == 0, oldTop .. " parts")
+		local pRail, pPost = 0, 0
+		for _, p in ipairs(named("^Balustrade2%u?%d*$")) do local lo, hi = wb(p) if lo.X >= -262.7 and hi.X <= -250.3 and lo.Z >= 145 and hi.Z <= 175 then pRail += 1 end end
+		for _, p in ipairs(named("^RailPost%d+$")) do local lo, hi = wb(p) if lo.X >= -262.7 and hi.X <= -250.3 and lo.Z >= 145 and hi.Z <= 175 and near(lo.Y, 9.5, 0.7) then pPost += 1 end end
+		check("terrace balustrade: 3+ Balustrade2 rails and 8+ RailPost posts standing on the deck (rail top 12.5 is checked with the other floor-2 rails)", pRail >= 3 and pPost >= 8, pRail .. " rails, " .. pPost .. " posts")
+		check("pavilion hip roof stops at the body: PavilionRoof east edge at most x -262 (BP1: no roof over the terrace)", #pr > 0 and phi.X <= -262, #pr > 0 and ("east edge " .. sx(phi.X)) or "no roof")
+		local ps = {}
+		for _, p in ipairs(named("^PorchStep%d+$")) do ps[tonumber(p.Name:match("%d+$"))] = p end
+		local psOk, psD = #ps == 4, #ps .. " steps"
+		if psOk then
+			for i = 1, 4 do
+				local lo, hi = wb(ps[i])
+				if not (hi.X <= -250.39 and lo.X >= -262 and between(lo.Z, 174, 184) and hi.Y <= 2.5 and lo.Y <= 0.2) then psOk, psD = false, "step " .. i .. " off: " .. string.format("x %s..%s z %s..%s top %s", sx(lo.X), sx(hi.X), sx(lo.Z), sx(hi.Z), sx(hi.Y)) break end
+				if i > 1 then
+					local _, hp = wb(ps[i - 1])
+					local rise = hi.Y - hp.Y
+					if rise < 0.2 or rise > 0.6 or not (ps[i].Position.Z < ps[i - 1].Position.Z) then psOk, psD = false, "step " .. i .. " rise " .. sx(rise) break end
+				end
+			end
+		end
+		check("BP1 ground flight at the terrace's south-front corner: exactly 4 PorchStep parts, each rising 0.2..0.6 toward the deck, east edge at most x -250.39, top at most 2.5", psOk, psD)
 		-- name band
 		local nb, nbOk, nbd = single("NameBand")
 		check("NameBand is ONE unique part", nbOk, nbd)
