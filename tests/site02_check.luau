@@ -668,27 +668,67 @@ local function run(opts)
 		end
 		check("8 tricycles queue at the apron (4 north z 100..136, 4 south z 184..220, x -237..-231) with 24+ wheels and 8+ roofs",
 			#tri == 8 and nQ == 4 and sQ == 4 and badTri == 0 and #named("^TricycleWheel%d+$") >= 24 and #named("^TricycleRoof%d+$") >= 8, #tri .. " bodies (" .. nQ .. "N/" .. sQ .. "S), " .. #named("^TricycleWheel%d+$") .. " wheels")
-		-- lean-tos
-		local lean, badLean = named("^LeanRoof%d+$"), 0
+		-- lean-tos: BP2 iso (bp2_iso_leantos_left.png) draws big red mono-pitch roofs along the street edge of the north wing; 3 fit the model
+		local lean, badLean, leanN, leanW = named("^LeanRoof%d+$"), 0, 0, 0
 		for _, p in ipairs(lean) do
-			if not (tinCol(p) and between(p.Position.X, -265, -253) and (between(p.Position.Z, 70, 91) or between(p.Position.Z, 229, 250))) then badLean += 1 end
+			local lo, hi = wb(p)
+			local c = (lo + hi) / 2
+			local dx, dz = hi.X - lo.X, hi.Z - lo.Z
+			local long, deep = math.max(dx, dz), math.min(dx, dz)
+			local siteN = between(c.X, -312, -250) and between(c.Z, 52, 72) -- the strip north of the hall end wall
+			local siteW = between(c.X, -264, -248) and between(c.Z, 70, 90) -- the front of the north wing, between the end wall and the north stair foot
+			if siteN then leanN += 1 elseif siteW then leanW += 1 end
+			if not (roofRed(p) and (siteN or siteW) and between(long, 14, 30) and between(deep, 9, 14.5) and between(lo.Y, 7.5, 9.5) and between(hi.Y, 11.5, 13.3)) then badLean += 1 end
 		end
-		check("4 tin lean-to roofs on the ground frontage (rust or grey, x -265..-253, z 70..91 or 229..250, clear of the stair feet)", #lean == 4 and badLean == 0, #lean .. " roofs, " .. badLean .. " off")
-		-- street stalls and side yards
-		local st, badSt = units("^StreetStall%d+$"), 0
-		for _, u in ipairs(st) do
-			local c = cen(u)
-			local okz = false
-			for _, z in ipairs({ 244, 254, 264, 62, 52 }) do if near(c.Z, z, 3.5) then okz = true end end
-			if not (between(c.X, -241, -235) and okz) then badSt += 1 end
+		check("3 red lean-to roofs (BP2: mono-pitch, 14..30 long, 9..14.5 deep, eave y 8..9, high edge y 12..13): 2 on the strip north of the hall end (x -312..-250, z 52..72) and 1 in front of the north wing (x -264..-248, z 70..90)",
+			#lean == 3 and badLean == 0 and leanN == 2 and leanW == 1, #lean .. " roofs, " .. badLean .. " off, " .. leanN .. " north strip, " .. leanW .. " wing front")
+		check("lean-to posts: 8+ LeanPost parts, each 7.5..9.5 tall and standing on the ground", (function()
+			local posts, bad = named("^LeanPost%d+$"), 0
+			for _, p in ipairs(posts) do local lo, hi = wb(p) if not (between(hi.Y - lo.Y, 7.5, 9.5) and lo.Y <= 0.6) then bad += 1 end end
+			return #posts >= 8 and bad == 0
+		end)(), #named("^LeanPost%d+$") .. " posts")
+		do
+			local stairs, hitStair = {}, {}
+			for _, p in ipairs(own) do if p.Name:match("^Step[NS]%d+$") or p.Name:match("^StairLanding[NS]$") then table.insert(stairs, p) end end
+			for _, r in ipairs(lean) do
+				local a, b = wb(r)
+				for _, s in ipairs(stairs) do
+					local c, d = wb(s)
+					if a.X < d.X + 1 and b.X > c.X - 1 and a.Y < d.Y + 1 and b.Y > c.Y - 1 and a.Z < d.Z + 1 and b.Z > c.Z - 1 then table.insert(hitStair, r.Name .. "/" .. s.Name) end
+				end
+			end
+			check("lean-to roofs stand clear of the stair feet (3 roofs, nothing within 1 stud of a step or landing)", #lean == 3 and #stairs > 0 and #hitStair == 0, #hitStair .. ": " .. table.concat(hitStair, ", ", 1, math.min(#hitStair, 4)))
 		end
-		local missingZ = {}
-		for _, z in ipairs({ 244, 254, 264, 62, 52 }) do -- each of the five rows is taken by a stall (two stalls on one row do not pass)
-			local taken = false
-			for _, u in ipairs(st) do if near(cen(u).Z, z, 3.5) then taken = true end end
-			if not taken then table.insert(missingZ, z) end
+		-- street vendors: BP2 draws dense umbrella and tent clusters at the hall's front corners (about 10..12 tents)
+		local st, nN, nS, badSt, overlapSt = units("^StreetStall%d+$"), 0, 0, 0, 0
+		for i, u in ipairs(st) do
+			local lo, hi = ub(u)
+			local c = (lo + hi) / 2
+			if between(c.X, -248, -231) and between(c.Z, 36, 60) then nN += 1 elseif between(c.X, -248, -231) and between(c.Z, 250, 274) then nS += 1 else badSt += 1 end
+			if not (between(hi.Y, 6.5, 11) and lo.Y <= 0.6 and #partsIn(u) >= 3) then badSt += 1 end
+			for j = i + 1, #st do
+				local a, b = ub(st[j])
+				if lo.X < b.X - 0.2 and hi.X > a.X + 0.2 and lo.Z < b.Z - 0.2 and hi.Z > a.Z + 0.2 then overlapSt += 1 end
+			end
 		end
-		check("5 street stalls on the apron (x -241..-235), one on each of z 244, 254, 264, 62, 52", #st == 5 and badSt == 0 and #missingZ == 0, #st .. " stalls, " .. badSt .. " off, rows without a stall: " .. table.concat(missingZ, ","))
+		check("10..12 street stalls (BP2 vendors) in two clusters: 4+ in the north cluster (x -248..-231, z 36..60) and 4+ in the south cluster (z 250..274), each on the ground, 6.5..11 tall, 3+ parts, none elsewhere, no two overlapping",
+			#st >= 10 and #st <= 12 and nN >= 4 and nS >= 4 and badSt == 0 and overlapSt == 0, #st .. " stalls (" .. nN .. "N/" .. nS .. "S), " .. badSt .. " off, " .. overlapSt .. " overlapping pairs")
+		-- lamp posts (BP2 iso: 5..6 thin posts with a lamp head along the kerb and beside the stairs)
+		do
+			local posts, heads, badLamp = named("^LampPost%d+$"), named("^LampHead%d+$"), 0
+			for _, p in ipairs(posts) do
+				local lo, hi = wb(p)
+				local c = (lo + hi) / 2
+				local headed = false
+				for _, h in ipairs(heads) do
+					local a, b = wb(h)
+					if math.abs((a.X + b.X) / 2 - c.X) <= 1 and math.abs((a.Z + b.Z) / 2 - c.Z) <= 1 and b.Y >= hi.Y - 0.5 and a.Y <= hi.Y + 1 then headed = true end
+				end
+				if not (between(hi.Y - lo.Y, 8, 14) and lo.Y <= 0.6 and between(c.X, -250.4, -229) and not between(c.Z, 148, 172) and headed) then badLamp += 1 end
+			end
+			check("6..8 lamp posts, each 8..14 tall on the ground on the apron (x -250.4..-229), outside the Guide band (z 148..172), each with a LampHead on top; as many heads as posts",
+				#posts >= 6 and #posts <= 8 and #heads == #posts and badLamp == 0, #posts .. " posts, " .. #heads .. " heads, " .. badLamp .. " off")
+		end
 		local function yardOk(pat, z0, z1)
 			local l, bad = units(pat), 0
 			for _, u in ipairs(l) do local lo, hi = ub(u) if not (lo.X >= -473 and hi.X <= -309 and lo.Z >= z0 - 1 and hi.Z <= z1 + 1) then bad += 1 end end
