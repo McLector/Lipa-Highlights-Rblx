@@ -1,7 +1,15 @@
 -- site02_yard: the street front of Site 02 (Candido B. Lopez Memorial Public Market), rebuilt from PublicMarketBP1.jpg and PublicMarketBP2.jpg (Slice 4, job R5a).
 -- Studio copy: ServerStorage.Builders.site02_yard. Assembler: builders/site02.luau. Check: tests/site02_check.luau, group "yard".
--- Owns Yard (Model: the apron YardSlab) and Structure/Forecourt (LeanRoof1..3 with LeanPost / LeanBeam / LeanRib, LampPost1..6 with LampHead1..6, StreetStall1..11 Models).
--- NOT built here (later jobs): tricycle queues (x -237..-231), vans, side stalls, SampleBoard. Those strips stay free: tricycles z 100..136 and 184..220, vans z 62..96 and 224..248.
+-- Owns Yard (Model: the apron YardSlab) and Structure/Forecourt (LeanRoof1..3 with LeanPost / LeanBeam / LeanRib, LampPost1..6 with LampHead1..6, StreetStall1..11 Models,
+--   SideStallN1..11 and SideStallS1..10 Models, the north awning SideAwningN1..9 with 11 Counter parts under it).
+-- NOT built here (later jobs): tricycle queues (x -237..-231), vans. Those strips stay free: tricycles z 100..136 and 184..220, vans z 62..96 and 224..248, north yard kerb z 33..46,
+--   south yard x -470..-428 z 262..270. The south yard aisle z 247..263 stays open (two shoppers stand in it).
+-- Side yards (R5b-2, BP1 iso_northyard and iso_shedsA, plain Concrete ground y 0): 21 pyramid-roof booths, 7 parts each (Counter, SidePole1..4, SideCanopy1 / SideCanopy2 as a stepped roof).
+--   BOOTHS below is the layout table; builders/site02_props.luau keeps a COPY (price boards, goods, vendors): keep the two in step.
+--   North row SideStallN1..11: centres x -455 + 14 (i - 1), roof z 50..57, counter z 53..55 (open front to the north kerb).
+--   South shed row SideStallS1..5: centres x -450, -420, -390, -360, -330, roof z 234..241, counter z 238..240 (customers come from the aisle, south).
+--   South street row SideStallS6..10: centres x -392, -374, -356, -338, -320, roof z 263..270 (1 stud south of the aisle edge), counter z 265..267 (customers from the aisle, north).
+--   North awning: SideAwningN1 slab x -459..-311, z 63.5..70.5, y 7.4..7.8 on posts SideAwningN2..9, with 11 Counter parts (x -455 + 14 (i - 1), 5 x 2, z 66..68) under it.
 -- All coordinates are WORLD (x east, z south, y up, ground y 0); wbox / wvcyl / wball convert to the assembler's local frame. Pure function of env: nothing is read from the DataModel.
 -- Lean-tos (BP2 iso, red mono-pitch roofs along the street edge of the north wing): eave y 8.5, high edge y 12.5, plate 0.4 thick, tin ribs on top, three posts and an eave beam each.
 --   LeanRoof1 / LeanRoof2 on the strip north of the hall end wall (high edge at z 71.2 against the wall at 71.4, eave z 58); LeanRoof3 in front of the north wing (high edge
@@ -126,4 +134,44 @@ return function(env)
 			wbox(ctx, pre .. "Stock", cx - 2.2, cx - 1.0, SY, SY + 1.3, cz - 0.8, cz + 0.8, WOOD, MWOO)
 		end, model)
 	end
+
+	------------------------------------------------------------------ Structure/Forecourt: side yard booths (each a Model) and the north awning
+	-- front = which way the customers stand (-1 north, +1 south). c0..c1 = counter z range. COPY of this table lives in site02_props.luau.
+	local BOOTHS = {}
+	for i = 1, 11 do BOOTHS[#BOOTHS + 1] = { name = "SideStallN" .. i, cx = -455 + 14 * (i - 1), z0 = 50, z1 = 57, c0 = 53, c1 = 55, front = -1 } end
+	for i = 1, 5 do BOOTHS[#BOOTHS + 1] = { name = "SideStallS" .. i, cx = -450 + 30 * (i - 1), z0 = 234, z1 = 241, c0 = 238, c1 = 240, front = 1 } end
+	for k = 1, 5 do BOOTHS[#BOOTHS + 1] = { name = "SideStallS" .. (5 + k), cx = -392 + 18 * (k - 1), z0 = 263, z1 = 270, c0 = 265, c1 = 267, front = -1 } end
+	for i, B in ipairs(BOOTHS) do
+		local model = env.newChild(fc, B.name, "Model")
+		env.section("Forecourt", function(ctx)
+			local cx, zm = B.cx, (B.z0 + B.z1) / 2
+			local A, A2 = UMB[(i - 1) % #UMB + 1], UMB[i % #UMB + 1]
+			-- counter 3.5 high (cloth-skirt colour), four thin wooden poles to y 7.6, a stepped pyramid roof of two flat plates (8 x 7 below, 5 x 4 above)
+			wbox(ctx, "Counter", cx - 3, cx + 3, 0, 3.5, B.c0, B.c1, A:Lerp(COUNTER, 0.3), MCON)
+			local k = 0
+			for _, sx in ipairs({ -1, 1 }) do
+				for _, z in ipairs({ B.z0 + 0.5, B.z1 - 0.5 }) do
+					k += 1
+					wvcyl(ctx, "SidePole" .. k, cx + sx * 3.6, z, 0, 7.6, 0.4, WOOD, MWOO)
+				end
+			end
+			wbox(ctx, "SideCanopy1", cx - 4, cx + 4, 7.6, 7.95, B.z0, B.z1, A, MFAB)
+			wbox(ctx, "SideCanopy2", cx - 2.5, cx + 2.5, 7.95, 8.45, zm - 2, zm + 2, A2, MFAB)
+		end, model)
+	end
+	env.section("Forecourt", function(ctx)
+		-- long low awning on the shed wall: one slab on 8 posts (4 along z 64.3, 4 along z 69.7), 11 counters under it
+		wbox(ctx, "SideAwningN1", -459, -311, 7.4, 7.8, 63.5, 70.5, ROOF, MFAB)
+		local n = 1
+		for _, z in ipairs({ 64.3, 69.7 }) do
+			for _, x in ipairs({ -458.5, -409.2, -360.8, -311.5 }) do
+				n += 1
+				wvcyl(ctx, "SideAwningN" .. n, x, z, 0, 7.4, 0.5, STEEL, MSMO)
+			end
+		end
+		for i = 1, 11 do
+			local cx = -455 + 14 * (i - 1)
+			wbox(ctx, "Counter", cx - 2.5, cx + 2.5, 0, 3.5, 66, 68, UMB[(i - 1) % #UMB + 1]:Lerp(COUNTER, 0.3), MCON)
+		end
+	end)
 end

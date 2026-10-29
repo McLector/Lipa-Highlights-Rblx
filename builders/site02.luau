@@ -5,7 +5,8 @@
 -- FRAME: world-aligned. Local axes = world axes, world = ORIGIN + (lx, ly, lz); y is height above the ground (ground is y 0; the assembler
 --   raycasts and asserts it within 0.6). The model faces +X (East): WorldPivot = CFrame.lookAt(ORIGIN, ORIGIN + (1,0,0)) is written after parenting.
 -- KEEP SET: Guide, InfoPanel, LocalNPCs are never touched, moved or recreated. EVERY other child of the model (old Structure, Yard, MarketStalls, Baskets,
---   Produce, PriceSigns, VendorNPCs, loose parts) is destroyed on every run (a keep list, not a replace list); this job builds no vendors or props.
+--   Produce, PriceSigns, VendorNPCs, loose parts) is destroyed on every run (a keep list, not a replace list); the props (MarketStalls,
+--   Baskets, Produce, PriceSigns) and the street vendor rigs (VendorNPCs) are rebuilt each run by site02_props.
 -- IDEMPOTENT. Fail-safe order (same as site10): everything is planned unparented first, so an error leaves the old model untouched; then the
 --   old non-kept children are destroyed and the plan is parented in batches with task.wait(). No terrain writes.
 -- The Structure tree of the naming contract is always created (empty Folders are fine; Yard is a Model). Grouping nodes Structure, Structure/Hall and
@@ -15,13 +16,15 @@
 -- Modules are FLAT siblings in ServerStorage.Builders (disk: builders/site02_<name>.luau). Each one is
 --     return function(env) ... end
 -- and is loaded with require(mod:Clone()). A missing module is skipped; a module returning an empty function adds nothing.
--- Container paths (relative to Structure, plus "Yard"): "Hall/Shell", "Hall/Windows", "Stairs", "Scaffold", "Sheds/Gabled", "Sheds/Markets",
+-- Container paths (relative to Structure, plus "Yard" and the five prop folders MarketStalls, Baskets, Produce, PriceSigns, VendorNPCs, which sit directly under the site): "Hall/Shell", "Hall/Windows", "Stairs", "Scaffold", "Sheds/Gabled", "Sheds/Markets",
 --   "Bagsakan", "CornerBlock", "ServiceBlock", "Forecourt", "Yard" (a Model directly under the site; the others are Folders). Ownership and part budgets:
 --     site02_hall   Hall/Shell, Hall/Windows                        420  (two containers, each at most 400 parts)
 --     site02_front  Hall/Shell (portico), Stairs, Scaffold          200
 --     site02_sheds  Sheds/Gabled, Sheds/Markets, Bagsakan           450
 --     site02_block   CornerBlock, ServiceBlock                      200
 --     site02_yard   Forecourt, Yard                                 550
+--     site02_props  MarketStalls, Baskets, Produce, PriceSigns,     380  (parts; the VendorNPCs rigs are outside this budget)
+--                   VendorNPCs
 --   Every container holds at most 400 parts in its subtree (hard error at plan time); the site (built + kept parts) at most 2000.
 -- env fields (LOCAL coordinates unless the name starts with w; y is height above ground):
 --   env.V, env.CF, env.ANG, env.PI, env.ORIGIN (Vector3 -402,0,160), env.BuildKit, env.GROUND
@@ -35,6 +38,9 @@
 --                            into the container, or into dest (an instance from newFolder/newChild) which must lie inside that container
 --   env.newFolder(path, subName [, className])   planned empty Folder (or className) inside the container; returns it
 --   env.newChild(parent, name [, className])     planned empty Model/Folder under an instance returned by container/newFolder/newChild
+--   env.addRig(rig)          rig = an UNPARENTED Model with a Humanoid, already positioned (CreateHumanoidModelFromDescription yields: build it in the module). Needs the
+--                            module to own "VendorNPCs"; plans the rig into that folder. Its BaseParts count toward env.used() (the 2000 site cap) but NOT toward the
+--                            module budget or the 400-part container rule. The returned table reports the total as rigParts.
 --   env.used()  parts planned so far, all modules     env.budget()  parts this module may still add
 -- Rules: only anchored parts (BuildKit does it), no Decals/Textures/ImageLabels, ASCII text only, human scale fixed (doors 8+, rails 3),
 -- nothing below y -0.5 (domes and heaps -0.6), every part inside the slot, the pinned names of the contract.
@@ -54,6 +60,7 @@ return function()
 		{ name = "site02_sheds", owns = { ["Sheds/Gabled"] = true, ["Sheds/Markets"] = true, Bagsakan = true }, budget = 450 },
 		{ name = "site02_block", owns = { CornerBlock = true, ServiceBlock = true }, budget = 200 },
 		{ name = "site02_yard", owns = { Forecourt = true, Yard = true }, budget = 550 },
+		{ name = "site02_props", owns = { MarketStalls = true, Baskets = true, Produce = true, PriceSigns = true, VendorNPCs = true }, budget = 380 },
 	}
 	-- path -> { parent path ("" is the site), class, grouping }
 	local TREE = {
@@ -71,6 +78,11 @@ return function()
 		{ "ServiceBlock", "Structure", "Folder" },
 		{ "Forecourt", "Structure", "Folder" },
 		{ "Yard", "", "Model" },
+		{ "MarketStalls", "", "Folder" },
+		{ "Baskets", "", "Folder" },
+		{ "Produce", "", "Folder" },
+		{ "PriceSigns", "", "Folder" },
+		{ "VendorNPCs", "", "Folder" },
 	}
 
 	local sites = workspace:FindFirstChild("Sites")
@@ -134,6 +146,7 @@ return function()
 	end
 
 	local report = {}
+	local rigParts = 0
 	local function runModule(def)
 		local mod = builders:FindFirstChild(def.name)
 		if not mod then
@@ -198,6 +211,19 @@ return function()
 			end
 			return target
 		end
+		function env.addRig(rig)
+			assert(def.owns.VendorNPCs, "site02: " .. def.name .. " does not own VendorNPCs, so it cannot add rigs")
+			assert(typeof(rig) == "Instance" and rig:IsA("Model") and rig:FindFirstChildOfClass("Humanoid"), "site02: addRig needs a Model with a Humanoid")
+			assert(rig.Parent == nil, "site02: addRig takes an unparented rig")
+			local n = 0
+			for _, d in ipairs(rig:GetDescendants()) do
+				if d:IsA("BasePart") then n += 1 end
+			end
+			rigParts += n
+			used += n -- the site cap sees the rig; the module budget and counts[path] do not
+			place(rig, containers["VendorNPCs"])
+			return rig
+		end
 		fn(env)
 		return modUsed
 	end
@@ -250,6 +276,7 @@ return function()
 	return {
 		parts = total,
 		builtParts = used,
+		rigParts = rigParts,
 		keptParts = kept,
 		ground = ground,
 		modules = report,
