@@ -24,9 +24,10 @@
 --     site02_block   CornerBlock, ServiceBlock                      200
 --     site02_yard   Forecourt, Yard                                 550
 --     site02_vehicles  Yard                                          160
+--     site02_traffic   Yard                                          165
 --     site02_props  MarketStalls, Baskets, Produce, PriceSigns,     380  (parts; the VendorNPCs rigs are outside this budget)
 --                   VendorNPCs
---   Every container holds at most 400 parts in its subtree (hard error at plan time); the site (built + kept parts) at most 2000.
+--   Every container holds at most 400 parts in its subtree (hard error at plan time); the site (built + kept parts) at most 2100 (raised from 2000 for the street traffic, owner-authorised 2026-10-30, briefs/site02.md).
 -- env fields (LOCAL coordinates unless the name starts with w; y is height above ground):
 --   env.V, env.CF, env.ANG, env.PI, env.ORIGIN (Vector3 -402,0,160), env.BuildKit, env.GROUND
 --   env.box(ctx, name, x0, x1, y0, y1, z0, z1, color, material)      axis-aligned box from min/max corners (local)
@@ -40,7 +41,7 @@
 --   env.newFolder(path, subName [, className])   planned empty Folder (or className) inside the container; returns it
 --   env.newChild(parent, name [, className])     planned empty Model/Folder under an instance returned by container/newFolder/newChild
 --   env.addRig(rig)          rig = an UNPARENTED Model with a Humanoid, already positioned (CreateHumanoidModelFromDescription yields: build it in the module). Needs the
---                            module to own "VendorNPCs"; plans the rig into that folder. Its BaseParts count toward env.used() (the 2000 site cap) but NOT toward the
+--                            module to own "VendorNPCs"; plans the rig into that folder. Its BaseParts count toward env.used() (the 2100 site cap, raised from 2000 for the street traffic, owner-authorised 2026-10-30, briefs/site02.md) but NOT toward the
 --                            module budget or the 400-part container rule. The returned table reports the total as rigParts.
 --   env.used()  parts planned so far, all modules     env.budget()  parts this module may still add
 -- Rules: only anchored parts (BuildKit does it), no Decals/Textures/ImageLabels, ASCII text only, human scale fixed (doors 8+, rails 3),
@@ -53,7 +54,7 @@ return function()
 
 	local ORIGIN = V(-402, 0, 160)
 	local MODEL_NAME = "Site02_Market"
-	local SITE_CAP, CONTAINER_CAP = 2000, 400
+	local SITE_CAP, CONTAINER_CAP = 2100, 400
 	local KEEP = { Guide = true, InfoPanel = true, LocalNPCs = true }
 	local MODULES = {
 		{ name = "site02_hall", owns = { ["Hall/Shell"] = true, ["Hall/Windows"] = true }, budget = 420 },
@@ -62,6 +63,7 @@ return function()
 		{ name = "site02_block", owns = { CornerBlock = true, ServiceBlock = true }, budget = 200 },
 		{ name = "site02_yard", owns = { Forecourt = true, Yard = true }, budget = 550 },
 		{ name = "site02_vehicles", owns = { Yard = true }, budget = 160 },
+		{ name = "site02_traffic", owns = { Yard = true }, budget = 165 },
 		{ name = "site02_props", owns = { MarketStalls = true, Baskets = true, Produce = true, PriceSigns = true, VendorNPCs = true }, budget = 380 },
 	}
 	-- path -> { parent path ("" is the site), class, grouping }
