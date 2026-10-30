@@ -63,5 +63,8 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | front street, north stair foot and zebra crossing at z 88..96 (beside bp2_iso_vendors_tricycles.png) | -205, 28, 70 | -236, 3, 105 |
 | 2 Market | front street, south zebra crossing at z 224..232 (beside iso_stairN.png; the east bar shows, the west bar merges with the paving) | -205, 28, 262 | -236, 3, 226 |
 | 2 Market | front street top-down: street, Road F and both crossings | -222, 120, 160 | -222, 0, 159 |
+| 2 Market | north side street and the north-east corner (beside iso_northyard.png; the street reads about like the concrete from far) | -180, 38, -48 | -240, 0, -8 |
+| 2 Market | south corner: the front street T into the existing road at z 344, Concrete verge flush with the road (beside bp2_iso_whole.png) | -180, 38, 376 | -240, 0, 336 |
+| 2 Market | south zebra crossing along the street (Salt bars; the west one blends in the hall's shadow, grass blades half-hide the east one) | -222, 14, 196 | -222, 0, 230 |
 
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.
