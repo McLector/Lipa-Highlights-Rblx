@@ -3,7 +3,8 @@
 -- Run in Edit mode: require(game.ServerStorage.Checks.filler_check:Clone())  -- returns JSON {passed, failed, failures}
 -- Why (owner, 2026-10-31): generic town buildings line the outer roads so the far sites stay hidden until a player arrives, and a light haze
 -- fades what is still in view. The filler must never touch a site (footprint + 10 percent, the BuildCheck box, plus 24), a road body
--- (half width + 3), the core town where the walking routes run (x -600..360, z -330..352), or the world edge (+-980).
+-- (half width + 3), the core town where the walking routes run (x -600..360, z -330..352), or the world edge (+-980). Fourth round (more town):
+-- nor the reserved land (future Outlets and Farm slots, Malarayat's new entrance), with 12 studs clear of the road edges for new buildings.
 local HttpService = game:GetService("HttpService")
 local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 local RoadData = require(game.ReplicatedStorage.LipaShared.RoadData:Clone())
@@ -202,6 +203,138 @@ if fill then
 		covered .. " of " .. eligible)
 	check("no Grass under the street-edge Lots or on the verge beside them", groundPts > 0 and #grassPts == 0,
 		#grassPts .. " of " .. groundPts .. " grass: " .. table.concat(grassPts, " ", 1, math.min(#grassPts, 6)))
+end
+
+-- More town (owner, fourth round, 2026-10-31: "build more filler buildings"). The builder adds rows 5 and 6 behind the four street rows, then fills
+-- the remaining gaps outward from the roads (Pass 2 and Pass 3 buildings carry the attribute Pass), and paves the grass corner by the Road A/B
+-- junction. Budget: at most about 2000 new parts, so CityFill stays at or under 4400 parts.
+do
+	-- Reserved land, hard-coded so a SiteData edit cannot shrink it: the FUTURE slots of the Outlets (x 325..775, z -850..-550) and the Farm
+	-- (x 570..970, z 80..400), each plus 26; 60 studs around Malarayat's new main entrance at the Road D mouth (450, 560); the current slots of
+	-- Carmel (x -410..-190, z -690..-510) and Malarayat (x 360..760, z 560..880) with the site rule (footprint + 10 percent + 26).
+	local RESERVED = {
+		{ key = "Outlets future slot + 26", x0 = 299, x1 = 801, z0 = -876, z1 = -524 },
+		{ key = "Farm future slot + 26", x0 = 544, x1 = 996, z0 = 54, z1 = 426 },
+		{ key = "Malarayat entrance (450,560) + 60", x0 = 390, x1 = 510, z0 = 500, z1 = 620 },
+		{ key = "Carmel slot + 10 percent + 26", x0 = -447, x1 = -153, z0 = -725, z1 = -475 },
+		{ key = "Malarayat slot + 10 percent + 26", x0 = 314, x1 = 806, z0 = 518, z1 = 922 },
+	}
+	local function xzBox(p)
+		local half, cf = p.Size / 2, p.CFrame
+		local ex = math.abs(cf.RightVector.X) * half.X + math.abs(cf.UpVector.X) * half.Y + math.abs(cf.LookVector.X) * half.Z
+		local ez = math.abs(cf.RightVector.Z) * half.X + math.abs(cf.UpVector.Z) * half.Y + math.abs(cf.LookVector.Z) * half.Z
+		return p.Position.X - ex, p.Position.X + ex, p.Position.Z - ez, p.Position.Z + ez
+	end
+	local inReserved = {}
+	for _, p in ipairs(parts) do
+		local x0, x1, z0, z1 = xzBox(p)
+		for _, b in ipairs(RESERVED) do
+			if overlaps(b, x0, x1, z0, z1) then table.insert(inReserved, p:GetFullName() .. " in " .. b.key) break end
+		end
+	end
+	check("no filler part inside the reserved land (future Outlets and Farm slots, Malarayat entrance, Carmel and Malarayat slots)", #inReserved == 0, list(inReserved))
+	-- Tagbakin (site 09, slot x -720..-480, z 450..650) gets Taal Volcano and the lake view: nothing within 250 studs of (-600, 550), and nothing
+	-- west of x -480 where z > 300 (coordinator, 2026-10-31).
+	local nearTaal = {}
+	for _, p in ipairs(parts) do
+		local x0, x1, z0, z1 = xzBox(p)
+		local qx, qz = math.clamp(-600, x0, x1), math.clamp(550, z0, z1)
+		if (qx + 600) ^ 2 + (qz - 550) ^ 2 < 250 ^ 2 or (x0 < -480 and z1 > 300) then table.insert(nearTaal, p:GetFullName()) end
+	end
+	check("no filler part within 250 studs of Tagbakin (-600, 550) or west of x -480 with z > 300", #nearTaal == 0, list(nearTaal))
+
+	check("CityFill holds 450 or more buildings (was 262)", buildings >= 450, buildings .. " buildings")
+	check("CityFill holds 3600..4400 parts (was 2387; budget about 2000 new)", #parts >= 3600 and #parts <= 4400, #parts .. " parts")
+
+	-- New-pass buildings keep a 12-stud clear band from every road edge (the street rows already line the roads), and some stand deep.
+	local newB, banded, deep = 0, {}, 0
+	local function roadDist(px, pz)
+		local best = math.huge
+		for _, s in ipairs(segs) do best = math.min(best, segDist(px, pz, s.a, s.b) - (s.clear - ROAD_CLEAR)) end
+		return best -- distance from the nearest road EDGE
+	end
+	if fill then
+		for _, m in ipairs(fill:GetChildren()) do
+			if m:IsA("Model") and (m:GetAttribute("Pass") or 1) >= 2 and m:FindFirstChild("Body") then
+				newB += 1
+				for _, p in ipairs(m:GetDescendants()) do
+					if p:IsA("BasePart") then
+						local x0, x1, z0, z1 = xzBox(p)
+						local hit = false
+						for ix = 0, 4 do
+							for iz = 0, 4 do
+								if roadDist(x0 + (x1 - x0) * ix / 4, z0 + (z1 - z0) * iz / 4) < 12 then hit = true end
+							end
+						end
+						if hit then table.insert(banded, p:GetFullName()) break end
+					end
+				end
+				local lot = m:FindFirstChild("Lot")
+				if lot and roadDist(lot.Position.X, lot.Position.Z) > 144 then deep += 1 end
+			end
+		end
+	end
+	check("150 or more new-pass buildings (attribute Pass 2 or 3)", newB >= 150, newB .. " new")
+	check("no new-pass building comes within 12 studs of a road edge", newB > 0 and #banded == 0, newB .. " new, " .. list(banded))
+	check("rows deeper than the old four: 60 or more new buildings whose Lot centre is over 144 studs from every road edge", deep >= 60, deep .. " deep")
+
+	-- The grass corner by the Road A/B junction (handoff 059, owed): x -104..352, z -448..-336 (between City Hall's box, Road A, Road B and the
+	-- core town). Every 8 studs, off the road bodies (half width + 5), a downward ray must land on a CityFill part, not on terrain.
+	local lp = RaycastParams.new()
+	lp.FilterType = Enum.RaycastFilterType.Include
+	lp.FilterDescendantsInstances = { fill or workspace.World, workspace.Terrain }
+	local cornerN, bare = 0, {}
+	for x = -104, 352, 8 do
+		for z = -448, -336, 8 do
+			local nearRoad = false
+			for _, s in ipairs(segs) do
+				if segDist(x, z, s.a, s.b) < s.clear - ROAD_CLEAR + 5 then nearRoad = true break end
+			end
+			if not nearRoad then
+				cornerN += 1
+				local r = workspace:Raycast(Vector3.new(x, 400, z), Vector3.new(0, -800, 0), lp)
+				if not r or r.Instance == workspace.Terrain then table.insert(bare, string.format("(%d,%d)", x, z)) end
+			end
+		end
+	end
+	check("the Road A/B corner (x -104..352, z -448..-336) is filled: every sample lands on a CityFill part", cornerN > 0 and #bare == 0,
+		#bare .. " of " .. cornerN .. " bare: " .. table.concat(bare, " ", 1, math.min(#bare, 8)))
+
+	-- Lots touch but never overlap (more than 0.1 stud) one another.
+	local lots = {}
+	for _, p in ipairs(parts) do
+		if p.Name == "Lot" then
+			local x0, x1, z0, z1 = xzBox(p)
+			table.insert(lots, { p = p, x0 = x0, x1 = x1, z0 = z0, z1 = z1 })
+		end
+	end
+	local clash = {}
+	for i = 1, #lots do
+		local a = lots[i]
+		for j = i + 1, #lots do
+			local b = lots[j]
+			if a.x0 < b.x1 - 0.1 and a.x1 > b.x0 + 0.1 and a.z0 < b.z1 - 0.1 and a.z1 > b.z0 + 0.1 then
+				table.insert(clash, a.p.Parent.Name .. "/" .. b.p.Parent.Name)
+			end
+		end
+		if i % 100 == 0 then task.wait() end
+	end
+	check("no two Lots overlap", #lots > 0 and #clash == 0, #lots .. " lots, " .. list(clash))
+
+	-- Some variety: three kinds of roof detail among the new buildings.
+	local kinds = {}
+	if fill then
+		for _, m in ipairs(fill:GetChildren()) do
+			if m:IsA("Model") and (m:GetAttribute("Pass") or 1) >= 2 then
+				for _, n in ipairs({ "Tank", "RoofBox", "Gable" }) do
+					if m:FindFirstChild(n) then kinds[n] = true end
+				end
+			end
+		end
+	end
+	local nk = 0
+	for _ in pairs(kinds) do nk += 1 end
+	check("new buildings show 3 kinds of roof detail (Tank, RoofBox, Gable)", nk == 3, nk .. " kinds")
 end
 
 -- Mood (owner, second round: "a nice mood of weather like sunny or sunset"): golden late afternoon.
