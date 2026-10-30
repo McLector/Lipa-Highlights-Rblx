@@ -32,6 +32,9 @@ local CONCRETE = {
 	{ x0 = -488, x1 = -400, z0 = -8, z1 = 328 },
 	{ x0 = -400, x1 = -312, z0 = -8, z1 = 328 },
 	{ x0 = -312, x1 = -228, z0 = -8, z1 = 328 },
+	-- Lomi King ground (owner-approved plan, handoff 053): the Lomi slot x 242..342, z 85..195 plus a 2-stud margin becomes Concrete (x 240..344, z 84..196, on the 4-stud grid),
+	-- like the Market and City Hall, so no grass blades show in the dining area. Only Grass and Pavement change; Road G's Asphalt mouth (x 232..240) is outside it.
+	{ x0 = 240, x1 = 344, z0 = 84, z1 = 196 },
 }
 
 -- Market front street (owner decision 2026-10-30, handoff 048): Asphalt, 12 wide (x -228..-216), against the paving edge with no grass verge, and the z span
