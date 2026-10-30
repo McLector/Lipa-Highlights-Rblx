@@ -105,3 +105,60 @@ Guide (0, +30), JeepStop (-20, +30) with sign and jeepney (-34, +30), InfoPanel 
 
 ## Approximated
 Reliefs and crests are flat panels; roof tiles are thin ribs; the shoulder windows are one twin-arch unit; the monastery wing is shortened (about 68 studs for a 60 m building) and its rear and L-return are guessed; the billboard figure is a block figure; the true driveway ring is not built (it would need terrain repaint, which needs the user's go).
+
+---
+
+# Revision 2 (Standard tier, 2026-10-31): rebuilt from the Mount Carmel Monastery Blueprint board - supersedes the layout above where they differ
+
+Source: `..\2nd Reference\Mt_carmel_monastery\Mount Carmel Monastery Blueprint.png` (site-plan inset, front-elevation inset, 3-D view), plan `scratch/standard_tier_plan.md` "05 Carmel". The board wins over the photos; the Slice 15 facade stays where the elevation agrees with it. Slot, pivot, footprint, forecourt terrain unchanged (no terrain writes). Guide, InfoPanel, JeepStop, JeepSign*, Jeepney and LocalNPCs are kept untouched.
+
+## Model
+`builders/site05.luau` is now a coordinator in the site03 pattern (KEEP list, MODULES, every container <= 400 parts, PART_BUDGET 2500, `WorldPivot = lookAt(ORIGIN, ORIGIN + (0,0,1))` written explicitly). `Structure` is a grouping Folder (Facade, Nave, Dome, Annex, Monastery) so the sites_check orientation guard is unchanged.
+- `site05_chapel` (Structure/*): facade as Revision 1 plus the elevation's low outer wings (|x| 37..48, top 17.5), wings widened to |x| 37, corner posts on the centre block (top 44.3), rose dia 10, ringed cross top 57.5; nave with clerestory windows; transept arms; west side block; sacristy behind the nave; dome dia 22 on a dia-25 drum with 8 windows over the crossing (0, -40), lantern, cross top 69.5; side wing east (AnnexBlock x 38..72) with the east low wing's porch.
+- `site05_monastery`: 2-storey L (north leg x -106..-28, z -86..-64; west leg x -106..-92 to z -30), walkway, west veranda (x -108..-94, z -30..40), courtyard (x -92..-52) with statue, gazebo, 5 umbrellas, paths, trees, palms, south wall with cone shrubs.
+- `site05_rectory`: L of 2-storey east leg (x 84..106, z -88..14) with green awning and north leg (x 30..84, z -88..-72).
+- `site05_grounds`: forecourt and drive paving, palm island (x 12..56, z 56..80), east drive to the shrine, perimeter wall (N, E, W, south-west diagonal, south-east; gate piers at x +-14), planting, lamps, shrine in the SE (brick-red, cream gable, green roof, arched door, both tablets facing south), the Revision 1 billboard moved to (-40, 56), a grotto statue for the kneeling pilgrim, prayer garden props (pews unmoved).
+Roofs are the board's teal-green (70,116,106); walls (248,226,170).
+
+## Tests first (site05_check, now grouped: `shared.site05_only`)
+Red against the 514-part Slice 15 model: general 8/1, facade 25/4, chapel 8/12, monastery 10/6, rectory 1/6, grounds 15/9, clear 7/0; all 68/38. `clear` is constraint-only, so a negative control: an anchored 4x4x4 part in the jeepney box made it 6/1 ("the parked Jeepney's box ... | NegControl"), removed: 7/0. Two test bugs were fixed before that red run (a rotated cylinder was read as reaching below ground; kept-object labels were counted). After the build the new floor pin "site holds 1500..2500 parts" became 1000..2500 (a first estimate from the plan's 2260; the board's features came to 1167). Final: 106/0.
+
+| Old pin (Slice 15) | Replaced by (board) |
+|---|---|
+| ringed cross stem top y 52 +-2 | top 56..59.5 (elevation: cross 9 studs, top 58) |
+| rose on the axis at y 31 +-1.5, 7-9 across | y 31..34, 9.5-11.5 across (0.42 of the centre block) |
+| low east AnnexBlock x 34..50, height <= 14 | side wing: x 36..78, 14-20 high, 36+ deep |
+| five roofs forest green (R <= 50, G 75..105, B <= 70) | the board's teal-green (R 55..95, G 100..135, B 90..125, G >= R + 25) |
+| Dome 15-17 across at z -53..-47 | 21-24 across at z -45..-35 (inset: about 20 across, 40 behind the facade, compressed 0.84) |
+| DomeDrum 16-19 across | 23-27 across |
+| exactly 4 DrumWin | exactly 8 (the 3-D view's ring of windows) |
+| dome cross top y 56..62 | y 64..71 |
+| MonasteryBlock x -102..-34, front face z -8 | north leg: 70+ long, x min <= -100, x max -34..-24, south face z -64, back z <= -84 |
+| white CourtStatue at x -62..-46 | inside the courtyard, x -92..-52, z -60..30 |
+| old veranda gone (VerandaFloor, VerandaCanopy, VerandaPost) | those names stay unused, plus VerandaDeck (west edge, 60+ long), 8+ VerandaColumn 8+ tall, VerandaRoofL green |
+| shrine gate kept at (80, -51) | gate in the SE corner (x 70..104, z 50..82), 8+ high |
+
+Every other Slice 15 pin is kept unchanged and passes. New pins: tree and container caps, unique guard names, slot bounds, FacadeLow, CentrePost, transepts, ChapelWestWing, west leg reaches z -40, gazebo, CourtWall, six rectory pins, tablets face south, fixed TextSize on every built label, shrine body and roof, a pew seat under the seated pilgrim, the grotto statue and open sky over the kneeling pilgrim, island, palms, DriveEast, perimeter wall and base, the jeepney box.
+
+## Verification
+Coordinator run twice: 1167 and 1167 parts (built 1099, kept 68; chapel 395, monastery 261, rectory 69, grounds 374; largest container Landscape 200; archPaths csg 3, fallback 0). site05_check 106/0; BuildCheck 05 15/0 (1167 parts); sites_check 277/0; npcs_check 237/0; routes_check 16/0. run_all not run (another site was mid-build); its EXPECTED `[5] = { 15, 514 }` would become `{ 15, 1167 }` (owner-only edit).
+Hashes (disk equals Studio): `site05` 17111/338/2144024279, `site05_chapel` 13568/235/1130220741, `site05_monastery` 8661/151/2836747863, `site05_rectory` 3181/57/1654202631, `site05_grounds` 12667/201/521100562, `tests/site05_check.luau` 36197/545/1720333103.
+Shots: the Studio viewport rendered blank (three tries), so `scratch/site05/shots/S4/` holds raycast rasters made in Studio instead: top-down, an oblique from the SSW, and the front elevation (from the first build, before the lamps and planting were added).
+
+## Board vs model
+| Item | Result |
+|---|---|
+| Stepped facade, three-arch portico, rose, niche, ringed cross, low outer wings | MATCH |
+| Dome on a windowed drum with lantern and cross, behind the facade | MATCH |
+| 2-storey L on the north and west of the courtyard, walkway, west veranda | MATCH in layout; the courtyard is narrower than the inset's (the elevation's 96-wide facade leaves x -92..-52) |
+| Courtyard: statue, umbrellas, gazebo, trees, palms, south wall with cone shrubs | MATCH |
+| Side wing east, rectory along the east edge, block on the north edge | MATCH |
+| Shrine in the SE corner: brick red, cream gable, green roof, arched door, two tablets | MATCH |
+| Palm island, perimeter wall with the south-west diagonal | MATCH; DIFF: the drive is rectangular paving, not the board's curves (forecourt terrain kept by decision) |
+| Wide stair | DIFF: 6 risers (portico floor 6), the board draws about 12 |
+| Marian billboard | DIFF: not on the board; kept from Revision 1 (plan did not retire it), moved to (-40, 56) |
+| Pews | DIFF from the plan: they stay in the east prayer garden, because the seated pilgrim of builders/npcs.luau sits on the z 32 row |
+
+## Open for the orchestrator / owner
+- The kneeling pilgrim (npcs.luau, local (80, -43.5)) now kneels at a new grotto statue, not at the Ten Commandments shrine, which moved to the SE. Proposed respot: local (92, 74.5) facing -Z (world -208, -525.5), in front of the shrine door. Not done here: npcs.luau rebuilds every site's NPCs.
+- No player-facing sentence is contradicted: the entry arch, tall arched windows, stepped front wall, portico centre arch and the forecourt below the steps all still hold. The history-panel words are unchanged (now fixed TextSize 20/16; every label fits, measured with TextService).

@@ -1,494 +1,338 @@
--- site05: Monastery of Our Lady of Mount Carmel (Slice 04, reworked in Slice 15). Studio copy: ServerStorage.Builders.site05; run with
---   require(game.ServerStorage.Builders.site05:Clone())()
--- Run builders/placeholders first (it creates Workspace.Sites.Site05_Carmel with Guide, InfoPanel, JeepStop...).
--- IDEMPOTENT: replaces Block / Structure / Grounds / Garden / Shrine / Pews / Kneeler / Candles / HistoryPanels and keeps
--- Guide, InfoPanel, JeepStop, JeepSign*, Jeepney. Touches nothing outside Workspace.Sites.Site05_Carmel.
--- (The terrain under the forecourt is repainted Pavement by builders/world.luau: x -352..-248, z -600..-508. The forecourt
--- paving below must stay inside that region.)
--- Brief: briefs/site05.md "Revision 1 (Slice 15)"; spec: tests/site05_check.luau. FRAME: the site pivot is yawed 180 degrees
--- (RightVector = -X), so the pivot is NOT used as the origin. origin = CFrame.new(pivot position): local +X = east,
--- +Z = south = facade side, y up. All heights are above the ground; the portico floor is B = 6 (six risers of one stud).
--- Fail-safe order as in site01: everything is built into unparented components first (budget and CSG included); only then
--- are the old children deleted and the components parented one at a time. An error before that point destroys the partial
--- build and leaves the placeholder Block untouched. The model, its WorldPivot and PrimaryPart are never touched.
+-- site05: Monastery of Our Lady of Mount Carmel, rebuilt from "Mount Carmel Monastery Blueprint.png" (Standard tier, 2026-10-31) ASSEMBLER.
+-- Studio copy: ServerStorage.Builders.site05; run with
+--   return require(game.ServerStorage.Builders.site05:Clone())()
+-- Check: tests/site05_check.luau (ServerStorage.Checks.site05_check), groups general, facade, chapel, monastery, rectory, grounds, clear.
+-- Brief: briefs/site05.md Revision 2. Same coordinator pattern as builders/site03.luau.
+-- HARDCODED (kept in step with SiteData row 5, asserted at run time): model Workspace.Sites.Site05_Carmel (must already exist, never created
+--   here), ORIGIN (-300, 0, -600), slot 220 x 180, facing S.
+-- FRAME: world-aligned. Local axes = world axes, world = ORIGIN + (lx, ly, lz): local +X = east, +Z = south = the facade side, y is height
+--   above the ground (ground y 0; asserted within 0.6 by a raycast). The model faces +Z: WorldPivot = CFrame.lookAt(ORIGIN, ORIGIN + (0,0,1))
+--   is written after parenting (RightVector -X, the "yawed 180" pivot of the old builder).
+-- KEEP SET: Guide, InfoPanel, JeepStop, JeepSignPole, JeepSign, Jeepney, LocalNPCs are never touched, moved or recreated. EVERY other child of
+--   the model is destroyed on every run (a keep list, not a replace list) and rebuilt by the modules. No terrain writes (the forecourt
+--   Pavement region x -52..52, z 0..92 of builders/world.luau stays as it is).
+-- IDEMPOTENT. Fail-safe order (site03): everything is planned unparented first, so an error leaves the old model untouched; then the old
+--   non-kept children are destroyed and the plan is parented in batches with task.wait().
+--
+-- ============================ MODULE CONTRACT ============================
+-- Modules are FLAT siblings in ServerStorage.Builders (disk: builders/site05_<name>.luau), each `return function(env) ... end`, loaded with
+-- require(mod:Clone()). A missing module is skipped (reported "missing").
+-- Containers (Structure is a grouping Folder that holds no parts; the sites_check guard searches it for Podium, NaveBlock, AnnexBlock,
+--   MonasteryBlock):
+--     site05_chapel      Structure/Facade, Structure/Nave, Structure/Dome, Structure/Annex                 800
+--     site05_monastery   Structure/Monastery, Garden                                                       600
+--     site05_rectory     Rectory                                                                           300
+--     site05_grounds     Grounds, Landscape, Shrine, Pews, Kneeler, Candles, HistoryPanels                 900
+--   Every container holds at most 400 parts (hard error at plan time); the site (built + kept) at most 2500 (BuildCheck).
+-- env (LOCAL coordinates, y above ground): V, CF, ANG, PI, ORIGIN, BuildKit, GROUND, and the helpers
+--   box(ctx, name, x0, x1, y0, y1, z0, z1, color, material)          axis-aligned box from min/max corners
+--   vcyl(ctx, name, x, z, y0, y1, dia, color, material)             vertical cylinder
+--   ball(ctx, name, x, y, z, dia, color, material)                  sphere
+--   strip(ctx, name, x0, x1, y0, y1, z0, z1, d, color, material)    wedge over a box, slope rising toward the axis unit vector d
+--   corner(ctx, name, x0, x1, y0, y1, z0, z1, sx, sz, color, mat)  corner wedge over a SQUARE base, apex over the base corner (sx, sz)
+--   hipRoof(ctx, name, x0, x1, z0, z1, y0, rise, color, material)   hip roof (ridge along the long side); the first slope is named `name`
+--   arch(ctx, name, spec)                                           BuildKit arch, counted in the report's archPaths
+--   gui(part, face, title, body, color, ppstud, titleSize, bodySize) SurfaceGui with fixed-TextSize labels
+--   palm(ctx, x, z, h, lean) (7 parts), tree(ctx, x, z, h, dia) (3 parts), shrub(ctx, x, z, dia) (1 part)
+--   section(path, fn [, dest]), newFolder(path, name [, class]), container(path), used(), budget()
+-- Rules: anchored parts only (BuildKit), no Decals/Textures/ImageLabels, ASCII only, human scale fixed (doors 8+, rails 3, counters 3.5,
+-- chairs 2), every part inside the slot, nothing below y -0.6, the names pinned by tests/site05_check.luau. No randomness: every run is equal.
+-- ==========================================================================
 return function()
-	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 	local BuildKit = require(game.ServerStorage.BuildKit:Clone())
-
 	local V, CF, ANG = Vector3.new, CFrame.new, CFrame.Angles
 	local PI = math.pi
-	local row = SiteData.byId(5)
-	local sites = workspace:FindFirstChild("Sites")
-	local site = sites and sites:FindFirstChild("Site05_Carmel")
-	assert(site, "site05: Workspace.Sites.Site05_Carmel not found (run builders/placeholders first)")
-	local pivotBefore = site:GetPivot()
-	local ORIGIN = CF(pivotBefore.Position)
 
-	local PART_BUDGET = 2500
-	local REPLACED = {
-		Block = true, Structure = true, Grounds = true, Garden = true, Shrine = true,
-		Pews = true, Kneeler = true, Candles = true, HistoryPanels = true,
+	local ORIGIN = V(-300, 0, -600)
+	local MODEL_NAME = "Site05_Carmel"
+	local SITE_CAP, CONTAINER_CAP = 2500, 400
+	local KEEP = { Guide = true, InfoPanel = true, JeepStop = true, JeepSignPole = true, JeepSign = true, Jeepney = true, LocalNPCs = true }
+	local MODULES = {
+		{ name = "site05_chapel", owns = { ["Structure/Facade"] = true, ["Structure/Nave"] = true, ["Structure/Dome"] = true, ["Structure/Annex"] = true }, budget = 800 },
+		{ name = "site05_monastery", owns = { ["Structure/Monastery"] = true, Garden = true }, budget = 600 },
+		{ name = "site05_rectory", owns = { Rectory = true }, budget = 300 },
+		{ name = "site05_grounds", owns = { Grounds = true, Landscape = true, Shrine = true, Pews = true, Kneeler = true, Candles = true, HistoryPanels = true }, budget = 900 },
+	}
+	-- path -> { parent path ("" is the site), class, grouping }
+	local TREE = {
+		{ "Structure", "", "Folder", true },
+		{ "Structure/Facade", "Structure", "Model" },
+		{ "Structure/Nave", "Structure", "Model" },
+		{ "Structure/Dome", "Structure", "Model" },
+		{ "Structure/Annex", "Structure", "Model" },
+		{ "Structure/Monastery", "Structure", "Model" },
+		{ "Garden", "", "Model" },
+		{ "Rectory", "", "Model" },
+		{ "Grounds", "", "Model" },
+		{ "Landscape", "", "Model" },
+		{ "Shrine", "", "Model" },
+		{ "Pews", "", "Model" },
+		{ "Kneeler", "", "Model" },
+		{ "Candles", "", "Model" },
+		{ "HistoryPanels", "", "Model" },
 	}
 
-	-- Colours (facade_front_wide_balingit_2018.jpg, elevated_monastery_roofs_velasquez.jpg, dome_velasquez.jpg).
-	local WALL = Color3.fromRGB(240, 220, 160)
-	local WALL_SHADE = Color3.fromRGB(214, 196, 140)
-	local TRIM = Color3.fromRGB(240, 236, 222)
-	local ROOF = Color3.fromRGB(30, 92, 56) -- dark forest green (the Slice 04 teal was too light)
-	local ROOF_RIB = Color3.fromRGB(46, 112, 70)
-	local DOME = Color3.fromRGB(244, 232, 190)
-	local RIB = Color3.fromRGB(226, 212, 168)
-	local TIMBER = Color3.fromRGB(80, 50, 40)
-	local MAROON = Color3.fromRGB(110, 40, 36)
-	local HEDGE = Color3.fromRGB(52, 110, 56)
-	local LAWN = Color3.fromRGB(86, 140, 60)
-	local GLASS = Color3.fromRGB(40, 48, 58)
-	local STONE = Color3.fromRGB(196, 188, 176)
-	local STONE_LIGHT = Color3.fromRGB(214, 206, 194)
-	local PAVE = Color3.fromRGB(150, 148, 144)
-	local TERRACOTTA = Color3.fromRGB(196, 128, 94)
-	local TEAL = Color3.fromRGB(20, 120, 110)
-	local LAVA = Color3.fromRGB(70, 66, 64)
-	local BILLBOARD = Color3.fromRGB(170, 215, 225)
-	local PEW = Color3.fromRGB(120, 78, 48)
-	local KNEEL_PAD = Color3.fromRGB(140, 40, 50)
-	local PANEL = Color3.fromRGB(30, 36, 48)
-	local FLAME = Color3.fromRGB(255, 200, 90)
-	local CONC, PLAS = Enum.Material.Concrete, Enum.Material.SmoothPlastic
-	local METAL, WOOD = Enum.Material.Metal, Enum.Material.Wood
-	local BRICK, LEAF = Enum.Material.Brick, Enum.Material.Grass
+	local sites = workspace:FindFirstChild("Sites")
+	assert(sites, "site05: Workspace.Sites not found (run builders/placeholders first)")
+	local builders = game.ServerStorage:FindFirstChild("Builders")
+	assert(builders, "site05: ServerStorage.Builders not found")
+	local existing = sites:FindFirstChild(MODEL_NAME)
+	assert(existing, "site05: Workspace.Sites.Site05_Carmel not found (run builders/placeholders first; this builder never creates it)")
 
-	local function countParts(inst)
-		local n = inst:IsA("BasePart") and 1 or 0
-		for _, d in ipairs(inst:GetDescendants()) do
-			if d:IsA("BasePart") then n += 1 end
+	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
+	local row = SiteData.byId(5)
+	assert(row and row.facing == "S", "site05: SiteData row 5 is missing or not facing S")
+	assert(row.pos == ORIGIN, string.format("site05: SiteData row 5 is at %s, expected %s", tostring(row and row.pos), tostring(ORIGIN)))
+	assert(row.size.X == 220 and row.size.Y == 180, string.format("site05: SiteData row 5 size is %s, expected 220 x 180", tostring(row.size)))
+
+	local ground = nil
+	do
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { existing }
+		local hit = workspace:Raycast(ORIGIN + V(0, 80, 0), V(0, -200, 0), params)
+		if hit then
+			ground = hit.Position.Y
+			assert(math.abs(ground) <= 0.6, string.format("site05: ground at ORIGIN is y %.2f, expected about 0", ground))
 		end
-		return n
 	end
+	local GROUND = ground or 0
 
-	-- Parts already in the site that survive the rebuild count against the 2,500 budget.
-	local used = 0
-	for _, c in ipairs(site:GetChildren()) do
-		if not REPLACED[c.Name] then used += countParts(c) end
+	------------------------------------------------------------------ helpers
+	local UP = V(0, 1, 0)
+	local function box(ctx, name, x0, x1, y0, y1, z0, z1, color, material)
+		return ctx:part(name, V(x1 - x0, y1 - y0, z1 - z0), CF((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), color, material)
 	end
-	local keptParts = used
-
-	local built = {} -- { name, parent = "Structure" | "Site", model, parts }
+	local function vcyl(ctx, name, x, z, y0, y1, dia, color, material)
+		return ctx:cyl(name, V(y1 - y0, dia, dia), CF(x, (y0 + y1) / 2, z) * ANG(0, 0, PI / 2), color, material)
+	end
+	local function ball(ctx, name, x, y, z, dia, color, material)
+		return ctx:ball(name, dia, CF(x, y, z), color, material)
+	end
+	-- Wedge over a box; the slope rises toward the horizontal axis unit vector d (the vertical face is on that side). (site03_tower.)
+	local function strip(ctx, name, x0, x1, y0, y1, z0, z1, d, color, material)
+		local size = (math.abs(d.X) > 0.5) and V(z1 - z0, y1 - y0, x1 - x0) or V(x1 - x0, y1 - y0, z1 - z0)
+		local cf = CFrame.fromMatrix(V((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), UP:Cross(d), UP, d)
+		return ctx:wedge(name, size, cf, color, material)
+	end
+	-- Corner wedge over a SQUARE base; the apex stands over the base corner on the (sx, sz) side. (site03_tower, verified there.)
+	local EX = { ["1,-1"] = V(1, 0, 0), ["1,1"] = V(0, 0, 1), ["-1,1"] = V(-1, 0, 0), ["-1,-1"] = V(0, 0, -1) }
+	local function corner(ctx, name, x0, x1, y0, y1, z0, z1, sx, sz, color, material)
+		local ex = EX[sx .. "," .. sz]
+		local cf = CFrame.fromMatrix(V((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), ex, UP, ex:Cross(UP))
+		return ctx:_make("CornerWedgePart", name, V(x1 - x0, y1 - y0, z1 - z0), cf, color, material)
+	end
+	-- Hip roof over x0..x1, z0..z1 from eave y0 rising `rise`: 2 slopes + 4 hip corners (2 + 4 parts; 4 if square).
+	local function hipRoof(ctx, name, x0, x1, z0, z1, y0, rise, color, material)
+		local y1 = y0 + rise
+		local made = {}
+		if (x1 - x0) >= (z1 - z0) then
+			local hw, zc = (z1 - z0) / 2, (z0 + z1) / 2
+			if x1 - x0 > z1 - z0 + 0.01 then
+				table.insert(made, strip(ctx, name, x0 + hw, x1 - hw, y0, y1, zc, z1, V(0, 0, -1), color, material))
+				table.insert(made, strip(ctx, name .. "S", x0 + hw, x1 - hw, y0, y1, z0, zc, V(0, 0, 1), color, material))
+			end
+			table.insert(made, corner(ctx, name .. "Hip", x1 - hw, x1, y0, y1, z0, zc, -1, 1, color, material))
+			table.insert(made, corner(ctx, name .. "Hip", x1 - hw, x1, y0, y1, zc, z1, -1, -1, color, material))
+			table.insert(made, corner(ctx, name .. "Hip", x0, x0 + hw, y0, y1, z0, zc, 1, 1, color, material))
+			table.insert(made, corner(ctx, name .. "Hip", x0, x0 + hw, y0, y1, zc, z1, 1, -1, color, material))
+		else
+			local hd, xc = (x1 - x0) / 2, (x0 + x1) / 2
+			table.insert(made, strip(ctx, name, xc, x1, y0, y1, z0 + hd, z1 - hd, V(-1, 0, 0), color, material))
+			table.insert(made, strip(ctx, name .. "S", x0, xc, y0, y1, z0 + hd, z1 - hd, V(1, 0, 0), color, material))
+			table.insert(made, corner(ctx, name .. "Hip", x0, xc, y0, y1, z1 - hd, z1, 1, -1, color, material))
+			table.insert(made, corner(ctx, name .. "Hip", xc, x1, y0, y1, z1 - hd, z1, -1, -1, color, material))
+			table.insert(made, corner(ctx, name .. "Hip", x0, xc, y0, y1, z0, z0 + hd, 1, 1, color, material))
+			table.insert(made, corner(ctx, name .. "Hip", xc, x1, y0, y1, z0, z0 + hd, -1, 1, color, material))
+		end
+		return made
+	end
 	local archPaths = { csg = 0, fallback = 0 }
-
-	local function component(name, parent, fn)
-		local model = Instance.new("Model")
-		model.Name = name
-		local ctx = BuildKit.new(model, ORIGIN, { budget = PART_BUDGET - used })
-		fn(ctx, model)
-		ctx:flush()
-		used += ctx:count()
-		table.insert(built, { name = name, parent = parent, model = model, parts = ctx:count() })
-	end
-
 	local function arch(ctx, name, spec)
 		local r = ctx:arch(name, spec)
 		archPaths[r.path] += 1
 		return r
 	end
-
-	-- An arched window (glass) with a trim surround on a wall face. `pos` is the bottom centre on the wall surface;
-	-- `yaw` turns the +Z face normal (0 = +Z, PI/2 = +X, PI = -Z, -PI/2 = -X). 4 parts.
-	local function arched(ctx, name, pos, yaw, w, h)
-		local rot = ANG(0, yaw, 0)
-		local normal = rot:VectorToWorldSpace(V(0, 0, 1))
-		ctx:window(name .. "_Trim", w + 1.4, h + 0.7, 0.4, CF(pos) * rot, TRIM, CONC)
-		ctx:window(name, w, h, 0.4, CF(pos + normal * 0.15) * rot, GLASS)
-	end
-
-	-- A vertical cylinder (Roblox cylinders run along local X, so roll them upright).
-	local function post(ctx, name, diameter, height, x, baseY, z, color, material)
-		return ctx:cyl(name, V(height, diameter, diameter), CF(x, baseY + height / 2, z) * ANG(0, 0, PI / 2), color, material)
-	end
-
-	-- A SurfaceGui with a title and an optional body line on one face of a part.
-	local function gui(part, face, title, body, textColor, ppstud)
+	-- A SurfaceGui with a title and an optional body line, FIXED TextSize (long labels never use TextScaled).
+	local function gui(part, face, title, body, textColor, ppstud, titleSize, bodySize)
 		local g = Instance.new("SurfaceGui")
 		g.Face = face
 		g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 		g.PixelsPerStud = ppstud or 30
 		g.Parent = part
-		local function lab(text, y0, h, font)
+		local function lab(name, text, y0, h, font, size)
 			local t = Instance.new("TextLabel")
-			t.Position = UDim2.fromScale(0, y0)
-			t.Size = UDim2.fromScale(1, h)
+			t.Name = name
+			t.Position = UDim2.fromScale(0.05, y0)
+			t.Size = UDim2.fromScale(0.9, h)
 			t.BackgroundTransparency = 1
 			t.TextColor3 = textColor
-			t.TextScaled = true
+			t.TextScaled = false
+			t.TextSize = size
 			t.TextWrapped = true
 			t.Font = font
 			t.Text = text
 			t.Parent = g
 		end
 		if body then
-			lab(title, 0.04, 0.3, Enum.Font.GothamBold)
-			lab(body, 0.38, 0.55, Enum.Font.GothamMedium)
+			lab("Title", title, 0.04, 0.3, Enum.Font.GothamBold, titleSize or 24)
+			lab("Body", body, 0.38, 0.58, Enum.Font.GothamMedium, bodySize or 18)
 		else
-			lab(title, 0.05, 0.9, Enum.Font.GothamBold)
+			lab("Title", title, 0.05, 0.9, Enum.Font.GothamBold, titleSize or 24)
 		end
+		return g
 	end
-
-	-- A cone topiary: a ball and a smaller ball above it (2 parts). `lowName` names the lower ball.
-	local function topiary(ctx, lowName, x, y0, z)
-		ctx:ball(lowName, 3.4, CF(x, y0 + 1.7, z), HEDGE, LEAF)
-		ctx:ball(lowName .. "Top", 2.2, CF(x, y0 + 3.6, z), HEDGE, LEAF)
-	end
-
-	-- A white Marian statue on a pedestal (6 parts). baseY = top of the ground slab; bodyName names the figure.
-	local function statue(ctx, x, baseY, z, bodyName)
-		ctx:part("Pedestal", V(4, 4, 4), CF(x, baseY + 2, z), STONE_LIGHT, CONC)
-		ctx:part("PedestalCap", V(4.6, 0.5, 4.6), CF(x, baseY + 4.25, z), TRIM, CONC)
-		ctx:part(bodyName or "StatueBody", V(1.8, 5, 1.4), CF(x, baseY + 7, z), TRIM, PLAS)
-		ctx:part("StatueArms", V(4, 0.5, 0.6), CF(x, baseY + 8.4, z), TRIM, PLAS)
-		ctx:ball("StatueHead", 1.6, CF(x, baseY + 10.2, z), TRIM, PLAS)
-		ctx:part("StatueHalo", V(0.3, 2.2, 2.2), CF(x, baseY + 10.2, z - 0.6), TRIM, PLAS)
-	end
-
-	-- Roof ribs: thin strips lying on both slopes of a gable whose ridge runs along Z.
-	-- eave = (half width, eave y); rise = ridge height above the eave; n ribs per slope; length along Z.
-	local function roofRibs(ctx, name, cx, cz, eaveY, run, rise, length, n)
-		local ang = math.atan2(rise, run)
-		for _, side in ipairs({ -1, 1 }) do
-			local nx, ny = side * math.sin(ang), math.cos(ang)
-			for i = 1, n do
-				local t = (i - 0.5) / n
-				local x = side * run * (1 - t)
-				local y = eaveY + rise * t
-				ctx:part(name, V(1.2, 0.25, length), CF(cx + x + nx * 0.15, y + ny * 0.15, cz) * ANG(0, 0, -side * ang), ROOF_RIB, PLAS)
-			end
-		end
-	end
-
-	local B = 6 -- portico floor, studs above the forecourt
-
-	------------------------------------------------------------------ Facade (front plane z = 0, body z -10..0, x +-34)
-	-- Heights are measured from the 2018 frontal photo: 68 studs = the outer facade (1130 px); the three steps rise to B+25,
-	-- B+33 and B+36, the pediment apex to B+41 and the ringed cross to B+46.
-	local function buildFacade(ctx)
-		ctx:part("Podium", V(72, B, 10), CF(0, B / 2, -5), STONE, CONC)
-		-- One wide terracotta stair across the portico: six risers of 1 stud, each a solid block down to the ground.
-		for i = 1, 6 do
-			ctx:part("StairRiser", V(56, 1, 1.7), CF(0, i - 0.5, 0.85 + (6 - i) * 1.7), TERRACOTTA, CONC)
-		end
-		-- Cream flank walls with a maroon base stripe and cone topiary, beside the stair (x +-28..52).
-		for _, s in ipairs({ -1, 1 }) do
-			ctx:part("FlankWall", V(24, 4, 1.4), CF(s * 40, 2, 8), WALL, CONC)
-			ctx:part("FlankWallBase", V(24, 1, 1.6), CF(s * 40, 0.5, 8), MAROON, CONC)
-			ctx:part("FlankWallCap", V(24.4, 0.4, 1.8), CF(s * 40, 4.2, 8), TRIM, CONC)
-			for k = 0, 3 do
-				topiary(ctx, "StairTopiary", s * (31 + 6 * k), 4.4, 8)
-			end
-		end
-		-- Handrails over the stair.
-		for _, x in ipairs({ -12, 12 }) do
-			ctx:part("RailPost", V(0.3, 3, 0.3), CF(x, 1.5, 9.4), STONE, METAL)
-			ctx:part("RailPost", V(0.3, 3, 0.3), CF(x, B + 1.5, 0.6), STONE, METAL)
-			ctx:part("StairRail", V(0.3, 0.3, 10.4), CF(x, 3 + 1.6, 5) * ANG(0.62, 0, 0), STONE, METAL)
-		end
-
-		-- Triple-arched portico: one large centre arch, two smaller side arches, timber doors set back in each.
-		arch(ctx, "ArchC", { width = 13, height = 13.5, depth = 8, wallWidth = 20, wallHeight = 20,
-			cframe = CF(0, B + 10, -4), color = WALL, material = CONC })
-		for _, sx in ipairs({ -16.65, 16.65 }) do
-			arch(ctx, "ArchS", { width = 9, height = 10.5, depth = 8, wallWidth = 12.7, wallHeight = 20,
-				cframe = CF(sx, B + 10, -4), color = WALL, material = CONC })
-			ctx:window("DoorS", 6, 9, 0.8, CF(sx, B, -5.6), TIMBER, WOOD)
-		end
-		ctx:window("DoorC", 9.6, 11, 0.8, CF(0, B, -5.6), TIMBER, WOOD)
-		-- White pilasters (13 high) on maroon plinths.
-		for _, x in ipairs({ -23, -10.3, 10.3, 23 }) do
-			ctx:part("Pilaster", V(2.6, 13, 1.4), CF(x, B + 6.5, 0.7), TRIM, CONC)
-			ctx:part("PierPlinth", V(3.2, 2.4, 1.8), CF(x, B + 1.2, 0.9), MAROON, CONC)
-		end
-		-- Stepped white entablature: low across the portico, raised over the centre arch.
-		ctx:part("EntabLow", V(47, 1.2, 11), CF(0, B + 20.6, -4.5), TRIM, CONC)
-		ctx:part("CentreRise", V(26, 1.8, 8), CF(0, B + 21.5, -5), WALL, CONC)
-		ctx:part("EntabMid", V(26, 1.2, 11), CF(0, B + 22.4, -4.5), TRIM, CONC)
-		-- Relief bands over the side arches and the coat of arms over the centre arch.
-		for _, x in ipairs({ -14.2, 14.2 }) do
-			ctx:part("ReliefBand", V(13, 1.4, 0.4), CF(x, B + 14.8, 0.2), TRIM, CONC)
-		end
-		ctx:part("CrestFrame", V(3.4, 3.8, 0.3), CF(0, B + 17.5, 0.15), TRIM, CONC)
-		ctx:part("Crest", V(2.4, 2.8, 0.4), CF(0, B + 17.5, 0.25), WALL_SHADE, CONC)
-
-		-- Outer shoulders (first step, x +-23..34, top B+25) with twin-arched windows and three square slits each.
-		for _, s in ipairs({ -1, 1 }) do
-			ctx:part("FacadeOuter", V(11, 25, 10), CF(s * 28.5, B + 12.5, -5), WALL, CONC)
-			ctx:part("ShoulderFill", V(3, 4.4, 9), CF(s * 21.5, B + 22.8, -5.5), WALL, CONC)
-			arched(ctx, "ShoulderWin", V(s * 28.5, B + 3, 0), 0, 6, 10)
-			ctx:part("ShoulderMullion", V(0.5, 10, 0.5), CF(s * 28.5, B + 8, 0.45), TRIM, CONC)
-			for k = -1, 1 do
-				ctx:part("ShoulderSlit", V(0.9, 2, 0.3), CF(s * (28.5 + 3 * k), B + 19.8, 0.15), GLASS, Enum.Material.Glass)
-			end
-			-- crenellated white band along the top of the shoulder (6) and of the mid step (4)
-			for k = 0, 5 do
-				ctx:part("Crenel", V(1.4, 1.2, 1.4), CF(s * (23.5 + 1.9 * k), B + 25.6, -0.8), TRIM, CONC)
-			end
-			for k = 0, 3 do
-				ctx:part("Crenel", V(1.4, 1.2, 1.4), CF(s * (14.5 + 1.8 * k), B + 33.6, -1.8), TRIM, CONC)
-			end
-			arched(ctx, "MidWin", V(s * 17, B + 22, -1), 0, 2.2, 7.5)
-		end
-		-- Second step (40 wide, top B+33), third step (26 wide, top B+36), and the pediment.
-		ctx:part("FacadeMid", V(40, 12.4, 8), CF(0, B + 26.8, -5), WALL, CONC)
-		ctx:part("FacadeCentre", V(26, 3, 8), CF(0, B + 34.5, -5), WALL, CONC)
-		ctx:gable("PedTrim", 27, 5, 8, CF(0, B + 36, -5), TRIM, CONC)
-		ctx:gable("Ped", 24, 4.1, 8.6, CF(0, B + 36, -5), WALL, CONC)
-		for i = 1, 7 do
-			ctx:part("PedScallop", V(1.6, 1.6, 0.6), CF(-7.5 + 2.5 * (i - 1), B + 37, -0.7), TRIM, CONC)
-		end
-		-- Rose window (white trim, dark glass, three spokes dropped: the photo shows a ringed tracery).
-		ctx:cyl("RoseTrim", V(0.5, 8.6, 8.6), CF(0, B + 26.3, -0.85) * ANG(0, PI / 2, 0), TRIM, CONC)
-		ctx:cyl("Rose", V(0.4, 7.4, 7.4), CF(0, B + 26.3, -0.6) * ANG(0, PI / 2, 0), GLASS)
-		for k = 0, 2 do
-			ctx:part("RoseTracery", V(7.4, 0.3, 0.2), CF(0, B + 26.3, -0.4) * ANG(0, 0, k * PI / 3), TRIM, CONC)
-		end
-		-- Marian niche with a white statue.
-		ctx:part("NicheShelf", V(5.6, 0.6, 1.4), CF(0, B + 31.6, -0.5), TRIM, CONC)
-		ctx:part("NicheFrame", V(5, 6.5, 0.5), CF(0, B + 34.6, -0.75), TRIM, CONC)
-		ctx:part("NicheRecess", V(3.4, 5, 0.4), CF(0, B + 34.4, -0.5), WALL_SHADE, CONC)
-		ctx:part("NicheStatue", V(1.2, 3.4, 0.8), CF(0, B + 33.4, -0.3), TRIM, PLAS)
-		ctx:ball("NicheHead", 1.2, CF(0, B + 35.4, -0.3), TRIM, PLAS)
-		-- Ringed (Celtic) cross on the apex: top B+46.
-		local cy = B + 44
-		ctx:part("CrossStem", V(1, 7, 0.9), CF(0, B + 42.5, -4), TRIM, CONC)
-		ctx:part("CrossArm", V(4, 1, 0.9), CF(0, cy, -4), TRIM, CONC)
-		for k = 0, 7 do
-			local th = k * PI / 4
-			ctx:part("CrossRing", V(1.45, 0.45, 0.6), CF(1.8 * math.cos(th), cy + 1.8 * math.sin(th), -4) * ANG(0, 0, th + PI / 2), TRIM, CONC)
-		end
-	end
-
-	------------------------------------------------------------------ Nave (z -10..-66, x +-23)
-	local function buildNave(ctx)
-		ctx:part("NaveBlock", V(46, 28, 56), CF(0, 14, -38), WALL, CONC)
-		ctx:gable("NaveRoof", 50, 11, 58, CF(0, 28, -38), ROOF, PLAS)
-		roofRibs(ctx, "NaveRib", 0, -38, 28, 25, 11, 58.4, 6)
-		ctx:part("NaveCornL", V(1.2, 1.2, 56), CF(-23.4, 27.4, -38), TRIM, CONC)
-		ctx:part("NaveCornR", V(1.2, 1.2, 56), CF(23.4, 27.4, -38), TRIM, CONC)
-		-- The repeated tall arched windows: five per side.
-		ctx:repeatAlong(5, V(0, 0, -18), V(0, 0, -9), function(_, p)
-			arched(ctx, "NaveWinE", V(23, 8, p.Z), PI / 2, 4, 11)
-			arched(ctx, "NaveWinW", V(-23, 8, p.Z), -PI / 2, 4, 11)
-		end)
-	end
-
-	------------------------------------------------------------------ East annex (low block east of the facade, x 34..50)
-	local function buildAnnex(ctx)
-		ctx:part("AnnexBlock", V(16, 12, 20), CF(42, 6, -12), WALL, CONC)
-		ctx:part("AnnexRoof", V(17, 0.6, 21), CF(42, 12.3, -12), ROOF, PLAS)
-		ctx:part("AnnexCornice", V(16.6, 0.8, 1), CF(42, 11.4, -1.6), TRIM, CONC)
-		ctx:window("AnnexDoor", 5, 8.5, 0.6, CF(42, 0, -1.8), TIMBER, WOOD)
-		ctx:part("AnnexCanopy", V(9, 0.4, 4), CF(42, 10.4, -0.2), ROOF, PLAS)
-		for _, x in ipairs({ 38, 46 }) do
-			ctx:part("AnnexCanopyPost", V(0.4, 10.2, 0.4), CF(x, 5.1, 1.6), STONE, METAL)
-		end
-	end
-
-	------------------------------------------------------------------ Monastery wing (west): long 2-storey block, walkway, L-return
-	local function buildMonastery(ctx)
-		ctx:part("MonasteryBlock", V(68, 24, 26), CF(-68, 12, -21), WALL, CONC)
-		ctx:gable("MonasteryRoof", 32, 7, 72, CF(-68, 24, -21) * ANG(0, PI / 2, 0), ROOF, PLAS)
-		ctx:part("MonasteryEave", V(72, 0.7, 1.4), CF(-68, 23.8, -7.6), ROOF_RIB, PLAS)
-		ctx:part("MonasteryCornice", V(69, 1, 1.2), CF(-68, 23.4, -7.6), TRIM, CONC)
-		-- Paired louvred windows in two rows (six pairs per row, two panes each).
-		for _, y in ipairs({ 6.5, 17.5 }) do
-			for k = 0, 5 do
-				for _, dx in ipairs({ -1.9, 1.9 }) do
-					ctx:part("MonasteryWin", V(3, 5, 0.3), CF(-98 + 10.8 * k + dx, y, -7.85), GLASS, Enum.Material.Glass)
-				end
-			end
-		end
-		-- Covered walkway along the front: floor, dark green roof at 12.4, eight posts, five teal umbrellas.
-		ctx:part("WalkwayFloor", V(68, 0.4, 6), CF(-68, 0.2, -5), STONE, CONC)
-		ctx:part("WalkwayRoof", V(70, 0.5, 7.4), CF(-68, 12.4, -4.7), ROOF, PLAS)
-		for k = 0, 7 do
-			ctx:part("WalkwayPost", V(0.5, 12, 0.5), CF(-100 + 9.5 * k, 6.2, -2.3), TRIM, CONC)
-		end
+	local TRUNK, FROND, LEAF_D, LEAF_L = Color3.fromRGB(120, 96, 70), Color3.fromRGB(64, 128, 52), Color3.fromRGB(46, 104, 50), Color3.fromRGB(80, 136, 60)
+	-- Palm: trunk, 5 drooping fronds and a head ball (7 parts). lean tilts the trunk toward +X by that many studs at the top.
+	local function palm(ctx, x, z, h, lean)
+		lean = lean or 0
+		local top = V(x + lean, h, z)
+		local base = V(x, 0, z)
+		local axis = (top - base)
+		ctx:cyl("PalmTrunk", V(axis.Magnitude, 1.1, 1.1), CFrame.lookAt((base + top) / 2, top) * ANG(0, PI / 2, 0), TRUNK, Enum.Material.Wood)
 		for k = 0, 4 do
-			local x = -94 + 11 * k
-			post(ctx, "UmbrellaPole", 0.3, 7, x, 0.4, -5.2, STONE, METAL)
-			ctx:cyl("Umbrella", V(0.5, 7, 7), CF(x, 8.2, -5.2) * ANG(0, 0, PI / 2), TEAL, PLAS)
+			local a = k * 2 * PI / 5 + 0.3
+			local dir = V(math.cos(a), 0, math.sin(a))
+			local c = top + dir * 2.6 - V(0, 0.9, 0)
+			ctx:part("PalmFrond", V(1.6, 0.25, 6), CFrame.lookAt(c, c + dir * 3 - V(0, 1.4, 0)), FROND, Enum.Material.Grass)
 		end
-		-- L-shaped return wing to the north of the court (guessed; no photo shows its rear).
-		ctx:part("MonasteryReturn", V(22, 24, 36), CF(-91, 12, -52), WALL, CONC)
-		ctx:gable("MonasteryReturnRoof", 26, 7, 40, CF(-91, 24, -52), ROOF, PLAS)
-		for _, z in ipairs({ -42, -52, -62 }) do
-			for _, y in ipairs({ 6.5, 17.5 }) do
-				ctx:part("ReturnWin", V(0.3, 5, 3.6), CF(-79.85, y, z), GLASS, Enum.Material.Glass)
+		ctx:ball("PalmHead", 1.6, CF(top), TRUNK, Enum.Material.Wood)
+	end
+	local function tree(ctx, x, z, h, dia)
+		vcyl(ctx, "TreeTrunk", x, z, 0, h * 0.55, 1, TRUNK, Enum.Material.Wood)
+		ctx:ball("TreeCrown", dia, CF(x, h - dia * 0.35, z), LEAF_D, Enum.Material.Grass)
+		ctx:ball("TreeCrown", dia * 0.7, CF(x + dia * 0.2, h - dia * 0.05, z - dia * 0.1), LEAF_L, Enum.Material.Grass)
+	end
+	local function shrub(ctx, x, z, dia)
+		ctx:ball("Shrub", dia, CF(x, dia * 0.3, z), LEAF_D, Enum.Material.Grass)
+	end
+
+	------------------------------------------------------------------ plan
+	local used = 0
+	local plan = {}
+	local SITE_TOKEN = {}
+	local planParent = {}
+	local function place(inst, dest)
+		planParent[inst] = dest
+		table.insert(plan, { inst = inst, dest = dest })
+	end
+	local containers, grouping, counts = {}, {}, {}
+	for _, t in ipairs(TREE) do
+		local inst = Instance.new(t[3])
+		inst.Name = t[1]:match("[^/]+$")
+		containers[t[1]] = inst
+		grouping[inst] = t[4] == true
+		counts[t[1]] = 0
+		place(inst, t[2] == "" and SITE_TOKEN or containers[t[2]])
+	end
+
+	local report = {}
+	local function runModule(def)
+		local mod = builders:FindFirstChild(def.name)
+		if not mod then
+			return "missing"
+		end
+		local fn = require(mod:Clone())
+		assert(type(fn) == "function", "site05: " .. def.name .. " must return function(env)")
+		local modUsed = 0
+		local function budget()
+			return math.max(0, math.min(def.budget - modUsed, SITE_CAP - used))
+		end
+		local function owned(path)
+			assert(def.owns[path], string.format("site05: %s does not own container %s", def.name, tostring(path)))
+			return containers[path]
+		end
+		local function inside(dest, path)
+			local cur = dest
+			while cur and cur ~= SITE_TOKEN do
+				if cur == containers[path] then return true end
+				cur = planParent[cur]
 			end
+			return false
 		end
-	end
-
-	------------------------------------------------------------------ Dome over the nave rear: round drum, cream ribbed dome, lantern, cross
-	local function buildDome(ctx)
-		local cx, cz = 0, -50
-		ctx:cyl("DomeDrum", V(12, 17, 17), CF(cx, 36, cz) * ANG(0, 0, PI / 2), WALL, CONC)
-		ctx:cyl("DrumCornice", V(1, 19, 19), CF(cx, 42.3, cz) * ANG(0, 0, PI / 2), TRIM, CONC)
-		for _, f in ipairs({ { 8.45, 0, PI / 2 }, { -8.45, 0, -PI / 2 }, { 0, 8.45, 0 }, { 0, -8.45, PI } }) do
-			arched(ctx, "DrumWin", V(cx + f[1], 32.5, cz + f[2]), f[3], 3, 7)
-		end
-		ctx:dome("Dome", 8, 8, CF(cx, 42.5, cz), DOME, RIB, PLAS)
-		post(ctx, "Lantern", 3, 5, cx, 49.5, cz, TRIM, CONC)
-		ctx:ball("LanternCap", 3.4, CF(cx, 55, cz), DOME, PLAS)
-		ctx:part("DomeCrossStem", V(0.5, 4, 0.5), CF(cx, 57.4, cz), TRIM, CONC)
-		ctx:part("DomeCrossArm", V(2, 0.5, 0.5), CF(cx, 58.4, cz), TRIM, CONC)
-	end
-
-	------------------------------------------------------------------ Grounds: forecourt paving, medallion, the Marian billboard
-	local function buildGrounds(ctx)
-		ctx:part("ForecourtPaving", V(100, 0.1, 86), CF(0, 0.05, 45), PAVE, CONC) -- inside the repainted terrain region
-		ctx:cyl("ForecourtMedallion", V(0.15, 10, 10), CF(0, 0.17, 50) * ANG(0, 0, PI / 2), STONE_LIGHT, CONC)
-		-- The arched Marian billboard on a lava-stone base, facing the road (+Z). Plain colours, no text, no photo texture.
-		local bx, bz = 40, 56
-		ctx:part("BillboardBase", V(8, 4.5, 5), CF(bx, 2.25, bz), LAVA, Enum.Material.Slate)
-		for _, r in ipairs({ { -3.4, 1.7, 1.6 }, { 3.4, 1.5, 1.9 }, { 0.4, 1.1, 3.3 } }) do
-			ctx:ball("BillboardRock", 3.4, CF(bx + r[1], r[2], bz + r[3]), LAVA, Enum.Material.Slate)
-		end
-		ctx:window("BillboardFrame", 9.6, 14, 0.4, CF(bx, 4.4, bz - 0.3), TRIM, CONC)
-		ctx:window("BillboardPanel", 8.4, 13, 0.6, CF(bx, 4.5, bz), BILLBOARD, PLAS)
-		ctx:part("BillboardFigure", V(2.6, 6, 0.3), CF(bx, 8.6, bz + 0.45), TRIM, PLAS)
-		ctx:ball("BillboardHead", 1.6, CF(bx, 12.3, bz + 0.45), TRIM, PLAS)
-	end
-
-	------------------------------------------------------------------ Garden: west topiary court, east prayer garden
-	local function buildGarden(ctx)
-		-- West court in front of the monastery wing (x -101..-51, z -2..14): a raised lawn so the terrain's grass blades
-		-- are hidden, a terracotta path, cone topiaries, a hedge and the white statue on its pedestal.
-		ctx:part("CourtLawn", V(50, 0.4, 16), CF(-76, 0.2, 6), LAWN, LEAF)
-		ctx:part("CourtPath", V(40, 0.25, 3), CF(-76, 0.525, 6), TERRACOTTA, CONC)
-		ctx:part("CourtHedge", V(50, 2.5, 1.6), CF(-76, 1.65, 13.4), HEDGE, LEAF)
-		for k = 0, 5 do
-			topiary(ctx, "Topiary", -97 + 8.5 * k, 0.4, 10)
-		end
-		for k = 0, 3 do
-			topiary(ctx, "Topiary", -93 + 8.5 * k, 0.4, 2)
-		end
-		statue(ctx, -56, 0.4, 6, "CourtStatue")
-		-- East prayer garden: a raised stone slab (0.4 thick so no grass shows), a connecting path, the statue.
-		ctx:part("PrayerSlab", V(46, 0.4, 56), CF(76, 0.2, 32), STONE_LIGHT, CONC)
-		ctx:part("PrayerPath", V(8, 0.3, 6), CF(51.5, 0.15, 18), STONE_LIGHT, CONC)
-		statue(ctx, 78, 0.4, 12)
-		ctx:part("PrayerHedgeN", V(46, 2.5, 1.6), CF(76, 1.65, 3.4), HEDGE, LEAF)
-		ctx:part("PrayerHedgeS", V(46, 2.5, 1.6), CF(76, 1.65, 59.4), HEDGE, LEAF)
-		ctx:part("PrayerHedgeE", V(1.6, 2.5, 56), CF(98.6, 1.65, 32), HEDGE, LEAF)
-	end
-
-	------------------------------------------------------------------ Shrine: gable over a brick-red base, arched gate, tablets
-	local function buildShrine(ctx)
-		local cx, cz = 80, -51
-		arch(ctx, "ShrineWall", { width = 6, height = 8, depth = 6, wallWidth = 18, wallHeight = 11,
-			cframe = CF(cx, 5.5, cz), color = MAROON, material = BRICK })
-		ctx:window("ShrineGate", 5.4, 8, 0.5, CF(cx, 0, cz + 0.4), TIMBER, WOOD)
-		ctx:part("ShrineGableBlock", V(20, 3, 6.6), CF(cx, 12.5, cz), WALL, CONC)
-		ctx:gable("ShrineGable", 20, 7, 6.6, CF(cx, 14, cz), WALL, CONC)
-		ctx:part("ShrineEdgeL", V(0.5, 0.5, 7), CF(cx - 5.3, 17.2, cz) * ANG(0, 0, 0.62), ROOF, PLAS)
-		ctx:part("ShrineEdgeR", V(0.5, 0.5, 7), CF(cx + 5.3, 17.2, cz) * ANG(0, 0, -0.62), ROOF, PLAS)
-		ctx:part("ShrineStep", V(8, 0.4, 2.4), CF(cx, 0.2, cz + 4.2), STONE, CONC)
-		for i, sx in ipairs({ -6, 6 }) do
-			local tablet = ctx:part("Tablet" .. i, V(4.4, 6, 0.3), CF(cx + sx, 5.5, cz + 3.15), TRIM, CONC)
-			gui(tablet, Enum.NormalId.Back, "THE TEN COMMANDMENTS", i == 2 and "(continued)" or nil, Color3.fromRGB(30, 30, 30), 40)
-		end
-	end
-
-	------------------------------------------------------------------ Required props (unchanged from Slice 04)
-	local function buildPews(ctx)
-		for i = 0, 3 do
-			local z = 26 + 6 * i
-			ctx:part("PewSeat", V(12, 0.6, 2.2), CF(78, 1.9, z), PEW, WOOD)
-			ctx:part("PewBack", V(12, 3, 0.4), CF(78, 3.4, z + 1), PEW, WOOD)
-			for _, lx in ipairs({ 72.6, 83.4 }) do
-				ctx:part("PewLeg", V(0.6, 1.5, 2), CF(lx, 1.15, z), PEW, WOOD)
-			end
-		end
-	end
-
-	local function buildKneeler(ctx)
-		ctx:part("KneelerBase", V(10, 1.2, 2.4), CF(78, 1, 18), PEW, WOOD)
-		ctx:part("KneelerPad", V(9.6, 0.4, 1.6), CF(78, 1.8, 18), KNEEL_PAD, PLAS)
-		ctx:part("KneelerRail", V(10, 1.8, 0.4), CF(78, 2.5, 19.4), PEW, WOOD)
-	end
-
-	local function buildCandles(ctx)
-		ctx:part("CandleRack", V(6, 2.6, 2.4), CF(70, 1.7, 10), STONE, CONC)
-		for r = 0, 1 do
-			for c = 0, 4 do
-				local x, z = 67.8 + 1.1 * c, 9.5 + 1.1 * r
-				post(ctx, "Candle", 0.5, 1.1, x, 3, z, TRIM, PLAS)
-				ctx:ball("Flame", 0.45, CF(x, 4.3, z), FLAME, Enum.Material.Neon)
-			end
-		end
-	end
-
-	local function buildHistoryPanels(ctx)
-		local titles = {
-			"1946 - Founding",
-			"1948 - Reported apparitions",
-			"1951 and 2015 - Church rulings",
+		local env = {
+			V = V, CF = CF, ANG = ANG, PI = PI, ORIGIN = ORIGIN, BuildKit = BuildKit, GROUND = GROUND,
+			box = box, vcyl = vcyl, ball = ball, strip = strip, corner = corner, hipRoof = hipRoof, arch = arch, gui = gui,
+			palm = palm, tree = tree, shrub = shrub,
+			used = function() return used end,
+			budget = budget,
 		}
-		-- Approved Slice 12 text (content/dialogue_draft.md); keep each body near 100 characters, the label is TextScaled.
-		local bodies = {
-			"Carmelite community founded on May 31, 1946.",
-			"Teresita Castillo reported apparitions of Mary. The reports drew pilgrims to Lipa.",
-			"1951: bishops found no supernatural basis. 2015: Arguelles' declaration was rejected by the Holy See.",
-		}
-		for i, z in ipairs({ 22, 34, 46 }) do
-			for _, dz in ipairs({ -4, 4 }) do
-				ctx:part("PanelPost", V(0.5, 2.6, 0.5), CF(97.5, 1.7, z + dz), STONE, METAL)
+		function env.container(path)
+			return owned(path)
+		end
+		function env.newFolder(path, subName, className)
+			local inst = Instance.new(className or "Folder")
+			inst.Name = subName
+			place(inst, owned(path))
+			return inst
+		end
+		function env.section(path, sectionFn, dest)
+			local c = owned(path)
+			assert(not grouping[c], "site05: grouping node holds no parts: " .. path)
+			local target = dest or c
+			assert(inside(target, path), "site05: dest is not inside container " .. path)
+			local holder = Instance.new("Model")
+			local ctx = BuildKit.new(holder, CF(ORIGIN), { budget = budget() })
+			sectionFn(ctx)
+			local n = ctx:count()
+			counts[path] += n
+			assert(counts[path] <= CONTAINER_CAP, string.format("site05: container %s holds %d parts, cap %d", path, counts[path], CONTAINER_CAP))
+			modUsed += n
+			used += n
+			for _, p in ipairs(ctx:parts()) do
+				place(p, target)
 			end
-			local board = ctx:part("HistoryPanel" .. i, V(0.4, 6, 10), CF(97.5, 6, z), PANEL, PLAS)
-			gui(board, Enum.NormalId.Left, titles[i], bodies[i], Color3.new(1, 1, 1), 30)
+			return target
+		end
+		fn(env)
+		return modUsed
+	end
+
+	for _, def in ipairs(MODULES) do
+		report[def.name] = runModule(def)
+	end
+
+	local kept = 0
+	for _, child in ipairs(existing:GetChildren()) do
+		if KEEP[child.Name] then
+			if child:IsA("BasePart") then kept += 1 end
+			for _, d in ipairs(child:GetDescendants()) do
+				if d:IsA("BasePart") then kept += 1 end
+			end
 		end
 	end
+	assert(used + kept <= SITE_CAP, string.format("site05: %d built + %d kept parts exceed the %d site cap", used, kept, SITE_CAP))
 
-	------------------------------------------------------------------ Build, then swap
-	local ok, err = pcall(function()
-		component("Facade", "Structure", buildFacade)
-		component("Nave", "Structure", buildNave)
-		component("Annex", "Structure", buildAnnex)
-		component("Monastery", "Structure", buildMonastery)
-		component("Dome", "Structure", buildDome)
-		component("Grounds", "Site", buildGrounds)
-		component("Garden", "Site", buildGarden)
-		component("Shrine", "Site", buildShrine)
-		component("Pews", "Site", buildPews)
-		component("Kneeler", "Site", buildKneeler)
-		component("Candles", "Site", buildCandles)
-		component("HistoryPanels", "Site", buildHistoryPanels)
-		assert(used <= PART_BUDGET, string.format("site05: %d parts exceeds the %d budget", used, PART_BUDGET))
-	end)
-	if not ok then
-		for _, b in ipairs(built) do b.model:Destroy() end
-		error("site05: build failed, the placeholder Block was left untouched: " .. tostring(err), 0)
-	end
-
+	------------------------------------------------------------------ swap
+	local site = existing
 	for _, child in ipairs(site:GetChildren()) do
-		if REPLACED[child.Name] then child:Destroy() end
+		if not KEEP[child.Name] then child:Destroy() end
 	end
-	local structure = Instance.new("Folder")
-	structure.Name = "Structure"
-	structure.Parent = site
-	for _, b in ipairs(built) do
-		b.model.Parent = (b.parent == "Structure") and structure or site
-		task.wait()
+	for i, e in ipairs(plan) do
+		e.inst.Parent = (e.dest == SITE_TOKEN) and site or e.dest
+		if i % 200 == 0 then task.wait() end
 	end
 
-	local pivotAfter = site:GetPivot()
-	assert((pivotAfter.Position - pivotBefore.Position).Magnitude < 1e-3 and pivotAfter.LookVector:Dot(pivotBefore.LookVector) > 0.9999,
-		"site05: the site pivot changed during the build")
+	-- Property write: no part moves. Faces +Z (south); RightVector -X, as before the rebuild.
+	site.WorldPivot = CFrame.lookAt(ORIGIN, ORIGIN + V(0, 0, 1))
 
-	local perComponent = {}
-	for _, b in ipairs(built) do perComponent[b.name] = b.parts end
+	local names = {}
+	for _, c in ipairs(site:GetChildren()) do table.insert(names, c.Name) end
+	table.sort(names)
+	local total, perContainer = 0, {}
+	for _, d in ipairs(site:GetDescendants()) do
+		if d:IsA("BasePart") then total += 1 end
+	end
+	for path, n in pairs(counts) do perContainer[#perContainer + 1] = path .. "=" .. n end
+	table.sort(perContainer)
 	return {
-		parts = countParts(site),
-		keptParts = keptParts,
-		builtParts = used - keptParts,
-		components = perComponent,
+		parts = total,
+		builtParts = used,
+		keptParts = kept,
+		ground = ground,
+		modules = report,
 		archPaths = archPaths,
+		containers = table.concat(perContainer, ","),
+		children = table.concat(names, ","),
 	}
 end
