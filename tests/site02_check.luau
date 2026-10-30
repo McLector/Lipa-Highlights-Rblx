@@ -1,7 +1,7 @@
 -- site02_check: the fidelity spec for Site 02 (Candido B. Lopez Memorial Public Market), REBUILT strictly from PublicMarketBP1.jpg (Slice 4, 2026-10-29). Written BEFORE the build.
 -- Studio copy: ServerStorage.Checks.site02_check. Run in Edit via execute_luau:
 --   require(game.ServerStorage.Checks.site02_check:Clone())      -- returns JSON {passed, failed, failures}
--- Groups (set shared.site02_only = "hall" | "sheds" | "yard" | "general" first to run one; run_all leaves it nil and runs all). Each group tests only its own parts.
+-- Groups (set shared.site02_only = "hall" | "sheds" | "yard" | "bands" | "general" first to run one; run_all leaves it nil and runs all). Each group tests only its own parts.
 -- Design source: scratch/site02/layout.md (numbers) and BP1. Replaced assertions: briefs/site02.md "Rebuild from BP1: replaced assertions".
 --
 -- ===================================== NAMING CONTRACT (builders MUST follow it) =====================================
@@ -70,7 +70,7 @@ local HttpService = game:GetService("HttpService")
 local SITE_POS = Vector3.new(-402, 0, 160)
 local SLOT = { x0 = -576, x1 = -228, z0 = -5, z1 = 325 }
 local BRANDS = { "ROSE PHARMACY", "PHARMACY", "BOTIKA", "DRUGSTORE", "MARLBORO", "CIGARETTE" } -- read in the photos (Marlboro signs, Rose Pharmacy map label)
-local CAP = { part = 400, total = 2100 } -- total raised 2000 to 2100 for the street traffic (R5e, owner-authorised 2026-10-30, logged in briefs/site02.md)
+local CAP = { part = 400, total = 2550 } -- total raised 2000 to 2100 for the street traffic (R5e, owner-authorised 2026-10-30, logged in briefs/site02.md); raised 2100 to 2550 for the band traffic and the crowd, R6a and R6b, owner-authorised 2026-10-30, logged in briefs/site02.md
 
 local function run(opts)
 	local only = (opts or {}).only
@@ -993,6 +993,242 @@ local function run(opts)
 		end
 	end)
 
+	------------------------------------------------------------------ bands: R6a, band traffic in the north and south bands (spec: scratch/site02/r6a-positions.md)
+	-- BandTraffic (Folder or Model, direct child of the site, no Humanoid) holds, per band (NORTH z -5..31 x -576..-228, SOUTH z 277..325 x -530..-228):
+	--   6 BandJeepney (Kind Jeepney, 8 parts), 4 BandTricycle (Kind Tricycle, 5 parts), 6 BandMotorbike (Kind Motorbike, 4 parts): Models, direct children, numbered 1..12 / 1..8 / 1..12;
+	--   6 UtilityPole parts (20..28 tall, on the ground) with one PoleArm and one PoleLamp each (within 6 studs of the pole), and 10 PoleWire parts (thin, above y 14, 40..60 long along x,
+	--   ends on the axes of two different poles of the same band). 240 parts in all (184 vehicle + 36 pole + 20 wire), all anchored. The size ranges and the ground rule are the R5e ones.
+	pcallGroup("bands", function()
+		local bt = site:FindFirstChild("BandTraffic")
+		local BANDS = {
+			N = { label = "north", x0 = -576, x1 = -228, z0 = -5, z1 = 31 },
+			S = { label = "south", x0 = -530, x1 = -228, z0 = 277, z1 = 325 }, -- x -530 keeps clear of the corner block (x <= -539); z 277 keeps clear of STri3 and SJ3 (end z 276.6)
+		}
+		local function bandOf(cz) return cz < 150 and "N" or "S" end
+		local function inBT(inst) return bt ~= nil and inst:IsDescendantOf(bt) end
+		local function btNamed(pat)
+			local t = {}
+			for _, p in ipairs(named(pat)) do if inBT(p) then table.insert(t, p) end end
+			return t
+		end
+		local function btUnits(pat) -- Models that are DIRECT children of BandTraffic
+			local t = {}
+			for _, u in ipairs(units(pat)) do if bt ~= nil and u.Parent == bt then table.insert(t, u) end end
+			return t
+		end
+		local function numbered(list, n) -- exactly n items, names end in 1..n, each number once
+			local seen, ok = {}, #list == n
+			for _, x in ipairs(list) do
+				local k = tonumber(x.Name:match("%d+$"))
+				if k == nil or k < 1 or k > n or seen[k] then ok = false else seen[k] = true end
+			end
+			return ok
+		end
+		local function onGround(lo) return lo.Y >= -0.1 and lo.Y <= 0.6 end -- the R5e rule
+		local function poleFamily(p)
+			return inBT(p) and (p.Name:match("^UtilityPole%d+$") or p.Name:match("^PoleArm%d+$") or p.Name:match("^PoleLamp%d+$") or p.Name:match("^PoleWire%d+$")) ~= nil
+		end
+		local function clashOf(inst, skip) -- first other built part that inst overlaps (the R5e test), or nil
+			local lo, hi = ub(inst)
+			for _, p in ipairs(own) do
+				if p ~= inst and not p:IsDescendantOf(inst) and not isKept(p) and not (skip and skip(p)) then
+					local a, b = wb(p)
+					if b.Y > 0.6 and lo.X < b.X - 0.1 and hi.X > a.X + 0.1 and lo.Y < b.Y - 0.1 and hi.Y > a.Y + 0.1 and lo.Z < b.Z - 0.1 and hi.Z > a.Z + 0.1 then
+						return p:GetFullName():sub(#site:GetFullName() + 2)
+					end
+				end
+			end
+			return nil
+		end
+		local KINDS = { -- the R5e size ranges
+			{ pat = "^BandJeepney%d+$", kind = "Jeepney", n = 12, per = 6, parts = 8, long = { 9, 14 }, wide = { 5, 7.5 }, tall = { 5, 8 } },
+			{ pat = "^BandTricycle%d+$", kind = "Tricycle", n = 8, per = 4, parts = 5, long = { 7.5, 9 }, wide = { 4.4, 5.8 }, tall = { 5.5, 7.2 } },
+			{ pat = "^BandMotorbike%d+$", kind = "Motorbike", n = 12, per = 6, parts = 4, long = { 4, 5.8 }, wide = { 0.5, 2.2 }, tall = { 2.5, 4 } },
+		}
+		local function shapeOf(u, K) -- nil when the vehicle is right, else the first fault
+			local lo, hi = ub(u)
+			local dx, dz, dy = hi.X - lo.X, hi.Z - lo.Z, hi.Y - lo.Y
+			local long, wide = math.max(dx, dz), math.min(dx, dz)
+			if not u:IsA("Model") then return "not a Model" end
+			if u:GetAttribute("Kind") ~= K.kind then return "Kind attribute" end
+			if #partsIn(u) ~= K.parts then return #partsIn(u) .. " parts (want " .. K.parts .. ")" end
+			if not (between(long, K.long[1], K.long[2]) and between(wide, K.wide[1], K.wide[2]) and between(dy, K.tall[1], K.tall[2])) then return string.format("size %.1f x %.1f x %.1f", long, wide, dy) end
+			if not onGround(lo) then return "not on the ground (y " .. sx(lo.Y) .. ")" end
+			return nil
+		end
+		local rigParts = {}
+		for _, d in ipairs(site:GetDescendants()) do
+			if d:IsA("BasePart") and isRig(d) then table.insert(rigParts, d) end
+		end
+
+		-- a. the container
+		check("bands: BandTraffic is a direct child of the site, a Folder or Model, and not a rig",
+			bt ~= nil and bt.Parent == site and (bt:IsA("Folder") or bt:IsA("Model")) and not isRig(bt),
+			bt == nil and "BandTraffic missing" or (bt.ClassName .. " in " .. (bt.Parent and bt.Parent.Name or "nil")))
+
+		-- b. counts and shape per kind
+		local allV = {}
+		for _, K in ipairs(KINDS) do
+			local list, bad, first = btUnits(K.pat), 0, ""
+			for _, u in ipairs(list) do
+				table.insert(allV, { u = u, K = K })
+				local why = shapeOf(u, K)
+				if why then
+					bad += 1
+					if first == "" then first = u.Name .. ": " .. why end
+				end
+			end
+			check("bands: exactly " .. K.n .. " Band" .. K.kind .. " Models numbered 1.." .. K.n .. " (Kind " .. K.kind .. ", " .. K.parts .. " parts, long " .. K.long[1] .. ".." .. K.long[2] .. ", wide " .. K.wide[1] .. ".." .. K.wide[2] .. ", tall " .. K.tall[1] .. ".." .. K.tall[2] .. ", on the ground)",
+				#list == K.n and numbered(list, K.n) and bad == 0, #list .. " found, " .. bad .. " off" .. (first ~= "" and (", first: " .. first) or ""))
+		end
+
+		-- c. per band: counts and bounds
+		for _, key in ipairs({ "N", "S" }) do
+			local B = BANDS[key]
+			local cnt, outside, first = { Jeepney = 0, Tricycle = 0, Motorbike = 0 }, 0, ""
+			for _, e in ipairs(allV) do
+				local lo, hi = ub(e.u)
+				if bandOf((lo.Z + hi.Z) / 2) == key then
+					cnt[e.K.kind] += 1
+					for _, p in ipairs(partsIn(e.u)) do
+						local a, b = wb(p)
+						if a.X < B.x0 - 0.05 or b.X > B.x1 + 0.05 or a.Z < B.z0 - 0.05 or b.Z > B.z1 + 0.05 then
+							outside += 1
+							if first == "" then first = e.u.Name .. "/" .. p.Name .. string.format(" x %s..%s z %s..%s", sx(a.X), sx(b.X), sx(a.Z), sx(b.Z)) end
+						end
+					end
+				end
+			end
+			check("bands: " .. B.label .. " band holds 6 jeepneys, 4 tricycles and 6 motorbikes, every part inside x " .. B.x0 .. ".." .. B.x1 .. " and z " .. B.z0 .. ".." .. B.z1,
+				cnt.Jeepney == 6 and cnt.Tricycle == 4 and cnt.Motorbike == 6 and outside == 0,
+				cnt.Jeepney .. " jeepneys, " .. cnt.Tricycle .. " tricycles, " .. cnt.Motorbike .. " motorbikes, " .. outside .. " parts outside" .. (first ~= "" and (", first: " .. first) or ""))
+		end
+
+		-- d. clearance of the vehicles
+		local nClash, firstClash = 0, ""
+		for _, e in ipairs(allV) do
+			local clash = clashOf(e.u)
+			if not clash then
+				local lo, hi = ub(e.u)
+				for _, p in ipairs(rigParts) do -- a figure may not stand inside or touch a vehicle (0.5 clear)
+					local a, b = wb(p)
+					if lo.X < b.X + 0.5 and hi.X > a.X - 0.5 and lo.Z < b.Z + 0.5 and hi.Z > a.Z - 0.5 and lo.Y < b.Y and hi.Y > a.Y then clash = "touches a figure (" .. p.Name .. ")" break end
+				end
+			end
+			if clash then
+				nClash += 1
+				if firstClash == "" then firstClash = e.u.Name .. " " .. (clash:find("^touches") and clash or ("overlaps " .. clash)) end
+			end
+		end
+		check("bands: all 32 band vehicles overlap no other vehicle and no other built part, and no figure is within 0.5 of one", #allV == 32 and nClash == 0,
+			#allV .. " vehicles, " .. nClash .. " clash" .. (firstClash ~= "" and (", first: " .. firstClash) or ""))
+
+		-- e. utility poles
+		local poles, arms, lamps, wires = btNamed("^UtilityPole%d+$"), btNamed("^PoleArm%d+$"), btNamed("^PoleLamp%d+$"), btNamed("^PoleWire%d+$")
+		local perBand, badPole, firstPole = { N = 0, S = 0 }, 0, ""
+		for _, p in ipairs(poles) do
+			local lo, hi = wb(p)
+			local why
+			if not between(hi.Y - lo.Y, 20, 28) then why = string.format("height %.1f", hi.Y - lo.Y)
+			elseif not onGround(lo) then why = "not on the ground (y " .. sx(lo.Y) .. ")" end
+			for key, B in pairs(BANDS) do
+				if between(p.Position.X, B.x0, B.x1) and between(p.Position.Z, B.z0, B.z1) then perBand[key] += 1 end
+			end
+			if why then
+				badPole += 1
+				if firstPole == "" then firstPole = p.Name .. ": " .. why end
+			end
+		end
+		check("bands: exactly 12 UtilityPole parts numbered 1..12, each 20..28 tall and standing on the ground, 6 in the north band and 6 in the south band",
+			#poles == 12 and numbered(poles, 12) and badPole == 0 and perBand.N == 6 and perBand.S == 6,
+			#poles .. " poles, north " .. perBand.N .. ", south " .. perBand.S .. ", " .. badPole .. " off" .. (firstPole ~= "" and (", first: " .. firstPole) or ""))
+		local function nearPoles(p)
+			local c = 0
+			for _, q in ipairs(poles) do
+				if math.abs(p.Position.X - q.Position.X) <= 6 and math.abs(p.Position.Z - q.Position.Z) <= 6 then c += 1 end
+			end
+			return c
+		end
+		local strayArm, strayLamp, polesNoArm, polesNoLamp = 0, 0, 0, 0
+		for _, a in ipairs(arms) do if nearPoles(a) < 1 then strayArm += 1 end end
+		for _, l in ipairs(lamps) do if nearPoles(l) < 1 then strayLamp += 1 end end
+		for _, q in ipairs(poles) do
+			local na, nl = 0, 0
+			for _, a in ipairs(arms) do if math.abs(a.Position.X - q.Position.X) <= 6 and math.abs(a.Position.Z - q.Position.Z) <= 6 then na += 1 end end
+			for _, l in ipairs(lamps) do if math.abs(l.Position.X - q.Position.X) <= 6 and math.abs(l.Position.Z - q.Position.Z) <= 6 then nl += 1 end end
+			if na ~= 1 then polesNoArm += 1 end
+			if nl ~= 1 then polesNoLamp += 1 end
+		end
+		check("bands: exactly 12 PoleArm and 12 PoleLamp parts (numbered 1..12), each within 6 studs (x and z) of a pole, and every pole has exactly one arm and one lamp",
+			#poles == 12 and #arms == 12 and #lamps == 12 and numbered(arms, 12) and numbered(lamps, 12) and strayArm == 0 and strayLamp == 0 and polesNoArm == 0 and polesNoLamp == 0,
+			#arms .. " arms, " .. #lamps .. " lamps, stray " .. strayArm .. "/" .. strayLamp .. ", poles without exactly one arm/lamp " .. polesNoArm .. "/" .. polesNoLamp)
+		local nPoleClash, firstPoleClash = 0, ""
+		for _, list in ipairs({ poles, arms, lamps }) do
+			for _, p in ipairs(list) do
+				local clash = clashOf(p, poleFamily) -- the arm, lamp and wires of a pole meet it by design
+				if clash then
+					nPoleClash += 1
+					if firstPoleClash == "" then firstPoleClash = p.Name .. " overlaps " .. clash end
+				end
+			end
+		end
+		check("bands: no pole, arm or lamp overlaps a band vehicle or any other built part", #poles == 12 and #arms == 12 and #lamps == 12 and nPoleClash == 0,
+			(#poles + #arms + #lamps) .. " pole parts, " .. nPoleClash .. " clash" .. (firstPoleClash ~= "" and (", first: " .. firstPoleClash) or ""))
+
+		-- f. wires
+		local wireBand, badWire, firstWire, unlinked, firstUnlinked = { N = 0, S = 0 }, 0, "", 0, ""
+		for _, w in ipairs(wires) do
+			local lo, hi = wb(w)
+			local dx, dy, dz = hi.X - lo.X, hi.Y - lo.Y, hi.Z - lo.Z
+			local key = bandOf(w.Position.Z)
+			wireBand[key] += 1
+			local why
+			if lo.Y <= 14 then why = "lowest point y " .. sx(lo.Y) .. " is not above 14"
+			elseif not (dy <= 0.5 and dz <= 0.5) then why = string.format("not thin (%.2f x %.2f)", dy, dz)
+			elseif not between(dx, 40, 60) then why = string.format("length along x %.1f", dx) end
+			if why then
+				badWire += 1
+				if firstWire == "" then firstWire = w.Name .. ": " .. why end
+			end
+			local pa, pb -- the poles of the same band whose axes the two ends reach
+			for _, q in ipairs(poles) do
+				if bandOf(q.Position.Z) == key then
+					if math.abs(q.Position.X - lo.X) <= 1 then pa = pa or q end
+					if math.abs(q.Position.X - hi.X) <= 1 then pb = pb or q end
+				end
+			end
+			if not (pa and pb and pa ~= pb) then
+				unlinked += 1
+				if firstUnlinked == "" then firstUnlinked = w.Name .. string.format(" x %s..%s", sx(lo.X), sx(hi.X)) end
+			end
+		end
+		check("bands: exactly 20 PoleWire parts numbered 1..20, 10 in the north band and 10 in the south band", #wires == 20 and numbered(wires, 20) and wireBand.N == 10 and wireBand.S == 10,
+			#wires .. " wires, north " .. wireBand.N .. ", south " .. wireBand.S)
+		check("bands: every PoleWire is thin (both cross-sections at most 0.5), 40..60 long along x and has its lowest point above y 14", #wires == 20 and badWire == 0,
+			#wires .. " wires, " .. badWire .. " off" .. (firstWire ~= "" and (", first: " .. firstWire) or ""))
+		check("bands: each PoleWire reaches the axes (within 1 stud in x) of two different poles of the same band", #wires == 20 and #poles == 12 and unlinked == 0,
+			#wires .. " wires, " .. unlinked .. " not linking two poles" .. (firstUnlinked ~= "" and (", first: " .. firstUnlinked) or ""))
+
+		-- g. the container as a whole
+		local all, unanch, badName = {}, 0, {}
+		local NAMESPACES = { "TricycleBody", "TricycleWheel", "TricycleRoof", "ParkedVehicle", "LampPost", "LampHead", "StreetTricycle", "StreetJeepney", "SidePole", "StreetStall" }
+		if bt then
+			for _, d in ipairs(bt:GetDescendants()) do
+				if d:IsA("BasePart") then
+					table.insert(all, d)
+					if not d.Anchored then unanch += 1 end
+				end
+				for _, pre in ipairs(NAMESPACES) do
+					if d.Name:sub(1, #pre) == pre then table.insert(badName, d.Name) end
+				end
+			end
+		end
+		check("bands: BandTraffic holds exactly 240 BasePart descendants (184 vehicle + 36 pole + 20 wire)", #all == 240, tostring(#all))
+		check("bands: every part in BandTraffic is anchored", #all > 0 and unanch == 0, #all .. " parts, " .. unanch .. " unanchored")
+		check("bands: no name in BandTraffic starts with a namespace of another check (TricycleBody, TricycleWheel, TricycleRoof, ParkedVehicle, LampPost, LampHead, StreetTricycle, StreetJeepney, SidePole, StreetStall)",
+			bt ~= nil and #badName == 0, #badName .. ": " .. table.concat(badName, ", ", 1, math.min(#badName, 4)))
+	end)
+
 	------------------------------------------------------------------ block: corner block (BP2) and service block (BP1 plan, BP2 plan)
 	-- CornerBlock (Structure/CornerBlock): BP2's louvred 4-storey block with the white and blue-grey checkerboard hoarding, long face parallel to the hall front, hoarding facing
 	--   east in the north half of that face (z 258..282). Parts: ONE CornerBlockBody; 12 Checker%d+ (3 wide x 4 high squares of 8 x 6) inside 4+ proud BlockFrame%d+; 10+ Louvre%d+
@@ -1239,7 +1475,7 @@ local function run(opts)
 			if plo.Y < lowest then lowest, lowName = plo.Y, p:GetFullName():sub(#site:GetFullName() + 2) end
 		end
 		check("no part anywhere in the site (rigs excluded) goes below y -0.6 (domes and heaps sink at most 0.6)", #own > 0 and lowest >= -0.601, sx(lowest) .. " at " .. lowName)
-		check("part count (rigs excluded) is between 950 and 2000 (the old model had 960; raised from 1500 for the corner block, service block, yard and vehicles, then from 1800 to 2000 for the street traffic, owner-authorised 2026-10-30)", #own >= 950 and #own <= 2000, tostring(#own))
+		check("part count (rigs excluded) is between 950 and 2000 (the old model had 960; raised from 1500 for the corner block, service block, yard and vehicles, then from 1800 to 2000 for the street traffic, then 2000 to 2200 for the band traffic, owner-authorised 2026-10-30)", #own >= 950 and #own <= 2200, tostring(#own))
 		local all = 0
 		for _, d in ipairs(site:GetDescendants()) do if d:IsA("BasePart") then all += 1 end end
 		check("site total (rigs included) is at most " .. CAP.total, all <= CAP.total, tostring(all))
