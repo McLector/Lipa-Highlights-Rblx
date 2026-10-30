@@ -46,7 +46,9 @@ if sites then
 				-- Built sites (1: Slice 02, 5: Slice 04, 6: Slice 05): the builder replaced the placeholder Block with Structure.
 				-- City Hall (10, Slice 3a) has no single Structure model: its structure root is the Wing model (beside Blocks, Steps,
 				-- Forecourt and Landscape), so for site 10 the root child is Wing.
-				local structureRoot = s.id == 10 and "Wing" or "Structure"
+				-- Lomi King (3) is rebuilt from the board in modules (dining, tower, front, context) with no Structure model:
+				-- its structure root is the Tower model (the salmon LomiBody and the floors above the podium), so for site 3 it is Tower.
+				local structureRoot = (s.id == 10 and "Wing") or (s.id == 3 and "Tower") or "Structure"
 				check(label .. " " .. structureRoot .. " present and Block absent", m:FindFirstChild(structureRoot) ~= nil and m:FindFirstChild("Block") == nil)
 				if s.id == 5 then
 					-- Orientation guard (Slice 04): the pivot is yawed 180 degrees, so a build that used the pivot as its origin is
