@@ -1,6 +1,7 @@
 -- site03_front: the FRONT of Site 03 (Lomi King), job L3c. Built from the Lomi King Architectural Blueprint Board (crops board_storefront, board_sign, board_right_ctx)
 --   and the Street View photo; the recipes of the old single-file builder (scratch/site03_old.luau) are PORTED: steel posts and rail, letters, logo, bamboo, parking sign,
---   poster, corner pier, sign posts, driveway. Ported text is byte-identical (the 8 letters, RamenPoster, ParkingSign); no new on-screen text.
+--   poster, corner pier, sign posts, driveway. Ported text is byte-identical (the 8 letters, RamenPoster, ParkingSign). New on-screen text (owner-approved
+--   2026-10-31, handoff 057 rows 3 and 4): the LOMI KING arc on the round sign and the parking sign's second line "Please do not block the driveway.".
 -- Studio copy: ServerStorage.Builders.site03_front. Assembler: builders/site03.luau. Check: tests/site03_check.luau, group "front" (also "general", "tower", "clear").
 -- Owns Storefront and Sign (Models directly under Site03_Lomi). Budget 220.
 -- FRAME: every number is WORLD (x east, z south, y up; this site faces WEST, the street is at small x). env.wbox / wvcyl / wball build world-aligned parts, env.W converts a
@@ -8,10 +9,10 @@
 -- Storefront: AwningFascia (orange block x 274.4..284, z 114..166, y 12..16, no text) with a top lip, dark hems and the south return band (x 274.4..300, z 165.5..166.5);
 --   LetterRail + Letter_1L..Letter_8G (silver LOMI, gold KING: invisible plates carrying one big SurfaceGui glyph on the west face, so the letters read as free-standing
 --   metal letters on the canopy top); SteelPost1..3 and SteelRail (black frame of the open front, around the dining Menu banner at x 274.5..274.9); CornerPier;
---   the framed bamboo slat wall on the south face (SlatBack, BambooSlat*, SlatFrame*, BambooCap), RamenPoster (+ PosterBorder), ParkingSign (+ SignFrame*, SignPost*),
+--   the framed bamboo slat wall on the south face (SlatBack, BambooSlat*, SlatFrame*, BambooCap), RamenPoster (+ PosterBorder), ParkingSign (+ ParkingBand, SignFrame*, SignPost*),
 --   the black corner lamp (CornerLamp*), DrivewayAsphalt and the dashed DrivewayLine.
 -- Sign: the round Lomi King / Kopi Vinz signboard north of the tower: LogoDisk (dark rim, faces west), LogoFace, LogoRing, LogoCore, LogoBowl (red / white / red / cream, ported
---   from the old file), LogoArm + LogoBracket joining it to the lattice mast: SignMast (central steel spine) with MastBrace* chords, ties and zigzag diagonals, and MastFoot.
+--   from the old file), LogoArc_1L..LogoArc_8G (white LOMI KING arc across the top of the red core), LogoArm + LogoBracket joining it to the lattice mast: SignMast (central steel spine) with MastBrace* chords, ties and zigzag diagonals, and MastFoot.
 -- Seams: the dining Menu banner is x 274.5..274.9, y 8.5..12, z 116..150; the dining FrontStep is x 274.5..284, y 0..1, z 116..150; pots x 275.5..280.5; the podium slab and south
 --   wall stop at z 165.5; the tower bay glass starts at x 280; the south context neighbour and the car start at z 181 (the driveway ends at z 178).
 return function(env)
@@ -24,7 +25,7 @@ return function(env)
 	local STEEL_D, SILVER = C3(40, 40, 45), C3(190, 194, 202)
 	local PIER = C3(205, 120, 100)
 	local SLAT, SLAT_BACK, BAMBOO_CAP = C3(190, 158, 104), C3(140, 108, 66), C3(120, 86, 50)
-	local WHITE, RED, CREAM_GREY = C3(240, 240, 236), C3(200, 30, 40), C3(200, 196, 184)
+	local WHITE, RED, CREAM_GREY, BLACK = C3(240, 240, 236), C3(200, 30, 40), C3(200, 196, 184), C3(20, 20, 20)
 	local ASPHALT, CONCRETE_C, LAMP = C3(62, 62, 66), C3(130, 128, 124), C3(255, 236, 190)
 	local SMOOTH, METAL, WOODM = Enum.Material.SmoothPlastic, Enum.Material.Metal, Enum.Material.Wood
 	local CONC, NEON = Enum.Material.Concrete, Enum.Material.Neon
@@ -154,7 +155,13 @@ return function(env)
 
 		-- the parking sign faces the driveway (south, +Z): white board, red text, black frame, two low posts
 		local sign = wbox(ctx, "ParkingSign", 276.5, 288.5, 2.2, 8.2, 166.6, 167, WHITE, SMOOTH)
-		gui(sign, Enum.NormalId.Back, "PARKING FOR LOMI KING CUSTOMERS ONLY", RED, 30, 38, 0.96, 0.84)
+		-- the red line sits in the top 62% (y about 4.2..7.9), clear of the band below; TextSize 31 passes the fit rule there (32 sits on its 2-line edge)
+		local top = gui(sign, Enum.NormalId.Back, "PARKING FOR LOMI KING CUSTOMERS ONLY", RED, 30, 31, 0.96, 0.62)
+		top.Position = UDim2.fromScale(0.02, 0.04)
+		-- the board's second line: a red band across the bottom of the sign, black text (approved; the board draws it white), one line
+		local band = wbox(ctx, "ParkingBand", 276.5, 288.5, 2.2, 4, 167, 167.04, RED, SMOOTH)
+		local second = gui(band, Enum.NormalId.Back, "Please do not block the driveway.", BLACK, 40, 22, 0.96, 0.84)
+		second.TextWrapped = false
 		wbox(ctx, "SignFrameT", 276.3, 288.7, 8.2, 8.4, 166.6, 167.05, STEEL_D, METAL)
 		wbox(ctx, "SignFrameB", 276.3, 288.7, 2, 2.2, 166.6, 167.05, STEEL_D, METAL)
 		wbox(ctx, "SignFrameL", 276.3, 276.5, 2.2, 8.2, 166.6, 167.05, STEEL_D, METAL)
@@ -185,6 +192,32 @@ return function(env)
 		disc("LogoRing", 278.0, 278.2, 8.2, WHITE)
 		disc("LogoCore", 277.8, 278.0, 6.6, RED)
 		disc("LogoBowl", 277.6, 277.8, 3.8, CREAM_GREY)
+
+		-- LOMI KING arc (board_sign.png; owner-approved): white letters across the top of the red core, read north to south (left to right from the street).
+		-- On the board they sit in the red outer band outside the white ring; that band is 0.5 wide here, so they sit on the core (radius 3.3), clear of the bowl (1.9).
+		-- Each letter is an invisible plate (0.7 wide, 1.1 tall, 0.05 thin) just west of the bowl, front face west, up along the radius; spacing by glyph advance.
+		local ARC_R, ARC_PPS, ARC_SIZE, ARC_GAP, ARC_SPACE = 2.6, 100, 90, 0.06, 0.3
+		local arcWord = "LOMIKING"
+		local adv = { 51, 70, 79, 29, 63, 29, 67, 63 } -- GothamBlack advances at TextSize 100 (as for the canopy letters)
+		local widths, total = {}, 0
+		for i = 1, 8 do
+			widths[i] = adv[i] * ARC_SIZE / 100 / ARC_PPS
+			total += widths[i] + (i < 8 and ARC_GAP or 0) + (i == 4 and ARC_SPACE or 0)
+		end
+		local s = -total / 2 -- arc length from the top, negative = north
+		for i = 1, 8 do
+			local theta = (s + widths[i] / 2) / ARC_R
+			local y, z = CY + ARC_R * math.cos(theta), 114.5 + ARC_R * math.sin(theta)
+			local c = W(277.57, y, z)
+			local up = W(277.57, y + math.cos(theta), z + math.sin(theta)) - c
+			local p = ctx:part("LogoArc_" .. i .. arcWord:sub(i, i), V(0.7, 1.1, 0.05), CFrame.lookAt(c, W(276.57, y, z), up), WHITE, SMOOTH)
+			p.Transparency = 1
+			p.CanCollide = false
+			p.CastShadow = false
+			local t = gui(p, Enum.NormalId.Front, arcWord:sub(i, i), WHITE, ARC_PPS, ARC_SIZE, 1, 1)
+			t.TextWrapped = false
+			s += widths[i] + ARC_GAP + (i == 4 and ARC_SPACE or 0)
+		end
 		wbox(ctx, "LogoArm", 279.5, 280.5, 30.4, 31.2, 111.4, 112.6, STEEL_D, METAL)
 		wbox(ctx, "LogoBracket", 279.5, 280.5, 23.4, 24.2, 111.4, 112.6, STEEL_D, METAL)
 

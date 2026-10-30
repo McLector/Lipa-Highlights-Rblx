@@ -352,6 +352,44 @@ group("front", function()
 		disk and body and (fmt(hi(disk, "Z")) .. " vs " .. fmt(lo(body, "Z"))) or "missing")
 	check("SignMast exists and stands at the sign (within 3 in z of LogoDisk, reaches the ground side: bottom <= 3)",
 		mast ~= nil and disk ~= nil and math.abs(mast.Position.Z - disk.Position.Z) <= 3 and lo(mast, "Y") <= 3, mast and (fmt(mast.Position.Z) .. " y " .. fmt(lo(mast, "Y"))) or "missing")
+	-- LOMI KING arc on the round sign (owner-approved 2026-10-31, handoff 057 row 3; board_sign.png): 8 letter plates LogoArc_* across the top of the
+	-- red core, white glyphs facing the street, upright along the radius. No KOPI VINZ and no cup (not approved).
+	local arc = withPrefix("LogoArc_")
+	table.sort(arc, function(a, b) return a.Position.Z < b.Position.Z end)
+	check("8 LogoArc_ letter plates on the round sign", #arc == 8, tostring(#arc))
+	local arcWord, arcLab, arcFace, arcX, arcUp, arcR, arcUpright = {}, 0, 0, 0, 0, 0, 0
+	local cy, cz = core and core.Position.Y or 0, core and core.Position.Z or 0
+	for _, p in ipairs(arc) do
+		local labs = labelsOf(p)
+		local l = labs[1]
+		table.insert(arcWord, l and l.Text or "?")
+		if #labs == 1 and l.TextScaled == false and l.Font == Enum.Font.GothamBlack and l.TextColor3.R >= 0.85 and l.TextColor3.G >= 0.85 and l.TextColor3.B >= 0.85 then arcLab += 1 end
+		local g = l and l:FindFirstAncestorOfClass("SurfaceGui")
+		local n = g and p.CFrame:VectorToWorldSpace(Vector3.FromNormalId(g.Face))
+		if n and n.X <= -0.99 then arcFace += 1 end
+		if bowl and hi(p, "X") <= lo(bowl, "X") + 0.01 then arcX += 1 end
+		if p.Position.Y > cy then arcUp += 1 end
+		local dy, dz = p.Position.Y - cy, p.Position.Z - cz
+		local r = math.sqrt(dy * dy + dz * dz)
+		local inner, outer = r - p.Size.Y / 2, math.sqrt((r + p.Size.Y / 2) ^ 2 + (p.Size.X / 2) ^ 2)
+		if inner >= 2.0 and outer <= 3.3 then arcR += 1 end
+		if r > 0 and p.CFrame.UpVector:Dot(Vector3.new(0, dy / r, dz / r)) >= 0.95 then arcUpright += 1 end
+	end
+	check("LogoArc letters read LOMIKING from north to south", table.concat(arcWord) == "LOMIKING", table.concat(arcWord, "|"))
+	check("every LogoArc plate has one white GothamBlack label, TextScaled false", #arc > 0 and arcLab == #arc, arcLab .. "/" .. #arc)
+	check("every LogoArc label faces west (normal dot -X >= 0.99)", #arc > 0 and arcFace == #arc, arcFace .. "/" .. #arc)
+	check("every LogoArc plate stands in front of LogoBowl (max x <= bowl min x)", #arc > 0 and arcX == #arc, arcX .. "/" .. #arc)
+	check("every LogoArc plate is above the disc centre (arc across the top)", #arc > 0 and arcUp == #arc, arcUp .. "/" .. #arc)
+	check("every LogoArc plate lies on the red core, clear of the bowl (inner >= 2.0, outer <= 3.3 from the centre)", #arc > 0 and arcR == #arc, arcR .. "/" .. #arc)
+	check("every LogoArc glyph is upright along the radius (UpVector dot radial >= 0.95)", #arc > 0 and arcUpright == #arc, arcUpright .. "/" .. #arc)
+	check("the arc is centred on the disc (first and last letter mirrored about the core z, +-0.3)",
+		#arc == 8 and core ~= nil and math.abs((arc[1].Position.Z + arc[8].Position.Z) / 2 - cz) <= 0.3, #arc == 8 and fmt((arc[1].Position.Z + arc[8].Position.Z) / 2) or "n/a")
+	local signModel = site and site:FindFirstChild("Sign")
+	local signText = {}
+	if signModel then for _, d in ipairs(signModel:GetDescendants()) do if d:IsA("TextLabel") then table.insert(signText, d.Text) end end end
+	local st = table.concat(signText, " ")
+	check("no KOPI or VINZ text on the round sign", signModel ~= nil and not st:find("KOPI", 1, true) and not st:find("VINZ", 1, true), st)
+	check("Sign holds 61 parts (53 + the 8 arc plates; no cup or other new part)", signModel ~= nil and #partsIn(signModel) == 61, signModel and tostring(#partsIn(signModel)) or "missing")
 
 	-- menu banner
 	local blocks = withPrefix("BannerBlock")
@@ -408,6 +446,29 @@ group("front", function()
 		if body then
 			check("ParkingSign is at least 10 south of LomiBody's centre z", sign.Position.Z >= body.Position.Z + 10, fmt(sign.Position.Z) .. " vs " .. fmt(body.Position.Z))
 		end
+	end
+	-- Second line of the parking sign (owner-approved 2026-10-31, handoff 057 row 4; board_storefront.png): a red band across the bottom of the sign,
+	-- black text as approved (the board draws it white), "do not" as approved (the board says "dont"). The red top line moves up, clear of the band.
+	local band = single("ParkingBand")
+	check("ParkingBand exists, red (about 200,30,40)", band ~= nil and (function() local r, g, b = rgb(band); return r >= 180 and g <= 60 and b <= 70 end)(),
+		band and string.format("%.0f,%.0f,%.0f", rgb(band)) or "missing")
+	if band and sign then
+		check("ParkingBand is flush on the sign's south face, inside its x span, y 2.2..4.5",
+			math.abs(lo(band, "Z") - hi(sign, "Z")) <= 0.05 and lo(band, "X") >= lo(sign, "X") - 0.01 and hi(band, "X") <= hi(sign, "X") + 0.01 and lo(band, "Y") >= 2.19 and hi(band, "Y") <= 4.5,
+			string.format("z %.2f vs %.2f, x %.1f..%.1f, y %.2f..%.2f", lo(band, "Z"), hi(sign, "Z"), lo(band, "X"), hi(band, "X"), lo(band, "Y"), hi(band, "Y")))
+		local bl = labelsOf(band)
+		local b1 = bl[1]
+		local bg = b1 and b1:FindFirstAncestorOfClass("SurfaceGui")
+		local bn = bg and band.CFrame:VectorToWorldSpace(Vector3.FromNormalId(bg.Face))
+		check("ParkingBand has one label: exactly 'Please do not block the driveway.', black, TextScaled false, TextSize >= 20, facing +Z",
+			#bl == 1 and b1.Text == "Please do not block the driveway." and b1.TextColor3.R <= 40 / 255 and b1.TextColor3.G <= 40 / 255 and b1.TextColor3.B <= 40 / 255
+				and b1.TextScaled == false and b1.TextSize >= 20 and bn ~= nil and bn.Z >= 0.99,
+			b1 and (b1.Text .. " size " .. b1.TextSize) or "no label")
+		local sl = labelsOf(sign)[1]
+		local bottom = sl and hi(sign, "Y") - (sl.Position.Y.Scale + sl.Size.Y.Scale) * extent(sign, "Y")
+		check("ParkingSign's top line sits above the band (label bottom >= band top)", bottom ~= nil and bottom >= hi(band, "Y") - 0.05, bottom and (fmt(bottom) .. " vs " .. fmt(hi(band, "Y"))) or "no label")
+	else
+		check("ParkingBand is flush on the sign, has its label, and the top line sits above it", false, "missing")
 	end
 	local poster = single("RamenPoster")
 	check("RamenPoster exists with RAMEN text", poster ~= nil and guiText(poster):find("RAMEN", 1, true) ~= nil, poster and guiText(poster) or "missing")
