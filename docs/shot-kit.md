@@ -56,5 +56,8 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | sample board close-up and the south stair foot (beside iso_stairN.png) | -212, 12, 178 | -231, 6, 190 |
 | 2 Market | vehicles and tricycle queue at the north stair foot (beside bp2_iso_vendors_tricycles.png) | -205, 28, 70 | -236, 3, 105 |
 | 2 Market | south stair foot: tricycle queue and jeepneys on the apron (beside iso_stairN.png) | -205, 28, 262 | -236, 3, 215 |
+| 2 Market | street traffic: second apron jeepney in front of hall door 8 | -215, 22, 250 | -250, 3, 236 |
+| 2 Market | apron top-down: kerb traffic either side of the clear Guide band | -238, 90, 160 | -238, 0, 159 |
+| 2 Market | south yard top-down: vans, tricycles, motorbikes (beside plan_sheds1.png) | -420, 70, 258 | -420, 0, 257 |
 
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.
