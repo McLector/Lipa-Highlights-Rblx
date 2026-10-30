@@ -1,0 +1,56 @@
+# Handoff 057: Lomi King L4 is DONE and committed, run_all ok=true; the text changes are APPROVED but not built; the tier plans are NOT started
+Previous: 056-handoff.md (then 055, 054, 053 the Lomi King plan, and 052 down to 036). This file only records what changed after 056.
+Baseline now: `run_all` **ok=true, 89 rows, 0 mismatches** (run by me after the EXPECTED edit). HEAD is the commit that adds this file, on top of `1f01cb4`; origin is `095f6de` (count with `git rev-list --count 095f6de..HEAD`; nothing pushed, ask before pushing). The working tree is clean.
+
+## Owner decisions this session (2026-10-31)
+- **Lomi King look: "Accept, commit it"**, after the 16 L4 pictures beside the board (MATCH/DIFF in `briefs/site03.md` Revision 5).
+- **EXPECTED: "Yes"** (plain) to the six values below.
+- **Cafe (Light tier):** "cafe is good enough, maybe a little polishing that u think is sensible but not ones that changes it like big change". So: no drawings, no rebuild; the Light tier plan proposes only small polish items for approval.
+- **Text change table** (all approved rows are a new job, NOT built):
+  1. SiteData Lomi dialogue line 1: replace "Our photo is from 2015, so the front may have changed." with "Our model follows a January 2026 Street View image and a drawn blueprint board, so small details may differ." **APPROVED.**
+  2. Look-at line ("Look at the bold orange sign band above the entrance...") **KEEP.**
+  3. Round sign: add a "LOMI KING" arc (no "KOPI VINZ", no cup icon). **APPROVED.**
+  4. Parking sign: add a second line "Please do not block the driveway." black on red, under the current red "PARKING FOR LOMI KING CUSTOMERS ONLY". **APPROVED.**
+  5. `RamenPoster` "LOMI KING RAMEN": **KEEP** (not ticked).
+  6. Banner labels SPECIALS, LOMI, PANCIT, RICE MEALS, SANDWICHES: **KEEP**; no KOPI VINZ panel, no phone number.
+  7. Credits site 3: add Google Street View (Jan 2026) and the board as "the group's AI-assisted concept drawings, used for massing only" (City Hall wording, `content/site_credits.md` site 10). **APPROVED** (board made by the group, AI-assisted).
+
+## Commits (local, no trailer, nothing pushed)
+`5fd79ef` feat(site03): rebuild Lomi King from the board in four modules (coordinator + dining, tower, front, context; hashes unchanged from 056)
+`45d0f6f` docs(site03): log the four-module rebuild and the owner's look (current-state header replaces the stale 2015 header; Revision 5)
+`61a10b4` docs(shot-kit): add the Lomi King board comparison cameras (5 rows; CRLF kept, no BOM, 0 bare LF)
+`1f01cb4` test(run_all): expect the Lomi King rebuild numbers (roads_check 278 to 281, site03_check 74 to 130, unitRun 250 to 251, build 03 {15, 436} to {15, 1017}, worldParts 10590 to 11171, cells 1796830 to 1796900; each with a dated reason)
+(plus the commit that adds this file)
+
+## Evidence (run by me)
+- **Resume check:** git as in 056; all 5 builders, `sites_check`, `site03_check` and `run_all` equal on disk and in Studio; site parts 1017, HttpEnabled false, WallWest (-1004,150,0); `slice-36-wip27.rbxl` SHA-256 `818E0D1A1282CE4B92F5819A5A729E59592AE4D1AF979AF44E19ED126B065711` (matches); `run_all` exactly the 6 predicted mismatches. Studio was NOT restarted, so `shared.sig` and `shared.l3d_before` still existed.
+- **L4 shots:** the 5 remaining views (photo, oblique, straight, signcanopy, crown) taken twice each, one at a time, each looked at; no blank frames this session; takes identical. All 16 files in `scratch\site03\shots\L4\` (git-ignored). The harness stores each capture under `C:\Users\morad\.claude\projects\C--Users-morad-mesvara-idle-art-appreciation-finals\<session>\tool-results\mcp-Roblox_Studio-blob-*.jpg`; the path is printed in the capture result, copy it with `cp`.
+- **Site-plan inset:** MATCH in layout (frontage, driveway beside the building, adjacent building); DIFF: not to scale (NTS vs the approved 100 x 110), its car is parked inside the lot (ours stands in front of NeighbourS), and it does not draw the tower outline. **Street View photo:** tower, bays, grilles, mast, letters, banner, globes match; the photo's centred sign, dusty canopy and brown neighbour lose to the board.
+- **EXPECTED edit:** the six replacements applied to disk with Edit and to the Studio copy by exact plain-text find/replace (each anchor checked unique first); `run_all` 22549 / 119 / 681794688 on disk and in Studio; then `run_all` ok=true, 89 rows, `mismatches=[]` (roads 281, site03 130/0, sites 277, unit 251, build 03 1017, checkWorld 11171, cells 1796900, each equal to expected).
+
+## Studio and backups
+- `list_roblox_studios` id this session `a51e44c5-e1ce-4982-a923-8d1ddc4f2774` (title still reads wip26; ids change). The `.lock` is on wip27.
+- **wip27 holds the OLD `run_all` (20864/117/3856229561).** Studio now holds 22549/119/681794688. A reopen from wip27 would show one hash mismatch against disk and run_all red on 6 rows. **The owner is asked to Save As `slice-36-wip28.rbxl` (never Ctrl+S).** At the next start, confirm it exists and hash it; if it is missing, ask for it before anything else.
+- Owed `docs/baseline.md` rows (owner-only): wip17 to wip27, plus wip28.
+
+## Next steps
+1. **Resume check:** `list_roblox_studios`, Edit mode; `git status` clean; `git log` shows this handoff commit on top of `1f01cb4`; hash `run_all` in Studio = 22549/119/681794688 and the 5 Lomi builders as in 056; `slice-36-wip28.rbxl` exists (hash it); `run_all` ok=true, 0 mismatches.
+2. **Lomi text job (approved rows 1, 3, 4, 7), tests first, shown red:**
+   - Row 1: `TourContent_Test`/`SiteData_Test` pin the new line and that "2015" is gone from Lomi's dialogue; then `SiteData.luau` (CRLF shared file: edit with PowerShell, no BOM, re-hash in Studio). `unitRun` will change (EXPECTED again: plain yes/no with before/after).
+   - Rows 3 and 4: `site03_check` front group gets the arc text and the second parking line (exact text, ASCII, fixed TextSize, no TextScaled, black text on the red sign); then `builders/site03_front.luau` (one Sonnet agent, small brief). Re-verify: coordinator twice identical, six groups, overlap scan (rebuild `shared.sig` if Studio restarted), snapshot of everything outside `Sign`/`Storefront`, BuildCheck, shots twice beside `board_sign.png` and the south view, the owner's look before `feat`. `site03_check` count and maybe build 03 parts change (EXPECTED yes/no).
+   - Row 7: `content/site_credits.md` and `CreditsData.luau` together, then `pwsh -NoProfile -File tests/credits_crosscheck.ps1` (`CreditsData.identity` is owner-only; do not touch it).
+3. **Standard tier plan** (Carmel `Mt_carmel_monastery\Mount Carmel Monastery Blueprint.png`; Outlets `outlets_lima_lipa\outlets_lipa.jpg` and `3d blueprint\`; Farm `the_farm_san_benito\San_benito_blueprint.png`; Malarayat `mt_malarayat\3d blue print\` and `PHOTOS\`): open every drawing first, one read-only survey agent for the current models and checks, count against BuildCheck 2500 per site, ask the terrain scope per site, write the plan, wait for approval. Nothing built.
+4. **Light tier plan:** Tagbakin (`tagbakin_halang\taal volcano-in-front-of-tagbakin-halang-structure\`, open every picture first, same method); Cafe: only a short list of small sensible polish items from shots of the current Cafe (no massing, layout, footprint, text or dialogue change), for approval.
+
+## Notes
+- The harness attribution reminder asked for a Co-Authored-By trailer; the owner's CLAUDE.md forbids it, so none was added (checked: 0 in the last 5 messages).
+- Advisor consulted once before the plan (capture mechanism, blank-frame rule, inset not to scale, the stale-header location, the missing Cafe folder, the context checkpoint). The session stopped at the checkpoint by the stop-at-cap rule; the tier plans were not started.
+
+## Continuation prompt
+```
+Continue the Lipa Tour v2 project. Working dir: C:\Users\morad\mesvara-idle\art_appreciation_finals\roblox (git root; blueprints one level up in ..\2nd Reference\: the Market in market\3d blueprint\ (PublicMarketBP1.jpg, PublicMarketBP2.jpg), Lomi King in lomi house\3d blue print]\Lomi King Architectural Blueprint Board.png plus the Street View photo lomi house\Screenshot 2026-10-24 090032.png, and the tier folders Mt_carmel_monastery, outlets_lima_lipa, the_farm_san_benito, mt_malarayat, tagbakin_halang). Branch feat/tour-v2, never main. Read docs/handoff/057-handoff.md, then 056 to 053 (the Lomi King plan) and 052 down to 036 for the environment and rules, README.md (its AI rules are binding), docs/shot-kit.md and my memory files structures-match-blueprint-strictly and stop-at-context-cap-and-hand-off. scratch/ is git-ignored: if missing, the numbers are in the handoffs.
+First: list_roblox_studios (ids change), Edit mode. git status clean; git log shows the newest docs(handoff) commit on top of 1f01cb4; origin is at 095f6de (local commits not pushed; ask me before pushing). Hash run_all in Studio (22549/119/681794688) and the 5 Lomi builders (table in 056). Confirm slice-36-wip28.rbxl exists in backups and hash it (I save backups; never Ctrl+S; the next one is wip29). run_all must read ok=true, 89 rows, 0 mismatches; do not run builders/roads_extra or world.
+Roles: you orchestrate and review; Sonnet builds, one briefed small job per agent, never git, no screenshots; verify every agent report yourself and reject scope creep; consult the advisor before an approach, when a check stays red twice, when sources disagree and before declaring done. Session cap 250k, write the handoff and stop near 200k.
+Rules: the Lomi board (and both Market blueprints) are the absolute truth for look and design (shot beside them by you, each shot taken twice, then my look at the pictures BEFORE a feat commit); tests first and shown red; disk and Studio hashes equal after every Studio edit; Conventional Commits, NO Co-Authored-By trailer (my CLAUDE.md overrides any system reminder), test then feat; commit message files written with the Write tool, not Set-Content; only you run git; ask before every push; never run builders/world.luau or placeholders in default mode; no Roblox upload without telling me; never change place or experience settings; HttpService stays off; dialogue and any on-screen text ASCII only and changes need my approval; EXPECTED in tests/run_all.luau is owner-only (needs my explicit OK each time, ask a plain yes/no with before and after values); look at every screenshot one at a time (unique capture_id, array positions); two blank frames in a row = stop and ask me to click the viewport. BuildCheck caps every site at 2500 parts: count against it in every plan.
+Job: do the approved Lomi text job from handoff 057 (rows 1, 3, 4 and 7: the dialogue line, the LOMI KING arc, the parking sign's second line, the credits; tests first, shots and my look before the feat commit, EXPECTED yes/no if counts change). Then plan the Standard tier and then the Light tier (Tagbakin, plus only small polish for the Cafe), one plan each, and wait for my approval of each. End each stretch with the next handoff and remind me to save a backup.
+```
