@@ -84,10 +84,11 @@ end
 route("Road E start (0, 225) -> Credits Plaza entrance (30, 3, 310)", Vector3.new(0, 3, 225), Vector3.new(30, 3, 310), 112)
 
 -- The core shops: every Guide must be reachable on foot from the spawn (6 studs in front of the Guide, along its facing).
--- Caps by site id. Market and Cafe keep 700. Lomi was 697.2 against 700 (2.8 studs of room, handoff 028); after the Cathedral compound grew and the Credits
+-- Caps by site id. Cafe keeps 700. Market: the rebuilt Market has its Guide on the forecourt at the stairs, and PathfindingService measured 440.58 studs from the spawn on
+-- 2026-10-30, the same in Edit mode and in Play (it was 461.53 in handoff 036), so its cap is that plus 15 percent = 506 (506.7, rounded down), the same owner rule. Lomi was 697.2 against 700 (2.8 studs of room, handoff 028); after the Cathedral compound grew and the Credits
 -- Plaza was added, a fresh Studio session measured 700.17 (the pathfinding mesh is rebuilt on every open), so Lomi's cap is that plus 15 percent = 805
 -- (805.2, rounded down), the owner-authorised rule for walking caps (2026-10-27).
-local SHOP_CAP = { [2] = 700, [3] = 805, [4] = 700 }
+local SHOP_CAP = { [2] = 506, [3] = 805, [4] = 700 }
 for _, id in ipairs({ 2, 3, 4 }) do
 	local row = SiteData.byId(id)
 	local m = sites and sites:FindFirstChild(string.format("Site%02d_%s", row.id, row.key))
