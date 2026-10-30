@@ -66,5 +66,7 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | north side street and the north-east corner (beside iso_northyard.png; the street reads about like the concrete from far) | -180, 38, -48 | -240, 0, -8 |
 | 2 Market | south corner: the front street T into the existing road at z 344, Concrete verge flush with the road (beside bp2_iso_whole.png) | -180, 38, 376 | -240, 0, 336 |
 | 2 Market | south zebra crossing along the street (Salt bars; the west one blends in the hall's shadow, grass blades half-hide the east one) | -222, 14, 196 | -222, 0, 230 |
+| 2 Market | north band traffic: kerb jeepneys, tricycles, motorbikes, poles and wires along the north side street (beside iso_northyard.png, about six kerb jeepneys along the kerb; the blueprints draw no utility poles or wires, those are the owner's request) | -190, 40, -45 | -340, 4, 6 |
+| 2 Market | south band traffic: the same along the south verge and road (beside iso_shedsA.png, which draws only two kerb jeepneys along the street, so ours is denser: an honest DIFF; and bp2_iso_whole.png) | -190, 40, 372 | -340, 4, 312 |
 
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.
