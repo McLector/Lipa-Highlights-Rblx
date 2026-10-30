@@ -25,7 +25,7 @@ Baseline now: `run_all` reads **ok=false, 89 rows, 5 mismatches, all predicted**
 - **Walk:** spawn to Lomi Guide measured 692.5 in Edit (three identical runs, cap 805, last 690.81). To be re-measured in Edit and Play after L3. Market walk to be re-checked after the WallWest reset: `routes_check` 16/0 (Edit); the Play run was done before the reset, so run it again in Play at L4.
 
 ## Owner action needed
-1. **Save As `slice-36-wip24.rbxl` (never Ctrl+S)** now: it holds L2, the WallWest reset and the Concrete ground. Then hash it. The `.lock` is on wip23; Studio's window title may still read wip18, so a plain Ctrl+S would overwrite wip23.
+1. **DONE: `slice-36-wip24.rbxl` saved** (655,522 bytes, 2026-10-31 01:15, SHA-256 `E1C06B5A454771F1690CC3E73B42B9AFC61D505968522B207BD509FC9CB5103D`). It holds L2, the WallWest reset and the Concrete ground. The `.lock` is now on wip24; a plain Ctrl+S would overwrite it, so the next backup is `slice-36-wip25.rbxl` via Save As.
 2. **Please do not click or drag in the 3D viewport** unless I ask (I may ask for one click if screenshots come back dark); a drag moved the boundary wall.
 3. Owed `docs/baseline.md` rows (owner-only): wip17 to wip24, with hashes (wip22 and wip23 above).
 
