@@ -50,6 +50,7 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | south side yard iso from the kerb (beside iso_shedsA.png: booth rows, shoppers' aisle) | -300, 40, 310 | -400, 4, 255 |
 | 2 Market | north side yard top-down (beside plan_sheds1.png and plan_sheds2.png) | -385, 140, 53 | -385, 0, 52 |
 | 2 Market | north booths close (beside iso_northyard.png: pyramid roofs, counter, vendor) | -418, 15, 34 | -445, 6, 54 |
+| 2 Market | north yard crowd: two shoppers (Shopper8 at -411,46 and Shopper9 at -370,46) among the umbrella booths (beside iso_northyard.png; the close row above frames neither figure, use this one) | -390, 20, 18 | -390, 3, 52 |
 | 2 Market | south booth row (beside iso_shedsA.png: booth rows, aisle) | -300, 26, 296 | -362, 6, 258 |
 | 2 Market | north booth row top-down (four quarters meet on one centre) | -385, 70, 53 | -385, 0, 52 |
 | 2 Market | south side yard top-down (beside plan_sheds1.png) | -390, 140, 256 | -390, 0, 255 |
