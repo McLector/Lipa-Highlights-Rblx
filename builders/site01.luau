@@ -1071,7 +1071,7 @@ local CC_Z0, CC_Z1 = MIDZ - 15, MIDZ + 15 -- the Cultural Center's z range, cent
 		folder.Name = "PlazaPeople"
 		local skins = { Color3.fromRGB(224, 172, 130), Color3.fromRGB(198, 134, 92), Color3.fromRGB(141, 85, 60), Color3.fromRGB(241, 194, 125) }
 		local shirts = { Color3.fromRGB(200, 60, 60), Color3.fromRGB(60, 100, 170), Color3.fromRGB(230, 200, 80), Color3.fromRGB(90, 150, 100) }
-		local spots = { { -18, 36, 0.4, true }, { 20, 44, -0.5, true }, { -34, WALL_Z + 19, 2.6 }, { 30, WALL_Z + 19, 3.4 } } -- x, z, yaw, on the upper level?
+		local spots = { { -18, 36, 0.4, true }, { 20, 50, -0.5, true }, { -34, WALL_Z + 19, 2.6 }, { 30, WALL_Z + 19, 3.4 } } -- x, z, yaw, on the upper level? (Visitor2 z 44 -> 50, session 061: z 44 was inside parked Vehicle30)
 		for i, s in ipairs(spots) do
 			local desc = Instance.new("HumanoidDescription")
 			desc.HeadColor = skins[i]

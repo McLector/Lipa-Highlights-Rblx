@@ -266,9 +266,9 @@ return function(opts)
 			{ role = "Diner1", x = 289.7, z = 147.5, face = V(1, 0, 0), pose = "sit", top = Color3.fromRGB(60, 100, 170), skin = 3, seat = 2.0 },
 			{ role = "Diner2", x = 294.3, z = 147.5, face = V(-1, 0, 0), pose = "sit", top = Color3.fromRGB(230, 200, 80), skin = 1, seat = 2.0 },
 		},
-		[4] = { -- Cafe: two customers at the outdoor table at (262, -148)
-			{ role = "Customer1", x = 259.7, z = -148, face = V(1, 0, 0), pose = "sitCup", top = Color3.fromRGB(150, 60, 60), skin = 4, seat = 2.0, wear = { Cup = true } },
-			{ role = "Customer2", x = 264.3, z = -148, face = V(-1, 0, 0), pose = "sitCup", top = Color3.fromRGB(70, 120, 120), skin = 2, seat = 2.0, wear = { Cup = true } },
+		[4] = { -- Cafe: two customers at the outdoor table at (262, -148); 0.4 back from the chair centres (259.7 / 264.3) so the legs clear the table (C4, 061)
+			{ role = "Customer1", x = 259.3, z = -148, face = V(1, 0, 0), pose = "sitCup", top = Color3.fromRGB(150, 60, 60), skin = 4, seat = 2.0, wear = { Cup = true } },
+			{ role = "Customer2", x = 264.7, z = -148, face = V(-1, 0, 0), pose = "sitCup", top = Color3.fromRGB(70, 120, 120), skin = 2, seat = 2.0, wear = { Cup = true } },
 		},
 		[5] = { -- Carmel: a pilgrim kneeling at the outdoor shrine (z -651), one seated in a pew facing the kneeler
 			{ role = "PilgrimKneeling", x = -220, z = -643.5, face = V(0, 0, -1), pose = "kneelPray", top = WHITE, legs = Color3.fromRGB(60, 60, 80), skin = 2, probe = 10 },

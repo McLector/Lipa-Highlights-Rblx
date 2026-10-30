@@ -235,6 +235,11 @@ end)
 ------------------------------------------------------------------ tower: four storeys, curved bays, barred windows, grille floor, hip eave, pavilion
 group("tower", function()
 	check("LomiBody is ONE unique part", body ~= nil)
+	-- Session 061 polish: PodiumParapetE's east face was flush with LomiBody's east face (x 328): grey and salmon flickered in a strip at
+	-- the tower's base. The parapet face must stand at least 0.03 proud of the tower.
+	local parE = allNamed("PodiumParapetE")[1]
+	check("PodiumParapetE's east face stands 0.03+ proud of LomiBody's (no flicker at the tower base)", parE ~= nil and body ~= nil
+		and hi(parE, "X") >= hi(body, "X") + 0.03, parE and body and string.format("%.3f vs %.3f", hi(parE, "X"), hi(body, "X")) or "missing")
 	local tz0, tz1
 	if body then tz0, tz1 = lo(body, "Z"), hi(body, "Z") end
 	local fz0, fz1
@@ -514,6 +519,27 @@ group("dining", function()
 	local rigs = 0
 	if diners then for _, c in ipairs(diners:GetChildren()) do if c:FindFirstChildOfClass("Humanoid") then rigs += 1 end end end
 	check("3 Diners rigs", diners ~= nil and rigs == 3, tostring(rigs))
+	-- Session 061 polish: the diners were set on the terrain (y 0) + 3, so their feet sank 0.39 into the 0.2 FloorTile (R15 needs
+	-- HipHeight + half the root part, 3.19, above the surface). Each rig's lowest body part must sit on the floor top under it.
+	local sunk, checked = {}, 0
+	if diners then
+		local rp = RaycastParams.new()
+		rp.FilterType = Enum.RaycastFilterType.Exclude
+		rp.FilterDescendantsInstances = { diners }
+		for _, rig in ipairs(diners:GetChildren()) do
+			local hrp = rig:FindFirstChild("HumanoidRootPart")
+			local m = math.huge
+			for _, p in ipairs(rig:GetChildren()) do
+				if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" then m = math.min(m, lo(p, "Y")) end
+			end
+			local hit = hrp and workspace:Raycast(hrp.Position, Vector3.new(0, -20, 0), rp)
+			checked += 1
+			if not hit or math.abs(m - hit.Position.Y) > 0.05 then
+				table.insert(sunk, string.format("%s feet %.2f floor %s", rig.Name, m, hit and string.format("%.2f", hit.Position.Y) or "nil"))
+			end
+		end
+	end
+	check("each Diners rig's lowest body part is within 0.05 of the floor top under it", checked == 3 and #sunk == 0, table.concat(sunk, "; "))
 
 	-- pots and shrubs flanking the dining front
 	local pots = allNamed("Pot")

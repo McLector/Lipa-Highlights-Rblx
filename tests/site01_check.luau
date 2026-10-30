@@ -1143,6 +1143,23 @@ do
 		end
 	end
 	check("B3c-1 visitors: 2 on the lot (above the podium top) and 2 on the plaza (on the ground, inside the fence)", onLot == 2 and onPlaza == 2 and #badRig == 0, string.format("%d lot, %d plaza, %s", onLot, onPlaza, table.concat(badRig, ", ")))
+	-- Session 061 polish: Visitor2 stood inside parked Vehicle30 (body through VehicleUnder, VehicleBody, VehicleCabin, VehicleGlass).
+	local vehicles = site:FindFirstChild("ParkedVehicles")
+	local inCar = {}
+	if people and vehicles then
+		local op = OverlapParams.new()
+		op.FilterType = Enum.RaycastFilterType.Include
+		op.FilterDescendantsInstances = { vehicles }
+		for _, rig in ipairs(people:GetChildren()) do
+			for _, p in ipairs(rig:GetChildren()) do
+				if p:IsA("BasePart") and #workspace:GetPartsInPart(p, op) > 0 then
+					table.insert(inCar, rig.Name .. "." .. p.Name)
+					break
+				end
+			end
+		end
+	end
+	check("B3c-1 visitors stand clear of the parked vehicles (no visitor body part inside a ParkedVehicles part)", people ~= nil and vehicles ~= nil and #inCar == 0, table.concat(inCar, ", "))
 end
 ------------------------------------------------------------------ B3c-2: the south lot is filled (cars, bay lines, lamps) and the east garden strip is planted
 -- B3c-1 left the lot bare south of z 48. Two more staggered rows of cars (rows z 65 and 87, bays 6 apart), their bay and aisle lines, six lamps down the Walkway and a hedged

@@ -262,7 +262,9 @@ return function(env)
 		hum.WalkSpeed = 0
 		rig.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 		rig:SetAttribute("SiteId", 3)
-		rig:PivotTo(CF(s[1] + DX, groundAt(s[1] + DX, s[2] + DZ) + 3, s[2] + DZ) * ANG(0, s[3], 0))
+		-- feet on the FloorTile top (0.2 above the terrain): R15 stands HipHeight + half the root part above its surface (session 061;
+		-- the old fixed + 3 sank the feet 0.39 into the floor)
+		rig:PivotTo(CF(s[1] + DX, groundAt(s[1] + DX, s[2] + DZ) + 0.2 + hum.HipHeight + hrp.Size.Y / 2, s[2] + DZ) * ANG(0, s[3], 0))
 		hrp.Anchored = true
 		env.addRig(rig, "Diners")
 	end

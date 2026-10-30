@@ -284,6 +284,44 @@ do
 	end
 	check("UnitFloor and CheckerDark sit inside the side and back wall planes by >= 0.03", wn ~= nil and ws ~= nil and bw ~= nil
 		and anchor("UnitFloor") ~= nil and #flush == 0, #flush .. " flush: " .. table.concat(flush, ", ", 1, math.min(#flush, 5)))
+
+	-- C4 (session 061, owner yes): the two seated customers at the front terrace table (262, -148) had their thighs, shins and feet
+	-- through the TableTop and TableLegs. Their legs must clear every TableTop and TableLeg; the cup in the hand stays over the top.
+	-- (The shins still touch the chair's front edge and front legs: inherent to the 2-stud chair and the 90-degree knee, not pinned.)
+	local tables = site:FindFirstChild("Tables")
+	local npcs = site:FindFirstChild("LocalNPCs")
+	local op = OverlapParams.new()
+	op.FilterType = Enum.RaycastFilterType.Include
+	op.FilterDescendantsInstances = { tables or site }
+	local clash, cupBad, seen = {}, {}, 0
+	for _, role in ipairs({ "Customer1", "Customer2" }) do
+		local rig = npcs and npcs:FindFirstChild(role)
+		if rig then
+			seen += 1
+			for _, leg in ipairs({ "LeftUpperLeg", "LeftLowerLeg", "LeftFoot", "RightUpperLeg", "RightLowerLeg", "RightFoot" }) do
+				local p = rig:FindFirstChild(leg)
+				for _, h in ipairs(p and workspace:GetPartsInPart(p, op) or {}) do
+					if h.Name == "TableTop" or h.Name == "TableLeg" then table.insert(clash, role .. "." .. leg .. "/" .. h.Name) end
+				end
+			end
+			-- The cup is held at the table's near corner (half off its edge before C4 too): it must stay within 0.6 of a TableTop
+			-- horizontally and not sink into it.
+			local cup = rig:FindFirstChild("Cup", true)
+			local near = false
+			for _, t in ipairs(cup and tables and tables:GetDescendants() or {}) do
+				if t:IsA("BasePart") and t.Name == "TableTop" then
+					local c = cup.Position
+					local dx = math.max(lo(t, "X") - c.X, 0, c.X - hi(t, "X"))
+					local dz = math.max(lo(t, "Z") - c.Z, 0, c.Z - hi(t, "Z"))
+					if math.sqrt(dx * dx + dz * dz) <= 0.6 and lo(cup, "Y") >= hi(t, "Y") - 0.02 then near = true end
+				end
+			end
+			if not near then table.insert(cupBad, role) end
+		end
+	end
+	check("Cafe customers' legs and feet do not intersect any TableTop or TableLeg", tables ~= nil and seen == 2 and #clash == 0,
+		#clash .. ": " .. table.concat(clash, ", ", 1, math.min(#clash, 4)))
+	check("each Cafe customer's Cup stays within 0.6 of a TableTop and does not sink into it", seen == 2 and #cupBad == 0, table.concat(cupBad, ", "))
 end
 
 ------------------------------------------------------------------ Thin ground parts stay inside the paved region (world x 224..324, z -200..-120)

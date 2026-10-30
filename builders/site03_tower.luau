@@ -57,7 +57,7 @@ return function(env)
 		B(ctx, "PodiumPlinth", 284, 328, 0, 1.2, 113.6, 114, PLINTH, CONCRETE)
 		B(ctx, "PodiumParapetN", 284, 328, 16, 17.2, 114, 114.6, CONC, CONCRETE)
 		B(ctx, "PodiumParapetS", 284, 328, 16, 17.2, 164.9, 165.5, CONC, CONCRETE)
-		B(ctx, "PodiumParapetE", 327.4, 328, 16, 17.2, 114.6, 164.9, CONC, CONCRETE)
+		B(ctx, "PodiumParapetE", 327.4, 328.05, 16, 17.2, 114.6, 164.9, CONC, CONCRETE) -- 0.05 proud of LomiBody's east face (no flicker, session 061)
 	end)
 
 	------------------------------------------------------------------ Tower: floors 2..4
