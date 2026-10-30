@@ -1,7 +1,7 @@
 -- site02_check: the fidelity spec for Site 02 (Candido B. Lopez Memorial Public Market), REBUILT strictly from PublicMarketBP1.jpg (Slice 4, 2026-10-29). Written BEFORE the build.
 -- Studio copy: ServerStorage.Checks.site02_check. Run in Edit via execute_luau:
 --   require(game.ServerStorage.Checks.site02_check:Clone())      -- returns JSON {passed, failed, failures}
--- Groups (set shared.site02_only = "hall" | "sheds" | "yard" | "bands" | "general" first to run one; run_all leaves it nil and runs all). Each group tests only its own parts.
+-- Groups (set shared.site02_only = "hall" | "sheds" | "yard" | "bands" | "crowd" | "general" first to run one; run_all leaves it nil and runs all). Each group tests only its own parts.
 -- Design source: scratch/site02/layout.md (numbers) and BP1. Replaced assertions: briefs/site02.md "Rebuild from BP1: replaced assertions".
 --
 -- ===================================== NAMING CONTRACT (builders MUST follow it) =====================================
@@ -1404,12 +1404,227 @@ local function run(opts)
 		end
 	end)
 
+	------------------------------------------------------------------ crowd: 12 shoppers (R6b)
+	-- R6b (owner-approved 2026-10-30): a crowd of 12 figures. REQUIRES: a Folder Crowd, direct child of Site02_Market, holding 12 R15 humanoid Models named
+	--   Shopper1..Shopper12, each exactly 16 BaseParts (192 in all), no Accessory, no Animate, HumanoidRootPart anchored, Humanoid.DisplayDistanceType None,
+	--   attribute SiteId 2. The site then holds 23 rigs (Guide, ShopperBayong1/2, Vendor1..8, Shopper1..12). Figures stand on the ground, keep clear of the
+	--   Guide, InfoPanel, Road F mouth, band rows and pole axes, stay west of x -229 (the zebra crossings stay empty, an honest DIFF), clear of every built
+	--   part, 2.5 studs apart, clustered at the stair feet and the side yards, with 4+ distinct torso colours. Every per-figure check also demands exactly 12
+	--   figures, so nothing passes while Crowd is missing.
+	pcallGroup("crowd", function()
+		local crowd = site:FindFirstChild("Crowd")
+		local figs = {}
+		for _, c in ipairs(crowd and crowd:GetChildren() or {}) do
+			if c:IsA("Model") and c:FindFirstChildOfClass("Humanoid") and c.Name:match("^Shopper%d+$") then table.insert(figs, c) end
+		end
+		table.sort(figs, function(a, b) return tonumber(a.Name:match("%d+$")) < tonumber(b.Name:match("%d+$")) end)
+		local function numbered(list, n) -- exactly n items, names end in 1..n, each number once
+			local seen, ok = {}, #list == n
+			for _, x in ipairs(list) do
+				local k = tonumber(x.Name:match("%d+$"))
+				if k == nil or k < 1 or k > n or seen[k] then ok = false else seen[k] = true end
+			end
+			return ok
+		end
+		local have12 = #figs == 12 and numbered(figs, 12)
+		local found = #figs .. " figures"
+		local function partsOfFig(m)
+			local t = {}
+			for _, d in ipairs(m:GetDescendants()) do if d:IsA("BasePart") then table.insert(t, d) end end
+			return t
+		end
+		local function hrpOf(m)
+			local h = m:FindFirstChild("HumanoidRootPart")
+			return (h ~= nil and h:IsA("BasePart")) and h or nil
+		end
+		local function figBox(m) -- world AABB from rig:GetBoundingBox() (CFrame + Size), over the 8 corners
+			local cf, size = m:GetBoundingBox()
+			local h = size / 2
+			local lo, hi = Vector3.new(1e9, 1e9, 1e9), Vector3.new(-1e9, -1e9, -1e9)
+			for _, a in ipairs({ -1, 1 }) do for _, b in ipairs({ -1, 1 }) do for _, c in ipairs({ -1, 1 }) do
+				local w = cf * Vector3.new(a * h.X, b * h.Y, c * h.Z)
+				lo = Vector3.new(math.min(lo.X, w.X), math.min(lo.Y, w.Y), math.min(lo.Z, w.Z))
+				hi = Vector3.new(math.max(hi.X, w.X), math.max(hi.Y, w.Y), math.max(hi.Z, w.Z))
+			end end end
+			return lo, hi
+		end
+		local function scan(fn) -- fn(figure) -> nil when fine, else a reason; returns the bad count and a ", first: ..." detail
+			local bad, first = 0, ""
+			for _, m in ipairs(figs) do
+				local why = fn(m)
+				if why then
+					bad += 1
+					if first == "" then first = m.Name .. ": " .. why end
+				end
+			end
+			return bad, (first ~= "" and (", first: " .. first) or "")
+		end
+
+		-- a. the container
+		local childCount = crowd and #crowd:GetChildren() or 0
+		check("crowd: Crowd is a Folder, a direct child of the site, holding exactly 12 Models with a Humanoid named Shopper1..Shopper12 (each number once, nothing else inside)",
+			crowd ~= nil and crowd:IsA("Folder") and crowd.Parent == site and have12 and childCount == 12,
+			crowd == nil and "Crowd missing" or (crowd.ClassName .. " in " .. (crowd.Parent and crowd.Parent.Name or "nil") .. ", " .. found .. ", " .. childCount .. " children"))
+
+		-- b. what each figure is made of
+		local bad, first = scan(function(m)
+			local hum = m:FindFirstChildOfClass("Humanoid")
+			if hum.RigType ~= Enum.HumanoidRigType.R15 then return "RigType " .. tostring(hum.RigType) end
+			local n = #partsOfFig(m)
+			if n ~= 16 then return n .. " parts (want 16)" end
+			return nil
+		end)
+		check("crowd: exactly 12 figures, each Humanoid.RigType R15 with exactly 16 BaseParts", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+		local total = 0
+		for _, m in ipairs(figs) do total += #partsOfFig(m) end
+		check("crowd: exactly 12 figures holding 192 BaseParts in all", have12 and total == 192, found .. ", " .. total .. " parts")
+		bad, first = scan(function(m)
+			for _, d in ipairs(m:GetDescendants()) do
+				if d:IsA("Accessory") then return "Accessory " .. d.Name end
+				if d.Name == "Animate" then return "descendant named Animate (" .. d.ClassName .. ")" end
+			end
+			return nil
+		end)
+		check("crowd: exactly 12 figures, none with an Accessory descendant or any descendant named Animate", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+		bad, first = scan(function(m)
+			local hrp, hum = hrpOf(m), m:FindFirstChildOfClass("Humanoid")
+			if hrp == nil then return "no HumanoidRootPart" end
+			if hrp.Anchored ~= true then return "HumanoidRootPart not anchored" end
+			if hum.DisplayDistanceType ~= Enum.HumanoidDisplayDistanceType.None then return "DisplayDistanceType " .. tostring(hum.DisplayDistanceType) end
+			return nil
+		end)
+		check("crowd: exactly 12 figures, each HumanoidRootPart anchored and Humanoid.DisplayDistanceType None", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+		bad, first = scan(function(m)
+			if m:GetAttribute("SiteId") ~= 2 then return "SiteId " .. tostring(m:GetAttribute("SiteId")) end
+			return nil
+		end)
+		check("crowd: exactly 12 figures, each with attribute SiteId 2", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+
+		-- c. grounded: a ray 10 studs straight down from each HumanoidRootPart lands 3.0 below it (+-0.2)
+		local skip = {}
+		for _, d in ipairs(workspace:GetDescendants()) do
+			if d:IsA("Humanoid") and d.Parent ~= nil then table.insert(skip, d.Parent) end
+		end
+		local rayP = RaycastParams.new()
+		rayP.FilterType = Enum.RaycastFilterType.Exclude
+		rayP.FilterDescendantsInstances = skip
+		bad, first = scan(function(m)
+			local hrp = hrpOf(m)
+			if hrp == nil then return "no HumanoidRootPart" end
+			local hit = workspace:Raycast(hrp.Position, Vector3.new(0, -10, 0), rayP)
+			if hit == nil then return "no ground within 10 studs below y " .. sx(hrp.Position.Y) end
+			if math.abs((hrp.Position.Y - 3.0) - hit.Position.Y) > 0.2 then return "HRP y " .. sx(hrp.Position.Y) .. " over ground y " .. sx(hit.Position.Y) .. " (" .. hit.Instance.Name .. ")" end
+			return nil
+		end)
+		check("crowd: exactly 12 figures, each standing on the ground (ray 10 studs down from the HumanoidRootPart hits, and HRP y - 3.0 is within 0.2 of the hit y)", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+
+		-- d. keep-clear boxes (x0, x1, z0, z1), strict overlap in x,z only
+		local KEEP = {
+			{ name = "Guide", x0 = -246, x1 = -236, z0 = 155, z1 = 165 },
+			{ name = "wide apron box", x0 = -250, x1 = -229, z0 = 148, z1 = 172 },
+			{ name = "Guide band", x0 = -576, x1 = -228, z0 = 140, z1 = 180 },
+			{ name = "InfoPanel", x0 = -247, x1 = -235, z0 = 142, z1 = 154 },
+			{ name = "Road F mouth", x0 = -260, x1 = -228, z0 = 154, z1 = 166 },
+			{ name = "north band rows", x0 = -576, x1 = -228, z0 = -4.5, z1 = 11.1 },
+			{ name = "south band rows", x0 = -576, x1 = -228, z0 = 311.9, z1 = 324.5 },
+			{ name = "north pole axis", x0 = -576, x1 = -228, z0 = 13, z1 = 16 },
+			{ name = "south pole axis", x0 = -576, x1 = -228, z0 = 307, z1 = 310 },
+		}
+		bad, first = scan(function(m)
+			local lo, hi = figBox(m)
+			for _, k in ipairs(KEEP) do
+				if lo.X < k.x1 and hi.X > k.x0 and lo.Z < k.z1 and hi.Z > k.z0 then
+					return string.format("box x %s..%s z %s..%s overlaps %s", sx(lo.X), sx(hi.X), sx(lo.Z), sx(hi.Z), k.name)
+				end
+			end
+			return nil
+		end)
+		check("crowd: exactly 12 figures, none whose bounding box overlaps (x,z, strict) the Guide, the wide apron box, the Guide band, the InfoPanel, the Road F mouth, the north or south band rows or either pole axis", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+
+		-- e. nothing east of x -229 (the real-bounds rule caps x at -227.95; the zebra crossings stay empty)
+		local maxX, maxName = -1e9, "none"
+		for _, m in ipairs(figs) do
+			for _, p in ipairs(partsOfFig(m)) do
+				local _, hi = wb(p)
+				if hi.X > maxX then maxX, maxName = hi.X, m.Name .. "/" .. p.Name end
+			end
+		end
+		check("crowd: exactly 12 figures, no part of any figure east of x -229 (max X <= -229)", have12 and maxX <= -229 + 0.001, found .. ", max x " .. sx(maxX) .. " at " .. maxName)
+
+		-- f. clear of every built part: the AABB grown by 0.5 on every side meets nothing that stands above y 0.6 (vehicles, stalls, counters, boards, steps, poles, InfoPanel)
+		local ovP = OverlapParams.new()
+		ovP.FilterType = Enum.RaycastFilterType.Include
+		ovP.FilterDescendantsInstances = { site }
+		bad, first = scan(function(m)
+			local lo, hi = figBox(m)
+			for _, p in ipairs(workspace:GetPartBoundsInBox(CFrame.new((lo + hi) / 2), (hi - lo) + Vector3.new(1, 1, 1), ovP)) do
+				if not isRig(p) and p.Position.Y + p.Size.Y / 2 > 0.6 then return "touches " .. p.Name end
+			end
+			return nil
+		end)
+		check("crowd: exactly 12 figures, each clear of every built part (box grown by 0.5 meets no non-rig part whose top is above y 0.6)", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+
+		-- g. spacing of every rig under the site
+		local rigModels, rigRoots = {}, {}
+		for _, d in ipairs(site:GetDescendants()) do
+			if d:IsA("Model") and d:FindFirstChildOfClass("Humanoid") then
+				table.insert(rigModels, d)
+				local h = hrpOf(d)
+				if h then table.insert(rigRoots, { n = d.Name, p = h.Position }) end
+			end
+		end
+		local closest, closePair = 1e9, "none"
+		for i = 1, #rigRoots do
+			for j = i + 1, #rigRoots do
+				local dx, dz = rigRoots[i].p.X - rigRoots[j].p.X, rigRoots[i].p.Z - rigRoots[j].p.Z
+				local d = math.sqrt(dx * dx + dz * dz)
+				if d < closest then closest, closePair = d, rigRoots[i].n .. " / " .. rigRoots[j].n end
+			end
+		end
+		check("crowd: exactly 12 figures; the site holds exactly 23 rigs (Guide, 2 ShopperBayong, 8 Vendors, 12 Shoppers), each with a HumanoidRootPart, no two closer than 2.5 studs in the XZ plane",
+			have12 and #rigModels == 23 and #rigRoots == 23 and closest >= 2.5,
+			found .. ", " .. #rigModels .. " rigs, " .. #rigRoots .. " roots, closest " .. (closest < 1e9 and sx(closest) or "n/a") .. " (" .. closePair .. ")")
+
+		-- h. clusters: the stair feet and the side yards (HumanoidRootPart position)
+		local nearN, nearS, side = 0, 0, 0
+		for _, m in ipairs(figs) do
+			local h = hrpOf(m)
+			if h then
+				local p = h.Position
+				if p.X <= -236 and math.abs(p.Z - 92) <= 14 then nearN += 1 end
+				if p.X <= -236 and math.abs(p.Z - 228) <= 14 then nearS += 1 end
+				if p.X <= -310 then side += 1 end
+			end
+		end
+		check("crowd: exactly 12 figures, at least 3 with x <= -236 and |z - 92| <= 14 (north stair foot)", have12 and nearN >= 3, found .. ", " .. nearN .. " at the north stair foot")
+		check("crowd: exactly 12 figures, at least 3 with x <= -236 and |z - 228| <= 14 (south stair foot)", have12 and nearS >= 3, found .. ", " .. nearS .. " at the south stair foot")
+		check("crowd: exactly 12 figures, at least 4 with x <= -310 (the side yards)", have12 and side >= 4, found .. ", " .. side .. " in the side yards")
+
+		-- i. variety
+		local cols, ncol = {}, 0
+		for _, m in ipairs(figs) do
+			local ut = m:FindFirstChild("UpperTorso")
+			if ut ~= nil and ut:IsA("BasePart") then
+				local key = string.format("%d,%d,%d", math.floor(ut.Color.R * 255 + 0.5), math.floor(ut.Color.G * 255 + 0.5), math.floor(ut.Color.B * 255 + 0.5))
+				if not cols[key] then cols[key] = true; ncol += 1 end
+			end
+		end
+		check("crowd: exactly 12 figures with at least 4 distinct UpperTorso colours", have12 and ncol >= 4, found .. ", " .. ncol .. " distinct colours")
+
+		-- j. shoppers belong to the Crowd, not to the vendors
+		local vend, strays = site:FindFirstChild("VendorNPCs"), 0
+		for _, d in ipairs(vend and vend:GetDescendants() or {}) do
+			if d:IsA("Model") and d.Name:match("^Shopper%d+$") then strays += 1 end
+		end
+		check("crowd: exactly 12 figures in Crowd, and no Model named Shopper<number> sits under VendorNPCs", have12 and strays == 0, found .. ", " .. strays .. " Shoppers under VendorNPCs")
+	end)
+
 	------------------------------------------------------------------ general: whole-site rules
 	pcallGroup("general", function()
 		local pv = site:GetPivot()
 		check("site pivot is at the SiteData pos (-402, 0, 160), facing E", (pv.Position - SITE_POS).Magnitude < 0.01 and pv.LookVector:Dot(Vector3.new(1, 0, 0)) > 0.999,
 			string.format("(%.2f, %.2f, %.2f) look %s", pv.X, pv.Y, pv.Z, tostring(pv.LookVector)))
-		for _, n in ipairs({ "Guide", "InfoPanel", "Structure", "Yard", "MarketStalls", "Baskets", "Produce", "PriceSigns", "VendorNPCs", "LocalNPCs" }) do
+		for _, n in ipairs({ "Guide", "InfoPanel", "Structure", "Crowd", "Yard", "MarketStalls", "Baskets", "Produce", "PriceSigns", "VendorNPCs", "LocalNPCs" }) do
 			check("direct child " .. n .. " exists", site:FindFirstChild(n) ~= nil)
 		end
 		local structureParts = 0
