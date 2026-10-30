@@ -25,9 +25,9 @@ Baseline now: `run_all` reads **ok=false, 89 rows, 5 mismatches, all predicted**
 - **Walk:** spawn to Lomi Guide measured 692.5 in Edit (three identical runs, cap 805, last 690.81). To be re-measured in Edit and Play after L3. Market walk to be re-checked after the WallWest reset: `routes_check` 16/0 (Edit); the Play run was done before the reset, so run it again in Play at L4.
 
 ## Owner action needed
-1. **DONE: `slice-36-wip24.rbxl` saved** (655,522 bytes, 2026-10-31 01:15, SHA-256 `E1C06B5A454771F1690CC3E73B42B9AFC61D505968522B207BD509FC9CB5103D`). It holds L2, the WallWest reset and the Concrete ground. The `.lock` is now on wip24; a plain Ctrl+S would overwrite it, so the next backup is `slice-36-wip25.rbxl` via Save As.
+1. **DONE: `slice-36-wip24.rbxl` saved** (655,522 bytes, 2026-10-31 01:15, SHA-256 `E1C06B5A454771F1690CC3E73B42B9AFC61D505968522B207BD509FC9CB5103D`). It holds L2, the WallWest reset and the Concrete ground. The owner then saved `slice-36-wip25.rbxl` (655,522 bytes, 2026-10-31 01:17), an identical copy of wip24 (same SHA-256). The `.lock` is now on wip25; a plain Ctrl+S would overwrite it, so the next backup is `slice-36-wip26.rbxl` via Save As.
 2. **Please do not click or drag in the 3D viewport** unless I ask (I may ask for one click if screenshots come back dark); a drag moved the boundary wall.
-3. Owed `docs/baseline.md` rows (owner-only): wip17 to wip24, with hashes (wip22 and wip23 above).
+3. Owed `docs/baseline.md` rows (owner-only): wip17 to wip25, with hashes (wip22, wip23, wip24 and wip25 above; wip25 equals wip24).
 
 ## Next steps
 1. Resume check: `list_roblox_studios` (ids change; last `cdaea0a2-08e9-4a54-a8d7-cc16cbc2d3fb`), Edit mode, run_all by spawn-and-poll (expect the 5 predicted mismatches only, no routes_check line), confirm `World.Boundary.WallWest` is at (-1004,150,0), `git status` clean on top of this commit, wip24 exists. Do NOT run `roads_extra` again.
