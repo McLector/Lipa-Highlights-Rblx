@@ -68,5 +68,7 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | south zebra crossing along the street (Salt bars; the west one blends in the hall's shadow, grass blades half-hide the east one) | -222, 14, 196 | -222, 0, 230 |
 | 2 Market | north band traffic: kerb jeepneys, tricycles, motorbikes, poles and wires along the north side street (beside iso_northyard.png, about six kerb jeepneys along the kerb; the blueprints draw no utility poles or wires, those are the owner's request) | -190, 40, -45 | -340, 4, 6 |
 | 2 Market | south band traffic: the same along the south verge and road (beside iso_shedsA.png, which draws only two kerb jeepneys along the street, so ours is denser: an honest DIFF; and bp2_iso_whole.png) | -190, 40, 372 | -340, 4, 312 |
+| 2 Market | crowd close-up at the north stair foot: two facing pairs of shoppers between the hall wall and the tricycle queue (beside iso_stairN.png and bp2_iso_vendors_tricycles.png; the figures read small from far away, so use this view) | -228, 10, 112 | -246, 3.5, 90 |
+| 2 Market | crowd in context: use the stair-foot rows above ((-205,28,70) to (-236,3,105) and (-205,28,262) to (-236,3,215)) and the south side yard iso ((-300,40,310) to (-400,4,255), beside iso_shedsA.png): 11 shoppers, 4 at the north foot, 3 at the south foot, 4 in the yards | see rows above | see rows above |
 
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.

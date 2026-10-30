@@ -16,7 +16,7 @@
 -- Modules are FLAT siblings in ServerStorage.Builders (disk: builders/site02_<name>.luau). Each one is
 --     return function(env) ... end
 -- and is loaded with require(mod:Clone()). A missing module is skipped; a module returning an empty function adds nothing.
--- Container paths (relative to Structure, plus "Yard", "BandTraffic" (a Folder directly under the site) and the five prop folders MarketStalls, Baskets, Produce, PriceSigns, VendorNPCs, which sit directly under the site): "Hall/Shell", "Hall/Windows", "Stairs", "Scaffold", "Sheds/Gabled", "Sheds/Markets",
+-- Container paths (relative to Structure, plus "Yard", "BandTraffic" (a Folder directly under the site), the five prop folders MarketStalls, Baskets, Produce, PriceSigns, VendorNPCs and the rig folder "Crowd", which sit directly under the site): "Hall/Shell", "Hall/Windows", "Stairs", "Scaffold", "Sheds/Gabled", "Sheds/Markets",
 --   "Bagsakan", "CornerBlock", "ServiceBlock", "Forecourt", "Yard" (a Model directly under the site; the others are Folders). Ownership and part budgets:
 --     site02_hall   Hall/Shell, Hall/Windows                        420  (two containers, each at most 400 parts)
 --     site02_front  Hall/Shell (portico), Stairs, Scaffold          200
@@ -26,6 +26,7 @@
 --     site02_vehicles  Yard                                          160
 --     site02_traffic   Yard                                          165
 --     site02_bands   BandTraffic                                    250  (R6a: 12 jeepneys, 8 tricycles, 12 motorbikes, 12 poles, 20 wires)
+--     site02_crowd   Crowd                                            0    (R6b: 12 shopper rigs, Shopper1..Shopper12; rigs only, outside the part budget)
 --     site02_props  MarketStalls, Baskets, Produce, PriceSigns,     380  (parts; the VendorNPCs rigs are outside this budget)
 --                   VendorNPCs
 --   Every container holds at most 400 parts in its subtree (hard error at plan time); the site (built + kept parts) at most 2550 (raised from 2100 to 2550 for the band traffic and the crowd, R6a and R6b, owner-authorised 2026-10-30, briefs/site02.md).
@@ -41,8 +42,8 @@
 --                            into the container, or into dest (an instance from newFolder/newChild) which must lie inside that container
 --   env.newFolder(path, subName [, className])   planned empty Folder (or className) inside the container; returns it
 --   env.newChild(parent, name [, className])     planned empty Model/Folder under an instance returned by container/newFolder/newChild
---   env.addRig(rig)          rig = an UNPARENTED Model with a Humanoid, already positioned (CreateHumanoidModelFromDescription yields: build it in the module). Needs the
---                            module to own "VendorNPCs"; plans the rig into that folder. Its BaseParts count toward env.used() (the 2550 site cap, raised from 2100 to 2550 for the band traffic and the crowd, R6a and R6b, owner-authorised 2026-10-30, briefs/site02.md) but NOT toward the
+--   env.addRig(rig [, folderName])   rig = an UNPARENTED Model with a Humanoid, already positioned (CreateHumanoidModelFromDescription yields: build it in the module). folderName is
+--                            optional and defaults to "VendorNPCs"; the module must own that folder ("VendorNPCs" for the vendors, "Crowd" for the shoppers). Plans the rig into it. Its BaseParts count toward env.used() (the 2550 site cap, raised from 2100 to 2550 for the band traffic and the crowd, R6a and R6b, owner-authorised 2026-10-30, briefs/site02.md) but NOT toward the
 --                            module budget or the 400-part container rule. The returned table reports the total as rigParts.
 --   env.used()  parts planned so far, all modules     env.budget()  parts this module may still add
 -- Rules: only anchored parts (BuildKit does it), no Decals/Textures/ImageLabels, ASCII text only, human scale fixed (doors 8+, rails 3),
@@ -67,6 +68,7 @@ return function()
 		{ name = "site02_traffic", owns = { Yard = true }, budget = 165 },
 		{ name = "site02_bands", owns = { BandTraffic = true }, budget = 250 },
 		{ name = "site02_props", owns = { MarketStalls = true, Baskets = true, Produce = true, PriceSigns = true, VendorNPCs = true }, budget = 380 },
+		{ name = "site02_crowd", owns = { Crowd = true }, budget = 0 },
 	}
 	-- path -> { parent path ("" is the site), class, grouping }
 	local TREE = {
@@ -90,6 +92,7 @@ return function()
 		{ "Produce", "", "Folder" },
 		{ "PriceSigns", "", "Folder" },
 		{ "VendorNPCs", "", "Folder" },
+		{ "Crowd", "", "Folder" },
 	}
 
 	local sites = workspace:FindFirstChild("Sites")
@@ -218,8 +221,9 @@ return function()
 			end
 			return target
 		end
-		function env.addRig(rig)
-			assert(def.owns.VendorNPCs, "site02: " .. def.name .. " does not own VendorNPCs, so it cannot add rigs")
+		function env.addRig(rig, folderName)
+			folderName = folderName or "VendorNPCs"
+			assert(def.owns[folderName], "site02: " .. def.name .. " does not own " .. folderName .. ", so it cannot add rigs to it")
 			assert(typeof(rig) == "Instance" and rig:IsA("Model") and rig:FindFirstChildOfClass("Humanoid"), "site02: addRig needs a Model with a Humanoid")
 			assert(rig.Parent == nil, "site02: addRig takes an unparented rig")
 			local n = 0
@@ -228,7 +232,7 @@ return function()
 			end
 			rigParts += n
 			used += n -- the site cap sees the rig; the module budget and counts[path] do not
-			place(rig, containers["VendorNPCs"])
+			place(rig, containers[folderName])
 			return rig
 		end
 		fn(env)
