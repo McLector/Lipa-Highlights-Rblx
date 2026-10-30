@@ -59,5 +59,9 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | street traffic: second apron jeepney in front of hall door 8 | -215, 22, 250 | -250, 3, 236 |
 | 2 Market | apron top-down: kerb traffic either side of the clear Guide band | -238, 90, 160 | -238, 0, 159 |
 | 2 Market | south yard top-down: vans, tricycles, motorbikes (beside plan_sheds1.png) | -420, 70, 258 | -420, 0, 257 |
+| 2 Market | front street from the east: the Asphalt street along the paving edge, Road F meeting it as a T (beside the BP1 front elevation) | -160, 26, 175 | -232, 3, 150 |
+| 2 Market | front street, north stair foot and zebra crossing at z 88..96 (beside bp2_iso_vendors_tricycles.png) | -205, 28, 70 | -236, 3, 105 |
+| 2 Market | front street, south zebra crossing at z 224..232 (beside iso_stairN.png; the east bar shows, the west bar merges with the paving) | -205, 28, 262 | -236, 3, 226 |
+| 2 Market | front street top-down: street, Road F and both crossings | -222, 120, 160 | -222, 0, 159 |
 
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.

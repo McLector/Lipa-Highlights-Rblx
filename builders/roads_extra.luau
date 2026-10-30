@@ -1,7 +1,9 @@
--- roads_extra.luau: paves the new roads (RoadData.NEW_ROADS: SPUR, WEST_BYPASS, EAST_BYPASS, WEST_LINK, EAST_LINK), repaints the ground under the
--- Cathedral and Credits plazas to Pavement, and repaints the ground under City Hall and the whole Market slot to Concrete (Slice 3b, Slice 4). Run in Edit via execute_luau:
---   return require(game.ServerStorage.Builders.roads_extra:Clone())()      -- returns { cellsBefore, cellsAfter, roads, regions, concreteRegions }
+-- roads_extra.luau: paves the new roads (RoadData.NEW_ROADS), repaints the ground under the
+-- Cathedral and Credits plazas to Pavement, and repaints the ground under City Hall and the whole Market slot to Concrete (Slice 3b, Slice 4).
+-- It also paves the Market front street (STREET, Asphalt) and its two zebra crossings (ZEBRA, Concrete bars). Run in Edit via execute_luau:
+--   return require(game.ServerStorage.Builders.roads_extra:Clone())()      -- returns { cellsBefore, cellsAfter, roads, regions, concreteRegions, streets, zebraBars }
 -- IDEMPOTENT: it only fills Asphalt, replaces Grass with Pavement (PAVED) and replaces Grass or Pavement with Concrete (CONCRETE), so a second run leaves every terrain voxel as it was.
+-- The street and the bars are fixed FillBlocks (Asphalt first, then the Concrete bars), so they give the same result on a second run.
 -- It never clears terrain (builders/world.luau does, and is never run). Same fill method as world.luau buildRoads: one Asphalt
 -- FillBlock per segment, 4 studs thick, top at y -2 (surface 0), extended by w/2 at interior joints and at a start that joins another road.
 local FLOOR_TOP = -2
@@ -29,6 +31,23 @@ local CONCRETE = {
 	{ x0 = -488, x1 = -400, z0 = -8, z1 = 328 },
 	{ x0 = -400, x1 = -312, z0 = -8, z1 = 328 },
 	{ x0 = -312, x1 = -228, z0 = -8, z1 = 328 },
+}
+
+-- Market front street (owner decision 2026-10-30, handoff 048): Asphalt, 12 wide (x -228..-216), against the paving edge with no grass verge, and the z span
+-- equals the Market Concrete chunks (z -8..328, 4-stud grid). It is terrain only and NOT a RoadData.NEW_ROADS entry, because a road body there would break the
+-- 7-roads, 12-wide and margin rules in roads_check / site02_check. site02_check forbids any non-rig part east of x -228, so there is no kerb, line or sign.
+-- Road F (z 156..164) meets it as a T. Terrain voxels are 4 studs, so the zebra stripes below are 4 studs wide.
+local STREET = {
+	{ x0 = -228, x1 = -216, z0 = -8, z1 = 328 },
+}
+
+-- Two zebra crossings at the stair feet (z 88..96 and z 224..232): Concrete bars at x -228..-224 and x -220..-216 with Asphalt between. The west bar lies
+-- beside the Market Concrete, so the two merge by colour (a known honest DIFF, owner approved the layout).
+local ZEBRA = {
+	{ x0 = -228, x1 = -224, z0 = 88, z1 = 96 },
+	{ x0 = -220, x1 = -216, z0 = 88, z1 = 96 },
+	{ x0 = -228, x1 = -224, z0 = 224, z1 = 232 },
+	{ x0 = -220, x1 = -216, z0 = 224, z1 = 232 },
 }
 
 return function()
@@ -70,6 +89,13 @@ return function()
 		T:ReplaceMaterial(region, 4, Enum.Material.Pavement, Enum.Material.Concrete)
 		task.wait()
 	end
+	for _, r in ipairs(STREET) do
+		T:FillBlock(CFrame.new((r.x0 + r.x1) / 2, FLOOR_TOP - 2, (r.z0 + r.z1) / 2), Vector3.new(r.x1 - r.x0, 4, r.z1 - r.z0), Enum.Material.Asphalt)
+		task.wait()
+	end
+	for _, r in ipairs(ZEBRA) do
+		T:FillBlock(CFrame.new((r.x0 + r.x1) / 2, FLOOR_TOP - 2, (r.z0 + r.z1) / 2), Vector3.new(r.x1 - r.x0, 4, r.z1 - r.z0), Enum.Material.Concrete)
+	end
 	task.wait()
-	return { cellsBefore = before, cellsAfter = T:CountCells(), roads = #RoadData.NEW_ROADS, regions = #PAVED, concreteRegions = #CONCRETE }
+	return { cellsBefore = before, cellsAfter = T:CountCells(), roads = #RoadData.NEW_ROADS, regions = #PAVED, concreteRegions = #CONCRETE, streets = #STREET, zebraBars = #ZEBRA }
 end
