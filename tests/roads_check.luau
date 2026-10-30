@@ -551,6 +551,31 @@ do
 	check("control: the Market Concrete edge rows just inside the slot (z -6 and z 326) are still Concrete, not Asphalt", #edge == 0, table.concat(edge, " "))
 end
 
+-- 6f. The Lomi King ground (owner decision, Site 3 growth 100 x 80 -> 100 x 110): the slot is x 242..342, z 85..195 and the whole ground x 240..344, z 84..196 is repainted Concrete
+-- (today it is Grass, with Pavement at the old shop forecourt). Samples sit at least 4 studs inside the region on the 4-stud grid. Controls: Road G's asphalt mouth west of the region
+-- ((232,140) and (236,140) read Asphalt today; (240,140) reads Pavement today and is inside the region, so it is NOT an Asphalt control) and Grass just outside on the other three sides.
+do
+	local bad = {}
+	local pts = {
+		{ 250, 90 }, { 250, 190 }, { 292, 90 }, { 292, 190 }, { 340, 90 }, { 340, 190 }, -- the six edge cells north and south
+		{ 292, 120 }, { 292, 160 },                                                      -- the old shop forecourt (Pavement today)
+	}
+	for _, p in ipairs(pts) do
+		if cellMaterial(p[1], p[2]) ~= Enum.Material.Concrete then table.insert(bad, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
+	end
+	check("Lomi King ground (x 240..344, z 84..196) is Concrete at " .. #pts .. " sample points", #bad == 0, #bad .. " not concrete: " .. table.concat(bad, " ", 1, math.min(#bad, 3)))
+	local road = {}
+	for _, p in ipairs({ { 232, 140 }, { 236, 140 } }) do
+		if cellMaterial(p[1], p[2]) ~= Enum.Material.Asphalt then table.insert(road, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
+	end
+	check("control: Road G's asphalt mouth west of the Lomi King ground at (232,140) and (236,140) is still Asphalt", #road == 0, table.concat(road, " "))
+	local spill = {}
+	for _, p in ipairs({ { 360, 140 }, { 292, 76 }, { 292, 204 } }) do
+		if cellMaterial(p[1], p[2]) ~= Enum.Material.Grass then table.insert(spill, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
+	end
+	check("control: the cells just outside the Lomi King ground (east, north, south) are still Grass", #spill == 0, table.concat(spill, " "))
+end
+
 -- 7. Entrance roads to the Cathedral side stairs (Slice 4 B3c-0b, owner markup) ---------------------------------------------------
 -- WEST_ENTRY / EAST_ENTRY run from each bypass centre line straight along the stairs' centre z to the foot of SideStairsW / SideStairsE
 -- (the lowest tread is the part with the largest |x|; its outer edge is the foot). They are the only roads allowed inside the slot's 10 percent
