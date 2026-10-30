@@ -29,7 +29,7 @@
 --     site02_crowd   Crowd                                            0    (R6b: 12 shopper rigs, Shopper1..Shopper12; rigs only, outside the part budget)
 --     site02_props  MarketStalls, Baskets, Produce, PriceSigns,     380  (parts; the VendorNPCs rigs are outside this budget)
 --                   VendorNPCs
---   Every container holds at most 400 parts in its subtree (hard error at plan time); the site (built + kept parts) at most 2550 (raised from 2100 to 2550 for the band traffic and the crowd, R6a and R6b, owner-authorised 2026-10-30, briefs/site02.md).
+--   Every container holds at most 400 parts in its subtree (hard error at plan time); the site (built + kept parts) at most 2500 (raised from 2100 to 2550 for the band traffic and the crowd, R6a and R6b, owner-authorised 2026-10-30, then tightened to 2500 to match BuildCheck's SITE_PART_BUDGET, owner-authorised 2026-10-31, briefs/site02.md).
 -- env fields (LOCAL coordinates unless the name starts with w; y is height above ground):
 --   env.V, env.CF, env.ANG, env.PI, env.ORIGIN (Vector3 -402,0,160), env.BuildKit, env.GROUND
 --   env.box(ctx, name, x0, x1, y0, y1, z0, z1, color, material)      axis-aligned box from min/max corners (local)
@@ -43,7 +43,7 @@
 --   env.newFolder(path, subName [, className])   planned empty Folder (or className) inside the container; returns it
 --   env.newChild(parent, name [, className])     planned empty Model/Folder under an instance returned by container/newFolder/newChild
 --   env.addRig(rig [, folderName])   rig = an UNPARENTED Model with a Humanoid, already positioned (CreateHumanoidModelFromDescription yields: build it in the module). folderName is
---                            optional and defaults to "VendorNPCs"; the module must own that folder ("VendorNPCs" for the vendors, "Crowd" for the shoppers). Plans the rig into it. Its BaseParts count toward env.used() (the 2550 site cap, raised from 2100 to 2550 for the band traffic and the crowd, R6a and R6b, owner-authorised 2026-10-30, briefs/site02.md) but NOT toward the
+--                            optional and defaults to "VendorNPCs"; the module must own that folder ("VendorNPCs" for the vendors, "Crowd" for the shoppers). Plans the rig into it. Its BaseParts count toward env.used() (the 2500 site cap, raised from 2100 to 2550 for the band traffic and the crowd, R6a and R6b, owner-authorised 2026-10-30, then tightened to 2500 on 2026-10-31, briefs/site02.md) but NOT toward the
 --                            module budget or the 400-part container rule. The returned table reports the total as rigParts.
 --   env.used()  parts planned so far, all modules     env.budget()  parts this module may still add
 -- Rules: only anchored parts (BuildKit does it), no Decals/Textures/ImageLabels, ASCII text only, human scale fixed (doors 8+, rails 3),
@@ -56,7 +56,7 @@ return function()
 
 	local ORIGIN = V(-402, 0, 160)
 	local MODEL_NAME = "Site02_Market"
-	local SITE_CAP, CONTAINER_CAP = 2550, 400
+	local SITE_CAP, CONTAINER_CAP = 2500, 400
 	local KEEP = { Guide = true, InfoPanel = true, LocalNPCs = true }
 	local MODULES = {
 		{ name = "site02_hall", owns = { ["Hall/Shell"] = true, ["Hall/Windows"] = true }, budget = 420 },
