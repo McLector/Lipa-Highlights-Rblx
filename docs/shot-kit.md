@@ -40,6 +40,11 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | name banner close-up | -230, 14, 160 | -330, 20, 160 |
 | 3 Lomi King | straight-on front (faces W) | 205, 12, 140 | 292, 15, 140 |
 | 3 Lomi King | sign and canopy close-up | 255, 16, 128 | 285, 20, 140 |
+| 3 Lomi King | board view (compare with the blueprint board) | 225, 10, 175 | 300, 35, 140 |
+| 3 Lomi King | top-down (compare with the board's site-plan inset) | 292, 220, 140 | 292, 0, 140.01 |
+| 3 Lomi King | south side, parking sign and driveway | 270, 12, 200 | 282, 5, 168 |
+| 3 Lomi King | photo view (compare with the Jan 2026 Street View image) | 240, 6, 141 | 292, 40, 141 |
+| 3 Lomi King | crown (eave, grilles, pavilion) | 215, 80, 185 | 305, 62, 141 |
 | 2 Market | corner block east face straight-on (checkerboard hoarding, louvres, doors) | -470, 22, 290 | -545, 14, 284 |
 | 2 Market | corner block isometric from the north-east (BP2 style; Bagsakan roof stays below the camera) | -478, 80, 200 | -558, 15, 286 |
 | 2 Market | service block and annex from the north-east | -470, 40, 5 | -525, 6, 58 |
