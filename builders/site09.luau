@@ -2,6 +2,7 @@
 --   require(game.ServerStorage.Builders.site09:Clone())()
 -- Needs Workspace.Sites.Site09_Tagbakin with its kept children (Guide, InfoPanel, JeepStop, JeepSignPole, JeepSign, Jeepney).
 -- IDEMPOTENT: replaces Block, Structure, Dock, Bancas, FishingActivity and LocationMapPanel. The kept children are left alone.
+-- Then calls ServerStorage.Builders.site09_taal (builders/site09_taal.luau): the Taal island in World.Backdrops (Revision 2).
 -- No terrain writes. Brief: briefs/site09.md.
 -- FRAMES: the site pivot is yawed NE and sits on the shore diagonal, so it is NOT used as the origin.
 --   ORIGIN = (-650, 0, 588), s = 0.70711. CFL = fromMatrix(ORIGIN, (s,0,s), (0,1,0)): local +X = SE, local +Z = SW (the lake),
@@ -460,9 +461,15 @@ return function()
 	assert((pivotAfter.Position - pivotBefore.Position).Magnitude < 1e-3 and pivotAfter.LookVector:Dot(pivotBefore.LookVector) > 0.9999,
 		"site09: the site pivot changed during the build")
 	local total = countParts(site)
+	-- Revision 2: Taal Volcano across the lake, in front of the lake facade. It lives in World.Backdrops (outside the site model and
+	-- its footprint bounds), so its parts are reported apart from the site's.
+	local taalModule = game.ServerStorage:FindFirstChild("Builders") and game.ServerStorage.Builders:FindFirstChild("site09_taal")
+	assert(taalModule, "site09: ServerStorage.Builders.site09_taal not found")
+	local taal = require(taalModule:Clone())()
 	return {
 		parts = total,
 		keptParts = keptParts,
 		builtParts = total - keptParts,
+		taalParts = taal.parts,
 	}
 end
