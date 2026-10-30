@@ -70,7 +70,7 @@ local HttpService = game:GetService("HttpService")
 local SITE_POS = Vector3.new(-402, 0, 160)
 local SLOT = { x0 = -576, x1 = -228, z0 = -5, z1 = 325 }
 local BRANDS = { "ROSE PHARMACY", "PHARMACY", "BOTIKA", "DRUGSTORE", "MARLBORO", "CIGARETTE" } -- read in the photos (Marlboro signs, Rose Pharmacy map label)
-local CAP = { part = 400, total = 2000 }
+local CAP = { part = 400, total = 2100 } -- total raised 2000 to 2100 for the street traffic (R5e, owner-authorised 2026-10-30, logged in briefs/site02.md)
 
 local function run(opts)
 	local only = (opts or {}).only
@@ -924,6 +924,73 @@ local function run(opts)
 				#vs .. " vehicles, " .. badV .. " off; stairs " .. nStairN .. "N/" .. nStairS .. "S, yards " .. nYardN .. "N/" .. nYardS .. "S")
 			check("parked vehicles overlap no other vehicle and no other built part", #vs > 0 and #hit == 0, #hit .. ": " .. table.concat(hit, ", ", 1, math.min(#hit, 4)))
 		end
+		-- R5e (owner request 2026-10-30, a busier street): StreetTricycle, Motorbike and StreetJeepney Models. New names, so the R5c counts above (8 TricycleBody, 11 ParkedVehicle) stay exact.
+		--   Tricycles and jeepneys follow BP2 bp2_iso_vendors_tricycles and BP1 iso_stairN; motorbikes are NOT drawn in either blueprint (a creative addition the owner asked for).
+		--   Each stands on the apron (x -250.4..-229) or in a side yard, outside the apron band z 140..180 that holds the Guide, the aisle and the InfoPanel and keeps the walk to the Guide open.
+		do
+			local KINDS = {
+				{ pat = "^StreetTricycle%d+$", kind = "Tricycle", n = 8, parts = 5, long = { 7.5, 9 }, wide = { 4.4, 5.8 }, tall = { 5.5, 7.2 } },
+				{ pat = "^Motorbike%d+$", kind = "Motorbike", n = 24, parts = 4, long = { 4, 5.8 }, wide = { 0.5, 2.2 }, tall = { 2.5, 4 } },
+				{ pat = "^StreetJeepney%d+$", kind = "Jeepney", n = 3, parts = 8, long = { 9, 14 }, wide = { 5, 7.5 }, tall = { 5, 8 } },
+			}
+			local rigParts = {}
+			for _, d in ipairs(site:GetDescendants()) do
+				if d:IsA("BasePart") and isRig(d) then table.insert(rigParts, d) end
+			end
+			local found, badShape, badClash, firstShape, firstClash, nApronMB, nYardMB = {}, 0, 0, "", "", 0, 0
+			for _, K in ipairs(KINDS) do
+				local list = units(K.pat)
+				table.insert(found, #list .. " " .. K.kind)
+				if #list ~= K.n then
+					badShape += 1
+					if firstShape == "" then firstShape = K.kind .. " count " .. #list .. " (want " .. K.n .. ")" end
+				end
+				for _, u in ipairs(list) do
+					local lo, hi = ub(u)
+					local dx, dz, dy = hi.X - lo.X, hi.Z - lo.Z, hi.Y - lo.Y
+					local long, wide = math.max(dx, dz), math.min(dx, dz)
+					local onApron = lo.X >= -250.6 and hi.X <= -228.8 and lo.Z >= 33.3 and hi.Z <= 277
+					local inYard = lo.X >= -473 and hi.X <= -309 and ((lo.Z >= 32.3 and hi.Z <= 72.1) or (lo.Z >= 231.4 and hi.Z <= 277.3))
+					local shape
+					if u:GetAttribute("Kind") ~= K.kind then shape = "Kind attribute"
+					elseif #partsIn(u) ~= K.parts then shape = #partsIn(u) .. " parts (want " .. K.parts .. ")"
+					elseif not (between(long, K.long[1], K.long[2]) and between(wide, K.wide[1], K.wide[2]) and between(dy, K.tall[1], K.tall[2])) then shape = string.format("size %.1f x %.1f x %.1f", long, wide, dy)
+					elseif lo.Y > 0.6 or lo.Y < -0.1 then shape = "not on the ground (y " .. sx(lo.Y) .. ")"
+					elseif not (onApron or inYard) then shape = "outside the apron and the side yards"
+					elseif onApron and lo.Z < 180 and hi.Z > 140 then shape = "in the Guide band z 140..180"
+					end
+					if shape then
+						badShape += 1
+						if firstShape == "" then firstShape = u.Name .. ": " .. shape end
+					else
+						if K.kind == "Motorbike" then
+							if onApron then nApronMB += 1 elseif inYard then nYardMB += 1 end
+						end
+						local clash
+						for _, p in ipairs(own) do -- nothing else stands where a vehicle stands (the apron slab and other thin ground parts are fine)
+							if not p:IsDescendantOf(u) and not isKept(p) then
+								local a, b = wb(p)
+								if b.Y > 0.6 and lo.X < b.X - 0.1 and hi.X > a.X + 0.1 and lo.Y < b.Y - 0.1 and hi.Y > a.Y + 0.1 and lo.Z < b.Z - 0.1 and hi.Z > a.Z + 0.1 then clash = "overlaps " .. p:GetFullName():sub(#site:GetFullName() + 2) break end
+							end
+						end
+						if not clash then
+							for _, p in ipairs(rigParts) do -- a figure may not stand inside or touch a vehicle (0.5 clear)
+								local a, b = wb(p)
+								if lo.X < b.X + 0.5 and hi.X > a.X - 0.5 and lo.Z < b.Z + 0.5 and hi.Z > a.Z - 0.5 and lo.Y < b.Y and hi.Y > a.Y then clash = "touches a figure (" .. p.Name .. ")" break end
+							end
+						end
+						if clash then
+							badClash += 1
+							if firstClash == "" then firstClash = u.Name .. " " .. clash end
+						end
+					end
+				end
+			end
+			check("street traffic (R5e): exactly 8 StreetTricycle (5 parts), 24 Motorbike (4 parts) and 3 StreetJeepney (8 parts) Models with the right Kind, size, on the ground, on the apron or in a side yard, out of the Guide band z 140..180",
+				badShape == 0, table.concat(found, ", ") .. "; " .. badShape .. " off" .. (firstShape ~= "" and (", first: " .. firstShape) or ""))
+			check("street traffic overlaps no other vehicle, no other built part and no figure", #found == 3 and badShape == 0 and badClash == 0, badClash .. " clash" .. (firstClash ~= "" and (", first: " .. firstClash) or ""))
+			check("street traffic fills the kerbs: 8+ motorbikes along the apron and 6+ in the side yards", nApronMB >= 8 and nYardMB >= 6, nApronMB .. " on the apron, " .. nYardMB .. " in the yards")
+		end
 	end)
 
 	------------------------------------------------------------------ block: corner block (BP2) and service block (BP1 plan, BP2 plan)
@@ -1172,7 +1239,7 @@ local function run(opts)
 			if plo.Y < lowest then lowest, lowName = plo.Y, p:GetFullName():sub(#site:GetFullName() + 2) end
 		end
 		check("no part anywhere in the site (rigs excluded) goes below y -0.6 (domes and heaps sink at most 0.6)", #own > 0 and lowest >= -0.601, sx(lowest) .. " at " .. lowName)
-		check("part count (rigs excluded) is between 950 and 1800 (the old model had 960; raised from 1500 for the corner block, service block, yard and vehicles)", #own >= 950 and #own <= 1800, tostring(#own))
+		check("part count (rigs excluded) is between 950 and 2000 (the old model had 960; raised from 1500 for the corner block, service block, yard and vehicles, then from 1800 to 2000 for the street traffic, owner-authorised 2026-10-30)", #own >= 950 and #own <= 2000, tostring(#own))
 		local all = 0
 		for _, d in ipairs(site:GetDescendants()) do if d:IsA("BasePart") then all += 1 end end
 		check("site total (rigs included) is at most " .. CAP.total, all <= CAP.total, tostring(all))
