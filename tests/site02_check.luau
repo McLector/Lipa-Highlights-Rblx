@@ -70,7 +70,7 @@ local HttpService = game:GetService("HttpService")
 local SITE_POS = Vector3.new(-402, 0, 160)
 local SLOT = { x0 = -576, x1 = -228, z0 = -5, z1 = 325 }
 local BRANDS = { "ROSE PHARMACY", "PHARMACY", "BOTIKA", "DRUGSTORE", "MARLBORO", "CIGARETTE" } -- read in the photos (Marlboro signs, Rose Pharmacy map label)
-local CAP = { part = 400, total = 2550 } -- total raised 2000 to 2100 for the street traffic (R5e, owner-authorised 2026-10-30, logged in briefs/site02.md); raised 2100 to 2550 for the band traffic and the crowd, R6a and R6b, owner-authorised 2026-10-30, logged in briefs/site02.md
+local CAP = { part = 400, total = 2500 } -- total raised 2000 to 2100 for the street traffic (R5e, owner-authorised 2026-10-30, logged in briefs/site02.md); raised 2100 to 2550 for the band traffic and the crowd, R6a and R6b, owner-authorised 2026-10-30, logged in briefs/site02.md; tightened 2550 to 2500 to match BuildCheck's SITE_PART_BUDGET, owner-authorised 2026-10-31
 
 local function run(opts)
 	local only = (opts or {}).only
