@@ -289,11 +289,21 @@ end)
 -- Mute: the ambient Sound lives in SoundService; WelcomeClient starts it. Volume is a client-side setting.
 local ambient = SoundService:FindFirstChild("AmbientTown")
 local baseVolume = ambient and ambient.Volume or 0
+-- The music loop (builders/mood.luau, tagged Music) mutes with the ambient loop.
+local musicLoops = {}
+for _, s in ipairs(SoundService:GetChildren()) do
+	if s:IsA("Sound") and s:GetAttribute("Music") == true then
+		table.insert(musicLoops, { sound = s, volume = s.Volume })
+	end
+end
 local muted = false
 muteButton.Activated:Connect(function()
 	muted = not muted
 	if ambient then
 		ambient.Volume = muted and 0 or baseVolume
+	end
+	for _, m in ipairs(musicLoops) do
+		m.sound.Volume = muted and 0 or m.volume
 	end
 	muteButton.Text = muted and "Sound: Off" or "Sound: On"
 	gui:SetAttribute("Muted", muted)

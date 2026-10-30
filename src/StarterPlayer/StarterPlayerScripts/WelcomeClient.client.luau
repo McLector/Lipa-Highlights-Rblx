@@ -95,6 +95,12 @@ start.Activated:Connect(function()
 	if ambient and ambient:IsA("Sound") and not ambient.IsPlaying then
 		ambient:Play()
 	end
+	-- The music loop (builders/mood.luau) starts with the ambient loop.
+	for _, s in ipairs(SoundService:GetChildren()) do
+		if s:IsA("Sound") and s:GetAttribute("Music") == true and not s.IsPlaying then
+			s:Play()
+		end
+	end
 	gui:SetAttribute("WelcomeOpen", false)
 	gui:Destroy()
 end)
