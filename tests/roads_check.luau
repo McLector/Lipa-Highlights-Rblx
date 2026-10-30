@@ -448,10 +448,11 @@ do
 	end
 	check("Market ground (x -576..-228, z -5..325) is Concrete at " .. #pts .. " sample points", #bad == 0, #bad .. " not concrete: " .. table.concat(bad, " ", 1, math.min(#bad, 3)))
 	local spill = {}
-	for _, p in ipairs({ { -580, 160 }, { -590, 160 }, { -400, -12 }, { -300, 332 }, { -224, 170 }, { -224, 150 } }) do
+	-- East controls moved from x -224 to x -212 (owner decision 2026-10-30): x -228..-216 is now the front street (section 6d), so the Grass beside Road F starts at x -216.
+	for _, p in ipairs({ { -580, 160 }, { -590, 160 }, { -400, -12 }, { -300, 332 }, { -212, 170 }, { -212, 150 } }) do
 		if cellMaterial(p[1], p[2]) ~= Enum.Material.Grass then table.insert(spill, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
 	end
-	check("control: the cells just outside the Market slot (west, north, south, and east beside Road F) are still Grass", #spill == 0, table.concat(spill, " "))
+	check("control: the cells just outside the Market slot (west, north, south, and east of the front street beside Road F) are still Grass", #spill == 0, table.concat(spill, " "))
 	check("control: Road F's asphalt end at (-224,160) is still Asphalt", cellMaterial(-224, 160) == Enum.Material.Asphalt, cellMaterial(-224, 160).Name)
 end
 
@@ -488,6 +489,30 @@ do
 	check("control: the cell just south of the Credits Plaza repaint (40,360) is still Grass", #south == 0, table.concat(south, " "))
 	local road = notMat({ { 2, 310 } }, Enum.Material.Asphalt)
 	check("control: Road E asphalt at (2,310) beside the EntryPath is still Asphalt", #road == 0, table.concat(road, " "))
+end
+
+-- 6d. The Market front street (owner decision 2026-10-30, handoff 048): terrain only, Asphalt x -228..-216, z -8..328 (builders/roads_extra.luau STREET), with two zebra crossings at the
+-- stair feet, z 88..96 and z 224..232 (ZEBRA): Concrete bars at x -228..-224 and x -220..-216, Asphalt between. It is not a RoadData.NEW_ROADS entry (that would break the margin rule).
+-- Cells are 4-stud floored. The west bar sits beside the Market's Concrete, so it merges with it by colour (a recorded DIFF).
+do
+	local function notMat(points, mat)
+		local bad = {}
+		for _, p in ipairs(points) do
+			if cellMaterial(p[1], p[2]) ~= mat then table.insert(bad, string.format("(%d,%d)=%s", p[1], p[2], cellMaterial(p[1], p[2]).Name)) end
+		end
+		return bad
+	end
+	local street = notMat({
+		{ -222, 0 }, { -222, 40 }, { -222, 100 }, { -222, 200 }, { -222, 260 }, { -222, 320 }, -- centre of the street along its length
+		{ -226, 40 }, { -218, 40 }, { -226, 260 }, { -218, 260 },                             -- both edges
+	}, Enum.Material.Asphalt)
+	check("Market front street (x -228..-216, z -8..328) is Asphalt at 10 points", #street == 0, #street .. " not asphalt: " .. table.concat(street, " ", 1, math.min(#street, 3)))
+	local bars = notMat({ { -226, 92 }, { -218, 92 }, { -226, 228 }, { -218, 228 } }, Enum.Material.Concrete)
+	local gaps = notMat({ { -222, 92 }, { -222, 228 } }, Enum.Material.Asphalt)
+	check("Market front street zebra crossings (z 88..96, z 224..232): Concrete bars at x -226 and -218, Asphalt between", #bars == 0 and #gaps == 0,
+		#bars .. " bars wrong, " .. #gaps .. " gaps wrong: " .. table.concat(bars, " ", 1, math.min(#bars, 2)) .. " " .. table.concat(gaps, " ", 1, math.min(#gaps, 2)))
+	local spill = notMat({ { -212, 100 }, { -212, 200 }, { -222, -12 }, { -222, 332 } }, Enum.Material.Grass)
+	check("control: the cells just east of the front street and beyond both of its ends are still Grass", #spill == 0, table.concat(spill, " "))
 end
 
 -- 7. Entrance roads to the Cathedral side stairs (Slice 4 B3c-0b, owner markup) ---------------------------------------------------

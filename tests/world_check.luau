@@ -234,7 +234,7 @@ do
 		{ -572, -1 }, { -232, -1 }, { -572, 321 }, { -232, 321 }, -- the four corner cells
 		{ -300, 160 }, { -350, 120 }, { -270, 200 }, { -380, 160 }, { -300, 78 }, { -300, 242 }, { -500, 160 }, -- old Pavement and old grass area
 	}, M.Concrete, {
-		{ -580, 160, M.Grass }, { -400, -12, M.Grass }, { -300, 332, M.Grass }, { -224, 170, M.Grass }, { -224, 160, M.Asphalt },
+		{ -580, 160, M.Grass }, { -400, -12, M.Grass }, { -300, 332, M.Grass }, { -212, 170, M.Grass }, { -224, 160, M.Asphalt },
 	})
 
 	-- Lomi paving (Slice 07, moved by Slice 14): shophouse floor, forecourt and driveway (x 240..340, z 100..180). x0 240 is where
