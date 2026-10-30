@@ -174,6 +174,21 @@ return function(t)
 		end
 	end)
 
+	-- Lomi King grows from 100 x 80 to 100 x 110 (Site 3): the centre stays (292,140), so the slot becomes x 242..342, z 85..195, facing W.
+	t.test("Lomi King slot is centre (292,140), size 100 x 110, facing W: x 242..342, z 85..195", function()
+		local l = SiteData.byId(3)
+		expect.equal(l.key, "Lomi")
+		expect.equal(l.size, Vector2.new(100, 110))
+		expect.near(l.pos.X, 292, 1e-6)
+		expect.near(l.pos.Z, 140, 1e-6)
+		expect.equal(l.facing, "W")
+		local x0, x1, z0, z1 = footprint(l)
+		expect.near(x0, 242, 1e-6)
+		expect.near(x1, 342, 1e-6)
+		expect.near(z0, 85, 1e-6)
+		expect.near(z1, 195, 1e-6)
+	end)
+
 	-- Facing must be one of the eight compass values.
 	t.test("facing is a valid compass value", function()
 		for _, s in ipairs(SiteData.sites) do
