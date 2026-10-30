@@ -1,9 +1,10 @@
 -- roads_extra.luau: paves the new roads (RoadData.NEW_ROADS), repaints the ground under the
 -- Cathedral and Credits plazas to Pavement, and repaints the ground under City Hall and the whole Market slot to Concrete (Slice 3b, Slice 4).
--- It also paves the Market front street (STREET, Asphalt) and its two zebra crossings (ZEBRA, Concrete bars). Run in Edit via execute_luau:
---   return require(game.ServerStorage.Builders.roads_extra:Clone())()      -- returns { cellsBefore, cellsAfter, roads, regions, concreteRegions, streets, zebraBars }
--- IDEMPOTENT: it only fills Asphalt, replaces Grass with Pavement (PAVED) and replaces Grass or Pavement with Concrete (CONCRETE), so a second run leaves every terrain voxel as it was.
--- The street and the bars are fixed FillBlocks (Asphalt first, then the Concrete bars), so they give the same result on a second run.
+-- It also paves the Market front street (STREET, Asphalt), its north side street (SIDE_STREETS, Asphalt), its southern extension to the existing road (STREET_SOUTH, Asphalt),
+-- repaints the grass strip south of the Market to Concrete (VERGE_SOUTH) and adds two zebra crossings (ZEBRA, Salt bars). Run in Edit via execute_luau:
+--   return require(game.ServerStorage.Builders.roads_extra:Clone())()      -- returns { cellsBefore, cellsAfter, roads, regions, concreteRegions, streets, zebraBars, sideStreets, southVerge }
+-- IDEMPOTENT: it only fills Asphalt or Salt, replaces Grass with Pavement (PAVED) and replaces Grass or Pavement with Concrete (CONCRETE, VERGE_SOUTH), so a second run leaves every terrain voxel as it was.
+-- The streets and the bars are fixed FillBlocks (Asphalt first, then the Salt bars), so they give the same result on a second run.
 -- It never clears terrain (builders/world.luau does, and is never run). Same fill method as world.luau buildRoads: one Asphalt
 -- FillBlock per segment, 4 studs thick, top at y -2 (surface 0), extended by w/2 at interior joints and at a start that joins another road.
 local FLOOR_TOP = -2
@@ -41,8 +42,24 @@ local STREET = {
 	{ x0 = -228, x1 = -216, z0 = -8, z1 = 328 },
 }
 
--- Two zebra crossings at the stair feet (z 88..96 and z 224..232): Concrete bars at x -228..-224 and x -220..-216 with Asphalt between. The west bar lies
--- beside the Market Concrete, so the two merge by colour (a known honest DIFF, owner approved the layout).
+-- Market side streets (owner decision 2026-10-30): the north side street is Asphalt, 12 wide (z -20..-8), just outside the slot and meeting the front street's north end.
+-- South there is no new street (owner chose "use the existing road"): an Asphalt road already runs along z 344..356, so the front street is extended south (STREET_SOUTH,
+-- x -228..-216, z 328..344) to T into it, and the grass strip between the Market and that road (VERGE_SOUTH, z 328..344) is repainted Concrete. x stays on the 4-stud grid.
+local SIDE_STREETS = {
+	{ x0 = -576, x1 = -216, z0 = -20, z1 = -8 },
+}
+
+local STREET_SOUTH = {
+	{ x0 = -228, x1 = -216, z0 = 328, z1 = 344 },
+}
+
+local VERGE_SOUTH = {
+	{ x0 = -576, x1 = -400, z0 = 328, z1 = 344 },
+	{ x0 = -400, x1 = -228, z0 = 328, z1 = 344 },
+}
+
+-- Two zebra crossings at the stair feet (z 88..96 and z 224..232): white Salt bars at x -228..-224 and x -220..-216 with Asphalt between (owner decision 2026-10-30,
+-- zebra bars white). They were Concrete at first and the west bar merged with the Market Concrete, so they are Salt, painted last so nothing overwrites them.
 local ZEBRA = {
 	{ x0 = -228, x1 = -224, z0 = 88, z1 = 96 },
 	{ x0 = -220, x1 = -216, z0 = 88, z1 = 96 },
@@ -89,13 +106,27 @@ return function()
 		T:ReplaceMaterial(region, 4, Enum.Material.Pavement, Enum.Material.Concrete)
 		task.wait()
 	end
+	for _, r in ipairs(VERGE_SOUTH) do
+		local region = Region3.new(Vector3.new(r.x0, -4, r.z0), Vector3.new(r.x1, 4, r.z1))
+		T:ReplaceMaterial(region, 4, Enum.Material.Grass, Enum.Material.Concrete)
+		T:ReplaceMaterial(region, 4, Enum.Material.Pavement, Enum.Material.Concrete)
+		task.wait()
+	end
 	for _, r in ipairs(STREET) do
 		T:FillBlock(CFrame.new((r.x0 + r.x1) / 2, FLOOR_TOP - 2, (r.z0 + r.z1) / 2), Vector3.new(r.x1 - r.x0, 4, r.z1 - r.z0), Enum.Material.Asphalt)
 		task.wait()
 	end
+	for _, r in ipairs(SIDE_STREETS) do
+		T:FillBlock(CFrame.new((r.x0 + r.x1) / 2, FLOOR_TOP - 2, (r.z0 + r.z1) / 2), Vector3.new(r.x1 - r.x0, 4, r.z1 - r.z0), Enum.Material.Asphalt)
+		task.wait()
+	end
+	for _, r in ipairs(STREET_SOUTH) do
+		T:FillBlock(CFrame.new((r.x0 + r.x1) / 2, FLOOR_TOP - 2, (r.z0 + r.z1) / 2), Vector3.new(r.x1 - r.x0, 4, r.z1 - r.z0), Enum.Material.Asphalt)
+		task.wait()
+	end
 	for _, r in ipairs(ZEBRA) do
-		T:FillBlock(CFrame.new((r.x0 + r.x1) / 2, FLOOR_TOP - 2, (r.z0 + r.z1) / 2), Vector3.new(r.x1 - r.x0, 4, r.z1 - r.z0), Enum.Material.Concrete)
+		T:FillBlock(CFrame.new((r.x0 + r.x1) / 2, FLOOR_TOP - 2, (r.z0 + r.z1) / 2), Vector3.new(r.x1 - r.x0, 4, r.z1 - r.z0), Enum.Material.Salt)
 	end
 	task.wait()
-	return { cellsBefore = before, cellsAfter = T:CountCells(), roads = #RoadData.NEW_ROADS, regions = #PAVED, concreteRegions = #CONCRETE, streets = #STREET, zebraBars = #ZEBRA }
+	return { cellsBefore = before, cellsAfter = T:CountCells(), roads = #RoadData.NEW_ROADS, regions = #PAVED, concreteRegions = #CONCRETE, streets = #STREET, zebraBars = #ZEBRA, sideStreets = #SIDE_STREETS, southVerge = #VERGE_SOUTH }
 end
