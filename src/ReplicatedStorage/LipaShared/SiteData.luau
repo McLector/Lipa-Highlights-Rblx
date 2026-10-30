@@ -67,7 +67,7 @@ SiteData.sites = {
 		{ "jeromedoe.blogspot.com", "www.flickr.com" },
 		{ "MarketStalls", "Baskets", "Produce", "PriceSigns", "VendorNPCs" },
 		{ guideLocal = Vector2.new(161, 0), panelLocal = Vector2.new(155, -12) }),
-	site(3, "Lomi", "Lomi King", "Eat", 292, 0, 140, "W", 100, 80, 3.5,
+	site(3, "Lomi", "Lomi King", "Eat", 292, 0, 140, "W", 100, 110, 3.5,
 		"Lomi Host",
 		{
 			"This is Lomi King, one of Lipa's lomi houses. Lomi is part of the city's food culture, and sharing a hot bowl is a social way to eat. Our photo is from 2015, so the front may have changed.",

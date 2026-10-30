@@ -6,7 +6,7 @@ The owner approved growing footprints to fit the blueprints ("the bigger the bet
 |---|---|---|---|---|
 | 1 Cathedral | about 54 x 68 m (2.0) | 240 x 200 | keep | already larger than the drawing |
 | 2 Market | 110 x 116 m (3.0): 330 along z, 348 along x | 348 x 330 at (-402,160) (data applied, Slice 4 job 3; the model is still the 2014 one until the rebuild) | 348 x 330 at about (-402,160) | east edge stays x -228 (Road F end); z -5..325 keeps 19 studs from Road E (z 344 edge) and 52 from the west bypass |
-| 3 Lomi King | lot 6 x 25 m (3.5) | 100 x 80 | keep | |
+| 3 Lomi King | lot 6 x 25 m (3.5); board and Street View photo | 100 x 80 | 100 x 110 at (292,140) (x 242..342, z 85..195) | grows 30 along z for the board's tower, dining, driveway and neighbours (owner-approved plan, handoff 053); the pivot stays; ground x 240..344, z 84..196 becomes Concrete |
 | 4 Cafe | no drawing | 100 x 80 | keep | |
 | 5 Carmel | about 82 x 68 m (2.5) | 220 x 180 | keep | the drawing fits |
 | 6 Outlets | about 430 x 255 m (drawing also says 12.4 ha, inconsistent) | 300 x 200 at (550,-650) | about 450 x 300 at (550,-700) | south edge stays z -550, flush with Road B's end |
