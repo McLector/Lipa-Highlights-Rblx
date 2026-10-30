@@ -1,8 +1,10 @@
 -- PassportClient: HUD "Passport x/N" (N = number of sites) with a gold Welcome row above a 3x3 Eat/Pray/Love stamp grid, driven by the
 -- StampList / StampCount player attributes that PassportServer publishes. With every site stamped it shows a certificate
 -- (CertificateLogic: Welcome row on top, then 2 or 3 columns by orientation, fixed text size) that can be reopened from the HUD.
--- A Mute button turns the ambient loop (SoundService.AmbientTown) down to 0 and back. Waypoints were cut (the jeepney menu
--- covers navigation). All text is plain (no rich text); every button is at least 44 px tall.
+-- A Mute button turns the ambient loop (SoundService.AmbientTown) down to 0 and back. All text is plain (no rich text); every button
+-- is at least 44 px tall.
+-- New-player guidance (2026-10-31): a "Next:" line under the buttons and a gold NEXT pin in the world, both from GuidanceLogic.hint
+-- (positions from SiteData, so the pin works while far sites are streamed out), plus a "Stamp collected" message on each new stamp.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
@@ -10,6 +12,7 @@ local SoundService = game:GetService("SoundService")
 local SiteData = require(ReplicatedStorage:WaitForChild("LipaShared"):WaitForChild("SiteData"))
 local PassportLogic = require(ReplicatedStorage.LipaShared:WaitForChild("PassportLogic"))
 local CertificateLogic = require(ReplicatedStorage.LipaShared:WaitForChild("CertificateLogic"))
+local GuidanceLogic = require(ReplicatedStorage.LipaShared:WaitForChild("GuidanceLogic"))
 
 local TOTAL = #SiteData.sites -- every count below comes from the site list
 
@@ -80,7 +83,7 @@ local cellsW, cellsH = 3 * CELL_W + 2 * GRID_GAP, 3 * CELL_H + 2 * GRID_GAP
 -- HUD grid: the Welcome row (site 10, full width) above the 3x3 grid; the frame height is the sum of its parts.
 local grid = Instance.new("Frame")
 grid.Name = "Grid"
-grid.LayoutOrder = 2
+grid.LayoutOrder = 3
 grid.Size = UDim2.fromOffset(cellsW + 2 * GRID_PAD, 2 * GRID_PAD + WELCOME_H + GRID_GAP + cellsH)
 grid.BackgroundColor3 = DARK
 grid.BackgroundTransparency = 0.1
@@ -93,6 +96,98 @@ gpad.PaddingTop, gpad.PaddingBottom = UDim.new(0, GRID_PAD), UDim.new(0, GRID_PA
 local gridList = Instance.new("UIListLayout", grid)
 gridList.Padding = UDim.new(0, GRID_GAP)
 gridList.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- The next-stop line sits between the buttons and the grid; fixed text size, wraps on a phone, capped in width.
+local HINT_TEXT = 16
+local hint = Instance.new("TextLabel")
+hint.Name = "NextHint"
+hint.LayoutOrder = 2
+hint.Size = UDim2.new(1, 0, 0, 0)
+hint.AutomaticSize = Enum.AutomaticSize.Y
+hint.BackgroundColor3 = DARK
+hint.BackgroundTransparency = 0.1
+hint.TextColor3 = Color3.new(1, 1, 1)
+hint.Font = Enum.Font.GothamMedium
+hint.TextSize = HINT_TEXT
+hint.TextWrapped = true
+hint.TextXAlignment = Enum.TextXAlignment.Left
+hint.Text = ""
+hint.Parent = hudRoot
+Instance.new("UICorner", hint).CornerRadius = UDim.new(0, 10)
+local hintLimit = Instance.new("UISizeConstraint")
+hintLimit.MaxSize = Vector2.new(420, 400)
+hintLimit.Parent = hint
+local hintPad = Instance.new("UIPadding", hint)
+hintPad.PaddingLeft, hintPad.PaddingRight, hintPad.PaddingTop, hintPad.PaddingBottom = UDim.new(0, 10), UDim.new(0, 10), UDim.new(0, 8), UDim.new(0, 8)
+
+-- The NEXT pin: a client-local invisible anchor part with a billboard that shows through walls at any distance.
+local pin = Instance.new("Part")
+pin.Name = "NextPin"
+pin.Anchored = true
+pin.CanCollide = false
+pin.CanQuery = false
+pin.CanTouch = false
+pin.Transparency = 1
+pin.Size = Vector3.new(1, 1, 1)
+local pinGui = Instance.new("BillboardGui")
+pinGui.Name = "NextPinGui"
+pinGui.AlwaysOnTop = true
+pinGui.LightInfluence = 0
+pinGui.Size = UDim2.fromOffset(84, 56)
+pinGui.StudsOffsetWorldSpace = Vector3.new(0, 14, 0)
+pinGui.Enabled = false
+pinGui.Parent = pin
+local pinLabel = Instance.new("TextLabel")
+pinLabel.Name = "Label"
+pinLabel.Size = UDim2.new(1, 0, 0, 34)
+pinLabel.BackgroundColor3 = GOLD
+pinLabel.TextColor3 = DARK
+pinLabel.Font = Enum.Font.GothamBold
+pinLabel.TextSize = 22
+pinLabel.Text = "NEXT"
+pinLabel.Parent = pinGui
+Instance.new("UICorner", pinLabel).CornerRadius = UDim.new(0, 8)
+local pinArrow = Instance.new("TextLabel")
+pinArrow.Name = "Arrow"
+pinArrow.Position = UDim2.fromOffset(0, 32)
+pinArrow.Size = UDim2.new(1, 0, 0, 24)
+pinArrow.BackgroundTransparency = 1
+pinArrow.TextColor3 = GOLD
+pinArrow.TextStrokeTransparency = 0.4
+pinArrow.Font = Enum.Font.GothamBold
+pinArrow.TextSize = 24
+pinArrow.Text = "V"
+pinArrow.Parent = pinGui
+pin.Parent = workspace
+
+-- "Stamp collected" message, top centre, for 3 seconds.
+local toast = Instance.new("TextLabel")
+toast.Name = "StampToast"
+toast.AnchorPoint = Vector2.new(0.5, 0)
+toast.Position = UDim2.new(0.5, 0, 0, 70)
+toast.Size = UDim2.fromOffset(0, 0)
+toast.AutomaticSize = Enum.AutomaticSize.XY
+toast.BackgroundColor3 = GREEN
+toast.TextColor3 = Color3.new(1, 1, 1)
+toast.Font = Enum.Font.GothamBold
+toast.TextSize = 20
+toast.Visible = false
+toast.Parent = gui
+Instance.new("UICorner", toast).CornerRadius = UDim.new(0, 8)
+local toastPad = Instance.new("UIPadding", toast)
+toastPad.PaddingLeft, toastPad.PaddingRight, toastPad.PaddingTop, toastPad.PaddingBottom = UDim.new(0, 12), UDim.new(0, 12), UDim.new(0, 8), UDim.new(0, 8)
+local toastToken = 0
+local function showToast(text)
+	toastToken += 1
+	local token = toastToken
+	toast.Text = text
+	toast.Visible = true
+	task.delay(3, function()
+		if token == toastToken then
+			toast.Visible = false
+		end
+	end)
+end
 
 local cells = Instance.new("Frame")
 cells.Name = "Cells"
@@ -310,12 +405,35 @@ muteButton.Activated:Connect(function()
 end)
 gui:SetAttribute("Muted", false)
 
-local lastCount = 0
-local function refresh()
+local function stampIds()
 	local ids = {}
 	for token in string.gmatch(player:GetAttribute("StampList") or "", "%d+") do
 		table.insert(ids, tonumber(token))
 	end
+	return ids
+end
+
+-- Re-aim the hint and the pin from the stamps and where the player stands now.
+local function updateHint()
+	local char = player.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	local h = GuidanceLogic.hint(stampIds(), hrp and hrp.Position or nil)
+	hint.Text = h.text
+	gui:SetAttribute("NextSiteId", h.siteId or 0)
+	gui:SetAttribute("NextMode", h.mode)
+	if h.point then
+		pin.Position = h.point + Vector3.new(0, 1, 0)
+		pinGui.Enabled = true
+	else
+		pinGui.Enabled = false
+	end
+end
+
+local lastCount = 0
+local lastSet = {}
+local primed = false
+local function refresh()
+	local ids = stampIds()
 	local state = PassportLogic.new()
 	for _, id in ipairs(PassportLogic.sanitize(ids)) do
 		PassportLogic.stamp(state, id)
@@ -333,8 +451,26 @@ local function refresh()
 	if complete and lastCount < TOTAL then
 		openCertificate()
 	end
+	for _, id in ipairs(PassportLogic.list(state)) do
+		if primed and not lastSet[id] then -- not on the first refresh, so a late start never announces old stamps
+			local site = SiteData.byId(id)
+			showToast("Stamp collected: " .. GuidanceLogic.plain(site and site.name) .. " (" .. PassportLogic.count(state) .. "/" .. TOTAL .. ")")
+		end
+	end
+	lastSet = {}
+	for _, id in ipairs(PassportLogic.list(state)) do
+		lastSet[id] = true
+	end
 	lastCount = PassportLogic.count(state)
+	primed = true
+	updateHint()
 end
 
 player:GetAttributeChangedSignal("StampList"):Connect(refresh)
 refresh()
+task.spawn(function()
+	while true do
+		task.wait(1)
+		updateHint()
+	end
+end)

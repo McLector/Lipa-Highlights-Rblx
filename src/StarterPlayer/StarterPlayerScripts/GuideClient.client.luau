@@ -219,6 +219,18 @@ local function open(siteId)
 	end)
 end
 
+-- New-player guidance (2026-10-31): the prompt says what talking gives you. Set here, on this client only, because the prompts come from
+-- builders/placeholders.luau (not re-run) and stream in and out, so every Guide prompt is relabelled as it arrives.
+local function relabel(inst)
+	if inst:IsA("ProximityPrompt") and inst:GetAttribute("PromptKind") == "Guide" then
+		inst.ActionText = "Talk (get a stamp)"
+	end
+end
+for _, d in ipairs(workspace:GetDescendants()) do
+	relabel(d)
+end
+workspace.DescendantAdded:Connect(relabel)
+
 ProximityPromptService.PromptTriggered:Connect(function(prompt, who)
 	if who ~= player or prompt:GetAttribute("PromptKind") ~= "Guide" then
 		return

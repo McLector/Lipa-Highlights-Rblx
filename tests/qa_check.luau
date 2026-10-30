@@ -428,7 +428,44 @@ if jeep then
 	check("JeepneyClient menu ignores the top-bar inset so it is centred on the real screen", string.find(src, "IgnoreGuiInset = true", 1, true) ~= nil)
 	check("JeepneyClient never turns RichText on", string.find(src, "RichText = true", 1, true) == nil)
 end
+-- New-player guidance (owner-approved plan, 2026-10-31): the newcomer playtest found no "what next" after Ate Joy, no way to find the
+-- three walk-only shops, a camera facing away from the guide after a ride, silent stamps and silent ride refusals. The logic is unit
+-- tested in GuidanceLogic_Test; these pins keep the clients wired to it and the approved words in place.
+if welcome then
+	local src = sourceOf(welcome)
+	check("WelcomeClient Step1 names Ate Joy as the first guide and keeps the touch hint",
+		string.find(src, "1. Ate Joy, the guide in front of you, starts the tour. Walk up to a guide and \" .. talkHint .. \" to talk. Each guide stamps your passport.", 1, true) ~= nil)
+end
+if passport then
+	local src = sourceOf(passport)
+	check("PassportClient takes its next-stop hint from GuidanceLogic", string.find(src, "GuidanceLogic.hint(", 1, true) ~= nil)
+	check("PassportClient shows the hint in a NextHint label with a fixed text size (HINT_TEXT >= 14)",
+		string.find(src, "\"NextHint\"", 1, true) ~= nil and (tonumber(string.match(src, "HINT_TEXT%s*=%s*(%d+)")) or 0) >= 14)
+	check("PassportClient publishes the next site as the NextSiteId attribute (for playtests)", string.find(src, "\"NextSiteId\"", 1, true) ~= nil)
+	check("PassportClient draws a client-local NEXT pin that shows through walls (BillboardGui, AlwaysOnTop)",
+		string.find(src, "\"NextPin\"", 1, true) ~= nil and string.find(src, "AlwaysOnTop = true", 1, true) ~= nil)
+	check("PassportClient announces a new stamp ('Stamp collected: ')", string.find(src, "\"Stamp collected: \"", 1, true) ~= nil)
+	check("PassportClient header no longer says the waypoints were cut", string.find(src, "Waypoints were cut", 1, true) == nil)
+end
+if guide then
+	local src = sourceOf(guide)
+	check("GuideClient relabels streamed-in guide prompts 'Talk (get a stamp)'",
+		string.find(src, "\"Talk (get a stamp)\"", 1, true) ~= nil and string.find(src, "DescendantAdded", 1, true) ~= nil)
+end
+if jeep then
+	local src = sourceOf(jeep)
+	check("JeepneyClient relabels jeep prompts 'Choose a ride'", string.find(src, "\"Choose a ride\"", 1, true) ~= nil)
+	check("JeepneyClient explains a cooldown refusal", string.find(src, "\"Wait a moment for the next jeepney.\"", 1, true) ~= nil)
+	check("JeepneyClient explains a ride asked for off the stop", string.find(src, "\"Stand on the yellow jeepney stop to ride.\"", 1, true) ~= nil)
+	check("JeepneyClient marks stamped places ' - done' and highlights GuidanceLogic.jeepTarget",
+		string.find(src, "\" - done\"", 1, true) ~= nil and string.find(src, "GuidanceLogic.jeepTarget(", 1, true) ~= nil)
+	check("JeepneyClient tells how to reach the walk-only shops",
+		string.find(src, "\"Market, Lomi King, Cafe de Lipa: ride to the Plaza, then walk.\"", 1, true) ~= nil)
+	check("JeepneyClient turns the camera to the guide after a ride",
+		string.find(src, "LastJeepResult", 1, true) ~= nil and string.find(src, "SiteData.guidePos(", 1, true) ~= nil and string.find(src, "CurrentCamera", 1, true) ~= nil)
+end
 local shared = game.ReplicatedStorage:FindFirstChild("LipaShared")
+check("GuidanceLogic lives in LipaShared", shared ~= nil and shared:FindFirstChild("GuidanceLogic") ~= nil)
 check("CertificateLogic and CreditsData live in LipaShared",
 	shared ~= nil and shared:FindFirstChild("CertificateLogic") ~= nil and shared:FindFirstChild("CreditsData") ~= nil)
 

@@ -70,7 +70,7 @@ end
 local GOLD, INK = Color3.fromRGB(255, 214, 102), Color3.fromRGB(232, 232, 238)
 text("Title", 1, 28, "Lipa City: Eat, Pray, Love", Enum.Font.GothamBold, GOLD)
 text("Subtitle", 2, 17, "Ten places that show modern Lipa, Batangas.", Enum.Font.Gotham, INK)
-text("Step1", 3, 17, "1. Walk up to a guide and " .. talkHint .. " to talk. Each guide stamps your passport.", Enum.Font.Gotham, INK)
+text("Step1", 3, 17, "1. Ate Joy, the guide in front of you, starts the tour. Walk up to a guide and " .. talkHint .. " to talk. Each guide stamps your passport.", Enum.Font.Gotham, INK)
 text("Step2", 4, 17, "2. Collect all 10 stamps. Your Passport is at the top left.", Enum.Font.Gotham, INK)
 text("Step3", 5, 17, "3. For far places, ride the jeepney from any jeepney stop.", Enum.Font.Gotham, INK)
 text("Step4", 6, 17, "4. Photo sources are on the credits board in the Credits Plaza, south of the Cathedral. Take the jeepney, exit by a side gate, walk south.", Enum.Font.Gotham, INK)
