@@ -247,6 +247,31 @@ if board then
 	for _, l in ipairs(labels) do if l.TextScaled then table.insert(scaled, l.Name) end end
 	check("CreditsBoard labels never use TextScaled (fixed TextSize)", #scaled == 0, table.concat(scaled, ","))
 	check("reference labels are exactly 16 px", #refSizeBad == 0 and #seq == 78, table.concat(refSizeBad, ",", 1, math.min(#refSizeBad, 5)))
+	-- Audio (session 061): CreditsData.audio is drawn on the last panel after Ref78: a label AudioHeader "AUDIO" (19 px or more), then
+	-- Audio1..AudioK, each exactly CreditsData.audio[i].text at 16 px with RichText off, in order, and nowhere else on the board.
+	local lastP = panelLabels[nPanels] or {}
+	local audioBad, audioElsewhere = {}, 0
+	local hdrAt = nil
+	for j, l in ipairs(lastP) do
+		if l.Name == "AudioHeader" then hdrAt = j end
+	end
+	local K = #(CreditsData.audio or {})
+	if not (hdrAt and lastP[hdrAt].Text == "AUDIO" and lastP[hdrAt].TextSize >= 19) then table.insert(audioBad, "no AUDIO header on the last panel") end
+	if hdrAt and not (hdrAt >= 2 and string.match(lastP[hdrAt - 1].Name, "^Ref%d+$")) then table.insert(audioBad, "header not after the references") end
+	for i = 1, K do
+		local l = hdrAt and lastP[hdrAt + i]
+		if not (l and l.Name == "Audio" .. i and l.Text == CreditsData.audio[i].text and l.TextSize == 16 and not l.RichText) then
+			table.insert(audioBad, "Audio" .. i)
+		end
+	end
+	if hdrAt and lastP[hdrAt + K + 1] ~= nil then table.insert(audioBad, "labels after the audio lines") end
+	for k = 1, nPanels - 1 do
+		for _, l in ipairs(panelLabels[k] or {}) do
+			if string.match(l.Name, "^Audio") then audioElsewhere += 1 end
+		end
+	end
+	check("the last panel draws the AUDIO header then every CreditsData.audio line (Audio<i>, 16 px, RichText off), after the references",
+		K >= 2 and #audioBad == 0 and audioElsewhere == 0, table.concat(audioBad, "; ") .. (audioElsewhere > 0 and ("; " .. audioElsewhere .. " elsewhere") or ""))
 
 	-- every panel's text must fit its canvas: measured with TextService (RichText measured as RichText when the property exists), so a long url cannot clip silently
 	local TextService = game:GetService("TextService")

@@ -12,7 +12,9 @@
 -- SurfaceGui Front, PixelsPerStud 40 (720 x 520 px), UIPadding 18, UIListLayout gap 6, fixed TextSize (never TextScaled).
 -- Panel 1 = title (32 px bold gold), identityText (24 px bold gold), every projectLines and noticeLines line (19 px). Panels 2..N = "REFERENCES (k of N-1)"
 -- (32 px) then the 78 CreditsData.references marked strings in order at 16 px, packed greedily by measured height (TextService, RichText measured as
--- RichText), never splitting an entry. RichText is on ONLY for the labels named Ref<i>. At the entrance: a text-only sign, 2 benches, 6 lamps
+-- RichText), never splitting an entry. The last panel ends with an AUDIO header (19 px bold gold, label AudioHeader) and the CreditsData.audio
+-- lines (16 px, labels Audio<i>, session 061); the build fails if they do not fit that panel. RichText is on ONLY for the labels named Ref<i>.
+-- At the entrance: a text-only sign, 2 benches, 6 lamps
 -- (the Cathedral builders' bench and lamp recipes, builders/site01.luau).
 local CreditsData = require(game.ReplicatedStorage.LipaShared.CreditsData:Clone())
 
@@ -93,6 +95,10 @@ for i, ref in ipairs(CreditsData.references) do
 	curH += h
 end
 table.insert(refPanels, cur)
+-- the audio block (session 061) goes under the last references panel; a panel of its own would shift the two rows, so it must fit there
+local audioH = textHeight("AUDIO", 19, GB, INNER_W) + GAP
+for _, a in ipairs(CreditsData.audio or {}) do audioH += textHeight(a.text, REF_SIZE, G, INNER_W) + GAP end
+assert(curH + audioH <= INNER_H - 2, string.format("credits: the audio lines need %d px but the last panel has %d left", audioH, INNER_H - 2 - curH))
 local NPANELS = 1 + #refPanels
 assert(NPANELS >= 8, "credits: only " .. NPANELS .. " panels")
 
@@ -108,6 +114,10 @@ local function contentFor(k)
 	else
 		add(string.format("REFERENCES (%d of %d)", k - 1, NPANELS - 1), 32, GB, GOLD)
 		for _, i in ipairs(refPanels[k - 1]) do add(CreditsData.references[i].marked, REF_SIZE, G, INK, "Ref" .. i, true) end
+		if k == NPANELS then
+			add("AUDIO", 19, GB, GOLD, "AudioHeader")
+			for i, a in ipairs(CreditsData.audio or {}) do add(a.text, REF_SIZE, G, INK, "Audio" .. i) end
+		end
 	end
 	return items
 end

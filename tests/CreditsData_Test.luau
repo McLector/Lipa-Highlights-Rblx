@@ -472,6 +472,22 @@ return function(t)
 		end
 	end)
 
+	-- Session 061: the town ambience (SoundService.AmbientTown, attribute Ambient = true) was the one uncredited sound.
+	t.test("every Ambient-tagged Sound in SoundService has an audio credit", function()
+		local credited = {}
+		for _, a in ipairs(CreditsData.audio or {}) do
+			credited[a.assetId] = true
+		end
+		local n = 0
+		for _, s in ipairs(game:GetService("SoundService"):GetDescendants()) do
+			if s:IsA("Sound") and s:GetAttribute("Ambient") == true then
+				n += 1
+				expect.truthy(credited[tonumber(string.match(s.SoundId, "(%d+)$"))])
+			end
+		end
+		expect.truthy(n >= 1)
+	end)
+
 	t.test("audio lines are in author order", function()
 		local prev = nil
 		for _, a in ipairs(CreditsData.audio or {}) do

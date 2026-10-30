@@ -216,8 +216,9 @@ Reference photos also come from the sites themselves and public web pages; they 
 
 DistrokidOfficial. (2026, September 5). Lofi Chill Blue Cat Study and Relaxing [Song]. Roblox Creator Store. https://create.roblox.com/store/asset/76934240287978
 ProSoundEffects. (2022, March 16). Date Stamp Big Office Impact Good Squeak 2 (SFX) [Sound effect]. Roblox Creator Store. https://create.roblox.com/store/asset/9114026047
+ProSoundEffects. (2022, March 16). Neighborhood 3 (SFX) [Sound effect]. Roblox Creator Store. https://create.roblox.com/store/asset/9112833822
 
-Uses: the first is the background music loop (rbxassetid://76934240287978, SoundService.MusicLoop, free); the second is the passport stamp sound (rbxassetid://9114026047, PassportClient, free; courtesy of Pro Sound Effects). The credits board does not show these lines yet (they are kept apart from the references; builders/credits.luau has to draw them).
+Uses: the first is the background music loop (rbxassetid://76934240287978, SoundService.MusicLoop, free); the second is the passport stamp sound (rbxassetid://9114026047, PassportClient, free; courtesy of Pro Sound Effects); the third is the town ambience loop (rbxassetid://9112833822, SoundService.AmbientTown, free; courtesy of Pro Sound Effects). They are kept apart from the references; builders/credits.luau draws them on the last credits board panel under an AUDIO header.
 
 ## Notes for the group
 
