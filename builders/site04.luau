@@ -185,12 +185,14 @@ return function()
 	local function buildStructure(ctx)
 		-- Thin ground parts, all inside x 112..212, z -200..-120.
 		B(ctx, "TerraceTile", 144, 164, 0, 0.2, -188, -128, TILE_LIGHT, SMOOTH)
-		B(ctx, "UnitFloor", 164, 204, 0, 0.2, -186, -134, CHECK_LIGHT, SMOOTH)
+		-- The slab and the edge checker tiles stop 0.05 inside the outer faces of SideWallN/S and BackWall: flush edge faces flickered
+		-- as a light strip on the charcoal walls (light tier C5).
+		B(ctx, "UnitFloor", 164, 203.95, 0, 0.2, -185.95, -134.05, CHECK_LIGHT, SMOOTH)
 		for i = 0, 9 do
 			for j = 0, 12 do
 				if (i + j) % 2 == 0 then
 					local x0, z0 = 164 + i * 4, -186 + j * 4
-					B(ctx, "CheckerDark", x0, x0 + 4, 0.2, 0.25, z0, z0 + 4, CHECK_DARK, SMOOTH)
+					B(ctx, "CheckerDark", x0, math.min(x0 + 4, 203.95), 0.2, 0.25, math.max(z0, -185.95), math.min(z0 + 4, -134.05), CHECK_DARK, SMOOTH)
 				end
 			end
 		end
@@ -223,8 +225,9 @@ return function()
 		B(ctx, "SignFascia", 163, 165, 12, 18, -186, -134, CHARCOAL, SMOOTH)
 		-- The sign sits on a charcoal band rising above the arcade's outer (west) edge, so the letters are seen from the street;
 		-- on the fascia behind the roof slab they were hidden (guard "sign letters are visible from the street").
-		-- The band runs down to the roof slab (y 13) so no white roof edge shows under the dark fascia.
-		B(ctx, "ArcadeSignBand", 144, 145.2, 13, 22, -188, -128, CHARCOAL, SMOOTH)
+		-- The band runs down to the roof slab (y 13) so no white roof edge shows under the dark fascia. It stands 0.05 proud of the
+		-- roof's west face, underside and both ends: shared face planes z-fought charcoal against white (light tier C1).
+		B(ctx, "ArcadeSignBand", 143.95, 145.2, 12.95, 22, -188.05, -127.95, CHARCOAL, SMOOTH)
 		buildWord(ctx, "cafedelipa", -180.1, 20.9, 0.75, 0.75, 143.4, 144)
 		B(ctx, "CafeBody", 164, 204, 12, 17, -186, -134, CHARCOAL, SMOOTH)
 		B(ctx, "BackWall", 202, 204, 0, 12, -186, -134, CHARCOAL, SMOOTH)
@@ -308,7 +311,8 @@ return function()
 		local chairCount = 0
 		local function tableAt(tx, tz, round)
 			if round then
-				VCyl(ctx, "TableBase", tx, tz, 0, 0.2, 1.4, LEG_DARK, WOODM)
+				-- Base disc raised 0.15 so its top (0.35) clears the floor top (0.2) it used to z-fight with (light tier C2).
+				VCyl(ctx, "TableBase", tx, tz, 0.15, 0.35, 1.4, LEG_DARK, WOODM)
 				VCyl(ctx, "TablePedestal", tx, tz, 0.2, 2.6, 0.3, LEG_DARK, WOODM)
 				VCyl(ctx, "TableTop", tx, tz, 2.6, 3.0, 2.4, TABLE_WOOD, WOODM)
 			else
@@ -395,7 +399,25 @@ return function()
 
 	------------------------------------------------------------------ Staff: idle R15 rigs, built like site03.
 	-- CreateHumanoidModelFromDescription yields, so this runs as its own step before the swap.
-	local function buildStaff(folder)
+	-- Floor top under world (x, z): the highest top of a low part of the built (still unparented) Structure covering the point,
+	-- or the terrain. The rigs stand on this, not on the terrain under the 0.2 floor (light tier C3).
+	local function floorTopAt(model, x, z)
+		local top = groundAt(x, z)
+		for _, p in ipairs(model:GetDescendants()) do
+			if p:IsA("BasePart") then
+				local c, sz = p.CFrame, p.Size
+				local function half(axis)
+					return (math.abs(c.RightVector[axis]) * sz.X + math.abs(c.UpVector[axis]) * sz.Y + math.abs(c.LookVector[axis]) * sz.Z) / 2
+				end
+				local pt = c.Position.Y + half("Y")
+				if pt <= 1 and math.abs(x - c.Position.X) <= half("X") and math.abs(z - c.Position.Z) <= half("Z") then
+					top = math.max(top, pt)
+				end
+			end
+		end
+		return top
+	end
+	local function buildStaff(folder, floorModel)
 		local skins = { Color3.fromRGB(224, 172, 130), Color3.fromRGB(141, 85, 60) }
 		local shirts = { Color3.fromRGB(240, 240, 236), Color3.fromRGB(200, 60, 60) }
 		local pants = { Color3.fromRGB(40, 40, 50), Color3.fromRGB(60, 60, 70) }
@@ -419,7 +441,11 @@ return function()
 			hum.WalkSpeed = 0
 			rig.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 			rig:SetAttribute("SiteId", row.id)
-			rig:PivotTo(CF(s[1] + DX, groundAt(s[1] + DX, s[2] + DZ) + 3, s[2] + DZ) * ANG(0, s[3], 0))
+			local wx, wz = s[1] + DX, s[2] + DZ
+			local floorY = floorTopAt(floorModel, wx, wz)
+			-- An R15 stands with its root HipHeight + half the root's height above the floor. The limbs hang on AnimationConstraints
+			-- that are not solved while the rig is unparented, so its lowest body part cannot be measured here.
+			rig:PivotTo(CF(wx, floorY + hum.HipHeight + hrp.Size.Y / 2, wz) * ANG(0, s[3], 0))
 			hrp.Anchored = true
 			rig.Parent = folder
 		end
@@ -433,7 +459,7 @@ return function()
 	end
 
 	local ok, err = pcall(function()
-		add(build("Structure", buildStructure), site)
+		local structure = add(build("Structure", buildStructure), site)
 		add(build("CoffeeBar", buildCoffeeBar), site)
 		add(build("BrewingSet", buildBrewingSet), site)
 		add(build("CoffeePacks", buildCoffeePacks), site)
@@ -442,7 +468,7 @@ return function()
 		add(build("Pendants", buildPendants), site)
 		local staff = add(Instance.new("Folder"), site)
 		staff.Name = "Staff"
-		buildStaff(staff)
+		buildStaff(staff, structure)
 		used += countParts(staff)
 		assert(used <= PART_BUDGET, string.format("site04: %d parts exceeds the %d budget", used, PART_BUDGET))
 	end)

@@ -92,3 +92,15 @@ A glass front that lets warm interior light spill onto the outdoor seating; the 
 | 8 | (model bug) | `RepresentativeSign` TextScaled on a 32-char line | fixed 26 px wrapped text |
 
 Still approximated: sides, rear, roof, the interior (labelled representative), the neighbour beyond the bay.
+
+## Revision 2 (light tier polish, 2026-10-31): z-fighting and sunk staff
+From `scratch/light_tier_plan.md` Part B. No massing, layout, footprint, colour, text or dialogue change; parts stay 705. C4 (customers, in the shared `builders/npcs.luau`) and C6 (warm glass) were not done.
+
+| # | Before | Now |
+|---|---|---|
+| C1 | `ArcadeSignBand` shared the roof's west face, underside and both end faces (charcoal vs white flicker) | band 0.05 proud on those faces: x 143.95..145.2, y 12.95..22, z -188.05..-127.95; the roof is unchanged |
+| C2 | 4 round `TableBase` discs at y 0..0.2, tops coplanar with the floor top | raised 0.15 to y 0.15..0.35 |
+| C3 | both Staff rigs set on the terrain + 3, feet 0.4 into the 0.2 floor | root at floor top (highest low Structure part under the rig) + HipHeight + half the root's height; feet within 0.05 of the floor |
+| C5 | `UnitFloor` and the edge `CheckerDark` tiles flush with the outer faces of `SideWallN`/`SideWallS`/`BackWall` | both stop 0.05 inside: x <= 203.95, z -185.95..-134.05 |
+
+Note: in Studio the terrain Pavement renders above the 0.2 floor parts, so the floor slab, checker tiles and table base discs are not seen in shots; C2 and C5 are geometric fixes.

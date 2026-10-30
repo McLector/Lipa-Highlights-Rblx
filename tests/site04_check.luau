@@ -221,6 +221,71 @@ do
 	check("every label is fixed-size and fits its part (no long TextScaled line)", #bad == 0, #bad .. " bad: " .. table.concat(bad, "; ", 1, math.min(#bad, 4)))
 end
 
+------------------------------------------------------------------ Light-tier polish (scratch/light_tier_plan.md Part B): no z-fighting faces, staff on the floor
+do
+	-- C1: the charcoal band and the white roof shared the west face, the underside and both end faces (flicker on the band's edge).
+	local band, roof = anchor("ArcadeSignBand"), anchor("ArcadeRoof")
+	local proud = {}
+	if band and roof then
+		proud = {
+			west = lo(roof, "X") - lo(band, "X"), under = lo(roof, "Y") - lo(band, "Y"),
+			north = lo(roof, "Z") - lo(band, "Z"), south = hi(band, "Z") - hi(roof, "Z"),
+		}
+	end
+	local flat = {}
+	for k, v in pairs(proud) do
+		if v < 0.02 or v > 0.2 then table.insert(flat, k .. " " .. fmt(v)) end
+	end
+	check("ArcadeSignBand stands 0.02..0.2 proud of ArcadeRoof's west face, underside and both ends (no shared face plane)",
+		band ~= nil and roof ~= nil and #flat == 0, table.concat(flat, ", "))
+
+	-- C2: the round table base discs sat at y 0..0.2, their tops coplanar with the floor top (0.2).
+	local bases = allNamed("TableBase")
+	local low = {}
+	for _, b in ipairs(bases) do
+		if hi(b, "Y") < 0.3 or hi(b, "Y") > 0.5 then table.insert(low, fmt(hi(b, "Y"))) end
+	end
+	check("4 TableBase discs, every top 0.1..0.3 above the floor top (y 0.3..0.5)", #bases == 4 and #low == 0,
+		#bases .. " bases, bad tops: " .. table.concat(low, ", "))
+
+	-- C3: the staff rigs were set on the terrain (y 0) + 3, so their feet sank about 0.4 into the 0.2 floor.
+	local staff = site:FindFirstChild("Staff")
+	local guide = site:FindFirstChild("Guide")
+	local rp = RaycastParams.new()
+	rp.FilterType = Enum.RaycastFilterType.Exclude
+	rp.FilterDescendantsInstances = { staff, guide }
+	local off = {}
+	local rigs = staff and staff:GetChildren() or {}
+	for _, rig in ipairs(rigs) do
+		local hrp = rig:FindFirstChild("HumanoidRootPart")
+		local m = math.huge
+		for _, p in ipairs(rig:GetChildren()) do
+			if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" then m = math.min(m, lo(p, "Y")) end
+		end
+		local hit = hrp and workspace:Raycast(hrp.Position, Vector3.new(0, -20, 0), rp)
+		if not hit or math.abs(m - hit.Position.Y) > 0.05 then
+			table.insert(off, string.format("%s feet %s floor %s", rig.Name, fmt(m), hit and fmt(hit.Position.Y) or "nil"))
+		end
+	end
+	check("each Staff rig's lowest body part is within 0.05 of the floor top under it", #rigs == 2 and #off == 0, table.concat(off, "; "))
+
+	-- C5: the floor slab's (and the edge checker tiles') edge faces were coplanar with the outer faces of SideWallN, SideWallS
+	-- and BackWall: a light strip flickering on the charcoal walls.
+	local wn, ws, bw = anchor("SideWallN"), anchor("SideWallS"), anchor("BackWall")
+	local flush = {}
+	if wn and ws and bw then
+		for _, name in ipairs({ "UnitFloor", "CheckerDark" }) do
+			for _, f in ipairs(allNamed(name)) do
+				if lo(f, "Z") < lo(wn, "Z") + 0.03 or hi(f, "Z") > hi(ws, "Z") - 0.03 or hi(f, "X") > hi(bw, "X") - 0.03 then
+					table.insert(flush, name)
+				end
+			end
+		end
+	end
+	check("UnitFloor and CheckerDark sit inside the side and back wall planes by >= 0.03", wn ~= nil and ws ~= nil and bw ~= nil
+		and anchor("UnitFloor") ~= nil and #flush == 0, #flush .. " flush: " .. table.concat(flush, ", ", 1, math.min(#flush, 5)))
+end
+
 ------------------------------------------------------------------ Thin ground parts stay inside the paved region (world x 224..324, z -200..-120)
 do
 	local out = {}
