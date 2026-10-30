@@ -284,4 +284,62 @@ do
 	check("Taal: no part within 300 studs of the Guide (Guide, InfoPanel, Jeep zones untouched)", #all > 0 and nearest >= 300, string.format("%.0f", nearest))
 end
 
+------------------------------------------------------------------ Revision 3 (session 061): sandy shore patches (builders/site09_shore.luau)
+-- Owner: "make the off shores like sand some parts". Six irregular Grass -> Sand patches along the waterline, three on the NW arm
+-- (x -798..-726) and three on the SE arm (x -634..-590), none under the quay, dock or building. Cells are read like world_check:
+-- the y -4..0 voxel of the 4-stud cell at floor(x/4)*4, floor(z/4)*4.
+do
+	local T = workspace.Terrain
+	local M = Enum.Material
+	local function cellMaterial(x, z)
+		local fx, fz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
+		return T:ReadVoxels(Region3.new(Vector3.new(fx, -4, fz), Vector3.new(fx + 4, 0, fz + 4)), 4)[1][1][1]
+	end
+	local function expect(list, mat, label)
+		local bad = {}
+		for _, p in ipairs(list) do
+			local m = cellMaterial(p[1], p[2])
+			if m ~= mat then table.insert(bad, string.format("(%d,%d)=%s", p[1], p[2], m.Name)) end
+		end
+		check(label, #bad == 0, table.concat(bad, " "))
+	end
+	expect({ { -790, 546 }, { -762, 554 }, { -738, 566 }, { -622, 666 }, { -606, 694 }, { -598, 722 } }, M.Sand,
+		"shore: the six patch centres on the waterline are Sand")
+	expect({ { -774, 550 }, { -750, 558 }, { -614, 678 }, { -602, 710 } }, M.Grass,
+		"shore: the gaps between the patches are still Grass (patches, not one stripe)")
+	expect({ { -698, 594 }, { -662, 622 }, { -700, 500 }, { -560, 640 } }, M.Grass,
+		"shore: control cells under the seawall and inland are still Grass")
+	expect({ { -706, 610 }, { -716, 590 }, { -700, 640 }, { -800, 600 } }, M.Water, "shore: the lake cells are still Water")
+	-- Every Sand cell at the surface layer in the box: near the site, on the waterline, and under no site part.
+	local X0, X1, Z0, Z1 = -800, -560, 500, 760
+	local mats = T:ReadVoxels(Region3.new(Vector3.new(X0, -4, Z0), Vector3.new(X1, 0, Z1)), 4)
+	local nx, nz = mats.Size.X, mats.Size.Z
+	local function at(i, k) if i < 1 or k < 1 or i > nx or k > nz then return nil end return mats[i][1][k] end
+	local op = OverlapParams.new()
+	op.FilterType = Enum.RaycastFilterType.Include
+	op.FilterDescendantsInstances = { site }
+	local sand, far, inland, covered = 0, {}, {}, {}
+	for i = 1, nx do
+		for k = 1, nz do
+			if at(i, k) == M.Sand then
+				sand += 1
+				local cx, cz = X0 + (i - 0.5) * 4, Z0 + (k - 0.5) * 4
+				if (Vector3.new(cx, 0, cz) - Vector3.new(-646, 0, 583)).Magnitude > 155 then table.insert(far, cx .. "," .. cz) end
+				local wet = false
+				for di = -4, 4 do
+					for dk = -4, 4 do
+						if at(i + di, k + dk) == M.Water then wet = true end
+					end
+				end
+				if not wet then table.insert(inland, cx .. "," .. cz) end
+				if #workspace:GetPartBoundsInBox(CFrame.new(cx, 10, cz), Vector3.new(3.9, 20, 3.9), op) > 0 then table.insert(covered, cx .. "," .. cz) end
+			end
+		end
+	end
+	check("shore: 30 to 400 Sand cells at the surface near Tagbakin", sand >= 30 and sand <= 400, tostring(sand))
+	check("shore: every Sand cell is within 155 of the site centre (-646, 583) and 16 of the water, and under no site part",
+		sand > 0 and #far == 0 and #inland == 0 and #covered == 0,
+		string.format("far %d inland %d covered %d: %s", #far, #inland, #covered, table.concat(far, " ", 1, math.min(#far, 3)) .. " " .. table.concat(covered, " ", 1, math.min(#covered, 3))))
+end
+
 return HttpService:JSONEncode(results)

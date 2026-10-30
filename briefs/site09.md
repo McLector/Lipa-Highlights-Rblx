@@ -143,3 +143,10 @@ The long horizontal band of lake, quay and building against the tall volcano (ho
 | Check | Old | New | Why |
 |---|---|---|---|
 | Taal: crater notch | silhouette middle at least 8% of H below both side peaks | at least 4% of H below both side peaks | measured off caption.jpg the far rim dips only ~6% of H below the left peak, so the photo itself failed the 8% rule; 4% keeps margin under the photo |
+
+## Revision 3 (session 061): sandy shore patches
+**Owner:** "the building is good enough, maybe make the off shores like sand some parts". Builder: `builders/site09_shore.luau` (terrain only), called by `builders/site09.luau` after the Taal step. Checks: the "shore:" group in `tests/site09_check.luau` (added; no existing assertion changed). world_check's Tagbakin Grass, Pavement and Water cells were re-read after the paint: all unchanged.
+
+| # | Brief before | Now |
+|---|---|---|
+| 1 | Terrain: "the worker does NOT touch Terrain"; "The shore, the lake and the water are untouched"; site09 header "No terrain writes" | Six irregular Grass -> Sand patches on the waterline (ReplaceMaterial per 4-stud column, so only Grass changes): NW arm centres (-790,546) r 7, (-762,554) r 10, (-738,566) r 7; SE arm (-622,666) r 7, (-606,694) r 9, (-598,722) r 7; ragged radius r * 0.8..1.2 (math.noise), only columns within 16 studs of Water and under no Site09 part (the quay, seawall, dock and building keep their ground). 64 surface cells repainted; a second run repaints 0. Water cells, the lake edge and every part are untouched. |
