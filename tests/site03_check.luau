@@ -16,7 +16,7 @@
 --   ChairSeat: 8+ parts, every top >= 1.95.  CounterTop top y 3.5 (+-0.05), > 15 east of the awning.  Door* (if any) 8+ tall.  RailPost* (if any) 2.9..3.4 tall.
 --   GrilleBar barred window = a Model or Folder named GrilleBar* with 3+ parts, centre y in 16..28 / 28..40 / 40..52 (2+ per floor); loose GrilleBar parts are dark.
 --   Car* and Motorbike* are Models inside Context, in x 276..288, z 181..194, clear of DrivewayAsphalt.  Neighbour windows are parts named Window* or Shutter*,
---   per floor y 0..12 / 12..24 / 24..36.  SignMast: z within 3 of LogoDisk, bottom y <= 3.  ParkingSign label: TextScaled false, TextSize >= 20.
+--   per floor y 0..12 / 12..24 / 24..36.  SignMast: z within 3 of LogoDisk, bottom y <= 3.  ParkingSign label: TextScaled false, TextSize >= 20; the sign stands on the canopy's south return, 11+ wide along x, label facing +Z (Revision 3).
 --   Letter_ x 276..284, bottom y >= 15.5.  BambooSlat z >= 158.  CurvedBay: z span 12 +-1, centre z 141 +-1.5, front x 280..281.5.  CornerPier z >= 160.
 --   Wall colour about 238,150,125 (+-8).  The slab and eave limits below.
 -- Storey slabs and bands (tower): any non-rig part at most 2.5 thick whose centre is inside the tower footprint (x >= 283, z 120..162), longest side at least 20,
@@ -394,13 +394,17 @@ group("front", function()
 	local sign = single("ParkingSign")
 	check("ParkingSign exists", sign ~= nil)
 	if sign then
-		local w, h = extent(sign, "Z"), extent(sign, "Y")
-		check("ParkingSign is large (>= 11 x >= 5.5 studs)", w >= 11 and h >= 5.5, fmt(w) .. " x " .. fmt(h))
+		-- Revision 3 (owner, 2026-10-31): the board puts the sign on the canopy's south return, facing the driveway, so its width runs along x.
+		local w, h = extent(sign, "X"), extent(sign, "Y")
+		check("ParkingSign is large (>= 11 wide along x, >= 5.5 tall: it stands on the south return)", w >= 11 and h >= 5.5, fmt(w) .. " x " .. fmt(h))
 		check("ParkingSign is low (bottom y <= 3.5, top y >= 8)", lo(sign, "Y") <= 3.5 and hi(sign, "Y") >= 8, fmt(lo(sign, "Y")) .. ".." .. fmt(hi(sign, "Y")))
 		local labs = labelsOf(sign)
 		local lab = labs[1]
 		check("ParkingSign text is exactly PARKING FOR LOMI KING CUSTOMERS ONLY", #labs == 1 and lab.Text == "PARKING FOR LOMI KING CUSTOMERS ONLY", lab and lab.Text or "no label")
 		check("ParkingSign text has a fixed TextSize (TextScaled false, TextSize >= 20)", lab ~= nil and lab.TextScaled == false and lab.TextSize >= 20, lab and ("size " .. lab.TextSize .. " scaled " .. tostring(lab.TextScaled)) or "no label")
+		local gui = lab and lab:FindFirstAncestorOfClass("SurfaceGui")
+		local normal = gui and sign.CFrame:VectorToWorldSpace(Vector3.FromNormalId(gui.Face))
+		check("ParkingSign label faces south (world normal +Z, dot >= 0.99)", normal ~= nil and normal.Z >= 0.99, normal and string.format("normal %.2f, %.2f, %.2f", normal.X, normal.Y, normal.Z) or "no label")
 		if body then
 			check("ParkingSign is at least 10 south of LomiBody's centre z", sign.Position.Z >= body.Position.Z + 10, fmt(sign.Position.Z) .. " vs " .. fmt(body.Position.Z))
 		end
