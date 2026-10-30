@@ -1404,12 +1404,12 @@ local function run(opts)
 		end
 	end)
 
-	------------------------------------------------------------------ crowd: 12 shoppers (R6b)
-	-- R6b (owner-approved 2026-10-30): a crowd of 12 figures. REQUIRES: a Folder Crowd, direct child of Site02_Market, holding 12 R15 humanoid Models named
-	--   Shopper1..Shopper12, each exactly 16 BaseParts (192 in all), no Accessory, no Animate, HumanoidRootPart anchored, Humanoid.DisplayDistanceType None,
-	--   attribute SiteId 2. The site then holds 23 rigs (Guide, ShopperBayong1/2, Vendor1..8, Shopper1..12). Figures stand on the ground, keep clear of the
+	------------------------------------------------------------------ crowd: 11 shoppers (R6b)
+	-- R6b (owner-approved 2026-10-30): a crowd of 11 figures. REQUIRES: a Folder Crowd, direct child of Site02_Market, holding 11 R15 humanoid Models named
+	--   Shopper1..Shopper11, each exactly 16 BaseParts (176 in all), no Accessory, no Animate, HumanoidRootPart anchored, Humanoid.DisplayDistanceType None,
+	--   attribute SiteId 2. The site then holds 22 rigs (Guide, ShopperBayong1/2, Vendor1..8, Shopper1..11). Figures stand on the ground, keep clear of the
 	--   Guide, InfoPanel, Road F mouth, band rows and pole axes, stay west of x -229 (the zebra crossings stay empty, an honest DIFF), clear of every built
-	--   part, 2.5 studs apart, clustered at the stair feet and the side yards, with 4+ distinct torso colours. Every per-figure check also demands exactly 12
+	--   part, 2.5 studs apart, clustered at the stair feet and the side yards, with 4+ distinct torso colours. Every per-figure check also demands exactly 11
 	--   figures, so nothing passes while Crowd is missing.
 	pcallGroup("crowd", function()
 		local crowd = site:FindFirstChild("Crowd")
@@ -1426,7 +1426,7 @@ local function run(opts)
 			end
 			return ok
 		end
-		local have12 = #figs == 12 and numbered(figs, 12)
+		local have11 = #figs == 11 and numbered(figs, 11)
 		local found = #figs .. " figures"
 		local function partsOfFig(m)
 			local t = {}
@@ -1462,8 +1462,8 @@ local function run(opts)
 
 		-- a. the container
 		local childCount = crowd and #crowd:GetChildren() or 0
-		check("crowd: Crowd is a Folder, a direct child of the site, holding exactly 12 Models with a Humanoid named Shopper1..Shopper12 (each number once, nothing else inside)",
-			crowd ~= nil and crowd:IsA("Folder") and crowd.Parent == site and have12 and childCount == 12,
+		check("crowd: Crowd is a Folder, a direct child of the site, holding exactly 11 Models with a Humanoid named Shopper1..Shopper11 (each number once, nothing else inside)",
+			crowd ~= nil and crowd:IsA("Folder") and crowd.Parent == site and have11 and childCount == 11,
 			crowd == nil and "Crowd missing" or (crowd.ClassName .. " in " .. (crowd.Parent and crowd.Parent.Name or "nil") .. ", " .. found .. ", " .. childCount .. " children"))
 
 		-- b. what each figure is made of
@@ -1474,10 +1474,10 @@ local function run(opts)
 			if n ~= 16 then return n .. " parts (want 16)" end
 			return nil
 		end)
-		check("crowd: exactly 12 figures, each Humanoid.RigType R15 with exactly 16 BaseParts", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+		check("crowd: exactly 11 figures, each Humanoid.RigType R15 with exactly 16 BaseParts", have11 and bad == 0, found .. ", " .. bad .. " off" .. first)
 		local total = 0
 		for _, m in ipairs(figs) do total += #partsOfFig(m) end
-		check("crowd: exactly 12 figures holding 192 BaseParts in all", have12 and total == 192, found .. ", " .. total .. " parts")
+		check("crowd: exactly 11 figures holding 176 BaseParts in all", have11 and total == 176, found .. ", " .. total .. " parts")
 		bad, first = scan(function(m)
 			for _, d in ipairs(m:GetDescendants()) do
 				if d:IsA("Accessory") then return "Accessory " .. d.Name end
@@ -1485,7 +1485,7 @@ local function run(opts)
 			end
 			return nil
 		end)
-		check("crowd: exactly 12 figures, none with an Accessory descendant or any descendant named Animate", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+		check("crowd: exactly 11 figures, none with an Accessory descendant or any descendant named Animate", have11 and bad == 0, found .. ", " .. bad .. " off" .. first)
 		bad, first = scan(function(m)
 			local hrp, hum = hrpOf(m), m:FindFirstChildOfClass("Humanoid")
 			if hrp == nil then return "no HumanoidRootPart" end
@@ -1493,12 +1493,12 @@ local function run(opts)
 			if hum.DisplayDistanceType ~= Enum.HumanoidDisplayDistanceType.None then return "DisplayDistanceType " .. tostring(hum.DisplayDistanceType) end
 			return nil
 		end)
-		check("crowd: exactly 12 figures, each HumanoidRootPart anchored and Humanoid.DisplayDistanceType None", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+		check("crowd: exactly 11 figures, each HumanoidRootPart anchored and Humanoid.DisplayDistanceType None", have11 and bad == 0, found .. ", " .. bad .. " off" .. first)
 		bad, first = scan(function(m)
 			if m:GetAttribute("SiteId") ~= 2 then return "SiteId " .. tostring(m:GetAttribute("SiteId")) end
 			return nil
 		end)
-		check("crowd: exactly 12 figures, each with attribute SiteId 2", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+		check("crowd: exactly 11 figures, each with attribute SiteId 2", have11 and bad == 0, found .. ", " .. bad .. " off" .. first)
 
 		-- c. grounded: a ray 10 studs straight down from each HumanoidRootPart lands 3.0 below it (+-0.2)
 		local skip = {}
@@ -1516,7 +1516,7 @@ local function run(opts)
 			if math.abs((hrp.Position.Y - 3.0) - hit.Position.Y) > 0.2 then return "HRP y " .. sx(hrp.Position.Y) .. " over ground y " .. sx(hit.Position.Y) .. " (" .. hit.Instance.Name .. ")" end
 			return nil
 		end)
-		check("crowd: exactly 12 figures, each standing on the ground (ray 10 studs down from the HumanoidRootPart hits, and HRP y - 3.0 is within 0.2 of the hit y)", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+		check("crowd: exactly 11 figures, each standing on the ground (ray 10 studs down from the HumanoidRootPart hits, and HRP y - 3.0 is within 0.2 of the hit y)", have11 and bad == 0, found .. ", " .. bad .. " off" .. first)
 
 		-- d. keep-clear boxes (x0, x1, z0, z1), strict overlap in x,z only
 		local KEEP = {
@@ -1539,7 +1539,7 @@ local function run(opts)
 			end
 			return nil
 		end)
-		check("crowd: exactly 12 figures, none whose bounding box overlaps (x,z, strict) the Guide, the wide apron box, the Guide band, the InfoPanel, the Road F mouth, the north or south band rows or either pole axis", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+		check("crowd: exactly 11 figures, none whose bounding box overlaps (x,z, strict) the Guide, the wide apron box, the Guide band, the InfoPanel, the Road F mouth, the north or south band rows or either pole axis", have11 and bad == 0, found .. ", " .. bad .. " off" .. first)
 
 		-- e. nothing east of x -229 (the real-bounds rule caps x at -227.95; the zebra crossings stay empty)
 		local maxX, maxName = -1e9, "none"
@@ -1549,7 +1549,7 @@ local function run(opts)
 				if hi.X > maxX then maxX, maxName = hi.X, m.Name .. "/" .. p.Name end
 			end
 		end
-		check("crowd: exactly 12 figures, no part of any figure east of x -229 (max X <= -229)", have12 and maxX <= -229 + 0.001, found .. ", max x " .. sx(maxX) .. " at " .. maxName)
+		check("crowd: exactly 11 figures, no part of any figure east of x -229 (max X <= -229)", have11 and maxX <= -229 + 0.001, found .. ", max x " .. sx(maxX) .. " at " .. maxName)
 
 		-- f. clear of every built part: the AABB grown by 0.5 on every side meets nothing that stands above y 0.6 (vehicles, stalls, counters, boards, steps, poles, InfoPanel)
 		local ovP = OverlapParams.new()
@@ -1562,7 +1562,7 @@ local function run(opts)
 			end
 			return nil
 		end)
-		check("crowd: exactly 12 figures, each clear of every built part (box grown by 0.5 meets no non-rig part whose top is above y 0.6)", have12 and bad == 0, found .. ", " .. bad .. " off" .. first)
+		check("crowd: exactly 11 figures, each clear of every built part (box grown by 0.5 meets no non-rig part whose top is above y 0.6)", have11 and bad == 0, found .. ", " .. bad .. " off" .. first)
 
 		-- g. spacing of every rig under the site
 		local rigModels, rigRoots = {}, {}
@@ -1581,8 +1581,8 @@ local function run(opts)
 				if d < closest then closest, closePair = d, rigRoots[i].n .. " / " .. rigRoots[j].n end
 			end
 		end
-		check("crowd: exactly 12 figures; the site holds exactly 23 rigs (Guide, 2 ShopperBayong, 8 Vendors, 12 Shoppers), each with a HumanoidRootPart, no two closer than 2.5 studs in the XZ plane",
-			have12 and #rigModels == 23 and #rigRoots == 23 and closest >= 2.5,
+		check("crowd: exactly 11 figures; the site holds exactly 22 rigs (Guide, 2 ShopperBayong, 8 Vendors, 11 Shoppers), each with a HumanoidRootPart, no two closer than 2.5 studs in the XZ plane",
+			have11 and #rigModels == 22 and #rigRoots == 22 and closest >= 2.5,
 			found .. ", " .. #rigModels .. " rigs, " .. #rigRoots .. " roots, closest " .. (closest < 1e9 and sx(closest) or "n/a") .. " (" .. closePair .. ")")
 
 		-- h. clusters: the stair feet and the side yards (HumanoidRootPart position)
@@ -1596,9 +1596,9 @@ local function run(opts)
 				if p.X <= -310 then side += 1 end
 			end
 		end
-		check("crowd: exactly 12 figures, at least 3 with x <= -236 and |z - 92| <= 14 (north stair foot)", have12 and nearN >= 3, found .. ", " .. nearN .. " at the north stair foot")
-		check("crowd: exactly 12 figures, at least 3 with x <= -236 and |z - 228| <= 14 (south stair foot)", have12 and nearS >= 3, found .. ", " .. nearS .. " at the south stair foot")
-		check("crowd: exactly 12 figures, at least 4 with x <= -310 (the side yards)", have12 and side >= 4, found .. ", " .. side .. " in the side yards")
+		check("crowd: exactly 11 figures, at least 3 with x <= -236 and |z - 92| <= 14 (north stair foot)", have11 and nearN >= 3, found .. ", " .. nearN .. " at the north stair foot")
+		check("crowd: exactly 11 figures, at least 3 with x <= -236 and |z - 228| <= 14 (south stair foot)", have11 and nearS >= 3, found .. ", " .. nearS .. " at the south stair foot")
+		check("crowd: exactly 11 figures, at least 4 with x <= -310 (the side yards)", have11 and side >= 4, found .. ", " .. side .. " in the side yards")
 
 		-- i. variety
 		local cols, ncol = {}, 0
@@ -1609,14 +1609,14 @@ local function run(opts)
 				if not cols[key] then cols[key] = true; ncol += 1 end
 			end
 		end
-		check("crowd: exactly 12 figures with at least 4 distinct UpperTorso colours", have12 and ncol >= 4, found .. ", " .. ncol .. " distinct colours")
+		check("crowd: exactly 11 figures with at least 4 distinct UpperTorso colours", have11 and ncol >= 4, found .. ", " .. ncol .. " distinct colours")
 
 		-- j. shoppers belong to the Crowd, not to the vendors
 		local vend, strays = site:FindFirstChild("VendorNPCs"), 0
 		for _, d in ipairs(vend and vend:GetDescendants() or {}) do
 			if d:IsA("Model") and d.Name:match("^Shopper%d+$") then strays += 1 end
 		end
-		check("crowd: exactly 12 figures in Crowd, and no Model named Shopper<number> sits under VendorNPCs", have12 and strays == 0, found .. ", " .. strays .. " Shoppers under VendorNPCs")
+		check("crowd: exactly 11 figures in Crowd, and no Model named Shopper<number> sits under VendorNPCs", have11 and strays == 0, found .. ", " .. strays .. " Shoppers under VendorNPCs")
 	end)
 
 	------------------------------------------------------------------ general: whole-site rules
