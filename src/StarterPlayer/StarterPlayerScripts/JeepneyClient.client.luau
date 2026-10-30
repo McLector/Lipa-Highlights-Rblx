@@ -5,9 +5,12 @@
 -- destination grid, so it fits a 338 px-tall phone. The old fixed 380x420 box ran off both edges there. Buttons are 48 px tall.
 -- New-player guidance (2026-10-31): stamped places say " - done", the next stop (GuidanceLogic.jeepTarget) is gold, a footnote explains
 -- the three walk-only shops, a refused ride says why, and after a ride the camera turns to that site's guide.
+-- Polish (2026-10-31): a ride fades to black before the request (the server moves the player before it answers), and back in after
+-- the camera turn, on a refusal, or after FADE_TIMEOUT if no answer comes, so the teleport no longer reads as a glitch.
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("LipaShared")
 local SiteData = require(Shared:WaitForChild("SiteData"))
@@ -25,6 +28,9 @@ local BLUE = Color3.fromRGB(70, 120, 220)
 local DONE = Color3.fromRGB(52, 66, 100)
 local GOLD = Color3.fromRGB(255, 214, 102)
 local DARK = Color3.fromRGB(24, 26, 36)
+local FADE_OUT = 0.25 -- seconds to black before the ride is asked for
+local FADE_IN = 0.35 -- seconds back from black after the camera turn
+local FADE_TIMEOUT = 8 -- fade back in anyway if the server never answers (it pre-streams a far stop before the move)
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "JeepMenu"
@@ -76,6 +82,47 @@ grid.CellSize = UDim2.new(0.5, -(GAP / 2 + 3), 0, BUTTON_HEIGHT)
 grid.CellPadding = UDim2.fromOffset(GAP, GAP)
 grid.SortOrder = Enum.SortOrder.LayoutOrder
 
+-- The ride fade: a black full-screen Frame in its own ScreenGui above every other menu; it never takes input.
+local fadeGui = Instance.new("ScreenGui")
+fadeGui.Name = "JeepFade"
+fadeGui.ResetOnSpawn = false
+fadeGui.IgnoreGuiInset = true
+fadeGui.DisplayOrder = 20
+fadeGui.Parent = playerGui
+local fade = Instance.new("Frame")
+fade.Name = "Black"
+fade.Size = UDim2.fromScale(1, 1)
+fade.BackgroundColor3 = Color3.new(0, 0, 0)
+fade.BackgroundTransparency = 1
+fade.BorderSizePixel = 0
+fade.Active = false
+fade.Parent = fadeGui
+
+local fadeToken = 0
+local function fadeIn()
+	fadeToken += 1
+	TweenService:Create(fade, TweenInfo.new(FADE_IN, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundTransparency = 1 }):Play()
+end
+
+-- Close the menu, fade out, then ask for the ride; the token drops a stale fade, and the timeout never leaves the screen black.
+local function rideTo(id)
+	gui.Enabled = false
+	fadeToken += 1
+	local token = fadeToken
+	local tween = TweenService:Create(fade, TweenInfo.new(FADE_OUT, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { BackgroundTransparency = 0 })
+	tween:Play()
+	tween.Completed:Wait()
+	if token ~= fadeToken then
+		return
+	end
+	JeepRequest:FireServer(id)
+	task.delay(FADE_TIMEOUT, function()
+		if token == fadeToken then
+			fadeIn()
+		end
+	end)
+end
+
 local buttons = {}
 for _, s in ipairs(SiteData.sites) do
 	if SiteData.hasJeepStop(s.id) then
@@ -91,8 +138,7 @@ for _, s in ipairs(SiteData.sites) do
 		b.Parent = scroll
 		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
 		b.Activated:Connect(function()
-			gui.Enabled = false
-			JeepRequest:FireServer(s.id)
+			rideTo(s.id)
 		end)
 		buttons[s.id] = b
 	end
@@ -201,19 +247,8 @@ local REFUSALS = {
 	not_at_stop = "Stand on the yellow jeepney stop to ride.",
 }
 
--- JeepSeq counts every request, so a second identical refusal still shows; LastJeepResult says what happened.
-player:GetAttributeChangedSignal("JeepSeq"):Connect(function()
-	local result = player:GetAttribute("LastJeepResult") or ""
-	if REFUSALS[result] then
-		showToast(REFUSALS[result])
-		return
-	end
-	local id = tonumber(string.match(result, "^ok:(%d+)$"))
-	local guidePos = id and SiteData.guidePos(id)
-	if not guidePos then
-		return
-	end
-	task.wait(0.3) -- let the server's move reach this client first
+-- After a ride the camera looks past the player at that site's guide.
+local function turnToGuide(guidePos)
 	local char = player.Character
 	local hrp = char and char:FindFirstChild("HumanoidRootPart")
 	local camera = workspace.CurrentCamera
@@ -226,4 +261,24 @@ player:GetAttributeChangedSignal("JeepSeq"):Connect(function()
 	end
 	local eye = hrp.Position - look.Unit * 14 + Vector3.new(0, 6, 0)
 	camera.CFrame = CFrame.lookAt(eye, Vector3.new(guidePos.X, hrp.Position.Y, guidePos.Z))
+end
+
+-- JeepSeq counts every request, so a second identical refusal still shows; LastJeepResult says what happened.
+-- A refusal (or any other non-ok answer) fades back in and says why; a ride waits for the move, turns the camera, then fades in.
+player:GetAttributeChangedSignal("JeepSeq"):Connect(function()
+	local result = player:GetAttribute("LastJeepResult") or ""
+	local id = tonumber(string.match(result, "^ok:(%d+)$"))
+	if not id then
+		fadeIn()
+		if REFUSALS[result] then
+			showToast(REFUSALS[result])
+		end
+		return
+	end
+	local guidePos = SiteData.guidePos(id)
+	task.wait(0.3) -- let the server's move reach this client first
+	if guidePos then
+		turnToGuide(guidePos)
+	end
+	fadeIn()
 end)

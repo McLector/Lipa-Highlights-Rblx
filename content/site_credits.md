@@ -212,6 +212,13 @@ Imagery and map data from Google Maps, Google Earth and Street View belong to Go
 Wikimedia Commons photographs keep the licence named in their reference (CC BY-SA 3.0, CC BY-SA 4.0 or CC0).
 Reference photos also come from the sites themselves and public web pages; they were used only as visual reference and no photo is used as a texture in the experience.
 
+## Audio
+
+DistrokidOfficial. (2026, September 5). Lofi Chill Blue Cat Study and Relaxing [Song]. Roblox Creator Store. https://create.roblox.com/store/asset/76934240287978
+ProSoundEffects. (2022, March 16). Date Stamp Big Office Impact Good Squeak 2 (SFX) [Sound effect]. Roblox Creator Store. https://create.roblox.com/store/asset/9114026047
+
+Uses: the first is the background music loop (rbxassetid://76934240287978, SoundService.MusicLoop, free); the second is the passport stamp sound (rbxassetid://9114026047, PassportClient, free; courtesy of Pro Sound Effects). The credits board does not show these lines yet (they are kept apart from the references; builders/credits.luau has to draw them).
+
 ## Notes for the group
 
 This section is for the group only; the game does not show it.

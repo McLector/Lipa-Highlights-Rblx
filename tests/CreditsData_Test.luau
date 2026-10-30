@@ -416,4 +416,70 @@ return function(t)
 		expect.equal(lines[3], "Wikimedia Commons photographs keep the licence named in their reference (CC BY-SA 3.0, CC BY-SA 4.0 or CC0).")
 		expect.equal(lines[4], "Reference photos also come from the sites themselves and public web pages; they were used only as visual reference and no photo is used as a texture in the experience.")
 	end)
+
+	-- Audio credits (polish pass, 2026-10-31; the music was owed in handoff 059): CreditsData.audio = { { text, assetId, use } } in author order.
+	-- text is an APA-style line ending in the asset's Creator Store url (also the line under "## Audio" in content/site_credits.md, checked by
+	-- tests/credits_crosscheck.ps1). It is a separate list, not part of references/noticeLines, so the built credits board and its 78-reference
+	-- pins stay as they are; the board shows it only once builders/credits.luau draws it.
+	local STORE = "https://create.roblox.com/store/asset/"
+
+	t.test("audio lists each sound once with an ASCII APA line ending in its Creator Store url and a use", function()
+		local list = CreditsData.audio
+		expect.equal(type(list), "table")
+		expect.truthy(#list >= 2)
+		local seen = {}
+		for _, a in ipairs(list) do
+			expect.equal(type(a.assetId), "number")
+			expect.falsy(seen[a.assetId])
+			seen[a.assetId] = true
+			expect.truthy(ascii(a.text) and ascii(a.use) and #a.use > 0)
+			local tail = STORE .. string.format("%d", a.assetId)
+			expect.equal(string.sub(a.text, -#tail), tail)
+			expect.truthy(string.find(a.text, "Roblox Creator Store.", 1, true) ~= nil)
+			expect.falsy(string.find(a.text, "[<>]"))
+		end
+	end)
+
+	t.test("audio credits the music loop exactly: Lofi Chill Blue Cat Study and Relaxing by DistrokidOfficial (76934240287978)", function()
+		local found = nil
+		for _, a in ipairs(CreditsData.audio or {}) do
+			if a.assetId == 76934240287978 then found = a end
+		end
+		expect.truthy(found ~= nil)
+		expect.truthy(found and string.sub(found.text, 1, #"DistrokidOfficial. (") == "DistrokidOfficial. (")
+		expect.truthy(found and string.find(found.text, "Lofi Chill Blue Cat Study and Relaxing", 1, true) ~= nil)
+	end)
+
+	t.test("every Music-tagged Sound in SoundService and the PassportClient stamp sound have an audio credit", function()
+		local credited = {}
+		for _, a in ipairs(CreditsData.audio or {}) do
+			credited[a.assetId] = true
+		end
+		local ids = {}
+		for _, s in ipairs(game:GetService("SoundService"):GetDescendants()) do
+			if s:IsA("Sound") and s:GetAttribute("Music") == true then
+				table.insert(ids, tonumber(string.match(s.SoundId, "(%d+)$")))
+			end
+		end
+		local passport = game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("PassportClient")
+		local okSrc, src = pcall(function() return passport.Source end) -- Source is plugin-only
+		local stamp = okSrc and tonumber(string.match(src, "STAMP_ASSET%s*=%s*(%d+)"))
+		expect.truthy(stamp ~= nil)
+		table.insert(ids, stamp)
+		expect.truthy(#ids >= 2)
+		for _, id in ipairs(ids) do
+			expect.truthy(credited[id])
+		end
+	end)
+
+	t.test("audio lines are in author order", function()
+		local prev = nil
+		for _, a in ipairs(CreditsData.audio or {}) do
+			local name = string.lower(string.sub(a.text, 1, (string.find(a.text, " (", 1, true) or 1) - 1))
+			if prev ~= nil then
+				expect.truthy(prev <= name)
+			end
+			prev = name
+		end
+	end)
 end

@@ -4,7 +4,7 @@
 # Reads the "- https://..." bullets under each "## Site N:" heading (stopping at the next "## " heading, so the later attribution
 # section is ignored) and the url strings of each `{ id = N, urls = { ... } }` entry. It also compares the 25 tour sources, the 78 APA 7
 # lines under "## References (APA 7)" with CreditsData.references[].text, and the 4 lines under "## Notices" with CreditsData.noticeLines
-# (in order, case-sensitive). Exits 1 on any mismatch.
+# (in order, case-sensitive), and the lines under "## Audio" with CreditsData.audio[].text. Exits 1 on any mismatch.
 $root = Split-Path -Parent $PSScriptRoot
 $md = Get-Content (Join-Path $root "content\site_credits.md") -Encoding UTF8
 $lua = Get-Content (Join-Path $root "src\ReplicatedStorage\LipaShared\CreditsData.luau") -Encoding UTF8
@@ -90,5 +90,25 @@ if ($mdNotes.Count -ne $luaNotes.Count -or $mdNotes.Count -ne 4) { "notices: md 
 for ($i = 0; $i -lt [Math]::Min($mdNotes.Count, $luaNotes.Count); $i++) {
 	if ($mdNotes[$i] -cne $luaNotes[$i]) { "notice $($i + 1) : text differs"; "  md  : $($mdNotes[$i])"; "  lua : $($luaNotes[$i])"; $mismatch++ }
 }
-"disk md vs CreditsData: $($mdSites.Count) sites, $total urls, $($mdSrc.Count) tour sources, $($mdRefs.Count) references, $($mdNotes.Count) notices, $mismatch mismatched"
+# Audio (polish pass, 2026-10-31): the md lines under "## Audio" that end in an https url against CreditsData.audio[].text, in order and
+# text for text; at least 2 (the music loop and the stamp sound).
+$mdAudio = @(); $inAudio = $false
+foreach ($line in $md) {
+	if ($line -match '^## Audio\s*$') { $inAudio = $true; continue }
+	if ($line -match '^## ') { $inAudio = $false; continue }
+	if ($inAudio -and $line -match ' https://\S+\s*$') { $mdAudio += $line.TrimEnd() }
+}
+$luaAudio = @(); $inLuaAudio = $false
+foreach ($line in $lua) {
+	if ($line -match '^CreditsData\.audio = \{') { $inLuaAudio = $true; continue }
+	if ($inLuaAudio -and $line -match '^\}') { $inLuaAudio = $false; continue }
+	if ($inLuaAudio -and $line -match '^\s*\{ text = "((?:[^"\\]|\\.)*)"') {
+		$luaAudio += (($Matches[1] -replace '\\"', '"') -replace '\\\\', '\')
+	}
+}
+if ($mdAudio.Count -ne $luaAudio.Count -or $mdAudio.Count -lt 2) { "audio: md $($mdAudio.Count), lua $($luaAudio.Count), expected the same count and at least 2"; $mismatch++ }
+for ($i = 0; $i -lt [Math]::Min($mdAudio.Count, $luaAudio.Count); $i++) {
+	if ($mdAudio[$i] -cne $luaAudio[$i]) { "audio $($i + 1) : text differs"; "  md  : $($mdAudio[$i])"; "  lua : $($luaAudio[$i])"; $mismatch++ }
+}
+"disk md vs CreditsData: $($mdSites.Count) sites, $total urls, $($mdSrc.Count) tour sources, $($mdRefs.Count) references, $($mdNotes.Count) notices, $($mdAudio.Count) audio, $mismatch mismatched"
 if ($mismatch -gt 0 -or $mdSites.Count -ne 10 -or $luaSites.Count -ne 10) { exit 1 }

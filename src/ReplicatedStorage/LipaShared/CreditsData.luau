@@ -193,6 +193,15 @@ CreditsData.noticeLines = {
 	"Reference photos also come from the sites themselves and public web pages; they were used only as visual reference and no photo is used as a texture in the experience.",
 }
 
+-- Audio heard in the experience, one entry per sound, in author order. text is the APA-style line (also the line under "## Audio" in
+-- content/site_credits.md, checked by tests/credits_crosscheck.ps1); assetId the Roblox asset; use where it plays. Both are free Creator
+-- Store sounds; title, creator and upload date come from MarketplaceService:GetProductInfo. Kept apart from references, so the built
+-- credits board is unchanged until builders/credits.luau draws this list. ASCII only.
+CreditsData.audio = {
+	{ text = "DistrokidOfficial. (2026, September 5). Lofi Chill Blue Cat Study and Relaxing [Song]. Roblox Creator Store. https://create.roblox.com/store/asset/76934240287978", assetId = 76934240287978, use = "Background music loop (SoundService.MusicLoop, builders/mood.luau), free." },
+	{ text = "ProSoundEffects. (2022, March 16). Date Stamp Big Office Impact Good Squeak 2 (SFX) [Sound effect]. Roblox Creator Store. https://create.roblox.com/store/asset/9114026047", assetId = 9114026047, use = "Passport stamp sound (PassportClient), free; courtesy of Pro Sound Effects." },
+}
+
 -- Student identity for the board. pending = true shows the TO BE ADDED slot; set it false once all three are filled.
 -- Owner-only field: filled in 2026-10-27 with the values the owner supplied (ASCII, so "Nino" has no tilde).
 CreditsData.identity = { name = "Casanova, Nino Gabriel C.; Cruzat, Shana Czane M.; Gonzales, Khatrina Joice M.; Morada, Myre Lector", course = "Art Appreciation", section = "C4A", pending = false }

@@ -464,6 +464,83 @@ if jeep then
 	check("JeepneyClient turns the camera to the guide after a ride",
 		string.find(src, "LastJeepResult", 1, true) ~= nil and string.find(src, "SiteData.guidePos(", 1, true) ~= nil and string.find(src, "CurrentCamera", 1, true) ~= nil)
 end
+-- Polish pass (2026-10-31, owner: "small effort big returns"): a fade around the jeepney ride so the teleport does not read as a glitch,
+-- a fixed grid text size, a quiet stamp sound with a counter pop (muted by the Sound button), and warm lamp lights at golden hour.
+if jeep then
+	local src = sourceOf(jeep)
+	local fadeOut = tonumber(string.match(src, "FADE_OUT%s*=%s*([%d%.]+)")) or 0
+	local fadeIn = tonumber(string.match(src, "FADE_IN%s*=%s*([%d%.]+)")) or 0
+	check("JeepneyClient fades through black in its own full-screen JeepFade ScreenGui (TweenService, IgnoreGuiInset)",
+		string.find(src, "\"JeepFade\"", 1, true) ~= nil and string.find(src, "fadeGui.IgnoreGuiInset = true", 1, true) ~= nil
+		and string.find(src, "TweenService", 1, true) ~= nil)
+	check("JeepneyClient fade is short: out 0.15..0.4 s, in 0.2..0.5 s", fadeOut >= 0.15 and fadeOut <= 0.4 and fadeIn >= 0.2 and fadeIn <= 0.5,
+		string.format("out %s, in %s", tostring(fadeOut), tostring(fadeIn)))
+	local waitAt = string.find(src, "Completed:Wait()", 1, true)
+	local fireAt = string.find(src, "JeepRequest:FireServer(", 1, true)
+	check("JeepneyClient asks for the ride only once the screen is black (Completed:Wait() before JeepRequest:FireServer)",
+		waitAt ~= nil and fireAt ~= nil and waitAt < fireAt)
+	local _, fadeIns = string.gsub(src, "fadeIn%(%)", "")
+	check("JeepneyClient fades back in on a refusal, after the camera turn and on a timeout (FADE_TIMEOUT, fadeIn() called 3+ times)",
+		string.find(src, "FADE_TIMEOUT", 1, true) ~= nil and fadeIns >= 3, tostring(fadeIns))
+	check("JeepneyClient fade frame never eats clicks (Active = false)", string.find(src, "fade.Active = false", 1, true) ~= nil)
+end
+if passport then
+	local src = sourceOf(passport)
+	check("PassportClient stamp cells no longer use TextScaled", string.find(src, "slot.TextScaled = true", 1, true) == nil)
+	local size = tonumber(string.match(src, "GRID_TEXT%s*=%s*(%d+)")) or 0
+	local inset = tonumber(string.match(src, "GRID_INSET%s*=%s*(%d+)")) or -1
+	local cw, ch = string.match(src, "WELCOME_H, CELL_W, CELL_H, GRID_GAP, GRID_PAD = %d+, (%d+), (%d+)")
+	cw, ch = tonumber(cw) or 0, tonumber(ch) or 0
+	check("PassportClient stamp cells use a fixed GRID_TEXT >= 12 with a GRID_INSET padding",
+		size >= 12 and inset >= 0 and string.find(src, "slot.TextSize = GRID_TEXT", 1, true) ~= nil, size .. " / " .. inset)
+	if size >= 12 and inset >= 0 and cw > 0 then
+		local TextService = game:GetService("TextService")
+		local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
+		local innerW, innerH = cw - 2 * inset, ch - 2 * inset
+		local over = {}
+		for _, s in ipairs(SiteData.sites) do
+			if s.category ~= "Welcome" then
+				local text = s.id .. ". " .. s.name
+				local fit = TextService:GetTextSize(text, size, Enum.Font.Gotham, Vector2.new(innerW, 10000))
+				if fit.Y > innerH then table.insert(over, string.format("%d tall %.0f > %d", s.id, fit.Y, innerH)) end
+				for word in string.gmatch(text, "%S+") do
+					local w = TextService:GetTextSize(word, size, Enum.Font.Gotham, Vector2.new(10000, 10000)).X
+					if w > innerW then table.insert(over, string.format("%d word %s %.0f > %d", s.id, word, w, innerW)) end
+				end
+			end
+		end
+		check("every stamp cell name fits its cell at GRID_TEXT (wrapped height and every single word, measured with TextService)", #over == 0, table.concat(over, "; "))
+	end
+	local vol = tonumber(string.match(src, "STAMP_VOLUME%s*=%s*([%d%.]+)")) or 0
+	check("PassportClient makes a quiet client-side StampSound (rbxassetid, STAMP_VOLUME 0 < v <= 0.4)",
+		string.find(src, "\"StampSound\"", 1, true) ~= nil and string.find(src, "STAMP_SOUND_ID = \"rbxassetid://", 1, true) ~= nil and vol > 0 and vol <= 0.4, tostring(vol))
+	check("PassportClient plays the stamp sound only when not muted", string.find(src, "if gotNew and not muted then", 1, true) ~= nil
+		and string.find(src, "stampSound:Play()", 1, true) ~= nil)
+	local pop = tonumber(string.match(src, "POP_SCALE%s*=%s*([%d%.]+)")) or 0
+	check("PassportClient pops the counter on a new stamp (UIScale, POP_SCALE 1.05..1.3)",
+		string.find(src, "UIScale", 1, true) ~= nil and pop >= 1.05 and pop <= 1.3, tostring(pop))
+end
+do
+	local lamp = game:GetService("ServerScriptService"):FindFirstChild("LampGlow")
+	check("ServerScriptService.LampGlow exists and is a Script", lamp ~= nil and lamp:IsA("Script") and not lamp:IsA("LocalScript"))
+	if lamp then
+		local src = sourceOf(lamp)
+		local names = { "LampGlobe", "LampHead", "PoleLamp", "StreetLampHead", "CornerLampGlobe", "CarParkLamp", "LightHead" }
+		local missing = {}
+		for _, n in ipairs(names) do
+			if string.find(src, "\"" .. n .. "\"", 1, true) == nil then table.insert(missing, n) end
+		end
+		check("LampGlow matches the seven lamp head names and not the architectural Lanterns", #missing == 0 and string.find(src, "Lantern", 1, true) == nil, table.concat(missing, ","))
+		local br = tonumber(string.match(src, "BRIGHTNESS%s*=%s*([%d%.]+)")) or 99
+		local range = tonumber(string.match(src, "RANGE%s*=%s*([%d%.]+)")) or 99
+		local cap = tonumber(string.match(src, "MAX_LIGHTS%s*=%s*(%d+)")) or 9999
+		check("LampGlow lights are soft PointLights without shadows (Brightness <= 1.5, Range <= 16, Shadows = false)",
+			string.find(src, "\"PointLight\"", 1, true) ~= nil and br > 0 and br <= 1.5 and range > 0 and range <= 16 and string.find(src, "Shadows = false", 1, true) ~= nil,
+			string.format("br %s range %s", tostring(br), tostring(range)))
+		check("LampGlow caps its lights (MAX_LIGHTS <= 300), skips heads that already hold a Light and follows rebuilt sites (DescendantAdded)",
+			cap <= 300 and string.find(src, "FindFirstChildWhichIsA(\"Light\")", 1, true) ~= nil and string.find(src, "DescendantAdded", 1, true) ~= nil, tostring(cap))
+	end
+end
 local shared = game.ReplicatedStorage:FindFirstChild("LipaShared")
 check("GuidanceLogic lives in LipaShared", shared ~= nil and shared:FindFirstChild("GuidanceLogic") ~= nil)
 check("CertificateLogic and CreditsData live in LipaShared",

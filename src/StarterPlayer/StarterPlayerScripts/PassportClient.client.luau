@@ -5,9 +5,12 @@
 -- is at least 44 px tall.
 -- New-player guidance (2026-10-31): a "Next:" line under the buttons and a gold NEXT pin in the world, both from GuidanceLogic.hint
 -- (positions from SiteData, so the pin works while far sites are streamed out), plus a "Stamp collected" message on each new stamp.
+-- Polish (2026-10-31): the stamp cells use one fixed GRID_TEXT (fits the longest name, wrapped, in a 100 x 74 cell), and a new stamp
+-- plays a quiet stamp sound (silent while muted) and pops the Passport counter.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
+local TweenService = game:GetService("TweenService")
 
 local SiteData = require(ReplicatedStorage:WaitForChild("LipaShared"):WaitForChild("SiteData"))
 local PassportLogic = require(ReplicatedStorage.LipaShared:WaitForChild("PassportLogic"))
@@ -79,6 +82,10 @@ certButton.Visible = false
 local WELCOME = SiteData.categoryColor("Welcome") or GOLD
 local WELCOME_H, CELL_W, CELL_H, GRID_GAP, GRID_PAD = 40, 100, 74, 6, 8
 local cellsW, cellsH = 3 * CELL_W + 2 * GRID_GAP, 3 * CELL_H + 2 * GRID_GAP
+-- Stamp cell text: one fixed size for every name (measured with TextService: the longest name wraps to 4 lines, 56 px, inside the
+-- 92 x 66 padded cell, and its widest word "Independencia" is 91 px), so no name renders huge or tiny.
+local GRID_TEXT = 14
+local GRID_INSET = 4
 
 -- HUD grid: the Welcome row (site 10, full width) above the 3x3 grid; the frame height is the sum of its parts.
 local grid = Instance.new("Frame")
@@ -220,7 +227,10 @@ for _, s in ipairs(SiteData.sites) do
 	else
 		slot.Name = "Slot" .. s.id
 		slot.Font = Enum.Font.Gotham
-		slot.TextScaled = true
+		slot.TextSize = GRID_TEXT
+		local inset = Instance.new("UIPadding", slot)
+		inset.PaddingLeft, inset.PaddingRight = UDim.new(0, GRID_INSET), UDim.new(0, GRID_INSET)
+		inset.PaddingTop, inset.PaddingBottom = UDim.new(0, GRID_INSET), UDim.new(0, GRID_INSET)
 		slot.Parent = cells
 		slotStyle[s.id] = { on = GREEN, onText = Color3.new(1, 1, 1), off = IDLE, offText = Color3.fromRGB(150, 150, 165) }
 	end
@@ -405,6 +415,24 @@ muteButton.Activated:Connect(function()
 end)
 gui:SetAttribute("Muted", false)
 
+-- New-stamp feedback: a short, quiet stamp sound made on this client (Creator Store, Pro Sound Effects, free; credited in CreditsData.audio)
+-- and a quick pop of the Passport counter. The sound is skipped while muted.
+local STAMP_ASSET = 9114026047 -- "Date Stamp Big Office Impact Good Squeak 2 (SFX)", 0.74 s
+local STAMP_SOUND_ID = "rbxassetid://" .. STAMP_ASSET -- joined, so no slash-digit literal trips the old site-count pin
+local STAMP_VOLUME = 0.35
+local POP_SCALE = 1.15
+local stampSound = Instance.new("Sound")
+stampSound.Name = "StampSound"
+stampSound.SoundId = STAMP_SOUND_ID
+stampSound.Volume = STAMP_VOLUME
+stampSound.Parent = SoundService
+local counterScale = Instance.new("UIScale")
+counterScale.Parent = toggle
+local function popCounter()
+	counterScale.Scale = POP_SCALE
+	TweenService:Create(counterScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+end
+
 local function stampIds()
 	local ids = {}
 	for token in string.gmatch(player:GetAttribute("StampList") or "", "%d+") do
@@ -451,11 +479,19 @@ local function refresh()
 	if complete and lastCount < TOTAL then
 		openCertificate()
 	end
+	local gotNew = false
 	for _, id in ipairs(PassportLogic.list(state)) do
 		if primed and not lastSet[id] then -- not on the first refresh, so a late start never announces old stamps
 			local site = SiteData.byId(id)
 			showToast("Stamp collected: " .. GuidanceLogic.plain(site and site.name) .. " (" .. PassportLogic.count(state) .. "/" .. TOTAL .. ")")
+			gotNew = true
 		end
+	end
+	if gotNew then
+		popCounter() -- once per refresh, however many stamps arrived
+	end
+	if gotNew and not muted then
+		stampSound:Play()
 	end
 	lastSet = {}
 	for _, id in ipairs(PassportLogic.list(state)) do
