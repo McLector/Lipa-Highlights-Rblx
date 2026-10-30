@@ -30,7 +30,7 @@ Archbishop Arguelles need an outside source and a careful tone).
 | Site | Line | Why it is kept |
 |---|---|---|
 | Market | "Our model follows a plan drawing and recent street photos, so some details may differ." (replaces "Our facade photo is from 2014, so the building may look different today."; owner approved 2026-10-29) | the Market was rebuilt from BP1 (the group's plan drawing) and recent Google Street View views, not from the 2014 photo; the model note comes from briefs/site02.md, not the PDF |
-| Lomi | "Our photo is from 2015, so the front may have changed." | same |
+| Lomi | "Our model follows a 2026 Street View image and a drawn board, so details may differ." (replaces "Our photo is from 2015, so the front may have changed."; owner approved 2026-10-31) | Lomi King was rebuilt from the group's Architectural Blueprint Board and a January 2026 Google Street View view, not from the 2015 photo; the model note comes from briefs/site03.md, not the PDF |
 | Cafe | "This model shows the Tibig/STAR branch, and its interior is a representative display." | the model note from the brief |
 | Cathedral | "Down the steps from this forecourt is Plaza Independencia ..." | describes the model layout |
 | Market | name "Candido B. Lopez Memorial Public Market" (sign name); the PDF says "Lipa City Public Market" | which name is correct? |

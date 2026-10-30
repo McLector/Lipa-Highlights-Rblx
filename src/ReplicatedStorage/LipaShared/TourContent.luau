@@ -120,7 +120,7 @@ TourContent.sites = {
 		talkAgain = {
 			"Kikiam, liver, meatballs... it's basically a whole meal in one bowl.",
 			"Historians credit To Kim Eng, but that is an attribution, not a fully documented fact.",
-			"Our photo is from 2015, so the front may have changed.",
+			"Our model follows a 2026 Street View image and a drawn board, so details may differ.",
 		},
 		goodbye = "Busog ka na, which means are you full already? Go get coffee next.",
 		lookAt = "Look at the bold orange sign band above the entrance, where the color pulls your eye to the name. Then find the bamboo texture of the screen beside the closed bay.",

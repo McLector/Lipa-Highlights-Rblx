@@ -27,7 +27,7 @@ Rules enforced by tests: every line is 220 bytes or fewer, **ASCII only** (the t
 | LIMA Estate spans Lipa and Malvar | Snippet (several Aboitiz-linked results) and `05_The_Outlets_LIMA/REFERENCE_NOTES.txt` |
 | Market name "Candido B. Lopez Memorial Public Market" | Read from the sign in `Market_Facade_2014.jpg` (checked again 2026-10-17). A web search found only "Lipa City Public Market". |
 | "cafedelipa" sign, Tibig/STAR branch | Read from `Cafe_de_Lipa_Tibig_STAR_Entrance_and_Outdoor_Seating_Night.jpg` (lowercase, lit yellow letters on a dark fascia) |
-| Lomi King sign, menu banner, parking sign | Read from `Lomi_King_Front_Oblique_2015.jpg` |
+| Lomi King sign, menu banner, parking sign | Read from the group's Lomi King Architectural Blueprint Board and a January 2026 Google Street View view (rebuild 2026-10-31); earlier read from `Lomi_King_Front_Oblique_2015.jpg` |
 | "% THE OUTLETS" slatted entrance sign | Read from `Outlets_Entrance_Sign.jpg` |
 | Plaza Independencia, Metropolitan Cathedral of San Sebastian | From the user's reference folder and details document. `lipa.gov.ph/city/` no longer carries a plaza description (it now shows a news item), so the plaza sentence stays general. |
 
@@ -53,7 +53,7 @@ The reference photos date from 2010 to 2014. The in-world price boards are label
 
 ## 3. Lomi King
 - (a) This is Lomi King, one of Lipa's lomi houses, where people sit down together for a hot bowl of lomi noodles.
-- (b) Lomi is part of Lipa's food culture, and sharing a bowl is a social way to eat together. The reference photo is from 2015, so the front may have changed.
+- (b) Lomi is part of Lipa's food culture, and sharing a bowl is a social way to eat together. Our model follows a 2026 Street View image and a drawn board, so details may differ.
 - (c) The front is a bold orange sign band, with a menu banner and globe lamps below. The bright colors pull the eye to the name before anything else.
 - (d) Look at the sign band above the entrance on the model. Follow the menu boards down to the doorway.
 

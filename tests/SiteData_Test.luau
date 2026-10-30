@@ -189,6 +189,20 @@ return function(t)
 		expect.near(z1, 195, 1e-6)
 	end)
 
+	-- Lomi King text job (owner-approved 2026-10-31, handoff 057 rows 1 and 7): the 2015-photo note is replaced by the board and Street View note
+	-- (shortened by the owner to keep line 1 within 220 chars), and the Street View domain joins the credits.
+	t.test("Lomi line 1 carries the 2026 model note, no Lomi line mentions 2015, and credits name Primer and Google", function()
+		local l = SiteData.byId(3)
+		expect.truthy(string.find(l.dialogue[1], "Our model follows a 2026 Street View image and a drawn board, so details may differ.", 1, true))
+		for _, line in ipairs(l.dialogue) do
+			expect.falsy(string.find(line, "2015", 1, true))
+		end
+		local has = {}
+		for _, d in ipairs(l.credits) do has[d] = true end
+		expect.truthy(has["primer.com.ph"])
+		expect.truthy(has["www.google.com"])
+	end)
+
 	-- Facing must be one of the eight compass values.
 	t.test("facing is a valid compass value", function()
 		for _, s in ipairs(SiteData.sites) do

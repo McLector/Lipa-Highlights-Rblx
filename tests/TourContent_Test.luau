@@ -255,6 +255,22 @@ return function(t)
 		expect.truthy(named)
 	end)
 
+	-- Lomi King text job (owner-approved 2026-10-31): Kuya Ben's 2015-photo line is replaced by the same model note as SiteData.
+	t.test("Lomi text: no spoken line mentions 2015, and the 2026 model note is spoken", function()
+		needTenSites()
+		local site = TourContent.sites[3]
+		expect.equal(site.id, 3)
+		local newLine = "Our model follows a 2026 Street View image and a drawn board, so details may differ."
+		local found = false
+		for _, group in ipairs({ site.firstTalk, site.talkAgain }) do
+			for _, line in ipairs(group) do
+				expect.falsy(string.find(line, "2015", 1, true))
+				if line == newLine then found = true end
+			end
+		end
+		expect.truthy(found)
+	end)
+
 	-- Slice 4 (Market rebuild, owner approved): the 2014 facade-photo line is gone; the model follows a plan drawing and recent street photos.
 	-- The old line lived in talkAgain[3] (firstTalk never carried it), so every spoken and shown Market text field is scanned, not only firstTalk.
 	t.test("Market text: no field mentions 2014 or the facade photo, and the new plan-drawing line is spoken", function()

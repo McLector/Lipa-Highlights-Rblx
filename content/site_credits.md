@@ -25,9 +25,12 @@ Photos in folder: 3; unique source pages: 4 (3 photo pages plus the OpenStreetMa
 
 ## Site 3: Lomi King
 Folder: 01_Lomi_Houses
-Photos in folder: 1; unique source pages: 1
+Photos in folder: 1; unique source pages: 2 (the Primer page plus Google Maps for the Street View view)
 
 - https://primer.com.ph/food/location/philippines/batangas/lomi-king-the-king-of-all-noodles-in-lipa-2/
+- https://www.google.com/maps
+
+Lomi King reference photo: a Google Street View view (January 2026). The Site 3 model was built from that view plus the group's AI-assisted concept drawing (the Lomi King Architectural Blueprint Board), used as the main design reference.
 
 ## Site 4: Cafe de Lipa (Tibig/STAR branch)
 Folder: 02_Cafe_de_Lipa

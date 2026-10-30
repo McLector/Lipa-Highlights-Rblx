@@ -152,6 +152,21 @@ return function(t)
 		expect.truthy(found)
 	end)
 
+	-- Lomi King text job (owner-approved 2026-10-31): the rebuilt model follows a January 2026 Street View view, so site 3 credits Google Maps
+	-- next to Primer, and the Google Maps reference (n.d.-c) lists sites 3 and 10.
+	t.test("site 3 credits Primer and the Google Street View reference; Google Maps reference covers sites 3 and 10", function()
+		local has = {}
+		for _, url in ipairs(CreditsData.sites[3].urls) do has[url] = true end
+		expect.truthy(has["https://primer.com.ph/food/location/philippines/batangas/lomi-king-the-king-of-all-noodles-in-lipa-2/"])
+		expect.truthy(has["https://www.google.com/maps"])
+		local maps
+		for _, ref in ipairs(CreditsData.references) do
+			if ref.url == "https://www.google.com/maps" then maps = ref end
+		end
+		expect.truthy(maps ~= nil)
+		expect.equal(maps and table.concat(maps.sites, ","), "3,10")
+	end)
+
 	-- Credits job B (2026-10-27, owner-approved): the old pin (exactly 2 lines, "City Hall reference photos: Google Street View." and "Site blueprints:
 	-- AI-assisted concept drawings prepared by the group; used for massing only.") is replaced because the owner supplied the real credit lines:
 	-- the blueprints were made with Gemini and the reference photos come from public images, Google Maps, Google Earth, Street View and the Ayala Land article.

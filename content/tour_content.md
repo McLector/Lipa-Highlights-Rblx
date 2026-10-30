@@ -86,7 +86,7 @@ Quiz: Which immigrant do local historians credit with Lipa lomi?
 - Talk again:
   - Kikiam, liver, meatballs... it's basically a whole meal in one bowl.
   - Historians credit To Kim Eng, but that is an attribution, not a fully documented fact.
-  - Our photo is from 2015, so the front may have changed.
+  - Our model follows a 2026 Street View image and a drawn board, so details may differ.
 - Goodbye: Busog ka na, which means are you full already? Go get coffee next.
 - Look at: Look at the bold orange sign band above the entrance, where the color pulls your eye to the name. Then find the bamboo texture of the screen beside the closed bay.
 - Display props:
@@ -96,7 +96,7 @@ Quiz: Which immigrant do local historians credit with Lipa lomi?
   - condiment tray (toyo, kalamansi, sili)
   - menu board
   - long shared tables
-- Sources: PDF [6], [8] (lomi and lomihan), [7] (To Kim Eng, Lipa Panciteria 1968, an attribution not fully documented; lor mee), [8] (soy sauce, kalamansi, chili). [VERIFY] Photo date 2015 (model note from briefs/site03.md; not in the PDF).
+- Sources: PDF [6], [8] (lomi and lomihan), [7] (To Kim Eng, Lipa Panciteria 1968, an attribution not fully documented; lor mee), [8] (soy sauce, kalamansi, chili). Model note: the model follows a January 2026 Google Street View view and the group's Lomi King Architectural Blueprint Board (briefs/site03.md; not in the PDF; owner approved 2026-10-31).
 
 ## Site 4: Cafe de Lipa
 Headline: Kapeng Barako: strong, bold coffee with a long history in Lipa.
