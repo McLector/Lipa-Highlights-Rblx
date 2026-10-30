@@ -43,6 +43,14 @@ They live in **one place**: `EXPECTED` at the top of `tests/run_all.luau`. Run `
 | Verified | `run_all` gave `ok = true`: 17 stored checks, unit 226, 8312 world parts, 1793696 terrain cells (2026-10-27, Slice 4 start) |
 | Note | Studio still lists the open place as `slice-25.rbxl`. Not treated as a mismatch. Studio was found in Play mode and was stopped before the check. |
 
+## Working backup (Slice 4 Market, street traffic R5e)
+| Field | Value |
+|---|---|
+| File | `slice-36-wip16.rbxl`, saved 2026-10-30 13:28, 633,755 bytes |
+| SHA-256 | `C7145D6A3D3FF6ED9669A203EE5E81BE54D95691EAE0BF9232FA12323C3650A3` |
+| Verified | `run_all` gave `ok = true`, 89 rows, 0 mismatches: 17 stored checks, unit 250, site02_check 151, build 02 parts 2082, 10174 world parts, 1796660 terrain cells (2026-10-30, Market front street start) |
+| Note | Holds the street traffic (`8d111b9`) and the `EXPECTED` update (`ee6a905`). `slice-36-wip17.rbxl` (SHA-256 `0B082C048D6EAEF47233BD4A7462D5BEE9674ECD598101C2F2E3753307081629`, saved 14:58) is a re-save of the same state before the street work. Studio's window title can lag behind the file that holds the `.lock`. Not treated as a mismatch. |
+
 Update this table every time the integrator shares a new baseline. If you save the place again, the size and SHA-256 change: refresh them before sharing.
 
 ## Check that your copy is the baseline
