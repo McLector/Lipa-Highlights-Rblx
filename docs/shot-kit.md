@@ -46,9 +46,12 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | street front north: lean-tos on the north strip and a vendor cluster (beside bp2_iso_leantos_left.png) | -205, 32, 20 | -262, 8, 66 |
 | 2 Market | lean-to in front of the north wing, lamp post and stalls (close-up) | -226, 20, 108 | -258, 8, 76 |
 | 2 Market | street front south: vendor cluster and the south end of the hall | -205, 30, 305 | -252, 6, 258 |
-| 2 Market | north side yard iso from the kerb (beside iso_northyard.png: booth row, awning, vendors) | -290, 40, 10 | -400, 4, 55 |
+| 2 Market | north side yard iso from the kerb (beside iso_northyard.png: booth row, awning, vendors) | -290, 40, 10 | -400, 4, 55 (too wide to judge booths: use the close row) |
 | 2 Market | south side yard iso from the kerb (beside iso_shedsA.png: booth rows, shoppers' aisle) | -300, 40, 310 | -400, 4, 255 |
 | 2 Market | north side yard top-down (beside plan_sheds1.png and plan_sheds2.png) | -385, 140, 53 | -385, 0, 52 |
+| 2 Market | north booths close (beside iso_northyard.png: pyramid roofs, counter, vendor) | -418, 15, 34 | -445, 6, 54 |
+| 2 Market | south booth row (beside iso_shedsA.png: booth rows, aisle) | -300, 26, 296 | -362, 6, 258 |
+| 2 Market | north booth row top-down (four quarters meet on one centre) | -385, 70, 53 | -385, 0, 52 |
 | 2 Market | south side yard top-down (beside plan_sheds1.png) | -390, 140, 256 | -390, 0, 255 |
 | 2 Market | sample board close-up and the south stair foot (beside iso_stairN.png) | -212, 12, 178 | -231, 6, 190 |
 | 2 Market | vehicles and tricycle queue at the north stair foot (beside bp2_iso_vendors_tricycles.png) | -205, 28, 70 | -236, 3, 105 |
