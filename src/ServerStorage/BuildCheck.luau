@@ -1,6 +1,6 @@
 -- BuildCheck: structural checks for a built site, run after every site builder (Edit mode, via execute_luau).
 --   BuildCheck.checkSite(model, siteRow) -> { passed, failed, failures = { "<check name> | <detail>" }, parts }
---   BuildCheck.checkWorld(root?, limit?) -> same shape; root defaults to workspace, limit to 20,000 parts.
+--   BuildCheck.checkWorld(root?, limit?) -> same shape; root defaults to workspace, limit to 25,000 parts (BuildCheck.WORLD_PART_BUDGET).
 -- Terrain-dependent checks (Guide on terrain, JeepStop on dry land) stay in tests/sites_check.luau.
 -- A rig is any Model that contains a Humanoid: its parts are exempt from the anchored check, but they
 -- still count towards the part budget. Bounds are compared in world axes, so diagonal sites work too.
@@ -9,7 +9,7 @@ local Players = game:GetService("Players")
 local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData)
 
 local SITE_PART_BUDGET = 2500
-local WORLD_PART_BUDGET = 20000
+local WORLD_PART_BUDGET = 25000 -- 20000 until 2026-10-31 (owner: raised for the Outlets, Farm and Malarayat rebuilds; StreamingEnabled is on)
 local BOUNDS_MARGIN = 1.1
 
 local BuildCheck = {}
@@ -183,5 +183,7 @@ function BuildCheck.checkWorld(root, limit)
 	record(res, "world part budget <= " .. limit, parts <= limit, parts .. " parts")
 	return res
 end
+
+BuildCheck.WORLD_PART_BUDGET = WORLD_PART_BUDGET
 
 return BuildCheck

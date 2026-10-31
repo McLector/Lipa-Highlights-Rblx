@@ -339,7 +339,7 @@ if fill then
 end
 check("every Body stands on its Lot", #floating == 0, list(floating))
 
--- The world budget (BuildCheck's 20000 cap).
+-- The world budget (BuildCheck's cap, 25000 since 2026-10-31).
 local w = BuildCheck.checkWorld()
 check("world part budget holds with the filler", w.failed == 0, w.parts .. " parts")
 

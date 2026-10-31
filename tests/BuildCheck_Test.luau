@@ -1,7 +1,7 @@
 -- Tests for ServerStorage.BuildCheck (Slice 02). Fixtures are built unparented, so no terrain or Studio state is needed.
 -- Contract:
 --   BuildCheck.checkSite(model, siteRow) -> { passed, failed, failures = { "<check name> | <detail>" }, parts }
---   BuildCheck.checkWorld(root?, limit?) -> same shape; root defaults to workspace, limit to 20000 BaseParts
+--   BuildCheck.checkWorld(root?, limit?) -> same shape; root defaults to workspace, limit to 25000 BaseParts (was 20000)
 --     (Terrain and player characters are excluded).
 -- Check names (a failure string starts with its name): "model exists", "site row known",
 --   "pivot within 1 stud of pos", "facing dot > 0.99", "bounds within footprint +10%", "Guide present",
@@ -311,5 +311,10 @@ return function(t)
 		local over = BC.checkWorld(root, 2)
 		expect.truthy(failed(over, "world part budget"))
 		expect.equal(over.failed, 1)
+	end)
+
+	t.test("the default world part budget is 25000 (owner 2026-10-31: raised from 20000 for the Outlets, Farm and Malarayat rebuilds)", function()
+		local BC = loadBuildCheck()
+		expect.equal(BC.WORLD_PART_BUDGET, 25000)
 	end)
 end
