@@ -43,7 +43,36 @@ They live in **one place**: `EXPECTED` at the top of `tests/run_all.luau`. Run `
 | Verified | `run_all` gave `ok = true`: 17 stored checks, unit 226, 8312 world parts, 1793696 terrain cells (2026-10-27, Slice 4 start) |
 | Note | Studio still lists the open place as `slice-25.rbxl`. Not treated as a mismatch. Studio was found in Play mode and was stopped before the check. |
 
-## Working backup (Slice 4 Market, street traffic R5e)
+## Working backup (handoff 062 start)
+| Field | Value |
+|---|---|
+| File | `slice-36-wip33.rbxl`, saved 2026-10-31 09:45, 959,960 bytes |
+| SHA-256 | `207C23C61D1E7046D2404EFE538BD32AB399162CC845918AA0145A9AA1A7ADD0` |
+| Verified | `run_all` gave `ok = true`, 89 rows, 0 mismatches: 17 stored checks, unit 283, 22375 world parts, 1807294 terrain cells (2026-10-31, handoff 062 start, on the open place after the 6751bfd commit) |
+| Note | Studio's window title still says `slice-36-wip26.rbxl`; the `.lock` is on wip33. Not treated as a mismatch. From `0aeb424` on, run_all also runs filler_check (18 stored checks, 91 rows). |
+
+## Backup log wip17..wip33 (sizes, times and SHA-256 read from the files on 2026-10-31; only wip33 was verified with run_all here)
+| File | Saved | Bytes | SHA-256 | Note |
+|---|---|---|---|---|
+| `slice-36-wip17.rbxl` | 2026-10-30 14:58 | 633,755 | `0B082C048D6EAEF47233BD4A7462D5BEE9674ECD598101C2F2E3753307081629` | re-save of wip16 (see the note above) |
+| `slice-36-wip18.rbxl` | 2026-10-30 17:48 | 636,331 | `38D6DA57F857638EEAE01A13BE2F3D73D8C933CAE9FD798475CA5E18A4411147` | contents not recorded |
+| `slice-36-wip19.rbxl` | 2026-10-30 21:53 | 636,828 | `2D8B95A8A3889D327197B8A06114D8D83D1A4E2963B48D87B9D834E2429359A1` | contents not recorded |
+| `slice-36-wip20.rbxl` | 2026-10-30 23:10 | 643,375 | `22CE26668D99FE188B4DCF33F86333119587FF490F95A1F00F3C11BF236E7B4D` | contents not recorded |
+| `slice-36-wip21.rbxl` | 2026-10-30 23:45 | 650,482 | `4298EC35B78D1C0B8C469C70BF5CCDE79A15498D648132EDBD465130AD5C0818` | contents not recorded |
+| `slice-36-wip22.rbxl` | 2026-10-31 00:30 | 650,855 | `7D7140252B1D6E366B02AFDC69EB41514770277F27D9B59870D98DABAA4C12D3` | contents not recorded |
+| `slice-36-wip23.rbxl` | 2026-10-31 01:02 | 655,358 | `9CABD6977F5B596281A976656EDB1BD0A5682AB3C6332A76FB1D73818D893182` | contents not recorded |
+| `slice-36-wip24.rbxl` | 2026-10-31 01:15 | 655,522 | `E1C06B5A454771F1690CC3E73B42B9AFC61D505968522B207BD509FC9CB5103D` | wip25 has the same bytes |
+| `slice-36-wip25.rbxl` | 2026-10-31 01:23 | 655,522 | `E1C06B5A454771F1690CC3E73B42B9AFC61D505968522B207BD509FC9CB5103D` | same bytes as wip24 |
+| `slice-36-wip26.rbxl` | 2026-10-31 02:53 | 668,736 | `6C32BA4340E840ABBBCB1E6F93EAE5949618F138D2E3796DD757A3FAC46EFC9D` | contents not recorded |
+| `slice-36-wip27.rbxl` | 2026-10-31 03:43 | 678,678 | `818E0D1A1282CE4B92F5819A5A729E59592AE4D1AF979AF44E19ED126B065711` | contents not recorded |
+| `slice-36-wip28.rbxl` | 2026-10-31 04:21 | 679,166 | `64E12E8A5C09B743D9C010EEA444AA95081A6EF484D30A772C36EF95BF4B28C8` | contents not recorded |
+| `slice-36-wip29.rbxl` | 2026-10-31 04:59 | 682,170 | `049CDE5673678F8F26C4A6F1EC141D7695BF0C0B82392AF58C8AE57C3C785923` | contents not recorded |
+| `slice-36-wip30.rbxl` | 2026-10-31 06:06 | 710,556 | `85E75D5AA948C4ADF5F6C4B12DB4667A930D8FB253FAB4385EF6B18316F4C3D6` | handoff 060 baseline |
+| `slice-36-wip31.rbxl` | 2026-10-31 06:34 | 716,599 | `CEC9256FA40AC6FD9368884B66D88FE59A37BA65538F19BB6606A17E9146BE2B` | saved after 060 part 1 (guidance) |
+| `slice-36-wip32.rbxl` | 2026-10-31 08:56 | 938,089 | `A5EA01D432516DB5E0BBC1CF15919397E8546ECD993E11AC4D41381E5F4D4A20` | handoff 061 recorded 817,146 bytes, SHA-256 2af97d3c...; the file now on disk is a later re-save under the same name |
+| `slice-36-wip33.rbxl` | 2026-10-31 09:45 | 959,960 | `207C23C61D1E7046D2404EFE538BD32AB399162CC845918AA0145A9AA1A7ADD0` | after the 061 grass cleanup (6751bfd); handoff 062 resume: run_all ok=true, 89 rows, 0 mismatches |
+
+## Earlier working backup (Slice 4 Market, street traffic R5e)
 | Field | Value |
 |---|---|
 | File | `slice-36-wip16.rbxl`, saved 2026-10-30 13:28, 633,755 bytes |
