@@ -99,7 +99,11 @@ SiteData.sites = {
 		"A Carmelite monastery founded on May 31, 1946, a place of prayer and pilgrimage in Lipa.",
 		{ "commons.wikimedia.org", "www.carmelitaniscalzi.com", "www.tripadvisor.co.uk", "www.trip.com" },
 		{ "Pews", "Kneeler", "Candles", "HistoryPanels" }),
-	site(6, "Outlets", "The Outlets at LIMA Estate", "Love", 550, 0, -650, "SW", 300, 200, 2.5,
+	-- Row 6: the Outlets, rebuilt from the LIMA Estate board (2026-10-31, briefs/site06.md Revision 2). Slot 450 x 300 at (550, -700), facing SW
+	-- (x 325..775, z -850..-550; the south edge stays flush with Road B's end). The Guide (528.79, -628.79), the JeepStop (514.64, -642.93, the
+	-- default 20 to the right of the Guide; no jeepLocal) and the InfoPanel (541.51, -624.54) keep their world positions: guideLocal and
+	-- panelLocal are the old offsets (30, 0) and (24, -12) plus the centre shift 25 * sqrt 2 forward and to the left.
+	site(6, "Outlets", "The Outlets at LIMA Estate", "Love", 550, 0, -700, "SW", 450, 300, 2.5,
 		"Outlets Guide",
 		{
 			"This is The Outlets at LIMA Estate, called The Outlets at Lipa until 2025. Its outdoor shops beside the Aboitiz Pitch stand for modern shopping, dining, and an economy tied to growing industry.",
@@ -108,8 +112,12 @@ SiteData.sites = {
 		},
 		"Contemporary shopping, dining and recreation. LIMA Estate spans Lipa and Malvar.",
 		{ "architizer.com" },
-		{ "ShopStreet", "SportsField", "EstateModelPedestal", "LipaMalvarPanel" }),
-	site(7, "Farm", "The Farm at San Benito", "Love", 700, 0, 240, "W", 260, 260, 3.0,
+		{ "ShopStreet", "SportsField", "EstateModelPedestal", "LipaMalvarPanel" },
+		{ guideLocal = Vector2.new(65.3553391, -35.3553391), panelLocal = Vector2.new(59.3553391, -47.3553391) }),
+	-- Row 7: the Farm, rebuilt from the San Benito board (2026-10-31, briefs/site07.md Revision 2). Slot 400 x 320 at (770, 240), facing W (x 570..970,
+	-- z 80..400; the west edge stays at Road C's end). Facing W: forward -X, right -Z, so world = (770 - lx, 240 - lz). The locals keep the WORLD
+	-- positions: Guide (670, 240) = local (100, 0); InfoPanel (676, 252) = local (94, -12); the JeepStop stays at the default (670, 220).
+	site(7, "Farm", "The Farm at San Benito", "Love", 770, 0, 240, "W", 400, 320, 3.0,
 		"Farm Guide",
 		{
 			"This is The Farm at San Benito, a wellness resort in Lipa with gardens, a lagoon, and activities like yoga. It shows Lipa's wellness tourism today. Visits involve a booking or paid services.",
@@ -118,7 +126,8 @@ SiteData.sites = {
 		},
 		"An operating resort representing Lipa's contemporary wellness tourism: gardens, accommodation and dining.",
 		{ "www.marriott.com", "www.thefarmatsanbenito.com", "artemlevy.com" },
-		{ "GardenPavilion", "LandscapedPath", "WellnessPanel" }),
+		{ "GardenPavilion", "LandscapedPath", "WellnessPanel" },
+		{ guideLocal = Vector2.new(100, 0), panelLocal = Vector2.new(94, -12) }),
 	site(8, "Malarayat", "Mount Malarayat Golf & Country Club", "Love", 560, 19.8, 720, "NW", 400, 320, 2.0,
 		"Club Guide",
 		{

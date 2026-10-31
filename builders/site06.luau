@@ -1,693 +1,366 @@
--- site06: The Outlets at LIMA Estate + Aboitiz Pitch (Slice 05). Studio copy: ServerStorage.Builders.site06; run with
---   require(game.ServerStorage.Builders.site06:Clone())()
--- Run builders/placeholders first (it creates Workspace.Sites.Site06_Outlets with Guide, InfoPanel, JeepStop...).
--- IDEMPOTENT: replaces Block / Structure / Grounds / ShopStreet / SportsField / EstateModelPedestal / LipaMalvarPanel and keeps
--- Guide, InfoPanel, JeepStop, JeepSign*, Jeepney. Touches nothing outside Workspace.Sites.Site06_Outlets. No terrain change:
--- every paved or turf surface is a part at least 0.4 thick.
--- Brief: briefs/site06.md. FRAMES: the site pivot is yawed to SW, so it is NOT used as the origin.
---   ORIGIN = CFrame.new(pivot position): world-aligned, +X east, +Z south (grounds, parking, pitch, stand).
---   SH     = ORIGIN * fromMatrix((-10,0,-50), SE, up, SW): the shop frame, local +Z = SW = the frontage, local +X = SE.
---   A SurfaceGui on the frontage side of a part in SH (or SIGN) is on the part's local +Z face = Enum.NormalId.Back.
--- Keep clear: the Guide, JeepStop pad and Jeepney sit at shop-frame z about 58; the forecourt slab ends at z 42 and a 6-stud
--- path joins it to the pad. Nothing is stacked under the kept objects.
--- Fail-safe order as in site01/site05: everything is built into unparented components first (budget included); only then are
--- the old children deleted and the components parented one at a time. An error before that point destroys the partial build
--- and leaves the placeholder Block untouched. The model, its WorldPivot and PrimaryPart are never touched.
+-- site06: The Outlets at LIMA Estate + Aboitiz Pitch, rebuilt from "The Outlets at Lima Estate Blueprint.png" (Standard tier, 2026-10-31)
+-- ASSEMBLER. Studio copy: ServerStorage.Builders.site06; run with
+--   return require(game.ServerStorage.Builders.site06:Clone())()
+-- Check: tests/site06_check.luau (ServerStorage.Checks.site06_check), groups general, retail, promenade, parking, pitch, entrance, clear,
+-- props. Brief: briefs/site06.md Revision 2. Same coordinator pattern as builders/site05.luau.
+-- HARDCODED (kept in step with SiteData row 6, asserted at run time): model Workspace.Sites.Site06_Outlets (must already exist, never
+--   created here), ORIGIN (550, 0, -700), slot 450 x 300 (x 325..775, z -850..-550), facing SW. The whole estate is built at one uniform
+--   plan scale of 1.05 studs per metre (the board's 430 x 255 m -> about 450 x 268; north of z -118 is the perimeter tree belt).
+-- FRAME: world-aligned. Local axes = world axes, world = ORIGIN + (lx, ly, lz): local +X = east, +Z = south, y is height above the
+--   ground (y 0; asserted within 0.6 by a raycast). The model faces SW: WorldPivot = CFrame.lookAt(ORIGIN, ORIGIN + SW) is written after
+--   parenting (the model has no PrimaryPart; asserted).
+-- KEEP SET: Guide, InfoPanel, JeepStop, JeepSignPole, JeepSign, Jeepney, LocalNPCs are never touched, moved or recreated (they keep their
+--   WORLD positions; SiteData row 6 carries guideLocal / panelLocal for them). EVERY other child of the model is destroyed on every run
+--   (a keep list, not a replace list) and rebuilt by the modules. No terrain writes: the old Pavement patches stay where parts do not
+--   cover them, and the arrival plaza round the kept cluster is that bare Pavement (nothing is stacked under the JeepStop pad).
+-- IDEMPOTENT. Fail-safe order (site03/site05): everything is planned unparented first, so an error leaves the old model untouched; then
+--   the old non-kept children are destroyed and the plan is parented in batches with task.wait().
+--
+-- ============================ MODULE CONTRACT ============================
+-- Modules are FLAT siblings in ServerStorage.Builders (disk: builders/site06_<name>.luau), each `return function(env) ... end`, loaded with
+-- require(mod:Clone()). A missing module is skipped (reported "missing").
+-- Containers (Structure is a grouping Folder that holds no parts; the sites_check guard finds ShopBody, WalkwayRoof, PitchTurf and
+--   StandTiers anywhere in the site, so each of those names is used by exactly ONE part):
+--     site06_retail      Structure/RetailWest, Structure/RetailCentre, Structure/RetailEast                     900
+--     site06_promenade   ShopStreet, Landscape                                                                   700
+--     site06_parking     Parking                                                                                 400
+--     site06_pitch       SportsField, Structure/Stand, Structure/PitchHouse                                      400
+--     site06_entrance    Grounds, EstateModelPedestal, LipaMalvarPanel                                           300
+--   Every container holds at most 400 parts (hard error at plan time); the site (built + kept) at most 2500 (BuildCheck).
+-- env (LOCAL coordinates, y above the ground): V, CF, ANG, PI, R (sqrt 0.5), SW, SE, ORIGIN, BuildKit, GROUND, C (palette), and helpers
+--   box(ctx, name, x0, x1, y0, y1, z0, z1, color, material)          axis-aligned box from min/max corners
+--   obox(ctx, name, cf, size, color, material)                       oriented box (cf in local coordinates)
+--   vcyl(ctx, name, x, z, y0, y1, dia, color, material)             vertical cylinder
+--   gui(part, face, title, body, color, ppstud, titleSize, bodySize) SurfaceGui with fixed-TextSize labels
+--   richGui(part, face, richText, ppstud, size)                     one RichText label, fixed TextSize, wrapped
+--   palm(ctx, x, z, h) (7 parts), tree(ctx, x, z, h, dia) (3 parts), bench(ctx, cf) (4 parts, seat top 2.2),
+--   lamp(ctx, x, z, h) (2 parts: StreetLampPole, StreetLampHead)
+--   section(path, fn [, dest [, lift]]), newFolder(path, name [, class]), container(path), used(), budget()
+-- DECK (1.3): the rendered terrain (Grass about 0.9, the old Pavement patches about 1.25) hides any part whose top is lower, although
+--   physics puts the ground at y 0 (measured 2026-10-31: a 0.5 turf was invisible from 15 to 300 studs; 1.25 showed). So every paved,
+--   turf and court area is a deck slab from y 0 to 1.3 (world), and a section built ON a deck passes lift = DECK: its parts are raised
+--   1.3, its deck slabs run from local y -DECK to 0, and its inlays sit at most 0.1 above the deck (every edge step stays <= 1.3, the
+--   project's walkable step). Only the arrival plaza (x -64..4, z 30..100) stays bare terrain round the kept Guide cluster, a 1.3 sunken
+--   court; trees, palms and hedges on the grass verges are not lifted.
+-- Rules: anchored parts only (BuildKit), no Decals/Textures/ImageLabels, no brand logos, ASCII only, human scale fixed (doors 8+, rails 3,
+-- counters 3.5, chairs 2), every part inside the slot (x -225..225, z -150..150), nothing below y -0.6, the names pinned by
+-- tests/site06_check.luau. No randomness: every run is equal.
+-- ==========================================================================
 return function()
-	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 	local BuildKit = require(game.ServerStorage.BuildKit:Clone())
-
 	local V, CF, ANG = Vector3.new, CFrame.new, CFrame.Angles
 	local PI = math.pi
+	local R = math.sqrt(0.5)
+	local SW, SE = V(-R, 0, R), V(R, 0, R)
+
+	local ORIGIN = V(550, 0, -700)
+	local MODEL_NAME = "Site06_Outlets"
+	local SITE_CAP, CONTAINER_CAP = 2500, 400
+	local KEEP = { Guide = true, InfoPanel = true, JeepStop = true, JeepSignPole = true, JeepSign = true, Jeepney = true, LocalNPCs = true }
+	local MODULES = {
+		{ name = "site06_retail", owns = { ["Structure/RetailWest"] = true, ["Structure/RetailCentre"] = true, ["Structure/RetailEast"] = true }, budget = 900 },
+		{ name = "site06_promenade", owns = { ShopStreet = true, Landscape = true }, budget = 700 },
+		{ name = "site06_parking", owns = { Parking = true }, budget = 400 },
+		{ name = "site06_pitch", owns = { SportsField = true, ["Structure/Stand"] = true, ["Structure/PitchHouse"] = true }, budget = 400 },
+		{ name = "site06_entrance", owns = { Grounds = true, EstateModelPedestal = true, LipaMalvarPanel = true }, budget = 300 },
+	}
+	-- path -> { parent path ("" is the site), class, grouping }
+	local TREE = {
+		{ "Structure", "", "Folder", true },
+		{ "Structure/RetailWest", "Structure", "Model" },
+		{ "Structure/RetailCentre", "Structure", "Model" },
+		{ "Structure/RetailEast", "Structure", "Model" },
+		{ "Structure/Stand", "Structure", "Model" },
+		{ "Structure/PitchHouse", "Structure", "Model" },
+		{ "ShopStreet", "", "Model" },
+		{ "Landscape", "", "Model" },
+		{ "Parking", "", "Model" },
+		{ "SportsField", "", "Model" },
+		{ "Grounds", "", "Model" },
+		{ "EstateModelPedestal", "", "Model" },
+		{ "LipaMalvarPanel", "", "Model" },
+	}
+
+	local sites = workspace:FindFirstChild("Sites")
+	assert(sites, "site06: Workspace.Sites not found (run builders/placeholders first)")
+	local builders = game.ServerStorage:FindFirstChild("Builders")
+	assert(builders, "site06: ServerStorage.Builders not found")
+	local existing = sites:FindFirstChild(MODEL_NAME)
+	assert(existing, "site06: Workspace.Sites.Site06_Outlets not found (run builders/placeholders first; this builder never creates it)")
+	assert(existing.PrimaryPart == nil, "site06: the model has a PrimaryPart, so a WorldPivot write would not move the pivot")
+
+	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 	local row = SiteData.byId(6)
 	assert(row and row.facing == "SW", "site06: SiteData row 6 is missing or not facing SW")
-	local sites = workspace:FindFirstChild("Sites")
-	local site = sites and sites:FindFirstChild("Site06_Outlets")
-	assert(site, "site06: Workspace.Sites.Site06_Outlets not found (run builders/placeholders first)")
-	local pivotBefore = site:GetPivot()
-	local ORIGIN = CF(pivotBefore.Position)
+	assert(row.pos == ORIGIN, string.format("site06: SiteData row 6 is at %s, expected %s", tostring(row and row.pos), tostring(ORIGIN)))
+	assert(row.size.X == 450 and row.size.Y == 300, string.format("site06: SiteData row 6 size is %s, expected 450 x 300", tostring(row.size)))
 
-	local R = math.sqrt(0.5)
-	local SE, SW = V(R, 0, R), V(-R, 0, R)
-	local UP = V(0, 1, 0)
-	local SH_L = CFrame.fromMatrix(V(-10, 0, -50), SE, UP, SW) -- shop frame, relative to the site centre
-	local SH = ORIGIN * SH_L
-	local SIGN = CFrame.fromMatrix(V(-82, 0, 50), SE, UP, SW) -- entrance sign frame, relative to the site centre
-
-	local PART_BUDGET = 2500
-	local REPLACED = {
-		Block = true, Structure = true, Grounds = true, ShopStreet = true, SportsField = true,
-		EstateModelPedestal = true, LipaMalvarPanel = true, Junction = true,
-	}
-
-	-- Colours (Outlets_Corner_Storefront.jpg, Outlets_Storefront_Front.jpg, Outlets_Facade_and_Covered_Walkway.jpg,
-	-- Outlets_Entrance_Sign.jpg, Aboitiz_Pitch_Stand_From_Above.jpg).
-	local ORANGE = Color3.fromRGB(200, 100, 55)
-	local ORANGE2 = Color3.fromRGB(190, 93, 50)
-	local SOFFIT = Color3.fromRGB(176, 86, 46)
-	local WHITE = Color3.fromRGB(236, 234, 228)
-	local GREY = Color3.fromRGB(214, 212, 206)
-	local BROWN = Color3.fromRGB(90, 50, 40)
-	local DARK = Color3.fromRGB(28, 30, 36)
-	local BLACK = Color3.fromRGB(18, 18, 22)
-	local GLASSC = Color3.fromRGB(60, 76, 88)
-	local STEEL = Color3.fromRGB(120, 124, 130)
-	local TURF = Color3.fromRGB(44, 152, 62) -- the drone shot shows a bright synthetic green
-	local TURF2 = Color3.fromRGB(54, 166, 72)
-	local LINE_W = Color3.fromRGB(240, 240, 236)
-	local LINE_O = Color3.fromRGB(210, 110, 40)
-	local CONCRETE = Color3.fromRGB(190, 188, 182)
-	local CONCRETE_LIGHT = Color3.fromRGB(214, 212, 206)
-	local BRICK = Color3.fromRGB(74, 72, 76)
-	local ASPHALT = Color3.fromRGB(88, 88, 94)
-	local SOLAR = Color3.fromRGB(28, 44, 92)
-	local LEAF = Color3.fromRGB(58, 120, 58)
-	local TRUNK = Color3.fromRGB(104, 84, 64)
-	local HEDGE = Color3.fromRGB(52, 110, 56)
-	local YELLOW = Color3.fromRGB(240, 200, 40)
-	local BULB = Color3.fromRGB(255, 214, 140)
-	-- Slice 16 (Commons junction photos, LIMA Estate 2025 drone shot): light-grey concrete road, paver sidewalks, maroon fascias,
-	-- purple lamp banners, clipped round shrubs in four greens, lava rock.
-	local ROAD = Color3.fromRGB(184, 184, 180)
-	local ROAD2 = Color3.fromRGB(176, 176, 172)
-	local PAVER = Color3.fromRGB(212, 210, 204)
-	local MAROON = Color3.fromRGB(112, 52, 44)
-	local PURPLE = Color3.fromRGB(78, 40, 112)
-	local REDC = Color3.fromRGB(214, 32, 40)
-	local SLATE = Color3.fromRGB(66, 62, 64)
-	local GRASSC = Color3.fromRGB(74, 140, 62)
-	local TOPIARY = {
-		Color3.fromRGB(62, 128, 60), Color3.fromRGB(54, 112, 52), Color3.fromRGB(92, 150, 60),
-		Color3.fromRGB(170, 196, 60), Color3.fromRGB(196, 208, 110),
-	}
-	local CONC, PLAS = Enum.Material.Concrete, Enum.Material.SmoothPlastic
-	local METAL, GLASS = Enum.Material.Metal, Enum.Material.Glass
-	local NEON, LEAFM, WOOD = Enum.Material.Neon, Enum.Material.Grass, Enum.Material.Wood
-
-	local function countParts(inst)
-		local n = inst:IsA("BasePart") and 1 or 0
-		for _, d in ipairs(inst:GetDescendants()) do
-			if d:IsA("BasePart") then n += 1 end
+	local ground = nil
+	do
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Include
+		params.FilterDescendantsInstances = { workspace.Terrain }
+		local hit = workspace:Raycast(ORIGIN + V(0, 80, 0), V(0, -200, 0), params)
+		if hit then
+			ground = hit.Position.Y
+			assert(math.abs(ground) <= 0.6, string.format("site06: ground at ORIGIN is y %.2f, expected about 0", ground))
 		end
-		return n
 	end
+	local GROUND = ground or 0
+	local DECK = 1.3
 
-	-- Parts already in the site that survive the rebuild count against the 2,500 budget.
-	local used = 0
-	for _, c in ipairs(site:GetChildren()) do
-		if not REPLACED[c.Name] then used += countParts(c) end
+	------------------------------------------------------------------ palette (the board, by eye; the old Slice 05/16 photo colours where they agree)
+	local C = {
+		WHITE = Color3.fromRGB(238, 236, 230), -- render
+		OFFWHITE = Color3.fromRGB(226, 224, 218),
+		ORANGE = Color3.fromRGB(200, 100, 55), -- timber-look cladding
+		ORANGE2 = Color3.fromRGB(186, 90, 48),
+		SOFFIT = Color3.fromRGB(176, 86, 46),
+		TERRA = Color3.fromRGB(186, 88, 54), -- roof-edge fascia (the board's orange-brown roof rims)
+		BROWN = Color3.fromRGB(96, 56, 44), -- canopies and awnings
+		MAROON = Color3.fromRGB(112, 52, 44),
+		DARK = Color3.fromRGB(34, 36, 42),
+		BLACK = Color3.fromRGB(18, 18, 22),
+		GLASS = Color3.fromRGB(52, 64, 76),
+		SOLAR = Color3.fromRGB(28, 44, 92),
+		STEEL = Color3.fromRGB(120, 124, 130),
+		CONCRETE = Color3.fromRGB(190, 188, 182),
+		PAVING = Color3.fromRGB(206, 202, 194),
+		PAVING2 = Color3.fromRGB(184, 176, 164),
+		ROAD = Color3.fromRGB(120, 120, 124),
+		PARK = Color3.fromRGB(104, 104, 108),
+		LINE = Color3.fromRGB(245, 245, 240),
+		TURF = Color3.fromRGB(44, 152, 62),
+		TURF2 = Color3.fromRGB(56, 168, 74),
+		LAWN = Color3.fromRGB(86, 148, 64),
+		HEDGE = Color3.fromRGB(52, 110, 56),
+		TRUNK = Color3.fromRGB(110, 88, 66),
+		LEAF = Color3.fromRGB(58, 122, 56),
+		LEAF2 = Color3.fromRGB(84, 144, 62),
+		FROND = Color3.fromRGB(64, 128, 52),
+		SOIL = Color3.fromRGB(120, 96, 72),
+		BULB = Color3.fromRGB(255, 214, 140),
+	}
+	local M = {
+		CONC = Enum.Material.Concrete, PLAS = Enum.Material.SmoothPlastic, METAL = Enum.Material.Metal, GLASS = Enum.Material.Glass,
+		GRASS = Enum.Material.Grass, WOOD = Enum.Material.Wood, NEON = Enum.Material.Neon, BRICK = Enum.Material.Brick,
+		PAVE = Enum.Material.Pavement, ASPHALT = Enum.Material.Asphalt, FABRIC = Enum.Material.Fabric,
+	}
+
+	------------------------------------------------------------------ helpers
+	local function box(ctx, name, x0, x1, y0, y1, z0, z1, color, material)
+		return ctx:part(name, V(x1 - x0, y1 - y0, z1 - z0), CF((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), color, material)
 	end
-	local keptParts = used
-
-	local built = {} -- { name, parent = "Structure" | "Site", model, parts }
-
-	local function component(name, parent, origin, fn)
-		local model = Instance.new("Model")
-		model.Name = name
-		local ctx = BuildKit.new(model, origin, { budget = PART_BUDGET - used })
-		fn(ctx, model)
-		ctx:flush()
-		used += ctx:count()
-		table.insert(built, { name = name, parent = parent, model = model, parts = ctx:count() })
+	local function obox(ctx, name, cf, size, color, material)
+		return ctx:part(name, size, cf, color, material)
 	end
-
-	-- A glazing panel: glass material, see-through over the dark core.
-	local function glass(ctx, name, size, cf)
-		local p = ctx:part(name, size, cf, GLASSC, GLASS)
-		p.Transparency = 0.3
-		p.Reflectance = 0.05
-		return p
+	local function vcyl(ctx, name, x, z, y0, y1, dia, color, material)
+		return ctx:cyl(name, V(y1 - y0, dia, dia), CF(x, (y0 + y1) / 2, z) * ANG(0, 0, PI / 2), color, material)
 	end
-
-	-- A net panel (fences, goals): thin and see-through.
-	local function net(ctx, name, size, cf, color)
-		local p = ctx:part(name, size, cf, color or STEEL, PLAS)
-		p.Transparency = 0.6
-		return p
-	end
-
-	-- A vertical cylinder (Roblox cylinders run along local X, so roll them upright).
-	local function post(ctx, name, diameter, height, x, baseY, z, color, material)
-		return ctx:cyl(name, V(height, diameter, diameter), CF(x, baseY + height / 2, z) * ANG(0, 0, PI / 2), color, material)
-	end
-
-	-- A SurfaceGui with a title and an optional body line on one face of a part.
-	local function gui(part, face, title, body, textColor, ppstud)
+	-- A SurfaceGui with a title and an optional body line, FIXED TextSize (long labels never use TextScaled).
+	local function gui(part, face, title, body, textColor, ppstud, titleSize, bodySize)
 		local g = Instance.new("SurfaceGui")
 		g.Face = face
 		g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 		g.PixelsPerStud = ppstud or 30
 		g.Parent = part
-		local function lab(text, y0, h, font)
+		local function lab(name, text, y0, h, font, size)
 			local t = Instance.new("TextLabel")
-			t.Position = UDim2.fromScale(0, y0)
-			t.Size = UDim2.fromScale(1, h)
+			t.Name = name
+			t.Position = UDim2.fromScale(0.04, y0)
+			t.Size = UDim2.fromScale(0.92, h)
 			t.BackgroundTransparency = 1
 			t.TextColor3 = textColor
-			t.TextScaled = true
+			t.TextScaled = false
+			t.TextSize = size
 			t.TextWrapped = true
 			t.Font = font
 			t.Text = text
 			t.Parent = g
 		end
 		if body then
-			lab(title, 0.04, 0.3, Enum.Font.GothamBold)
-			lab(body, 0.38, 0.55, Enum.Font.GothamMedium)
+			lab("Title", title, 0.04, 0.3, Enum.Font.GothamBold, titleSize or 24)
+			lab("Body", body, 0.38, 0.58, Enum.Font.GothamMedium, bodySize or 18)
 		else
-			lab(title, 0.05, 0.9, Enum.Font.GothamBold)
+			lab("Title", title, 0.05, 0.9, Enum.Font.GothamBold, titleSize or 24)
 		end
+		return g
 	end
-
-	-- One coloured RichText label filling a face (the entrance sign).
-	local function richGui(part, face, richText, ppstud)
+	local function richGui(part, face, richText, ppstud, size)
 		local g = Instance.new("SurfaceGui")
 		g.Face = face
 		g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-		g.PixelsPerStud = ppstud or 30
+		g.PixelsPerStud = ppstud or 20
 		g.Parent = part
 		local t = Instance.new("TextLabel")
+		t.Name = "Title"
 		t.Size = UDim2.fromScale(1, 1)
 		t.BackgroundTransparency = 1
 		t.RichText = true
-		t.TextScaled = true
+		t.TextScaled = false
+		t.TextSize = size or 60
+		t.TextWrapped = true
 		t.Font = Enum.Font.GothamBlack
 		t.TextColor3 = Color3.new(0, 0, 0)
 		t.Text = richText
 		t.Parent = g
+		return g
 	end
-
-	-- A slim tree in a planter (4 parts): thin trunk, flat two-tier crown (Outlets_Storefront_Front.jpg).
-	local function tree(ctx, x, z)
-		ctx:part("TreePlanter", V(3.2, 1, 3.2), CF(x, 0.9, z), CONCRETE_LIGHT, CONC)
-		post(ctx, "TreeTrunk", 0.7, 9, x, 1.4, z, TRUNK, WOOD)
-		ctx:cyl("TreeCrown", V(2.2, 8.5, 8.5), CF(x, 10.2, z) * ANG(0, 0, PI / 2), LEAF, LEAFM)
-		ctx:cyl("TreeCrownTop", V(1.8, 5.5, 5.5), CF(x, 12, z) * ANG(0, 0, PI / 2), LEAF, LEAFM)
+	-- Palm: trunk, 5 drooping fronds and a head ball (7 parts); frond tips reach about 5.6 studs from the trunk.
+	local function palm(ctx, x, z, h)
+		local top = V(x, h, z)
+		vcyl(ctx, "PalmTrunk", x, z, 0, h, 1.1, C.TRUNK, M.WOOD)
+		for k = 0, 4 do
+			local a = k * 2 * PI / 5 + 0.3
+			local dir = V(math.cos(a), 0, math.sin(a))
+			local c = top + dir * 2.6 - V(0, 0.9, 0)
+			ctx:part("PalmFrond", V(1.6, 0.25, 6), CFrame.lookAt(c, c + dir * 3 - V(0, 1.4, 0)), C.FROND, M.GRASS)
+		end
+		ctx:ball("PalmHead", 1.6, CF(top), C.TRUNK, M.WOOD)
 	end
-
-	-- A bench facing -Z (north in the shop frame): seat, backrest, two legs (4 parts). Sits on the forecourt slab (top 0.4).
-	local function bench(ctx, x, z)
-		ctx:part("BenchSeat", V(5, 0.4, 1.6), CF(x, 2.4, z), BROWN, WOOD)
-		ctx:part("BenchBack", V(5, 1.4, 0.3), CF(x, 3.3, z + 0.75), BROWN, WOOD)
+	local function tree(ctx, x, z, h, dia)
+		vcyl(ctx, "TreeTrunk", x, z, 0, h * 0.55, 1, C.TRUNK, M.WOOD)
+		ctx:ball("TreeCrown", dia, CF(x, h - dia * 0.35, z), C.LEAF, M.GRASS)
+		ctx:ball("TreeCrown", dia * 0.7, CF(x + dia * 0.2, h - dia * 0.05, z - dia * 0.1), C.LEAF2, M.GRASS)
+	end
+	-- A bench in frame cf (seat along local x, the backrest on local -Z, sitter faces local +Z): seat top 2.2.
+	local function bench(ctx, cf)
+		ctx:part("BenchSeat", V(5, 0.4, 1.6), cf * CF(0, 2.0, 0), C.BROWN, M.WOOD)
+		ctx:part("BenchBack", V(5, 1.4, 0.3), cf * CF(0, 2.9, -0.75), C.BROWN, M.WOOD)
 		for _, dx in ipairs({ -2, 2 }) do
-			ctx:part("BenchLeg", V(0.4, 2, 1.4), CF(x + dx, 1.4, z), STEEL, METAL)
+			ctx:part("BenchLeg", V(0.4, 1.8, 1.4), cf * CF(dx, 0.9, 0), C.STEEL, M.METAL)
 		end
 	end
-
-	-- A palm (9 parts): trunk, crown ball, seven drooping fronds. World-aligned frame.
-	local function palm(ctx, x, z)
-		post(ctx, "PalmTrunk", 1.4, 15, x, 0, z, TRUNK, WOOD)
-		ctx:ball("PalmCrown", 2.2, CF(x, 15.4, z), LEAF, LEAFM)
-		for k = 0, 6 do
-			local th = k * 2 * PI / 7
-			ctx:part("PalmFrond", V(7, 0.25, 1.6), CF(x, 15.2, z) * ANG(0, th, 0) * CF(3.4, 0, 0) * ANG(0, 0, -0.35), LEAF, LEAFM)
-		end
+	local function lamp(ctx, x, z, h)
+		h = h or 12
+		vcyl(ctx, "StreetLampPole", x, z, 0, h, 0.5, C.DARK, M.METAL)
+		ctx:part("StreetLampHead", V(1.6, 0.6, 1.6), CF(x, h + 0.3, z), C.BULB, M.NEON)
 	end
 
-	-- A parked car (3 parts): dark underbody (reads as wheels), coloured body, glass cabin. Long axis along Z.
-	local function car(ctx, x, z, color)
-		ctx:part("CarUnder", V(3.6, 0.8, 7.6), CF(x, 0.8, z), BLACK, PLAS)
-		ctx:part("CarBody", V(4.2, 1.5, 8.4), CF(x, 1.95, z), color, PLAS)
-		local cab = ctx:part("CarCabin", V(3.6, 1.3, 4.4), CF(x, 3.35, z - 0.3), GLASSC, GLASS)
-		cab.Transparency = 0.2
+	------------------------------------------------------------------ plan
+	local used = 0
+	local plan = {}
+	local SITE_TOKEN = {}
+	local planParent = {}
+	local function place(inst, dest)
+		planParent[inst] = dest
+		table.insert(plan, { inst = inst, dest = dest })
+	end
+	local containers, grouping, counts = {}, {}, {}
+	for _, t in ipairs(TREE) do
+		local inst = Instance.new(t[3])
+		inst.Name = t[1]:match("[^/]+$")
+		containers[t[1]] = inst
+		grouping[inst] = t[4] == true
+		counts[t[1]] = 0
+		place(inst, t[2] == "" and SITE_TOKEN or containers[t[2]])
 	end
 
-	------------------------------------------------------------------ Shop block: the corner "Park Outlet" unit (SH frame)
-	-- The frame is 76 wide (x +-38), 34 tall, 34 deep (z +-17); the top band overhangs 4 studs in front of the end legs.
-	local function buildShop(ctx)
-		ctx:part("ShopBody", V(68, 24, 26), CF(0, 12, -1), DARK, CONC)
-		-- Two storeys of glazing between the left leg (x -38..-29) and the black panel (x 17..31).
-		for i = 0, 4 do
-			local x = -29 + 9.2 * i + 4.6
-			glass(ctx, "GlassGround", V(8.6, 11, 0.4), CF(x, 6, 12.6))
-			glass(ctx, "GlassUpper", V(8.6, 10, 0.4), CF(x, 18.5, 12.6))
+	local report = {}
+	local function runModule(def)
+		local mod = builders:FindFirstChild(def.name)
+		if not mod then
+			return "missing"
 		end
-		for i = 0, 5 do
-			local x = -29 + 9.2 * i
-			ctx:part("MullionGround", V(0.7, 12, 0.9), CF(x, 6, 12.7), STEEL, METAL)
-			ctx:part("MullionUpper", V(0.7, 11, 0.9), CF(x, 18.5, 12.7), STEEL, METAL)
+		local fn = require(mod:Clone())
+		assert(type(fn) == "function", "site06: " .. def.name .. " must return function(env)")
+		local modUsed = 0
+		local function budget()
+			return math.max(0, math.min(def.budget - modUsed, SITE_CAP - used))
 		end
-		-- Orange timber-look frame: planked end legs and a planked, overhanging top band.
-		local function plank(i) return (i % 2 == 0) and ORANGE or ORANGE2 end
-		for i = 0, 2 do
-			ctx:part("LegLeft", V(3, 34, 34), CF(-36.5 + 3 * i, 17, 0), plank(i), PLAS)
+		local function owned(path)
+			assert(def.owns[path], string.format("site06: %s does not own container %s", def.name, tostring(path)))
+			return containers[path]
 		end
-		for i = 0, 1 do
-			ctx:part("LegRight", V(3.5, 34, 34), CF(32.75 + 3.5 * i, 17, 0), plank(i), PLAS)
+		local function inside(dest, path)
+			local cur = dest
+			while cur and cur ~= SITE_TOKEN do
+				if cur == containers[path] then return true end
+				cur = planParent[cur]
+			end
+			return false
 		end
-		for i = 1, 20 do
-			ctx:part("BandPlank", V(3.8, 10, 38), CF(-38 + 3.8 * (i - 0.5), 29, 2), plank(i), PLAS)
+		local env = {
+			V = V, CF = CF, ANG = ANG, PI = PI, R = R, SW = SW, SE = SE, ORIGIN = ORIGIN, BuildKit = BuildKit, GROUND = GROUND, DECK = DECK, C = C, M = M,
+			box = box, obox = obox, vcyl = vcyl, gui = gui, richGui = richGui, palm = palm, tree = tree, bench = bench, lamp = lamp,
+			used = function() return used end,
+			budget = budget,
+		}
+		function env.container(path)
+			return owned(path)
 		end
-		-- Soffit under the overhang with two rows of downlights.
-		ctx:part("Soffit", V(60, 0.3, 9), CF(0, 23.85, 16.5), SOFFIT, PLAS)
-		for _, z in ipairs({ 14, 19 }) do
-			ctx:repeatAlong(4, V(-24, 23.6, z), V(16, 0, 0), function(_, p)
-				ctx:part("Downlight", V(1.2, 0.15, 1.2), CF(p), BULB, NEON)
-			end)
+		function env.newFolder(path, subName, className)
+			local inst = Instance.new(className or "Folder")
+			inst.Name = subName
+			place(inst, owned(path))
+			return inst
 		end
-		-- Black side panel with the shop name.
-		ctx:part("NamePanel", V(14, 23, 0.6), CF(24, 11.5, 12.6), BLACK, PLAS)
-		-- The lettering sits on its own plate on the lower storey, clear of the canopy at y 12.6.
-		local plate = ctx:part("NameText", V(12, 5, 0.2), CF(24, 7.5, 13.0), BLACK, PLAS)
-		gui(plate, Enum.NormalId.Back, "PARK OUTLET", nil, Color3.new(1, 1, 1), 30)
-		-- Brown cantilevered canopy between the floors, on angled steel struts.
-		ctx:part("ShopCanopy", V(80, 0.7, 12), CF(0, 12.6, 17.5), BROWN, PLAS)
-		ctx:repeatAlong(8, V(-35, 10.5, 15.55), V(10, 0, 0), function(_, p)
-			ctx:part("CanopyStrut", V(0.4, 0.4, 6.9), CF(p) * ANG(-0.55, 0, 0), STEEL, METAL)
-		end)
-		-- Solar roof (drone shot: nearly every roof carries blue panels), on top of the 34-high band.
-		for _, x in ipairs({ -24, 0, 24 }) do
-			for _, z in ipairs({ -6, 8 }) do
-				ctx:part("ShopSolar", V(9, 0.3, 6), CF(x, 34.7, z) * ANG(0.18, 0, 0), SOLAR, PLAS)
+		function env.section(path, sectionFn, dest, lift)
+			local c = owned(path)
+			assert(not grouping[c], "site06: grouping node holds no parts: " .. path)
+			local target = dest or c
+			assert(inside(target, path), "site06: dest is not inside container " .. path)
+			local holder = Instance.new("Model")
+			local ctx = BuildKit.new(holder, CF(ORIGIN + V(0, lift or 0, 0)), { budget = budget() })
+			sectionFn(ctx)
+			local n = ctx:count()
+			counts[path] += n
+			assert(counts[path] <= CONTAINER_CAP, string.format("site06: container %s holds %d parts, cap %d", path, counts[path], CONTAINER_CAP))
+			modUsed += n
+			used += n
+			for _, p in ipairs(ctx:parts()) do
+				place(p, target)
+			end
+			return target
+		end
+		fn(env)
+		return modUsed
+	end
+
+	for _, def in ipairs(MODULES) do
+		report[def.name] = runModule(def)
+	end
+
+	local kept = 0
+	for _, child in ipairs(existing:GetChildren()) do
+		if KEEP[child.Name] then
+			if child:IsA("BasePart") then kept += 1 end
+			for _, d in ipairs(child:GetDescendants()) do
+				if d:IsA("BasePart") then kept += 1 end
 			end
 		end
 	end
+	assert(used + kept <= SITE_CAP, string.format("site06: %d built + %d kept parts exceed the %d site cap", used, kept, SITE_CAP))
 
-	------------------------------------------------------------------ White neighbour: its own roofline, orange tower (SH frame)
-	local function buildWing(ctx)
-		ctx:part("WingBody", V(40, 22, 24), CF(66, 11, 2), WHITE, CONC)
-		ctx:part("WingParapet", V(40.8, 0.8, 24.8), CF(66, 22.4, 2), GREY, CONC)
-		ctx:part("WingFascia", V(40.8, 1.2, 0.6), CF(66, 20.6, 14.6), MAROON, PLAS) -- brown-maroon fascia (drone shot)
-		-- Tall orange accent panel at the SE end, standing 4 studs above the roof.
-		for i = 0, 2 do
-			ctx:part("AccentPlank", V(3.5, 26, 1.6), CF(77.5 + 3.5 * i, 13, 14.8), (i % 2 == 0) and ORANGE or ORANGE2, PLAS)
-		end
-		for i = 0, 2 do
-			local x = 51 + 9.8 * i
-			glass(ctx, "WingGlassGround", V(9.2, 10, 0.4), CF(x, 5.6, 14.2))
-			glass(ctx, "WingGlassUpper", V(9.2, 5, 0.3), CF(x, 17.2, 14.1))
-		end
-		for i = 0, 3 do
-			ctx:part("WingMullion", V(0.6, 11, 0.7), CF(46.2 + 9.8 * i, 5.6, 14.3), STEEL, METAL)
-		end
-		-- Rooftop solar array (4 x 3), slightly tilted.
-		for i = 0, 3 do
-			for j = 0, 2 do
-				ctx:part("SolarPanel", V(7.5, 0.3, 5), CF(51 + 9.5 * i, 23.4, -5 + 6 * j) * ANG(0.18, 0, 0), SOLAR, PLAS)
-			end
-		end
-	end
-
-	------------------------------------------------------------------ Covered walkway continuing the canopy (SH frame)
-	local function buildWalkway(ctx)
-		ctx:part("WalkwayRoof", V(46, 0.7, 14), CF(63, 12.4, 19) * ANG(0.07, 0, 0), BROWN, PLAS)
-		ctx:part("WalkwayFascia", V(46, 1, 0.4), CF(63, 11.6, 26), WHITE, PLAS)
-		for _, x in ipairs({ 46, 58, 70, 83 }) do
-			post(ctx, "WalkwayPost", 0.7, 11.4, x, 0, 25.4, STEEL, METAL)
-		end
-	end
-
-	------------------------------------------------------------------ Second block: a white two-storey unit across the courtyard (SH frame)
-	-- The drone shot shows many low blocks round courtyards; one more block, facing NE onto the forecourt, hints at that cluster.
-	-- Shop-frame x 56..92, z 46..60: 13+ studs east of the Guide, clear of the pad and the path (see site06_check).
-	local function buildSecond(ctx)
-		ctx:part("SecondBody", V(36, 22, 14), CF(74, 11, 53), WHITE, CONC)
-		ctx:part("SecondFascia", V(36.8, 1.2, 14.8), CF(74, 22.6, 53), MAROON, PLAS)
-		for _, x in ipairs({ 61, 67, 81, 87 }) do
-			glass(ctx, "SecondGlassGround", V(5.2, 9, 0.4), CF(x, 5.2, 45.8))
-		end
-		for _, x in ipairs({ 60, 67, 74, 81, 88 }) do
-			glass(ctx, "SecondGlassUpper", V(6, 7, 0.4), CF(x, 16.2, 45.8))
-		end
-		glass(ctx, "SecondDoor", V(6, 9, 0.4), CF(74, 4.5, 45.7))
-		for i = 0, 3 do
-			for _, z in ipairs({ 49.5, 56.5 }) do
-				ctx:part("SecondSolar", V(7, 0.3, 5), CF(62 + 8.6 * i, 23.6, z), SOLAR, PLAS)
-			end
-		end
-	end
-
-	------------------------------------------------------------------ Pitch-side block: long, low, maroon and white, solar roof (ORIGIN frame)
-	-- The drone shot has a long block along the pitch's near side; here it runs along the pitch's west fence (x 72.5..81.5).
-	local function buildPitchBlock(ctx)
-		ctx:part("PitchBlock", V(9, 10, 72), CF(77, 5, -56), WHITE, CONC)
-		ctx:part("PitchBlockFascia", V(9.8, 1, 72.8), CF(77, 10.5, -56), MAROON, PLAS)
-		for i = 0, 5 do
-			ctx:part("PitchBlockSolar", V(7, 0.3, 10), CF(77, 11.3, -86 + 12 * i), SOLAR, PLAS)
-		end
-		for _, z in ipairs({ -80, -56, -32 }) do
-			glass(ctx, "PitchBlockDoor", V(0.4, 9, 4), CF(81.7, 4.5, z))
-		end
-	end
-
-	------------------------------------------------------------------ Aboitiz Pitch stand: three angled segments, south of the pitch (ORIGIN frame)
-	local function buildStand(ctx)
-		local cxs = { 101.5, 121, 140.5 }
-		local yaws = { 0.12, 0, -0.12 }
-		local dzs = { -1.2, 0, -1.2 }
-		for k = 1, 3 do
-			local seg = CF(cxs[k], 0, 18.5 + dzs[k]) * ANG(0, yaws[k], 0)
-			for i = 0, 4 do
-				local h = 1.4 * (i + 1)
-				local name = (k == 2 and i == 0) and "StandTiers" or "StandTier"
-				ctx:part(name, V(19, h, 5), seg * CF(0, h / 2, 8.5 + 5 * i - 18.5), CONCRETE, CONC)
-			end
-			ctx:part("StandBackWall", V(19, 13, 0.8), seg * CF(0, 6.5, 12.9), WHITE, CONC)
-			ctx:part("StandCanopy", V(19.4, 0.6, 15), seg * CF(0, 13.6, 5.5), BROWN, PLAS)
-			for _, sx in ipairs({ -9, 9 }) do
-				ctx:cyl("StandPost", V(13.3, 0.8, 0.8), seg * CF(sx, 6.65, -1.5) * ANG(0, 0, PI / 2), STEEL, METAL)
-			end
-			for _, sx in ipairs({ -4.8, 4.8 }) do
-				for _, sz in ipairs({ 2, 9.3 }) do
-					ctx:part("StandSolar", V(9, 0.25, 6.5), seg * CF(sx, 14.05, sz), SOLAR, PLAS)
-				end
-			end
-		end
-		-- Central stair up the middle segment.
-		local mid = CF(cxs[2], 0, 18.5)
-		for i = 0, 4 do
-			local h = 1.4 * (i + 1) + 0.1
-			ctx:part("StandStair", V(2.6, h, 5), mid * CF(0, h / 2, 8.5 + 5 * i - 18.5), CONCRETE_LIGHT, CONC)
-		end
-	end
-
-	------------------------------------------------------------------ Sports field: the Aboitiz Pitch (ORIGIN frame)
-	local function buildPitch(ctx)
-		local cx, w, l = 121, 62, 96
-		local north, south = -96, 0
-		ctx:part("PitchTurf", V(w, 0.5, l), CF(cx, 0.25, (north + south) / 2), TURF, PLAS)
-		for k = 0, 3 do -- mown stripes: every other 12-stud band
-			ctx:part("PitchStripe", V(w, 0.05, 12), CF(cx, 0.525, south - 6 - 24 * k), TURF2, PLAS)
-		end
-		local function line(x, z, sx, sz, color)
-			return ctx:part("PitchLine", V(sx, 0.05, sz), CF(x, 0.575, z), color or LINE_W, PLAS)
-		end
-		-- Boundary, halfway line and centre circle (12 straight segments).
-		line(cx, north + 1.5, w - 3, 0.35)
-		line(cx, south - 1.5, w - 3, 0.35)
-		line(cx - (w - 3) / 2, (north + south) / 2, 0.35, l - 3)
-		line(cx + (w - 3) / 2, (north + south) / 2, 0.35, l - 3)
-		line(cx, (north + south) / 2, w - 3, 0.35)
-		for k = 0, 11 do
-			local th = k * PI / 6
-			ctx:part("PitchCircle", V(4.3, 0.05, 0.35), CF(cx + 8 * math.cos(th), 0.575, -48 + 8 * math.sin(th)) * ANG(0, -th + PI / 2, 0), LINE_W, PLAS)
-		end
-		-- Penalty and goal areas at both ends (dir = +1 runs south from the north goal line, -1 north from the south one).
-		local function penalty(z0, dir)
-			line(cx, z0 + dir * 14, 30, 0.35)
-			line(cx - 15, z0 + dir * 7, 0.35, 14)
-			line(cx + 15, z0 + dir * 7, 0.35, 14)
-			line(cx, z0 + dir * 5, 14, 0.35)
-			line(cx - 7, z0 + dir * 2.5, 0.35, 5)
-			line(cx + 7, z0 + dir * 2.5, 0.35, 5)
-		end
-		penalty(north + 1.5, 1)
-		penalty(south - 1.5, -1)
-		-- Orange small-sided pitch markings in the southern half (Aboitiz_Pitch_Stand_From_Above.jpg).
-		line(cx, -34, 42, 0.35, LINE_O)
-		line(cx, -8, 42, 0.35, LINE_O)
-		line(cx - 21, -21, 0.35, 26, LINE_O)
-		line(cx + 21, -21, 0.35, 26, LINE_O)
-		-- Two full-size goals with nets (dir = +1 when the pitch lies to the south of the goal line).
-		local function goal(z, dir)
-			local gw, gh, gd = 18, 6, 4
-			for _, sx in ipairs({ -1, 1 }) do
-				ctx:part("GoalPost", V(0.5, gh, 0.5), CF(cx + sx * gw / 2, 0.5 + gh / 2, z), WHITE, METAL)
-				net(ctx, "GoalSideNet", V(0.1, gh, gd), CF(cx + sx * gw / 2, 0.5 + gh / 2, z - dir * gd / 2), WHITE)
-			end
-			ctx:part("GoalBar", V(gw + 0.5, 0.5, 0.5), CF(cx, 0.5 + gh, z), WHITE, METAL)
-			net(ctx, "GoalBackNet", V(gw, gh, 0.1), CF(cx, 0.5 + gh / 2, z - dir * gd), WHITE)
-			net(ctx, "GoalTopNet", V(gw, 0.1, gd), CF(cx, 0.5 + gh, z - dir * gd / 2), WHITE)
-		end
-		goal(north + 1.5, 1)
-		goal(south - 1.5, -1)
-		-- Five small training goals lined up along the stand side, each turned a little.
-		for i, x in ipairs({ 100, 109, 118, 129, 139 }) do
-			local base = CF(x, 0, -5) * ANG(0, ({ 0.5, -0.3, 0.2, -0.5, 0.3 })[i], 0)
-			for _, sx in ipairs({ -3.5, 3.5 }) do
-				ctx:part("TrainGoalPost", V(0.35, 3.4, 0.35), base * CF(sx, 0.5 + 1.7, 0), WHITE, METAL)
-			end
-			ctx:part("TrainGoalBar", V(7.3, 0.35, 0.35), base * CF(0, 0.5 + 3.4, 0), WHITE, METAL)
-			net(ctx, "TrainGoalNet", V(7, 3.4, 0.1), base * CF(0, 0.5 + 1.7, -1.8), WHITE)
-		end
-		-- Perimeter fence (east, north, west; the stand closes the south side) and its posts.
-		local fh = 8
-		net(ctx, "FenceEast", V(0.15, fh, 102), CF(154, fh / 2, -48), STEEL)
-		net(ctx, "FenceWest", V(0.15, fh, 102), CF(88, fh / 2, -48), STEEL)
-		net(ctx, "FenceNorth", V(w + 4, fh, 0.15), CF(cx, fh / 2, -99), STEEL)
-		for i = 0, 8 do
-			local z = -96 + 12 * i
-			post(ctx, "FencePost", 0.5, fh, 154, 0, z, STEEL, METAL)
-			post(ctx, "FencePost", 0.5, fh, 88, 0, z, STEEL, METAL)
-		end
-		for i = 0, 5 do
-			post(ctx, "FencePost", 0.5, fh, 92 + 12 * i, 0, -99, STEEL, METAL)
-		end
-		-- Four floodlight masts at the corners.
-		for _, p in ipairs({ { 86, -98 }, { 156, -98 }, { 156, 2 }, { 86, 2 } }) do
-			post(ctx, "FloodMast", 1, 28, p[1], 0, p[2], STEEL, METAL)
-			ctx:part("FloodHead", V(6, 3, 1), CF(p[1], 28.5, p[2]) * ANG(0.3, 0, 0), BLACK, PLAS)
-		end
-	end
-
-	------------------------------------------------------------------ Shop street: forecourt, trees, string lights, pylon (SH frame)
-	local function buildStreet(ctx)
-		ctx:part("ForecourtSlab", V(140, 0.4, 24), CF(20, 0.2, 30), BRICK, CONC)
-		ctx:part("ConnectPath", V(6, 0.3, 9), CF(22.4, 0.15, 46.5), CONCRETE_LIGHT, CONC) -- z 42..51: stops at the pad's near corner (51.4)
-		for _, x in ipairs({ 6, 56, 84 }) do
-			tree(ctx, x, 40)
-		end
-		for _, x in ipairs({ -36, -24, -12, 0, 12 }) do
-			post(ctx, "Bollard", 0.9, 3.6, x, 0.4, 26.5, YELLOW, PLAS)
-		end
-		for _, x in ipairs({ -24, 24, 48, 72 }) do
-			bench(ctx, x, 37)
-		end
-		-- String lights: three poles and two sagging spans with warm bulbs.
-		local poles = { -44, -18, 28 }
-		for _, x in ipairs(poles) do
-			post(ctx, "LightPole", 0.6, 14.1, x, 0.4, 25, STEEL, METAL)
-		end
-		for s = 1, 2 do
-			local x0, x1 = poles[s], poles[s + 1]
-			local xm = (x0 + x1) / 2
-			local top, low = V(x0, 14.5, 25), V(xm, 13.1, 25)
-			local top2 = V(x1, 14.5, 25)
-			for _, seg in ipairs({ { top, low }, { low, top2 } }) do
-				local a, b = seg[1], seg[2]
-				ctx:part("LightWire", V(0.12, 0.12, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), BLACK, PLAS)
-			end
-			local n = (s == 1) and 5 or 8
-			for i = 1, n do
-				local t = i / (n + 1)
-				local y = 14.5 - 1.4 * (1 - math.abs(2 * t - 1))
-				ctx:ball("Bulb", 0.6, CF(x0 + (x1 - x0) * t, y - 0.45, 25), BULB, NEON)
-			end
-		end
-		-- Courtyard between the forecourt and the second block: a link slab, two planters with clipped shrubs.
-		ctx:part("CourtyardLink", V(40, 0.4, 4), CF(74, 0.2, 44), BRICK, CONC)
-		for _, x in ipairs({ 64.5, 78 }) do
-			ctx:part("CourtyardPlanter", V(8, 1.2, 3), CF(x, 0.6, 40), CONCRETE_LIGHT, CONC)
-			for _, dx in ipairs({ -2, 2 }) do
-				ctx:ball("CourtyardShrub", 3.6, CF(x + dx, 2.6, 40), HEDGE, LEAFM)
-			end
-		end
-	end
-
-	------------------------------------------------------------------ Grounds: entrance sign, entry path, car park, palms, hedges
-	local function buildGrounds(ctx)
-		-- Entrance sign (SIGN frame, faces SW toward the road mouth): paved apron with painted stripes, plinth, slatted frame,
-		-- coloured lettering on a silver back panel seen through the slats (Outlets_Entrance_Sign.jpg).
-		ctx:part("SignApron", V(38, 0.4, 20), SIGN * CF(0, 0.2, 12), CONCRETE_LIGHT, CONC)
-		for i = 0, 8 do
-			ctx:part("SignStripe", V(1.3, 0.05, 14), SIGN * CF(-16 + 4 * i, 0.43, 12) * ANG(0, 0.35, 0), BLACK, PLAS)
-		end
-		ctx:part("SignPlinth", V(36, 1.2, 4.4), SIGN * CF(0, 0.6, 0), WHITE, CONC)
-		local back = ctx:part("EntranceSign", V(34, 13, 0.5), SIGN * CF(0, 7.7, -0.6), Color3.fromRGB(205, 206, 208), PLAS)
-		richGui(back, Enum.NormalId.Back,
-			'<font color="#D8231F">%</font> <font color="#2B2E3A">THE</font> <font color="#0A4FC4">O</font>'
-				.. '<font color="#2FA83A">U</font><font color="#0A4FC4">T</font><font color="#E0502A">L</font>'
-				.. '<font color="#B1182B">E</font><font color="#E5A21E">T</font><font color="#4B1B5A">S</font>', 24)
-		for i = 0, 14 do
-			ctx:part("SignSlat", V(0.8, 14, 1.6), SIGN * CF(-16.8 + 2.4 * i, 8.2, 1.0), WHITE, CONC)
-		end
-		ctx:part("SignCap", V(36, 1, 4.4), SIGN * CF(0, 15.7, 0), WHITE, CONC)
-
-		-- Entry path from the road mouth (-120, +100), with a spur east toward the Guide (it stops 21 studs short of her).
-		ctx:part("EntryPath", V(16, 0.4, 76), CF(-120, 0.2, 62), ROAD, CONC) -- the concrete approach road, kerbed in buildJunction
-		ctx:part("EntrySpur", V(86, 0.4, 10), CF(-83, 0.2, 25), CONCRETE_LIGHT, CONC)
-
-		-- Car park south of the shops: slab, bay lines, a few cars, light poles.
-		-- Slice 16: moved 9 studs south (z 62..106) to leave room for the second block; light concrete like the road.
-		ctx:part("CarParkSlab", V(118, 0.4, 44), CF(-1, 0.2, 84), ROAD2, CONC)
-		for _, zc in ipairs({ 72, 96 }) do
-			ctx:repeatAlong(13, V(-54, 0.43, zc), V(9, 0, 0), function(_, p)
-				ctx:part("BayLine", V(0.3, 0.05, 12), CF(p), LINE_W, PLAS)
-			end)
-		end
-		car(ctx, -36, 72, WHITE)
-		car(ctx, -9, 72, Color3.fromRGB(170, 40, 40))
-		car(ctx, -27, 96, Color3.fromRGB(150, 154, 160))
-		car(ctx, 18, 96, Color3.fromRGB(30, 50, 110))
-		car(ctx, 45, 96, Color3.fromRGB(60, 62, 68))
-		for _, x in ipairs({ -40, -10, 20, 50 }) do
-			post(ctx, "CarParkPole", 0.8, 16, x, 0.4, 84, STEEL, METAL)
-			ctx:part("CarParkLamp", V(4, 0.6, 1.2), CF(x, 16.6, 84), BULB, NEON)
-		end
-
-		-- Palm row along the car park's west edge (the entry avenue and the junction island are in buildJunction).
-		for _, p in ipairs({ { -66, 56 }, { -66, 76 }, { -66, 96 } }) do
-			palm(ctx, p[1], p[2])
-		end
-	end
-
-	------------------------------------------------------------------ Junction: kerbed road, sidewalks, avenue, island, billboard, pylon, office (ORIGIN frame)
-	-- From the Commons junction photos (Judgefloro, CC0): light-grey concrete road with black and yellow painted kerbs, a zebra
-	-- crossing, light paver sidewalks, royal palms down both sides, cobra-head lamps with purple banners, an island of clipped
-	-- round shrubs with foxtail palms and a lava rock behind yellow chain bollards, a billboard on a steel frame, a tall tenant
-	-- pylon with a red chevron, and a low white entrance office with a red door. The road is the 16-wide EntryPath (x -128..-112).
-	local function buildJunction(ctx)
-		-- Painted kerbs, 4-stud segments alternating black and yellow; the east kerb starts at z 34 so the spur stays open.
-		for i = 0, 17 do
-			ctx:part((i % 2 == 0) and "KerbBlack" or "KerbYellow", V(0.8, 0.6, 4), CF(-128.4, 0.3, 28 + 4 * i), (i % 2 == 0) and BLACK or YELLOW, CONC)
-		end
-		for i = 0, 15 do
-			ctx:part((i % 2 == 0) and "KerbBlack" or "KerbYellow", V(0.8, 0.6, 4), CF(-111.6, 0.3, 36 + 4 * i), (i % 2 == 0) and BLACK or YELLOW, CONC)
-		end
-		for i = 0, 6 do
-			ctx:part("ZebraStripe", V(1.2, 0.05, 6), CF(-124.8 + 2.1 * i, 0.43, 91), LINE_W, PLAS)
-		end
-		-- Paver sidewalks, 0.4 thick (thinner paving is buried by the terrain's grass blades).
-		ctx:part("PaverStrip", V(5, 0.4, 68), CF(-131.5, 0.2, 66), PAVER, CONC)
-		ctx:part("PaverStrip", V(5, 0.4, 68), CF(-108.5, 0.2, 66), PAVER, CONC)
-		-- Cobra-head lamps on the east sidewalk, each with a purple "NOW OPEN" banner facing the road.
-		for _, z in ipairs({ 44, 62, 80, 96 }) do
-			post(ctx, "StreetLampPole", 0.7, 16, -108.5, 0.4, z, STEEL, METAL)
-			ctx:part("StreetLampArm", V(3.6, 0.4, 0.4), CF(-110.3, 16.2, z), STEEL, METAL)
-			ctx:part("StreetLampHead", V(1.8, 0.4, 0.9), CF(-112.2, 16, z), Color3.fromRGB(230, 230, 220), PLAS)
-			local banner = ctx:part("LampBanner", V(0.2, 5.5, 1.8), CF(-109.4, 9.5, z), PURPLE, PLAS)
-			gui(banner, Enum.NormalId.Left, "NOW OPEN", nil, Color3.new(1, 1, 1), 40)
-		end
-		for _, z in ipairs({ 52, 70 }) do
-			ctx:part("WaterBarrier", V(1.6, 3, 5), CF(-108.5, 1.9, z), Color3.fromRGB(214, 100, 64), PLAS)
-		end
-		-- Royal palms down both sides of the road (the junction island carries its own).
-		for _, p in ipairs({ { -139, 34 }, { -139, 46 }, { -103, 33 }, { -103, 42 } }) do
-			palm(ctx, p[1], p[2])
-		end
-
-		-- Island: a 0.4 thick lawn (x -150..-136, z 58..100), 28 clipped round shrubs, 3 palms, 2 lava rocks, chain bollards.
-		ctx:part("IslandLawn", V(14, 0.4, 42), CF(-143, 0.2, 79), GRASSC, LEAFM)
-		local seed = 7
-		local function rnd()
-			seed = (seed * 16807) % 2147483647
-			return seed / 2147483647
-		end
-		for i = 1, 28 do
-			local d = 3 + rnd() * 3.2
-			ctx:ball("Topiary", d, CF(-148.6 + rnd() * 11.2, 0.4 + d * 0.4, 59 + rnd() * 40), TOPIARY[(i - 1) % 5 + 1], LEAFM)
-		end
-		for _, p in ipairs({ { -141, 64 }, { -146, 78 }, { -141, 92 } }) do
-			palm(ctx, p[1], p[2])
-		end
-		ctx:part("IslandRock", V(3.2, 2.2, 3), CF(-139.5, 1.2, 72) * ANG(0.2, 0.6, 0.1), SLATE, Enum.Material.Slate)
-		ctx:part("IslandRock", V(3, 2, 3.2), CF(-146, 1.2, 88) * ANG(0.1, 1.1, 0.2), SLATE, Enum.Material.Slate)
-		for i = 0, 6 do
-			post(ctx, "ChainBollard", 0.6, 3.4, -135.2, 0.4, 60 + 6 * i, YELLOW, PLAS)
-		end
-		for i = 0, 5 do
-			ctx:part("ChainLink", V(0.12, 0.12, 6), CF(-135.2, 3.2, 63 + 6 * i), BLACK, PLAS)
-		end
-
-		-- Billboard on a steel frame west of the road, facing east (text and plain colours only, no photo texture).
-		for _, z in ipairs({ 34, 50 }) do
-			post(ctx, "BillboardPost", 1.6, 18, -152, 0, z, STEEL, METAL)
-		end
-		ctx:part("BillboardFrame", V(0.5, 11.2, 25.2), CF(-152.6, 22, 42), DARK, PLAS)
-		ctx:part("BillboardAccent", V(0.5, 1.2, 24), CF(-151.7, 16.4, 42), REDC, PLAS)
-		local board = ctx:part("BillboardPanel", V(0.8, 10, 24), CF(-152, 22, 42), WHITE, PLAS)
-		gui(board, Enum.NormalId.Right, "% THE OUTLETS", "ALL-OUT ON GREAT DEALS. GREAT FINDS.", Color3.fromRGB(180, 30, 40), 30)
-
-		-- Tenant pylon at the road mouth: tall steel stack of seven panels with a red chevron and a dark-grey backing.
-		ctx:part("PylonBody", V(1.2, 26, 3.6), CF(-94, 13, 98), STEEL, METAL)
-		for i, text in ipairs({ "SPORTSWEAR OUTLET", "FOOTWEAR OUTLET", "ABOITIZ PITCH", "FOOD HALL", "PARKING", "RESTROOMS", "INFO" }) do
-			local bar = ctx:part("PylonSign", V(0.2, 2.6, 3.2), CF(-94.7, 2.8 + 3.3 * (i - 1), 98), WHITE, PLAS)
-			gui(bar, Enum.NormalId.Left, text, nil, Color3.fromRGB(30, 36, 48), 40)
-		end
-		-- (z 101: the 11-stud diamond's far corner then reaches z 108.8, inside the footprint +10% of 110)
-		ctx:part("PylonChevronDark", V(1, 8, 8), CF(-95.7, 7, 101) * ANG(PI / 4, 0, 0), Color3.fromRGB(62, 64, 70), PLAS)
-		ctx:part("PylonChevron", V(1.2, 11, 11), CF(-96.5, 7, 101) * ANG(PI / 4, 0, 0), REDC, PLAS)
-
-		-- Entrance office: a low white block with a red door on its west face and a flat canopy on two posts.
-		ctx:part("OfficeBody", V(10, 9, 12), CF(-87, 4.5, 86), WHITE, CONC)
-		ctx:part("OfficeDoor", V(0.3, 8.6, 4), CF(-92.1, 4.3, 86), Color3.fromRGB(200, 40, 40), PLAS)
-		ctx:part("OfficeCanopy", V(6, 0.4, 12), CF(-95, 9.8, 86), Color3.fromRGB(60, 64, 70), PLAS)
-		for _, z in ipairs({ 81, 91 }) do
-			post(ctx, "OfficePost", 0.6, 9.6, -97.5, 0, z, STEEL, METAL)
-		end
-	end
-
-	------------------------------------------------------------------ Required props: estate model pedestal and the Lipa/Malvar panel (SH frame)
-	local function buildPedestal(ctx)
-		local x, z = -12, 31
-		local plinth = ctx:part("Plinth", V(8, 3.5, 8), CF(x, 2.15, z), WHITE, CONC)
-		gui(plinth, Enum.NormalId.Back, "LIMA ESTATE MODEL", "A small model of the estate. LIMA Estate spans Lipa and Malvar.", Color3.fromRGB(30, 36, 48), 40)
-		ctx:part("ModelBase", V(7.4, 0.3, 7.4), CF(x, 4.05, z), DARK, PLAS)
-		ctx:part("ModelPitch", V(2.6, 0.15, 4.2), CF(x + 1.9, 4.28, z - 0.8), TURF, PLAS)
-		ctx:part("ModelShop", V(2.4, 1.6, 2), CF(x - 2, 5, z - 2), ORANGE, PLAS)
-		ctx:part("ModelWing", V(2.8, 1.1, 1.8), CF(x - 0.8, 4.7, z + 0.2), WHITE, PLAS)
-		ctx:part("ModelStand", V(2.6, 0.45, 0.8), CF(x + 1.9, 4.4, z + 2), CONCRETE, PLAS)
-		local case = ctx:part("ModelCase", V(7.4, 3, 7.4), CF(x, 5.65, z), GLASSC, GLASS)
-		case.Transparency = 0.75
-	end
-
-	local function buildPanel(ctx)
-		local cx, z = -40, 31
-		for _, dx in ipairs({ -9.5, 9.5 }) do
-			ctx:part("PanelPost", V(0.6, 13.6, 0.6), CF(cx + dx, 6.8, z - 0.5), STEEL, METAL)
-		end
-		local title = ctx:part("PanelTitle", V(22, 2.4, 0.5), CF(cx, 12.4, z), Color3.fromRGB(30, 36, 48), PLAS)
-		gui(title, Enum.NormalId.Back, "LIMA ESTATE SPANS LIPA AND MALVAR", nil, Color3.new(1, 1, 1), 40)
-		local left = ctx:part("PanelLipa", V(10.75, 6, 0.5), CF(cx - 5.625, 8.2, z), Color3.fromRGB(30, 70, 140), PLAS)
-		gui(left, Enum.NormalId.Back, "LIPA CITY", nil, Color3.new(1, 1, 1), 40)
-		local right = ctx:part("PanelMalvar", V(10.75, 6, 0.5), CF(cx + 5.625, 8.2, z), Color3.fromRGB(40, 120, 70), PLAS)
-		gui(right, Enum.NormalId.Back, "MALVAR", nil, Color3.new(1, 1, 1), 40)
-		ctx:part("PanelDivider", V(0.5, 6, 0.7), CF(cx, 8.2, z), WHITE, PLAS)
-		local foot = ctx:part("PanelFooter", V(22, 2, 0.5), CF(cx, 4.2, z), Color3.fromRGB(30, 36, 48), PLAS)
-		gui(foot, Enum.NormalId.Back, "Schematic map, not to scale. The estate spans Lipa and Malvar.", nil, Color3.new(1, 1, 1), 40)
-	end
-
-	------------------------------------------------------------------ Build, then swap
-	local ok, err = pcall(function()
-		component("ShopBlock", "Structure", SH, buildShop)
-		component("WhiteWing", "Structure", SH, buildWing)
-		component("Walkway", "Structure", SH, buildWalkway)
-		component("Stand", "Structure", ORIGIN, buildStand)
-		component("SportsField", "Site", ORIGIN, buildPitch)
-		component("SecondBlock", "Structure", SH, buildSecond)
-		component("PitchBlock", "Structure", ORIGIN, buildPitchBlock)
-		component("ShopStreet", "Site", SH, buildStreet)
-		component("Grounds", "Site", ORIGIN, buildGrounds)
-		component("Junction", "Site", ORIGIN, buildJunction)
-		component("EstateModelPedestal", "Site", SH, buildPedestal)
-		component("LipaMalvarPanel", "Site", SH, buildPanel)
-		assert(used <= PART_BUDGET, string.format("site06: %d parts exceeds the %d budget", used, PART_BUDGET))
-	end)
-	if not ok then
-		for _, b in ipairs(built) do b.model:Destroy() end
-		error("site06: build failed, the placeholder Block was left untouched: " .. tostring(err), 0)
-	end
-
+	------------------------------------------------------------------ swap
+	local site = existing
 	for _, child in ipairs(site:GetChildren()) do
-		if REPLACED[child.Name] then child:Destroy() end
+		if not KEEP[child.Name] then child:Destroy() end
 	end
-	local structure = Instance.new("Folder")
-	structure.Name = "Structure"
-	structure.Parent = site
-	for _, b in ipairs(built) do
-		b.model.Parent = (b.parent == "Structure") and structure or site
-		task.wait()
+	for i, e in ipairs(plan) do
+		e.inst.Parent = (e.dest == SITE_TOKEN) and site or e.dest
+		if i % 200 == 0 then task.wait() end
 	end
 
-	local pivotAfter = site:GetPivot()
-	assert((pivotAfter.Position - pivotBefore.Position).Magnitude < 1e-3 and pivotAfter.LookVector:Dot(pivotBefore.LookVector) > 0.9999,
-		"site06: the site pivot changed during the build")
+	-- Property write: no part moves. Faces SW, at the new slot centre (the kept objects keep their world positions).
+	site.WorldPivot = CFrame.lookAt(ORIGIN, ORIGIN + SW)
 
-	local perComponent = {}
-	for _, b in ipairs(built) do perComponent[b.name] = b.parts end
+	local names = {}
+	for _, c in ipairs(site:GetChildren()) do table.insert(names, c.Name) end
+	table.sort(names)
+	local total, perContainer = 0, {}
+	for _, d in ipairs(site:GetDescendants()) do
+		if d:IsA("BasePart") then total += 1 end
+	end
+	for path, n in pairs(counts) do perContainer[#perContainer + 1] = path .. "=" .. n end
+	table.sort(perContainer)
 	return {
-		parts = countParts(site),
-		keptParts = keptParts,
-		builtParts = used - keptParts,
-		components = perComponent,
+		parts = total,
+		builtParts = used,
+		keptParts = kept,
+		ground = ground,
+		modules = report,
+		containers = table.concat(perContainer, ","),
+		children = table.concat(names, ","),
 	}
 end

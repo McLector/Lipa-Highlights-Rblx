@@ -111,3 +111,63 @@ Horizontal layering across the pool: water, coping, terrace, glass, roof; the lo
 | 6 | (model bug) | `WellnessBoard` 213 characters TextScaled (tiny type) | fixed 18 px wrapped text |
 
 **Guard changed on purpose (sites_check, Site 7):** the thatch sight-line ray was aimed at each tier's axis centre, which cannot see the upper tiers of a fine cone from a low eye (9 of 12). It now aims at each tier's near-side edge, the surface a player sees. The guard still needs 80% of the tiers visible; 12 of 12 pass.
+
+# Revision 2 (Standard tier, 2026-10-31): rebuilt from the San Benito board - supersedes the layout above where they differ
+
+Source: `..\2nd Reference\the_farm_san_benito\San_benito_blueprint.png` (main 3-D view, insets A site plan, B Narra pool villas, C Acqua Hydrotherapy, D Big Lagoon and pavilion, E Temple of Five Elements and garden), plan `scratch/standard_tier_plan.md` "07 Farm". Owner decisions: slot about 400 x 320 at (770,240); not to scale, the board's relative layout kept, buildings at human scale; PARTS ONLY (no terrain writes; rivers and lagoons are parts flush with the ground); split into modules. The board's north is world north (-Z).
+
+## Slot and data
+`SiteData` row 7: pos (770, 0, 240), facing W, size 400 x 320 (x 570..970, z 80..400; the west edge stays at Road C's end), `guideLocal` (100, 0) and `panelLocal` (94, -12): the Guide (670,240), InfoPanel (676,252) and JeepStop (670,220) keep their world positions (measured before the edit). No `jeepLocal`: the default (Guide + 20 to the right) already gives (670,220), and a `jeepLocal` would switch sites_check to its "own curb, 40-90 studs" branch. The site pivot was written to (770,0,240) facing W in the same step as the data edit (a property write). `docs/footprints.md` row 7 updated. NPCs (`builders/npcs.luau` [7]): YogaGuest (736,300) -> (756,206) on the round pavilion's floor (seat 1.15 unchanged), FarmStaff (726,293) -> (745,214) on the plaza beside it; `npcs({only={7}})` run.
+
+## Model (coordinator `builders/site07.luau`, site05 pattern; world coordinates; KEEP Guide, InfoPanel, JeepStop, JeepSignPole, JeepSign, Jeepney, LocalNPCs)
+| Module | Containers | Board zone, as built (world) |
+|---|---|---|
+| `site07_entrance` (257) | Structure/River, Entrance, Banaba, Parking | river ring: 60 chords, water 14 wide on the ellipse a 189, b 147 (water a 182..196, b 140..154), y -0.38..0.12, mud bank 18 wide; bridge x 571..595, z 232..248 (deck top 0.7, parapets 3 high); gate piers x 610..614 at z 225..230 / 250..255, beam y 10..11.5, hip roof; guard post x 618..628, z 214..224 (door 8.2); Banaba court x 694..806, z 292..360 (y -0.5..0.35, covers the old terrain lagoon and its smoothed edge), hall x 714..790, z 314..344, 19 high, 3 brown hip roofs + entrance canopy; parking x 652..698, z 300..340, drive x 648..656, z 260..300, 18 bay lines, 6 cars |
+| `site07_water` (109) | Structure/BigLagoon, Acqua, FrontOffice | Big Lagoon: 5 water discs x 720..799, z 130..195, sand rim, rocks; hip-roofed two-tier pavilion on a deck x 776..794, z 168..186, rails 3 high, boardwalk to the plaza; Acqua deck x 606..648, z 254..296, 5 pools (PoolWater x 614..630, z 262..278), 2 cabanas, loungers; Front Office x 848..882, z 236..262 with porch; its lagoon (906,246)+(922,258) |
+| `site07_villas` (150) | GardenPavilion, Structure/GlassVilla, NarraVillas, Amphitheater | round thatched pavilion (756,206): floor dia 16 top 1.0, 8 posts, 12 thatch tiers (Slice 20 profile), finial; glass villa x 780..808, z 220..252, 8 VillaGlassPane on x 780, VillaBody = back wall x 806..808, brown hip roof eave 12; Narra villas at (821,124), (851,134), (880,150) with pools south; amphitheater (744,248): stage dia 12, 4 octagonal tiers r 9..21, top 3.45, aisle WSW |
+| `site07_halls` (90) | Structure/Temple, Sanctuary | temple plinth x 682..698, z 128..144, two-tier hip roof; labyrinth (690,166): 8 rings dia 34..6, fountain, hedge ring open south; Sanctuary x 830..910, z 288..308, 19 high, 3 brown hip roofs, veranda on 8 columns |
+| `site07_grounds` (1379) | LandscapedPath/Entry, Plaza, Walks; WellnessPanel; Structure/PalmsA, PalmsB, PalmsC, Trees | PathStart x 595..607, entry path to x 652 (pebble, white chevrons, mossy curbs), arrival plaza x 652..700, z 192..260 (bare only under the Guide and the jeep pad), central plaza x 700..800, z 200..280, south walk, 9 winding walks; Wellness board x 702..704, z 194..206 (text unchanged, fixed 18 px, west face); 120 palms (8 parts), 72 trees, 90 shrubs on a hashed grid, kept out of zones, walks, the river band and the sight-line corridors |
+
+## Tests first
+Red (old 723-part model, before the data edit): site07_check 38/52; sites_check 276/1 (the replaced deck pin); unit suite 282 run, 3 failed (2 Farm cases + the Outlets agent's row 6 case). Green: site07_check 91/0 (91 checks: the bridge group has one check more once the bridge exists), sites_check 277/0, unit 282/0.
+
+| Old pin | Replaced by (board) |
+|---|---|
+| site07_check: pivot at (700,0,240) facing W | (770,0,240) facing W |
+| site07_check: pool water dark teal (r <= 40, g <= 115, b <= 112) | PoolWater is the board's pool blue (b >= 140, b > r + 60, g >= 100); transparency 0.05..0.3 (was <= 0.3) |
+| site07_check: >= 10 CopingJoint | >= 4 AcquaCoping |
+| site07_check: 19 palms | >= 60 palms |
+| site07_check: 8 fronds per palm (152) | 6 fronds per palm |
+| site07_check: 6 WingPost; posts ground to eave on the screen line | VillaRoof is brown; its eave >= 11 |
+| site07_check: part count 600..1500 | 1700..2400 built, whole site <= 2500 |
+| sites_check: pavilion deck south of the pool (deck.Z > pool.Z + 30) | pavilion deck north-west of VillaBody (Z < body.Z - 15, X < body.X), within 70 |
+| SiteData_Test: [7] = (700, 240, W) | (770, 240, W); the "rows 3 to 9" loop skips row 7 (its literal guidePos(7) = (670,0,240) pin kept) |
+
+Kept and still passing: kept objects, required props, the six anchors, the 12-tier cone (5 checks) and finial, palms >= 15.5 tall, fronds >= 8.5 and not colliding, label legibility; in sites_check the glass-on-west, roof-above-glass, pool-west-of-villa, path-start and Wellness-board pins, the four lanes, the three keep-clear boxes and the three sight-lines. New: board pins in groups general, entrance, south, centre, north, east, planting, ground (river ring and flushness, bridge, gate, guard post, Banaba, parking, Acqua, the look-at group, amphitheater, lagoon and pavilion, temple and labyrinth, Narra row, Front Office and lagoon, Sanctuary, planting, every old Pavement and Water cell covered). SiteData_Test: one new case (row 7 slot and the three world positions).
+
+## Board vs model
+| Item | Result |
+|---|---|
+| Oval ringed by the North and South rivers | MATCH (a ring of parts; the oval is 1.3:1, the board's about 2.2:1: the slot's proportion) |
+| Main entrance, guard post and bridge | DIFF: at the west tip, where Road C arrives; the board draws them mid-south |
+| Banaba hall and parking beside the entrance on the South river | MATCH in the south-west; DIFF: the parking lies west of the hall (between the hall and the Acqua pools), not between the hall and the gate |
+| Front Office and lagoon (E), Holistic Medical Sanctuary (SE) | MATCH |
+| Big Lagoon (N centre) with its hip-roofed pavilion | MATCH |
+| Amphitheater (centre); round thatched hut beside a villa just north of it | MATCH |
+| Temple of Five Elements with the labyrinth garden (NW) | MATCH; temple north of the rings as in inset E |
+| Narra pool villas | MATCH: a row of 3 along the North river, NE |
+| Acqua Hydrotherapy pools and cabanas | MATCH (W) |
+| Dense palms | MATCH at the edges; DIFF: the centre is paved plaza and lawn, sparser than the board |
+| Other zones (Garden Glass, Acacia, Mahogany, Isla Royale, restaurants, gym, South Pool and others) | not built (plan) |
+| River surface | DIFF: terrain grass blades poke through the flush river parts in places (terrain decoration; no terrain or setting change allowed) |
+
+## Text
+No line changed. "Look at the round thatched pavilion beside the straight-edged villa ... Then follow the patterned path." stays true: the GardenPavilion stands beside the glass villa, both east of the Guide, with the chevron path at the Guide's feet (`scratch/site07/shots/guide_lookat.jpg`). The Wellness board words are unchanged. No entrance lettering or zone labels were built (pinned: the only built text is the Wellness board).
+
+## Verification
+Coordinator run twice: 2052 and 2052 parts (built 1985, kept 67; entrance 257, water 109, villas 150, halls 90, grounds 1379; largest containers PalmsA and PalmsB 360). BuildCheck 07 14/0 (2052). site07_check 91/0, sites_check 277/0, npcs_check 237/0, guides_check 123/0, routes_check 16/0, roads_check 281/0, qa_check 116/0, placeholders_check 32/0, unit 282/0. checkWorld FAILS: 21275 parts against the 20,000 cap (all sites together; the Farm adds 1329).
+Shots: `scratch/site07/shots/front_oblique.jpg`, `board_view.jpg`, `top_down.jpg`, `guide_lookat.jpg`, `wellness_board.jpg`.
+
+## Tidy pass (owner's look, 2026-10-31)
+Rivers, lagoons and pools raised so every water top is at y 1.05..1.45 (grass blades render to about y 0.9); the river and lagoons are one opaque SmoothPlastic deep blue-teal (28,104,142), no Glass seams; grassy banks; bridge deck top 1.7 with ramps; pavilion deck, boardwalk, Acqua and Narra decks raised to match. The central plaza and the Banaba court became lawn (Grass parts, terrain colour) with 5-wide walks, a small forecourt and a walk at the hall; the arrival area is a patterned band plus a jeep apron. 9 small brown hip-roof villas (3 north, 4 west, 2 south-west with pools). Planting 100 palms (wider fronds) and 256 broadleaf trees (crowns 17..23, not colliding), no shrubs.
+Pins first, red 88/8: REPLACED river top 0..0.3 -> 0.95..1.4; lagoon top 0..0.3 -> 0.95..1.4; bridge deck top <= 1.2 -> 1.3..2.0 with 2 ramps. NEW: opaque one-colour river; 8+ small villas; canopy >= 30% of the land from above (was 9.3%); paved ground <= 15% (was 29.3%); every water top >= 0.95. Green: site07_check 96/0, sites_check 277/0, npcs_check 237/0, guides_check 123/0, routes_check 16/0, BuildCheck 07 14/0; builder twice 2430 / 2430 (built 2363, kept 67). Shot scratch/site07/shots/board_view_tidy.jpg.

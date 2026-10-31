@@ -48,8 +48,8 @@ return function(t)
 	t.test("positions and facings match the layout", function()
 		local expected = {
 			[1] = { 0, 57.5, "S" }, [2] = { -402, 160, "E" }, [3] = { 292, 140, "W" },
-			[4] = { 272, -160, "W" }, [5] = { -300, -600, "S" }, [6] = { 550, -650, "SW" },
-			[7] = { 700, 240, "W" }, [8] = { 560, 720, "NW" }, [9] = { -600, 550, "NE" },
+			[4] = { 272, -160, "W" }, [5] = { -300, -600, "S" }, [6] = { 550, -700, "SW" }, -- [6] REPLACED (Outlets board rebuild): was { 550, -650, "SW" }
+			[7] = { 770, 240, "W" }, [8] = { 560, 720, "NW" }, [9] = { -600, 550, "NE" },
 			[10] = { -270, -305, "E" }, -- Step C: the blueprint rebuild moved the slot centre (was -250, -260)
 		}
 		for id, e in pairs(expected) do
@@ -403,6 +403,8 @@ return function(t)
 	-- Slice 4 (Market rebuild): row 2 now carries guideLocal / panelLocal (pinned by "row 2: Guide ..." above), so this loop starts at row 3.
 	t.test("rows 3 to 9 keep the old guidePos and jeepStopPos formulas", function()
 		for id = 3, 9 do
+			if id == 7 then continue end -- Farm board rebuild (2026-10-31): row 7 now carries guideLocal / panelLocal, pinned by "row 7: ..." below
+			if id == 6 then continue end -- Outlets board rebuild (2026-10-31): row 6 now carries guideLocal / panelLocal, pinned by "row 6: ..." below
 			local s = SiteData.byId(id)
 			expect.equal(s.guideLocal, nil)
 			expect.equal(s.jeepLocal, nil)
@@ -421,6 +423,26 @@ return function(t)
 		expect.near((SiteData.guidePos(7) - Vector3.new(670, 0, 240)).Magnitude, 0, 1e-6)
 	end)
 
+	-- Farm board rebuild (2026-10-31, briefs/site07.md Revision 2): the slot grew from 260 x 260 at (700,240) to 400 x 320 at (770,240), facing W
+	-- (x 570..970, z 80..400; the west edge stays at Road C's end). REPLACED in "positions and facings": [7] (700, 240, "W") -> (770, 240, "W").
+	-- The Guide (670,240), the JeepStop (670,220, the default 20 to the right of the Guide; no jeepLocal) and the InfoPanel (676,252) keep their
+	-- WORLD positions through guideLocal (100, 0) and panelLocal (94, -12). Literal values, on purpose.
+	t.test("row 7: slot (770,240) 400 x 320 facing W; Guide (670,240), JeepStop (670,220), InfoPanel (676,252) stay put", function()
+		local f = SiteData.byId(7)
+		expect.equal(f.facing, "W")
+		expect.near(f.pos.X - f.size.X / 2, 570, 1e-6)
+		expect.near(f.pos.X + f.size.X / 2, 970, 1e-6)
+		expect.near(f.pos.Z - f.size.Y / 2, 80, 1e-6)
+		expect.near(f.pos.Z + f.size.Y / 2, 400, 1e-6)
+		expect.equal(typeof(f.guideLocal), "Vector2")
+		expect.equal(typeof(f.panelLocal), "Vector2")
+		expect.equal(f.jeepLocal, nil)
+		expect.near((SiteData.guidePos(7) - Vector3.new(670, 0, 240)).Magnitude, 0, 1e-6)
+		expect.near((SiteData.jeepStopPos(7) - Vector3.new(670, 0, 220)).Magnitude, 0, 1e-6)
+		local pp = SiteData.localToWorld(7, f.panelLocal.X, f.panelLocal.Y)
+		expect.near((pp - Vector3.new(676, 0, 252)).Magnitude, 0, 1e-6)
+	end)
+
 	-- Local frame of a site: lx along the facing (forward), lz to the right of the facing (-f.Z, 0, f.X), origin = site pos.
 	t.test("localToWorld follows the documented frame (+x forward, lz right)", function()
 		local p = SiteData.localToWorld(10, 47, 45) -- facing E: forward +X, right +Z; origin (-270, -305) since Step C
@@ -429,6 +451,26 @@ return function(t)
 		local q = SiteData.localToWorld(1, 30, 0) -- facing S: forward +Z, origin (0, 57.5) since Cathedral south growth
 		expect.near((q - Vector3.new(0, 0, 87.5)).Magnitude, 0, 1e-6)
 		expect.equal(SiteData.localToWorld(11, 0, 0), nil)
+	end)
+
+	-- Outlets board rebuild (2026-10-31, briefs/site06.md Revision 2): the slot grew from 300 x 200 at (550,-650) to 450 x 300 at (550,-700), facing SW
+	-- (x 325..775, z -850..-550; the south edge stays flush with Road B's end). REPLACED in "positions and facings": [6] (550, -650) -> (550, -700).
+	-- The Guide (528.79,-628.79), the JeepStop (514.64,-642.93, the default 20 to the right of the Guide; no jeepLocal) and the InfoPanel
+	-- (541.51,-624.54) keep their WORLD positions through guideLocal and panelLocal. Literal values (float32, so 1e-3), on purpose.
+	t.test("row 6: slot (550,-700) 450 x 300 facing SW; Guide, JeepStop and InfoPanel keep their world positions", function()
+		local o = SiteData.byId(6)
+		expect.equal(o.facing, "SW")
+		expect.near(o.pos.X - o.size.X / 2, 325, 1e-6)
+		expect.near(o.pos.X + o.size.X / 2, 775, 1e-6)
+		expect.near(o.pos.Z - o.size.Y / 2, -850, 1e-6)
+		expect.near(o.pos.Z + o.size.Y / 2, -550, 1e-6)
+		expect.equal(typeof(o.guideLocal), "Vector2")
+		expect.equal(typeof(o.panelLocal), "Vector2")
+		expect.equal(o.jeepLocal, nil)
+		expect.near((SiteData.guidePos(6) - Vector3.new(528.787, 0, -628.787)).Magnitude, 0, 1e-3)
+		expect.near((SiteData.jeepStopPos(6) - Vector3.new(514.645, 0, -642.929)).Magnitude, 0, 1e-3)
+		local pp = SiteData.localToWorld(6, o.panelLocal.X, o.panelLocal.Y)
+		expect.near((pp - Vector3.new(541.515, 0, -624.544)).Magnitude, 0, 1e-3)
 	end)
 
 	-- Cathedral south growth (Slice 4 B3b): the slot centre moved to (0, 57.5) and grew to 240 x 315 (z -100..215); the Guide, the

@@ -274,17 +274,19 @@ return function(opts)
 			{ role = "PilgrimKneeling", x = -220, z = -643.5, face = V(0, 0, -1), pose = "kneelPray", top = WHITE, legs = Color3.fromRGB(60, 60, 80), skin = 2, probe = 10 },
 			{ role = "PilgrimSeated", x = -225, z = -568, face = V(0, 0, -1), pose = "sit", top = Color3.fromRGB(150, 130, 170), skin = 1, seat = 2.2, wear = { Rosary = true } },
 		},
-		[6] = { -- Outlets: shoppers under the covered walkway, a player on the Aboitiz Pitch kicking toward the south goal
+		[6] = { -- Outlets: shoppers at the ShopBlock's covered walkway, a player on the Aboitiz Pitch kicking toward the west goal
+			-- (board rebuild 2026-10-31: the pitch moved and its goals are now at the E and W ends; the player was at (671, -690) facing N)
 			{ role = "Shopper1", x = 575, z = -645, face = NE, pose = "walk", top = Color3.fromRGB(240, 240, 240), legs = Color3.fromRGB(40, 70, 130), skin = 1, probe = 10,
 				wear = { ShoppingBag = Color3.fromRGB(200, 50, 50) } },
 			{ role = "Shopper2", x = 566, z = -652, face = SW, pose = "walk", top = Color3.fromRGB(90, 90, 90), skin = 3, probe = 10,
 				wear = { ShoppingBag = Color3.fromRGB(240, 170, 40) } },
-			{ role = "FootballPlayer", x = 671, z = -690, face = V(0, 0, -1), pose = "kick", top = Color3.fromRGB(230, 120, 30), legs = WHITE, skin = 2, probe = 10, ground = { "Ball" } },
+			{ role = "FootballPlayer", x = 650, z = -660, face = V(-1, 0, 0), pose = "kick", top = Color3.fromRGB(230, 120, 30), legs = WHITE, skin = 2, probe = 10, ground = { "Ball" } },
 		},
-		[7] = { -- Farm: a guest on a mat on the pavilion deck, a staff member in white beside the deck
-			{ role = "YogaGuest", x = 736, z = 300, face = V(-1, 0, 0), pose = "yoga", top = Color3.fromRGB(240, 200, 210), legs = Color3.fromRGB(70, 70, 90), skin = 4, seat = 1.15,
+		[7] = { -- Farm: a guest on a mat on the round pavilion's floor (top y 1.0, board rebuild 2026-10-31; was the lagoon deck at (736, 300)),
+			-- a staff member in white on the plaza beside it (was (726, 293))
+			{ role = "YogaGuest", x = 756, z = 206, face = V(-1, 0, 0), pose = "yoga", top = Color3.fromRGB(240, 200, 210), legs = Color3.fromRGB(70, 70, 90), skin = 4, seat = 1.15,
 				ground = { "YogaMat" } },
-			{ role = "FarmStaff", x = 726, z = 293, face = V(1, 0, 0.7), pose = "stand", top = WHITE, legs = WHITE, skin = 2, probe = 10 },
+			{ role = "FarmStaff", x = 745, z = 214, face = V(1, 0, -0.7), pose = "stand", top = WHITE, legs = WHITE, skin = 2, probe = 10 },
 		},
 		[8] = { -- Malarayat: a golfer and a caddie on the forecourt by the carts
 			{ role = "Golfer", x = 578, z = 748, face = SW, pose = "golf", top = Color3.fromRGB(240, 240, 240), legs = KHAKI, skin = 1, probe = 40,

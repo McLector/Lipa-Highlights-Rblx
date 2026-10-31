@@ -231,8 +231,11 @@ if sites then
 						roof and tostring(roof.Position) or "part missing")
 					check(label .. " pool is west of the villa", body ~= nil and pool ~= nil and pool.Position.X < body.Position.X - 30,
 						body and pool and (pool.Position.X .. " vs " .. body.Position.X) or "parts missing")
-					check(label .. " pavilion deck is south of the pool", pool ~= nil and deck ~= nil and deck.Position.Z > pool.Position.Z + 30,
-						pool and deck and (deck.Position.Z .. " vs " .. pool.Position.Z) or "parts missing")
+					-- REPLACED (Farm board rebuild, 2026-10-31, briefs/site07.md Revision 2): "pavilion deck is south of the pool" (deck.Z > pool.Z + 30,
+					-- the Slice 09 lagoon deck) -> the round pavilion stands beside the villa on its north-west (a mirrored build puts it south or east).
+					check(label .. " pavilion deck is north-west of the villa body, within 70 studs", body ~= nil and deck ~= nil
+						and deck.Position.Z < body.Position.Z - 15 and deck.Position.X < body.Position.X and (deck.Position - body.Position).Magnitude <= 70,
+						body and deck and (tostring(deck.Position) .. " vs " .. tostring(body.Position)) or "parts missing")
 					check(label .. " path starts west of the Guide", pstart ~= nil and pstart.Position.X < guideX - 60,
 						pstart and tostring(pstart.Position) or "part missing")
 					local boardGui = board and board:FindFirstChildOfClass("SurfaceGui")
