@@ -150,3 +150,18 @@ The long horizontal band of lake, quay and building against the tall volcano (ho
 | # | Brief before | Now |
 |---|---|---|
 | 1 | Terrain: "the worker does NOT touch Terrain"; "The shore, the lake and the water are untouched"; site09 header "No terrain writes" | Six irregular Grass -> Sand patches on the waterline (ReplaceMaterial per 4-stud column, so only Grass changes): NW arm centres (-790,546) r 7, (-762,554) r 10, (-738,566) r 7; SE arm (-622,666) r 7, (-606,694) r 9, (-598,722) r 7; ragged radius r * 0.8..1.2 (math.noise), only columns within 16 studs of Water and under no Site09 part (the quay, seawall, dock and building keep their ground). 64 surface cells repainted; a second run repaints 0. Water cells, the lake edge and every part are untouched. |
+
+## Revision 4 (session 062): the sand patches become beaches
+**Owner:** the six patches barely show from the dock; make them bigger so a sandy shore reads from the Guide / dock view, on the lakeshore only. **Board:** `2nd Reference/tagbakin_halang` holds only Taal photos (no board draws the beach), so the placement follows `Tagbakin_Shoreline_Building_From_Lake.jpg` and `_Oblique.jpg`: open sand on the building's SE side, an earthy strip on the NW. Builder: `builders/site09_shore.luau` (terrain only, Grass -> Sand only, idempotent). First pass used 12..24 stud depths; the Guide shot still showed a thin line, so the depths were raised before the final run, and some of this revision's own new pins were changed after that first build (rows 5..7).
+
+| # | Pin before (Revision 3) | Now |
+|---|---|---|
+| 1 | "the gaps between the patches are still Grass": (-774,550) (-750,558) (-614,678) (-602,710) | "one Grass gap per arm": (-750,558) (-602,710); (-774,550) and (-614,678) moved to the new waterline Sand pin |
+| 2 | "30 to 400 Sand cells" | "300 to 400 Sand cells" (lower bound raised, upper kept; measured 357, Revision 3 had 64) |
+| 3 | "every Sand cell is within 155 of the site centre and 16 of the water" (scan box x -800..-560, z 500..760) | "inside the NW arm box (x -864..-716, z 508..600) or the SE arm box (x -668..-556, z 644..800), within 40 of the water", scan box x -868..-552, z 504..804 |
+| 4 | (new) | waterline Sand along both arms; Sand 11..13 and 14..23 studs inland; inland Grass controls beyond the beach depth; quay and plaza Pavement unchanged |
+| 5 | (own new pin, first build) "within 24 of the water" | "within 40 of the water" (loosened, after the first visual pass deepened the SE beach) |
+| 6 | (own new pin, first build) count "200 to 600" | "300 to 400" |
+| 7 | (own new pin, first build) inland Grass controls (-820,516) and (-560,780), 28 studs from the water | (-820,508) and (-566,690), 36 and 45 studs from the water (the deeper beaches may reach 28) |
+
+Shape: NW arm x -860..-720, 16..28 studs deep; SE arm z 646..800, 24..40 studs deep by the quay (z <= 704) and 16..28 beyond; one along-shore Grass gap per arm at (-750,558) and (-602,710); arm ends taper; no column under a Site09 part. world_check's Tagbakin Grass controls re-read after the paint: all Grass.

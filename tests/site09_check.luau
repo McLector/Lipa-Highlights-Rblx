@@ -305,13 +305,27 @@ do
 	end
 	expect({ { -790, 546 }, { -762, 554 }, { -738, 566 }, { -622, 666 }, { -606, 694 }, { -598, 722 } }, M.Sand,
 		"shore: the six patch centres on the waterline are Sand")
-	expect({ { -774, 550 }, { -750, 558 }, { -614, 678 }, { -602, 710 } }, M.Grass,
-		"shore: the gaps between the patches are still Grass (patches, not one stripe)")
+	-- Revision 4 (session 062): owner "the patches barely show from the dock". The patches grow into four beaches, two per arm
+	-- (NW arm x -860..-720, SE arm z 646..800), 16..28 studs deep (24..40 by the quay on the SE arm), split by one Grass gap per arm.
+	-- (Revision 3 pinned (-774,550) and (-614,678) as Grass gaps; they are now inside the beaches, see briefs/site09.md Revision 4.)
+	expect({ { -750, 558 }, { -602, 710 } }, M.Grass,
+		"shore: one Grass gap per arm is still Grass (beaches, not one stripe)")
+	expect({ { -774, 550 }, { -614, 678 }, { -834, 540 }, { -818, 540 }, { -802, 544 }, { -590, 740 }, { -584, 760 }, { -578, 780 } }, M.Sand,
+		"shore: the waterline along both arms is Sand (NW out to x -834, SE out to z 780)")
+	expect({ { -834, 532 }, { -818, 532 }, { -786, 540 }, { -770, 544 }, { -626, 654 }, { -614, 666 }, { -592, 722 }, { -582, 744 } }, M.Sand,
+		"shore: the beaches reach 11..13 studs inland of the water (wide enough to read from the dock)")
+	expect({ { -834, 528 }, { -818, 528 }, { -802, 532 }, { -770, 540 }, { -606, 666 }, { -610, 656 }, { -600, 672 }, { -588, 722 }, { -578, 744 }, { -584, 730 } }, M.Sand,
+		"shore: the beaches reach 14..23 studs inland (16 on the NW arm, 20..23 by the quay on the SE arm)")
+	expect({ { -820, 508 }, { -800, 512 }, { -760, 520 }, { -580, 670 }, { -566, 690 }, { -560, 720 } }, M.Grass,
+		"shore: inland cells beyond the beach depth (34+ studs from the water, 43+ by the quay) are still Grass (no sand inland)")
+	expect({ { -632, 650 }, { -630, 646 }, { -706, 578 }, { -690, 582 }, { -602, 562 } }, M.Pavement,
+		"shore: the quay and plaza paving next to the beaches is still Pavement")
 	expect({ { -698, 594 }, { -662, 622 }, { -700, 500 }, { -560, 640 } }, M.Grass,
 		"shore: control cells under the seawall and inland are still Grass")
 	expect({ { -706, 610 }, { -716, 590 }, { -700, 640 }, { -800, 600 } }, M.Water, "shore: the lake cells are still Water")
-	-- Every Sand cell at the surface layer in the box: near the site, on the waterline, and under no site part.
-	local X0, X1, Z0, Z1 = -800, -560, 500, 760
+	-- Every Sand cell at the surface layer in the box: inside one of the two arm boxes, within 40 studs (10 cells) of the water,
+	-- and under no site part. Revision 4 widened the scan box to cover the builder's box (was -800..-560 x 500..760).
+	local X0, X1, Z0, Z1 = -868, -552, 504, 804
 	local mats = T:ReadVoxels(Region3.new(Vector3.new(X0, -4, Z0), Vector3.new(X1, 0, Z1)), 4)
 	local nx, nz = mats.Size.X, mats.Size.Z
 	local function at(i, k) if i < 1 or k < 1 or i > nx or k > nz then return nil end return mats[i][1][k] end
@@ -324,10 +338,12 @@ do
 			if at(i, k) == M.Sand then
 				sand += 1
 				local cx, cz = X0 + (i - 0.5) * 4, Z0 + (k - 0.5) * 4
-				if (Vector3.new(cx, 0, cz) - Vector3.new(-646, 0, 583)).Magnitude > 155 then table.insert(far, cx .. "," .. cz) end
+				local inNW = cx >= -864 and cx <= -716 and cz >= 508 and cz <= 600
+				local inSE = cx >= -668 and cx <= -556 and cz >= 644 and cz <= 800
+				if not (inNW or inSE) then table.insert(far, cx .. "," .. cz) end
 				local wet = false
-				for di = -4, 4 do
-					for dk = -4, 4 do
+				for di = -10, 10 do
+					for dk = -10, 10 do
 						if at(i + di, k + dk) == M.Water then wet = true end
 					end
 				end
@@ -336,8 +352,8 @@ do
 			end
 		end
 	end
-	check("shore: 30 to 400 Sand cells at the surface near Tagbakin", sand >= 30 and sand <= 400, tostring(sand))
-	check("shore: every Sand cell is within 155 of the site centre (-646, 583) and 16 of the water, and under no site part",
+	check("shore: 300 to 400 Sand cells at the surface near Tagbakin", sand >= 300 and sand <= 400, tostring(sand))
+	check("shore: every Sand cell is inside the NW arm box (x -864..-716, z 508..600) or the SE arm box (x -668..-556, z 644..800), within 40 of the water, and under no site part",
 		sand > 0 and #far == 0 and #inland == 0 and #covered == 0,
 		string.format("far %d inland %d covered %d: %s", #far, #inland, #covered, table.concat(far, " ", 1, math.min(#far, 3)) .. " " .. table.concat(covered, " ", 1, math.min(#covered, 3))))
 end

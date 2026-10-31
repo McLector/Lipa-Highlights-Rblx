@@ -3,8 +3,8 @@
 -- Needs Workspace.Sites.Site09_Tagbakin with its kept children (Guide, InfoPanel, JeepStop, JeepSignPole, JeepSign, Jeepney).
 -- IDEMPOTENT: replaces Block, Structure, Dock, Bancas, FishingActivity and LocationMapPanel. The kept children are left alone.
 -- Then calls ServerStorage.Builders.site09_taal (builders/site09_taal.luau): the Taal island in World.Backdrops (Revision 2).
--- Then calls ServerStorage.Builders.site09_shore (builders/site09_shore.luau): Grass -> Sand patches on the lakeshore (Revision 3,
--- session 061); that is the only terrain write. Brief: briefs/site09.md.
+-- Then calls ServerStorage.Builders.site09_shore (builders/site09_shore.luau): Grass -> Sand beaches on the lakeshore (Revision 3,
+-- session 061; widened in Revision 4, session 062); that is the only terrain write. Brief: briefs/site09.md.
 -- FRAMES: the site pivot is yawed NE and sits on the shore diagonal, so it is NOT used as the origin.
 --   ORIGIN = (-650, 0, 588), s = 0.70711. CFL = fromMatrix(ORIGIN, (s,0,s), (0,1,0)): local +X = SE, local +Z = SW (the lake),
 --   +Y up. World = (-650 + s*(lx - lz), ly, 588 + s*(lx + lz)).
