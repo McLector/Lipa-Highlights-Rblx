@@ -28,6 +28,32 @@ if not sites then
 	return HttpService:JSONEncode(results)
 end
 
+-- Fixes 062: the Guides stood 0.19..0.49 in the floor (City Hall's floated 0.11). The probe below is the same rule builders/guides.luau
+-- seats with: cast 30 studs down from the root part, every Humanoid figure excluded; the lowest foot corner must be within 0.05 of the hit.
+local figures = {}
+for _, d in ipairs(workspace:GetDescendants()) do
+	if d:IsA("Model") and d:FindFirstChildOfClass("Humanoid") then table.insert(figures, d) end
+end
+local seatParams = RaycastParams.new()
+seatParams.FilterType = Enum.RaycastFilterType.Exclude
+seatParams.FilterDescendantsInstances = figures
+local function footBottom(guide)
+	local m = math.huge
+	for _, name in ipairs({ "LeftFoot", "RightFoot" }) do
+		local f = guide:FindFirstChild(name)
+		if f then
+			for _, sx in ipairs({ -0.5, 0.5 }) do
+				for _, sy in ipairs({ -0.5, 0.5 }) do
+					for _, sz in ipairs({ -0.5, 0.5 }) do
+						m = math.min(m, (f.CFrame * Vector3.new(sx * f.Size.X, sy * f.Size.Y, sz * f.Size.Z)).Y)
+					end
+				end
+			end
+		end
+	end
+	return m
+end
+
 local dressed = 0
 for _, row in ipairs(SiteData.sites) do
 	local site
@@ -88,6 +114,11 @@ for _, row in ipairs(SiteData.sites) do
 			end
 			dressed += 1
 		end
+		local hrp = guide:FindFirstChild("HumanoidRootPart")
+		local hit = hrp and workspace:Raycast(hrp.Position, Vector3.new(0, -30, 0), seatParams)
+		local gap = hit and (footBottom(guide) - hit.Position.Y) or math.huge
+		check(label .. " stands on the surface below (lowest foot within 0.05 of it)", math.abs(gap) <= 0.05,
+			hit and (hit.Instance.Name .. " gap " .. fmt(gap)) or "nothing below")
 		local prompt = guide:FindFirstChild("GuidePrompt", true)
 		check(label .. " talk prompt is unchanged (Guide kind, 12 studs)", prompt ~= nil and prompt:IsA("ProximityPrompt")
 			and prompt:GetAttribute("PromptKind") == "Guide" and prompt.MaxActivationDistance == 12)

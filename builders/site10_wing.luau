@@ -279,8 +279,10 @@ return function(env)
 		box(ctx, "WingUnderside", -13, 23, 13.4, 14, -113, -6, CONC, MCONC)
 		-- recessed core: glass back wall (floors 1-4), open in front of floors 2-4
 		box(ctx, "CoreBack", -13, 12, FL[1], FL[5], -64, -46, GLASS, GLASSM)
+		-- white spandrel bands: 0.2 proud in front, 0.05 proud at the back, 0.05 inside each side, so no face shares a CoreBack plane
+		-- (Fixes 062: at lx -13 and lz -64 / -46 they were coplanar with CoreBack and z-fought)
 		for k = 1, 3 do
-			box(ctx, "CoreBackBand" .. k, -13, 12.2, FL[k + 1] - 0.5, FL[k + 1] + 0.5, -64, -46, WHITE, MCONC)
+			box(ctx, "CoreBackBand" .. k, -13.05, 12.2, FL[k + 1] - 0.5, FL[k + 1] + 0.5, -63.95, -46.05, WHITE, MCONC)
 		end
 		-- glazed entrance lobby on the podium (y 4 .. 21.2), front glass at lx 24
 		box(ctx, "CoreLobbyFront", 23.6, 24, 13, FL[2], -64, -46, GLASS, GLASSM).Transparency = 0.15

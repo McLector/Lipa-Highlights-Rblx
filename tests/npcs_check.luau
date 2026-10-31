@@ -134,6 +134,46 @@ for _, row in ipairs(SiteData.sites) do
 						fmt(lx) .. ", " .. fmt(lz) .. " in " .. table.concat(clash, ", "))
 				end
 			end
+			-- Fixes 062: the Student stood 1.3 studs into TerraceS2 (and in the TerraceS3Wall riser). It must stand on a terrace tread:
+			-- the first surface under its root is a Terrace[SN]n tread, the lowest foot corner is within 0.05 of that tread top, and no
+			-- rig part (shrunk by 0.05 a side) overlaps any non-figure part of the site.
+			local student = folder:FindFirstChild("Student")
+			local shrp = student and student:FindFirstChild("HumanoidRootPart")
+			local detail, ok = "no Student", false
+			if shrp then
+				local hit = workspace:Raycast(shrp.Position, Vector3.new(0, -20, 0), params)
+				local low = math.huge
+				for _, n in ipairs({ "LeftFoot", "RightFoot" }) do
+					local f = student:FindFirstChild(n)
+					if f then
+						for _, sx in ipairs({ -0.5, 0.5 }) do for _, sy in ipairs({ -0.5, 0.5 }) do for _, sz in ipairs({ -0.5, 0.5 }) do
+							low = math.min(low, (f.CFrame * Vector3.new(sx * f.Size.X, sy * f.Size.Y, sz * f.Size.Z)).Y)
+						end end end
+					end
+				end
+				local sp = OverlapParams.new()
+				sp.FilterType = Enum.RaycastFilterType.Include
+				sp.FilterDescendantsInstances = { site }
+				local clips = {}
+				for _, p in ipairs(student:GetDescendants()) do
+					if p:IsA("BasePart") and p.Size.X > 0.1 and p.Size.Y > 0.1 and p.Size.Z > 0.1 then
+						for _, h in ipairs(workspace:GetPartBoundsInBox(p.CFrame, p.Size - Vector3.new(0.1, 0.1, 0.1), sp)) do
+							local fig = h:FindFirstAncestorWhichIsA("Model")
+							local isFigure = false
+							while fig and fig ~= site do
+								if fig:FindFirstChildOfClass("Humanoid") then isFigure = true break end
+								fig = fig.Parent and fig.Parent:FindFirstAncestorWhichIsA("Model") or nil
+							end
+							if not isFigure then table.insert(clips, p.Name .. ">" .. h.Name) end
+						end
+					end
+				end
+				local onTread = hit ~= nil and string.match(hit.Instance.Name, "^Terrace[SN]%d+$") ~= nil
+				local gap = hit and (low - hit.Position.Y) or math.huge
+				ok = onTread and math.abs(gap) <= 0.05 and #clips == 0
+				detail = (hit and hit.Instance.Name or "nothing") .. " gap " .. fmt(gap) .. "; " .. #clips .. " clips " .. table.concat(clips, ", ", 1, math.min(#clips, 4))
+			end
+			check(row.key .. "/Student stands on a terrace tread (feet within 0.05 of it, no part inside the terrace)", ok, detail)
 		end
 	end
 end

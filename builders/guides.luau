@@ -3,13 +3,17 @@
 --   require(game.ServerStorage.Builders.guides:Clone())()
 -- Run AFTER builders/placeholders.luau (which makes each Guide; placeholders({ only = { 10 } }) rebuilds Ate Joy undressed, so
 -- re-run this afterwards). IDEMPOTENT: replaces only each Guide's GuideOutfit model and
--- GuidePolo shirt; the Guide's position, prompt, name and dialogue are untouched. Spec: tests/guides_check.luau.
+-- GuidePolo shirt; the Guide's XZ position, prompt, name and dialogue are untouched (its height is seated, see Fixes 062 below). Spec: tests/guides_check.luau.
 -- The polo is a classic Shirt drawn by tools/guide_shirt.py (teal, collar, 3-button placket, LIPA TOUR badge, short sleeves)
 -- and uploaded as rbxassetid://71550766060779. The cap and tour flag carry the site's category colour (SiteData.categoryColor:
 -- Eat/Pray/Love/Welcome; the one colour table, no local copy), the
 -- lanyard ID hangs below the placket, and a GUIDE sign floats over the head. Every outfit part is welded to the body part it
 -- sits on, massless and non-colliding, so the guide (anchored at its root) is unchanged in Play.
-return function()
+-- Fixes 062: before dressing, each Guide is SEATED: it moves straight up or down so its lowest foot corner rests on the first surface
+-- under its root part (cast 30 studs down, every Humanoid figure excluded; tests/guides_check.luau uses the same probe). This runs after
+-- placeholders and the site builders, so it sees the real slabs and podium paving (the Guides stood 0.19..0.49 in them). Idempotent: a
+-- seated Guide moves 0. guides({ only = { 1, 2 } }) seats and dresses just those sites; guides() does all ten.
+return function(opts)
 	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
 
 	local V, CF, ANG = Vector3.new, CFrame.new, CFrame.Angles
@@ -125,19 +129,53 @@ return function()
 		outfit.Parent = guide
 	end
 
+	local figures = {}
+	for _, d in ipairs(workspace:GetDescendants()) do
+		if d:IsA("Model") and d:FindFirstChildOfClass("Humanoid") then table.insert(figures, d) end
+	end
+	local seatParams = RaycastParams.new()
+	seatParams.FilterType = Enum.RaycastFilterType.Exclude
+	seatParams.FilterDescendantsInstances = figures
+	local function seat(guide)
+		local hit = workspace:Raycast(guide.HumanoidRootPart.Position, V(0, -30, 0), seatParams)
+		assert(hit, "guides: nothing under " .. guide:GetFullName())
+		local low = math.huge
+		for _, name in ipairs({ "LeftFoot", "RightFoot" }) do
+			local f = guide[name]
+			for _, sx in ipairs({ -0.5, 0.5 }) do
+				for _, sy in ipairs({ -0.5, 0.5 }) do
+					for _, sz in ipairs({ -0.5, 0.5 }) do
+						low = math.min(low, (f.CFrame * V(sx * f.Size.X, sy * f.Size.Y, sz * f.Size.Z)).Y)
+					end
+				end
+			end
+		end
+		local dy = hit.Position.Y - low
+		if math.abs(dy) > 1e-3 then guide:PivotTo(guide:GetPivot() + V(0, dy, 0)) end
+		return dy
+	end
+
+	local wanted
+	if opts and opts.only then
+		wanted = {}
+		for _, id in ipairs(opts.only) do wanted[id] = true end
+	end
 	local done = {}
 	for _, row in ipairs(SiteData.sites) do
-		local site
-		for _, m in ipairs(sites:GetChildren()) do
-			if m:GetAttribute("SiteId") == row.id then site = m end
+		if not wanted or wanted[row.id] then
+			local site
+			for _, m in ipairs(sites:GetChildren()) do
+				if m:GetAttribute("SiteId") == row.id then site = m end
+			end
+			local guide = site and site:FindFirstChild("Guide")
+			assert(guide, "guides: no Guide in site " .. row.id)
+			local color = SiteData.categoryColor(row.category)
+			assert(color, "guides: no category colour for " .. tostring(row.category))
+			local dy = seat(guide)
+			dress(guide, color)
+			table.insert(done, string.format("%d(%+.2f)", row.id, dy))
+			task.wait()
 		end
-		local guide = site and site:FindFirstChild("Guide")
-		assert(guide, "guides: no Guide in site " .. row.id)
-		local color = SiteData.categoryColor(row.category)
-		assert(color, "guides: no category colour for " .. tostring(row.category))
-		dress(guide, color)
-		table.insert(done, tostring(row.id))
-		task.wait()
 	end
-	return "guides: dressed " .. table.concat(done, ",")
+	return "guides: seated and dressed " .. table.concat(done, ",")
 end

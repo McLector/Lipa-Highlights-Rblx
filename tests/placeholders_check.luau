@@ -135,6 +135,52 @@ if m then
 	end
 end
 
+-- Fixes 062: the Outlets JeepStop pad (top 0.4 over terrain at 0) vanished under the terrain render, which draws up to about y 0.9..1.25
+-- on the plazas (City Hall, Malarayat and Tagbakin pads too). Pad visibility cannot be raycast, so the pin is geometric, one per JeepStop:
+-- on terrain the pad top is at least 1.3 above the highest terrain under its centre and corners, with its bottom at or below the lowest
+-- (no gap under it); on a part (Cathedral podium, Carmel drive) the pad top is above that part's top.
+if sites then
+	local figs = {}
+	for _, d in ipairs(workspace:GetDescendants()) do
+		if d:IsA("Model") and d:FindFirstChildOfClass("Humanoid") then table.insert(figs, d) end
+	end
+	local terrainOnly = RaycastParams.new()
+	terrainOnly.FilterType = Enum.RaycastFilterType.Include
+	terrainOnly.FilterDescendantsInstances = { workspace.Terrain }
+	for _, row in ipairs(SiteData.sites) do
+		local model = sites:FindFirstChild(string.format("Site%02d_%s", row.id, row.key))
+		local stop = model and model:FindFirstChild("JeepStop")
+		if SiteData.hasJeepStop(row.id) and stop then
+			local excl = table.clone(figs)
+			for _, n in ipairs({ "Guide", "InfoPanel", "JeepStop", "JeepSignPole", "JeepSign", "Jeepney" }) do
+				for _, c in ipairs(model:GetChildren()) do
+					if c.Name == n then table.insert(excl, c) end
+				end
+			end
+			local rp = RaycastParams.new()
+			rp.FilterType = Enum.RaycastFilterType.Exclude
+			rp.FilterDescendantsInstances = excl
+			local top, bottom = stop.Position.Y + stop.Size.Y / 2, stop.Position.Y - stop.Size.Y / 2
+			local under = workspace:Raycast(Vector3.new(stop.Position.X, bottom + 3, stop.Position.Z), Vector3.new(0, -30, 0), rp)
+			local label = string.format("Site%02d JeepStop pad", row.id)
+			if under and under.Instance == workspace.Terrain then
+				local lo, hi = math.huge, -math.huge
+				local hx, hz = stop.Size.X / 2 - 0.5, stop.Size.Z / 2 - 0.5
+				for _, o in ipairs({ Vector3.zero, Vector3.new(hx, 0, hz), Vector3.new(-hx, 0, hz), Vector3.new(hx, 0, -hz), Vector3.new(-hx, 0, -hz) }) do
+					local w = stop.CFrame:PointToWorldSpace(o)
+					local r = workspace:Raycast(Vector3.new(w.X, top + 5, w.Z), Vector3.new(0, -60, 0), terrainOnly)
+					if r then lo, hi = math.min(lo, r.Position.Y), math.max(hi, r.Position.Y) end
+				end
+				check(label .. " on terrain clears the terrain render (top >= terrain + 1.3, bottom <= lowest terrain + 0.05)",
+					top - hi >= 1.3 - 0.01 and bottom <= lo + 0.05, string.format("top %.2f bottom %.2f terrain %.2f..%.2f", top, bottom, lo, hi))
+			else
+				check(label .. " on a part shows above it (top above the part top)", under ~= nil and top > under.Position.Y + 0.05,
+					under and string.format("%s top %.2f, pad top %.2f", under.Instance.Name, under.Position.Y, top) or "nothing under")
+			end
+		end
+	end
+end
+
 -- The MUTATING proof (by hand, after the change). Returns {passed, failed, failures}.
 local function snapshot()
 	local snap = { models = {}, struct = {} }

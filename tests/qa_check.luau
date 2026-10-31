@@ -571,4 +571,56 @@ check("GuidanceLogic lives in LipaShared", shared ~= nil and shared:FindFirstChi
 check("CertificateLogic and CreditsData live in LipaShared",
 	shared ~= nil and shared:FindFirstChild("CertificateLogic") ~= nil and shared:FindFirstChild("CreditsData") ~= nil)
 
+-- Fixes 062: InfoPanels and JeepSigns (builders/placeholders.luau) used TextScaled. README: long labels use a fixed TextSize. Per site, every
+-- label on the InfoPanel and JeepSign has TextScaled off, TextWrapped on, a TextSize of at least 24, and its actual text measured with
+-- TextService:GetTextSize at that size, wrapped to the label's padded width, fits the padded box in both width and height.
+do
+	local TextService = game:GetService("TextService")
+	local SiteData = require(game.ReplicatedStorage.LipaShared.SiteData:Clone())
+	local sites = workspace:FindFirstChild("Sites")
+	local function fits(t)
+		local pad = t:FindFirstChildOfClass("UIPadding")
+		local abs = t.AbsoluteSize
+		if abs.X < 1 then -- no layout yet: fall back to the SurfaceGui's expected pixel size
+			local gui, part = t.Parent, t.Parent and t.Parent.Parent
+			abs = Vector2.new(part.Size.X * gui.PixelsPerStud, part.Size.Y * gui.PixelsPerStud)
+		end
+		local w, h = abs.X, abs.Y
+		if pad then
+			w -= pad.PaddingLeft.Offset + pad.PaddingRight.Offset + abs.X * (pad.PaddingLeft.Scale + pad.PaddingRight.Scale)
+			h -= pad.PaddingTop.Offset + pad.PaddingBottom.Offset + abs.Y * (pad.PaddingTop.Scale + pad.PaddingBottom.Scale)
+		end
+		local need = TextService:GetTextSize(t.Text, t.TextSize, t.Font, Vector2.new(w, math.huge))
+		return not t.TextScaled and t.TextWrapped and t.TextSize >= 24 and need.X <= w and need.Y <= h,
+			string.format("%s scaled=%s size %d need %dx%d box %dx%d", t.Text:sub(1, 24), tostring(t.TextScaled), t.TextSize, need.X, need.Y, w, h)
+	end
+	for _, row in ipairs(SiteData.sites) do
+		local model = sites and sites:FindFirstChild(string.format("Site%02d_%s", row.id, row.key))
+		local bad, n = {}, 0
+		for _, name in ipairs({ "InfoPanel", "JeepSign" }) do
+			local p = model and model:FindFirstChild(name)
+			for _, t in ipairs(p and p:GetDescendants() or {}) do
+				if t:IsA("TextLabel") then
+					n += 1
+					local ok, why = fits(t)
+					if not ok then table.insert(bad, name .. ": " .. why) end
+				end
+			end
+		end
+		check(string.format("Site%02d InfoPanel/JeepSign text: fixed TextSize (no TextScaled), wrapped, and GetTextSize fits the padded label", row.id),
+			model ~= nil and n >= 1 and #bad == 0, n .. " labels; " .. table.concat(bad, " ; "))
+	end
+	-- The default-mode placeholder Block billboard (260 x 50 px) has no live instance; prove its ten strings at the builder's size.
+	local ph = game.ServerStorage:FindFirstChild("Builders") and game.ServerStorage.Builders:FindFirstChild("placeholders")
+	local src = ph and sourceOf(ph) or ""
+	local bbSize = tonumber(string.match(src, "BILLBOARD_TEXT_SIZE%s*=%s*(%d+)"))
+	local over = {}
+	for _, row in ipairs(SiteData.sites) do
+		local need = bbSize and TextService:GetTextSize(string.format("%d. %s (placeholder)", row.id, row.name), bbSize, Enum.Font.GothamBold, Vector2.new(260, math.huge))
+		if not need or need.X > 260 or need.Y > 50 then table.insert(over, tostring(row.id)) end
+	end
+	check("placeholders.luau sets no TextScaled = true, and the Block billboard text fits 260 x 50 at BILLBOARD_TEXT_SIZE for all ten sites",
+		src ~= "" and string.find(src, "TextScaled = true", 1, true) == nil and bbSize ~= nil and #over == 0, tostring(bbSize) .. "; over " .. table.concat(over, ","))
+end
+
 return HttpService:JSONEncode(results)

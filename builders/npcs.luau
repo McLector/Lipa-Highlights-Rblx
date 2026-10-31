@@ -302,7 +302,9 @@ return function(opts)
 			-- (lx 28..38, lz -30..-15), the jeep curb (lx 90..100, lz 20..40) and the steps (lx 5..25).
 			{ role = "ResidentWalking", x = -204, z = -234, face = V(-1, 0, -0.3), pose = "walk", top = Color3.fromRGB(110, 150, 190), legs = Color3.fromRGB(60, 70, 100), skin = 2, probe = 30 },
 			{ role = "ResidentBayong", x = -188, z = -290, face = V(-1, 0, 0.3), pose = "carry", top = Color3.fromRGB(215, 120, 140), skin = 1, probe = 30, wear = { Bayong = true } },
-			{ role = "Student", x = -206, z = -298, face = V(-1, 0, 0.5), pose = "carry", top = WHITE, legs = Color3.fromRGB(40, 60, 110), skin = 4, probe = 30,
+			-- Student: centred on the TerraceS2 tread (x -206.5..-201.6, top 1.6), facing the building (Fixes 062: was x -206 facing
+			-- (-1, 0, 0.5), 1.3 into the tread and inside the TerraceS3Wall riser).
+			{ role = "Student", x = -204.05, z = -298, face = V(-1, 0, 0), pose = "carry", top = WHITE, legs = Color3.fromRGB(40, 60, 110), skin = 4, probe = 30,
 				wear = { ShoppingBag = Color3.fromRGB(70, 140, 100) } },
 			{ role = "OfficeStaff", x = -184, z = -230, face = V(-1, 0, -0.3), pose = "stand", top = CREAM, legs = DARK, skin = 3, probe = 30 },
 		},

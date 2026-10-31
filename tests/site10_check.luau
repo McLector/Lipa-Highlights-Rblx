@@ -948,6 +948,32 @@ local function run(opts)
 		end
 		check("clearance under the raised brick boxes is at least 10 studs", raised > 0 and worst >= 10 - 0.05,
 			raised .. " raised boxes, tightest " .. worstName .. string.format(" %.2f", worst == math.huge and 0 or worst))
+
+		-- Fixes 062: CoreBackBand1..3 shared the back (lx -13) and side (lz -64 / -46) planes of the glass CoreBack, so they z-fought.
+		-- No band face may lie within 0.02 of a CoreBack face plane on the same axis (both are axis aligned in CoreBack's frame).
+		local coreBack, bands = nil, {}
+		for _, p in ipairs(ownParts()) do
+			if p.Name == "CoreBack" then coreBack = p end
+			if string.match(p.Name, "^CoreBackBand%d+$") then table.insert(bands, p) end
+		end
+		local coplanar = {}
+		if coreBack then
+			local h = coreBack.Size / 2
+			for _, b in ipairs(bands) do
+				local c = coreBack.CFrame:PointToObjectSpace(b.Position)
+				local rel = coreBack.CFrame:VectorToObjectSpace(b.CFrame:VectorToWorldSpace(b.Size))
+				local bh = Vector3.new(math.abs(rel.X), math.abs(rel.Y), math.abs(rel.Z)) / 2
+				for _, ax in ipairs({ "X", "Y", "Z" }) do
+					for _, bf in ipairs({ c[ax] - bh[ax], c[ax] + bh[ax] }) do
+						for _, cf in ipairs({ -h[ax], h[ax] }) do
+							if math.abs(bf - cf) < 0.02 then table.insert(coplanar, b.Name .. " " .. ax .. string.format(" %.2f", bf)) end
+						end
+					end
+				end
+			end
+		end
+		check("CoreBackBand1..3 share no face plane with CoreBack (no z-fighting)", coreBack ~= nil and #bands == 3 and #coplanar == 0,
+			(coreBack and "" or "no CoreBack; ") .. #bands .. " bands; " .. table.concat(coplanar, ", "))
 	end
 
 	------------------------------------------------------------------ steps and forecourt
