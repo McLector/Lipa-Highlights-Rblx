@@ -62,3 +62,10 @@ First: list_roblox_studios (ids change), Edit mode, check the viewport renders. 
 Faster process; safety rules unchanged (only you run git, ask before push, NO Co-Authored-By trailer, HttpService off: agents must never turn it on, no settings or uploads, disk = Studio hashes, ASCII text, BuildCheck 2500 per site and 25000 world, never loosen an existing assertion). Use Opus agents for builds. My look gates new or rebuilt structures. Session cap 250k, handoff near 200k.
 Job: (1) the owner calls in 061 next steps 3 and 4 (ask me in one dialog); (2) shot-kit rows for 06/07 and the Market overview; (3) whatever I add. End with the next handoff and remind me to save a backup.
 ```
+
+## Addendum: grass cleanup (same session, owner ask "clean up the grass ... where the grass shouldnt be")
+- Four Opus agents, one per site. Each added an idempotent ground step (builders/site05_ground, site06_ground, site07_ground, site08_ground, called last by the coordinator). It repaints terrain Grass to Pavement, Concrete, Mud, Ground or Sand under the hard parts only. Lawns stay Grass, and second runs repaint 0. This reverses "parts only" for those spots; the owner's ask covers it.
+- Checks: site05 106 -> 110, site06 97 -> 118, site07 96 -> 99, site08 88 -> 93, each red first. sites_check 277/0 and routes_check 16/0.
+- Malarayat: the agent's own new ground pins skip samples within 4 studs of the plot edge (road verge outside the plot); not logged in its brief. Blades still show through the fairway parts (left as Grass).
+- Commits: `f75ded7` (05, 07, 08), `55e6fb0` (06), then the run_all commit. EXPECTED: those four checks and cells 1805068 -> 1807294 (owner pre-approved). run_all ok=true, 89 rows, 0 mismatches; run_all 26385/119/862280857 on disk and in Studio. Use this hash at resume instead of the one above.
+- Shots (tool-results): 05 ...1793410526133-x1cv5m.jpg, 06 ...1793410544533-r2i4ta.jpg, 07 ...1793410530679-5fijl2.jpg, 08 ...1793410523904-2dtzzy.jpg.
