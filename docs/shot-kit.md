@@ -84,5 +84,7 @@ Handoff 062 rows (captured 2026-10-31 on the rebuilt sites; the provisional rows
 | 2 Market | overview: the whole hall front, the name banner, both stair feet, kerb traffic and both side yards | -150, 55, 255 | -310, 14, 160 |
 | 6 The Outlets | whole site from the north-west (entrance pylon, promenade and oval, retail blocks, Aboitiz Pitch, curved grandstand, parking) | 360, 150, -460 | 560, 0, -700 |
 | 6 The Outlets | top-down (slot 450 x 300 centred on (550, -700); the southernmost few studs fall just off the frame) | 550, 380, -699 | 550, 0, -700 |
+| 7 The Farm | whole site from the south (river ring, west villas and gym, halls, east forest; captured by the 062 Farm agent) | 770, 300, 540 | 770, 0, 225 |
+| 7 The Farm | top-down (slot 400 x 320 centred on (770, 240)) | 770, 330, 241 | 770, 0, 240 |
 
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.
