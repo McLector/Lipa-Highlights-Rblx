@@ -2,7 +2,7 @@
 -- 2026-10-31: "The Outlets at Lima Estate Blueprint.png", briefs/site06.md Revision 2). Earlier: the Slice 16 fidelity spec (Revision 1).
 -- Studio copy: ServerStorage.Checks.site06_check. Run in Edit via execute_luau:
 --   require(game.ServerStorage.Checks.site06_check:Clone())      -- returns JSON {passed, failed, failures}
--- Groups (set shared.site06_only = "general" | "retail" | "promenade" | "parking" | "pitch" | "entrance" | "clear" | "props" first to run
+-- Groups (set shared.site06_only = "general" | "retail" | "promenade" | "parking" | "pitch" | "entrance" | "clear" | "props" | "ground" first to run
 -- one; run_all leaves it nil and runs all; SET IT BACK TO nil after a filtered run).
 -- Frame: the site pivot is yawed SW, but the builder works in world-aligned local axes (origin = the pivot position (550, 0, -700)), so
 -- lp(p) is the world position minus the site position (+X east, +Z south). The slot is x -225..225, z -150..150 (world x 325..775,
@@ -583,6 +583,89 @@ if group("clear") then
 	check("the walk from Road B's mouth to the Guide is open (entry walk, then the plaza)", #bad == 0, table.concat(bad, ", ", 1, math.min(#bad, 6)))
 	local mouth = blockers(nil, Vector3.new(12, 8, 30), CFrame.new(SITE_POS + Vector3.new(-120, 5, 135)))
 	check("the road mouth lane (x -126..-114, z 120..150) is open", #mouth == 0, table.concat(mouth, ", ", 1, math.min(#mouth, 4)))
+end
+
+------------------------------------------------------------------ ground: no terrain Grass blades under paving, floors, turf, roads, sign bases (builders/site06_ground.luau)
+-- Terrain Grass draws decoration blades that poke through the 1.3 decks, so the terrain under every ground-touching hard part (paving,
+-- roads, parking, the artificial PitchTurf, aprons, building bodies, the stand, sign and monument bases) is repainted, padded 1 voxel.
+-- Real planting (lawn parts, beds, hedges, the perimeter tree belt) keeps its Grass. Same footprint rule as builders/site06_ground.luau.
+if group("ground") then
+	local T = workspace.Terrain
+	local LAWN = { GardenLawn = true, OvalLawn = true, OvalLawnInner = true, MonumentBed = true, ParkingIsland = true, PerimeterHedge = true,
+		PlazaBed = true, SpineBed = true }
+	local SKIPTOP = { Jeepney = true, LocalNPCs = true, Guide = true }
+	local PAD = 4
+	local feet = {}
+	for _, p in ipairs(site:GetDescendants()) do
+		if p:IsA("BasePart") and not isRig(p) and not LAWN[p.Name] and p.Material ~= Enum.Material.Grass then
+			local top = p
+			while top.Parent ~= site do top = top.Parent end
+			if not SKIPTOP[top.Name] then
+				local cf, h = p.CFrame, p.Size / 2
+				local ex = math.abs(cf.RightVector.X) * h.X + math.abs(cf.UpVector.X) * h.Y + math.abs(cf.LookVector.X) * h.Z
+				local ey = math.abs(cf.RightVector.Y) * h.X + math.abs(cf.UpVector.Y) * h.Y + math.abs(cf.LookVector.Y) * h.Z
+				local ez = math.abs(cf.RightVector.Z) * h.X + math.abs(cf.UpVector.Z) * h.Y + math.abs(cf.LookVector.Z) * h.Z
+				if p.Position.Y - ey <= 2 and 4 * ex * ez >= 30 then
+					table.insert(feet, { p = p, x0 = p.Position.X - ex - PAD, x1 = p.Position.X + ex + PAD, z0 = p.Position.Z - ez - PAD, z1 = p.Position.Z + ez + PAD })
+				end
+			end
+		end
+	end
+	local function covered(x, z)
+		for _, f in ipairs(feet) do
+			if x >= f.x0 and x <= f.x1 and z >= f.z0 and z <= f.z1 then
+				local q = f.p.CFrame:PointToObjectSpace(Vector3.new(x, f.p.Position.Y, z))
+				local h = f.p.Size / 2
+				if math.abs(q.X) <= h.X + PAD and math.abs(q.Y) <= h.Y + PAD and math.abs(q.Z) <= h.Z + PAD then return f.p end
+			end
+		end
+		return nil
+	end
+	-- the slot's whole voxel columns (x 328..772, z -848..-552), y -8..4 (the surface voxel and the one under it)
+	local X0, Z0 = 328, -848
+	local mats, occ = T:ReadVoxels(Region3.new(Vector3.new(X0, -8, Z0), Vector3.new(772, 4, -552)), 4)
+	local function grassCol(i, k)
+		for j = 1, mats.Size.Y do
+			if mats[i][j][k] == Enum.Material.Grass and occ[i][j][k] > 0 then return true end
+		end
+		return false
+	end
+	local function colAt(x, z) return math.floor((x - X0) / 4) + 1, math.floor((z - Z0) / 4) + 1 end
+	local nCov, bad = 0, {}
+	for i = 1, mats.Size.X do
+		for k = 1, mats.Size.Z do
+			local x, z = X0 + (i - 0.5) * 4, Z0 + (k - 0.5) * 4
+			if covered(x, z) then
+				nCov += 1
+				if grassCol(i, k) then table.insert(bad, string.format("(%d,%d)", x, z)) end
+			end
+		end
+	end
+	check("ground: 0 Grass terrain columns under the " .. #feet .. " paved/floor/turf/base footprints (padded 1 voxel)", #feet >= 80 and nCov >= 2000 and #bad == 0,
+		string.format("%d footprints, %d covered columns, %d grass: %s", #feet, nCov, #bad, table.concat(bad, " ", 1, math.min(#bad, 6))))
+	-- sample points: the centre of each named hard part is not Grass
+	local SAMPLES = { "PitchTurf", "ParkingNE", "ParkingW", "ParkingS", "SouthRoad", "NorthRoad", "EastRoad", "WestRoad", "StandApron", "PitchApronW",
+		"ShopBody", "PitchHouseBody", "MonumentBase", "PlinthBase", "PromenadeSpine", "OvalPaving", "GardenPath", "WalkwayPaving" }
+	for _, nm in ipairs(SAMPLES) do
+		local p = anchor(nm)
+		local ok = false
+		if p then
+			local i, k = colAt(p.Position.X, p.Position.Z)
+			ok = i >= 1 and i <= mats.Size.X and k >= 1 and k <= mats.Size.Z and not grassCol(i, k)
+		end
+		check("ground: no Grass terrain under the " .. nm .. " centre", ok, p and string.format("(%.0f, %.0f)", p.Position.X, p.Position.Z) or "missing")
+	end
+	local nPave, badPave = 0, {}
+	for _, p in ipairs(allNamed("ClusterPaving")) do
+		nPave += 1
+		local i, k = colAt(p.Position.X, p.Position.Z)
+		if grassCol(i, k) then table.insert(badPave, string.format("(%.0f,%.0f)", p.Position.X, p.Position.Z)) end
+	end
+	check("ground: no Grass terrain under the 7 ClusterPaving deck centres", nPave >= 7 and #badPave == 0, nPave .. " decks, grass at " .. table.concat(badPave, " "))
+	-- lawn control: the north perimeter tree belt (550, -835) is real lawn, outside every footprint, and keeps its Grass
+	local ci, ck = colAt(550, -835)
+	check("ground: lawn control (550, -835) in the perimeter tree belt is still Grass, outside every footprint",
+		grassCol(ci, ck) and covered(550, -835) == nil, tostring(mats[ci][mats.Size.Y - 1][ck]))
 end
 
 ------------------------------------------------------------------ props: estate model pedestal and the Lipa/Malvar panel (texts kept)

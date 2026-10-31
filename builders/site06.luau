@@ -11,7 +11,7 @@
 --   parenting (the model has no PrimaryPart; asserted).
 -- KEEP SET: Guide, InfoPanel, JeepStop, JeepSignPole, JeepSign, Jeepney, LocalNPCs are never touched, moved or recreated (they keep their
 --   WORLD positions; SiteData row 6 carries guideLocal / panelLocal for them). EVERY other child of the model is destroyed on every run
---   (a keep list, not a replace list) and rebuilt by the modules. No terrain writes: the old Pavement patches stay where parts do not
+--   (a keep list, not a replace list) and rebuilt by the modules. No terrain writes (except site06_ground, last): the old Pavement patches stay where parts do not
 --   cover them, and the arrival plaza round the kept cluster is that bare Pavement (nothing is stacked under the JeepStop pad).
 -- IDEMPOTENT. Fail-safe order (site03/site05): everything is planned unparented first, so an error leaves the old model untouched; then
 --   the old non-kept children are destroyed and the plan is parented in batches with task.wait().
@@ -353,6 +353,9 @@ return function()
 		if d:IsA("BasePart") then total += 1 end
 	end
 	for path, n in pairs(counts) do perContainer[#perContainer + 1] = path .. "=" .. n end
+	-- terrain: repaint the Grass under the hard surfaces (builders/site06_ground.luau), skipped when the module is missing
+	local groundMod = builders:FindFirstChild("site06_ground")
+	local groundReport = groundMod and require(groundMod:Clone())() or "missing"
 	table.sort(perContainer)
 	return {
 		parts = total,
@@ -362,5 +365,6 @@ return function()
 		modules = report,
 		containers = table.concat(perContainer, ","),
 		children = table.concat(names, ","),
+		ground = groundReport,
 	}
 end
