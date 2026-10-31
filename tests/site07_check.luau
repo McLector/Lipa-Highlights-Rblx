@@ -2,7 +2,7 @@
 -- (Standard tier, 2026-10-31: "San_benito_blueprint.png", briefs/site07.md Revision 2). Written BEFORE the rebuild.
 -- Studio copy: ServerStorage.Checks.site07_check. Run in Edit via execute_luau:
 --   require(game.ServerStorage.Checks.site07_check:Clone())      -- returns JSON {passed, failed, failures}
--- Groups (set shared.site07_only = "general" | "entrance" | "south" | "centre" | "north" | "east" | "planting" | "ground" first to run one;
+-- Groups (set shared.site07_only = "general" | "entrance" | "south" | "centre" | "north" | "east" | "planting" | "west" | "ground" first to run one;
 -- run_all leaves it nil and runs all; SET IT BACK TO nil after a filtered run).
 -- Frame: WORLD coordinates (the builder is world-aligned; the site pivot (770, 0, 240) faces W). North = -Z, East = +X; the board's north
 -- is world north. Slot x 570..970, z 80..400. Pins the board contradicts were REPLACED (never just deleted); each keeps its old text in a
@@ -527,6 +527,80 @@ if group("planting") then
 		end
 	end
 	check("no trunk stands in the river band", wet == 0, tostring(wet))
+end
+
+------------------------------------------------------------------ west: the west half of the oval is dense like the board (owner, session 062)
+-- The board fills its west half (Garden Glass, Acacia, Mahogany villas, Pure Energy Gym, Sulu Terraces, pale paths, palms) as densely as
+-- the east. The model's west (x < 770) was open lawn: canopy 11.0%, anything standing above y 1.6 on 25.1% of the land, 26 trunks, 8 small
+-- villas, 6 walk segments (red run, 2026-10-31). The parts come from the planting outside the river ring (briefs/site07.md Revision 3).
+if group("west") then
+	local ex = {}
+	for _, n in ipairs({ "Guide", "InfoPanel", "JeepStop", "JeepSignPole", "JeepSign", "Jeepney", "LocalNPCs" }) do
+		local c = site:FindFirstChild(n)
+		if c then table.insert(ex, c) end
+	end
+	local p = RaycastParams.new()
+	p.FilterType = Enum.RaycastFilterType.Exclude
+	p.FilterDescendantsInstances = ex
+	local CAN = { PalmFrond = true, PalmHead = true, TreeCrown = true }
+	local nW, canW, upW, nE, canE = 0, 0, 0, 0, 0
+	for x = 590, 950, 6 do
+		for z = 102, 378, 6 do
+			if inLand(x, z, 2) then
+				local h = workspace:Raycast(Vector3.new(x, 80, z), Vector3.new(0, -160, 0), p)
+				local mine = h and h.Instance:IsDescendantOf(site)
+				if x < 770 then
+					nW += 1
+					if mine and CAN[h.Instance.Name] then canW += 1 end
+					if mine and h.Position.Y > 1.6 then upW += 1 end
+				else
+					nE += 1
+					if mine and CAN[h.Instance.Name] then canE += 1 end
+				end
+			end
+		end
+	end
+	check("west half: fronds and crowns cover >= 13% of the land from above (was 11.0%)", nW > 0 and canW / nW >= 0.13,
+		string.format("%.1f%% of %d", 100 * canW / math.max(nW, 1), nW))
+	check("west half: built or planted parts above y 1.6 cover >= 32% of the land from above (was 25.1%)", nW > 0 and upW / nW >= 0.32,
+		string.format("%.1f%% of %d", 100 * upW / math.max(nW, 1), nW))
+	check("east half keeps its canopy (>= 45% from above) while the west fills in", nE > 0 and canE / nE >= 0.45,
+		string.format("%.1f%% of %d", 100 * canE / math.max(nE, 1), nE))
+	local trunks = 0
+	for _, n in ipairs({ "PalmTrunk", "TreeTrunk" }) do
+		for _, t in ipairs(allNamed(n)) do
+			if t.Position.X < 770 and inLand(t.Position.X, t.Position.Z, 0) then trunks += 1 end
+		end
+	end
+	check("west half: at least 33 palm or tree trunks inside the land (was 26)", trunks >= 33, tostring(trunks))
+	-- small villas (the board's rows of brown hip-roof houses) in the west half, and the Sulu Terraces row north of the Banaba court
+	local sv, west, sulu = find("Structure/SmallVillas"), 0, 0
+	for _, m in ipairs(sv and sv:GetChildren() or {}) do
+		local body = m:IsA("Model") and m:FindFirstChild("SmallVillaBody")
+		if body and body.Position.X < 770 then
+			west += 1
+			local bp = body.Position
+			if bp.X > 700 and bp.Z > 274 and bp.Z < 290 then sulu += 1 end
+		end
+	end
+	check("west half: at least 16 small brown hip-roof villas (was 8)", west >= 16, tostring(west))
+	check("Sulu Terraces: at least 3 small villas between the amphitheater and the Banaba court (x 700..770, z 274..290)", sulu >= 3, tostring(sulu))
+	-- Pure Energy Gym (board: beside the parking, north of it)
+	local gym, groof, gdoor = anchor("GymBody"), allNamed("GymRoof"), anchor("GymDoor")
+	local gb = gym and boundsOf({ gym })
+	check("Pure Energy Gym: a block >= 20 x 14, top >= 10, north of the parking lot and west of the south walk (x 652..696, z 262..298)",
+		gb ~= nil and gb.x1 - gb.x0 >= 20 and gb.z1 - gb.z0 >= 14 and gb.y1 >= 10 and gb.x0 >= 652 and gb.x1 <= 696 and gb.z0 >= 262 and gb.z1 <= 298,
+		gb and bstr(gb) or "missing")
+	check("the gym has a brown hip roof and a door at least 8 tall", #groof >= 1 and brownRoof(groof[1]) and gdoor ~= nil
+		and select(2, ext(gdoor, "Y")) - select(1, ext(gdoor, "Y")) >= 8, tostring(#groof))
+	-- pale walks link the west villas (board): walk segments whose centre lies west of x 700
+	local segs = 0
+	for _, s in ipairs(allNamed("PathSegment")) do if s.Position.X < 700 then segs += 1 end end
+	check("west walks: at least 12 PathSegment parts west of x 700 (was 6)", segs >= 12, tostring(segs))
+	-- low hedges in the west lawns where tall planting would cut the pinned sight-lines (<= 3 high)
+	local hedges, low = allNamed("Hedge"), 0
+	for _, hp in ipairs(hedges) do if select(2, ext(hp, "Y")) <= 3 and hp.Position.X < 770 then low += 1 end end
+	check("low hedges (<= 3 high) in the west lawns: at least 6", low >= 6 and low == #hedges, low .. "/" .. #hedges)
 end
 
 ------------------------------------------------------------------ ground: the old Pavement and Water terrain is covered by parts

@@ -19,8 +19,9 @@
 --     site07_entrance  Structure/River, Structure/Entrance, Structure/Banaba, Structure/Parking                    500
 --     site07_water     Structure/BigLagoon, Structure/Acqua, Structure/FrontOffice                                  350
 --     site07_villas    GardenPavilion, Structure/GlassVilla, NarraVillas, Amphitheater, SmallVillas                  550
---     site07_halls     Structure/Temple, Structure/Sanctuary                                                        300
---     site07_grounds   LandscapedPath/*, WellnessPanel, Structure/PalmsA, PalmsB, PalmsC, Trees, TreesB           1850
+--     site07_halls     Structure/Temple, Structure/Sanctuary, Structure/Gym                                         300
+--     site07_grounds   LandscapedPath/*, WellnessPanel, Structure/PalmsA, PalmsB, PalmsC, Trees, TreesB, TreesC,
+--                      Structure/Hedges                                                                             1850
 --   Every container holds at most 400 parts (hard error at plan time); the site (built + kept) at most 2500 (BuildCheck).
 -- env (WORLD coordinates): V, CF, ANG, PI, ORIGIN, BuildKit, LAYOUT, and the helpers
 --   box(ctx, name, x0, x1, y0, y1, z0, z1, color, material)          axis-aligned box from min/max corners
@@ -50,9 +51,10 @@ return function()
 		{ name = "site07_water", owns = { ["Structure/BigLagoon"] = true, ["Structure/Acqua"] = true, ["Structure/FrontOffice"] = true }, budget = 350 },
 		{ name = "site07_villas", owns = { GardenPavilion = true, ["Structure/GlassVilla"] = true, ["Structure/NarraVillas"] = true, ["Structure/Amphitheater"] = true,
 			["Structure/SmallVillas"] = true }, budget = 550 },
-		{ name = "site07_halls", owns = { ["Structure/Temple"] = true, ["Structure/Sanctuary"] = true }, budget = 300 },
+		{ name = "site07_halls", owns = { ["Structure/Temple"] = true, ["Structure/Sanctuary"] = true, ["Structure/Gym"] = true }, budget = 300 },
 		{ name = "site07_grounds", owns = { ["LandscapedPath/Entry"] = true, ["LandscapedPath/Plaza"] = true, ["LandscapedPath/Walks"] = true, WellnessPanel = true,
-			["Structure/PalmsA"] = true, ["Structure/PalmsB"] = true, ["Structure/PalmsC"] = true, ["Structure/Trees"] = true, ["Structure/TreesB"] = true }, budget = 1850 },
+			["Structure/PalmsA"] = true, ["Structure/PalmsB"] = true, ["Structure/PalmsC"] = true, ["Structure/Trees"] = true, ["Structure/TreesB"] = true,
+			["Structure/TreesC"] = true, ["Structure/Hedges"] = true }, budget = 1850 },
 	}
 	-- path -> { name path, parent path ("" is the site), class, grouping }
 	local TREE = {
@@ -70,11 +72,14 @@ return function()
 		{ "Structure/SmallVillas", "Structure", "Model" },
 		{ "Structure/Temple", "Structure", "Model" },
 		{ "Structure/Sanctuary", "Structure", "Model" },
+		{ "Structure/Gym", "Structure", "Model" },
 		{ "Structure/PalmsA", "Structure", "Model" },
 		{ "Structure/PalmsB", "Structure", "Model" },
 		{ "Structure/PalmsC", "Structure", "Model" },
 		{ "Structure/Trees", "Structure", "Model" },
 		{ "Structure/TreesB", "Structure", "Model" },
+		{ "Structure/TreesC", "Structure", "Model" },
+		{ "Structure/Hedges", "Structure", "Model" },
 		{ "GardenPavilion", "", "Model" },
 		{ "LandscapedPath", "", "Model", true },
 		{ "LandscapedPath/Entry", "LandscapedPath", "Model" },
@@ -88,7 +93,11 @@ return function()
 	local LAYOUT = {
 		ellipse = { cx = 770, cz = 240, a = 189, b = 147, w = 14 }, -- river centre line and width: water a 182..196, b 140..154
 		occupied = {
-			{ 566, 656, 208, 258 }, -- bridge, gate, guard post, entry path
+			-- Revision 3 (session 062): the entry box (was 566..656 x 208..258) and the temple box (was 664..714 x 122..192) are cut to the
+			-- real footprints, so the west lawns between them can be planted.
+			{ 566, 656, 229, 258 }, -- bridge and entry path (and the lawn south of it, under the road-mouth view)
+			{ 606, 618, 224, 258 }, -- gate piers and gate roof
+			{ 616, 632, 211, 229 }, -- guard post and barrier
 			{ 650, 702, 186, 264 }, -- arrival plaza (Guide, JeepStop, jeepney, InfoPanel)
 			-- tidy (owner's look): the central plaza became lawn with walks; only its features stay clear of planting
 			{ 698, 710, 188, 212 }, -- Wellness board
@@ -96,13 +105,14 @@ return function()
 			{ 716, 772, 220, 276 }, -- amphitheater
 			{ 772, 816, 212, 260 }, -- glass villa
 			{ 712, 808, 120, 204 }, -- Big Lagoon and its pavilion
-			{ 664, 714, 122, 192 }, -- Temple of Five Elements and the labyrinth
+			{ 678, 702, 124, 148 }, -- Temple of Five Elements (roof x 680.5..699.5, z 127..145)
+			{ 670, 710, 146, 186 }, -- labyrinth and its hedge ring (r 19.2 round (690,166))
 			{ 810, 832, 114, 142 }, { 840, 862, 124, 152 }, { 869, 891, 140, 168 }, -- Narra villas and pools
 			{ 840, 942, 224, 270 }, -- Front Office and its lagoon
 			{ 822, 918, 278, 316 }, -- Holistic Medical Sanctuary
 			{ 690, 710, 256, 300 }, { 690, 756, 282, 300 }, -- south walk (lanes c and d)
 			{ 706, 798, 290, 352 }, -- Banaba hall, forecourt and canopy
-			{ 642, 702, 256, 346 }, -- parking and its drive
+			{ 642, 702, 256, 346 }, -- parking and its drive; Pure Energy Gym (x 664..688, z 272..288) and its hedges
 			{ 602, 650, 250, 300 }, -- Acqua Hydrotherapy
 		},
 		-- tidy (owner's look): the board's many small brown hip-roof villas, {x, z, pool side}: Garden Glass on the north edge, Acacia and
@@ -111,7 +121,16 @@ return function()
 			{ 744, 114 }, { 766, 110 }, { 790, 112 },
 			{ 603, 205 }, { 613, 188 }, { 626, 172 }, { 640, 158 },
 			{ 626, 306, "E" }, { 643, 318, "N" }, -- pool on that side
+			-- Revision 3 (session 062, the west half denser): Garden Glass on the north river west of the lagoon, Acacia in the north-west
+			-- wedge, Mahogany Luxury either side of the entry walk, and the Sulu Terraces row between the amphitheater and the Banaba court.
+			{ 708, 122 }, { 727, 114 },
+			{ 664, 158 },
+			{ 600, 222 }, { 648, 216 },
+			{ 714, 281 }, { 731, 281 }, { 748, 281 },
 		},
+		-- Revision 3: the keep-clear boxes of sites_check (Guide, InfoPanel front zone, JeepStop and landing), world x0, x1, z0, z1. Planting
+		-- keeps its trunks a crown radius plus one away (trees 13, palms 10), because the keep-clear queries do not skip non-colliding crowns.
+		keepClear = { { 658, 682, 228, 252 }, { 664, 676, 246, 258 }, { 658, 682, 190, 232 } },
 		corridors = { -- sight-line triangles (eye, a, b) in x/z, kept clear of planting
 			{ { 664, 234 }, { 780, 218 }, { 780, 254 } },
 			{ { 576, 236 }, { 780, 218 }, { 780, 254 } },

@@ -2,7 +2,13 @@
 -- Studio copy: ServerStorage.Builders.site07_grounds. Assembler: builders/site07.luau. Check: tests/site07_check.luau, groups centre, planting,
 --   ground; tests/sites_check.luau (lanes, keep-clear boxes, sight-lines).
 -- Owns LandscapedPath/Entry, LandscapedPath/Plaza, LandscapedPath/Walks, WellnessPanel, Structure/PalmsA, Structure/PalmsB, Structure/PalmsC,
--- Structure/Trees, Structure/TreesB. Budget 1850.
+-- Structure/Trees, Structure/TreesB, Structure/TreesC, Structure/Hedges. Budget 1850.
+-- Revision 3 (session 062, owner: the west half is still open, make it denser so it matches the board): the parts come from the planting
+--   outside the river ring (its 49 palms became broadleaf trees, 3 parts instead of 8). Planting now fills the west half of the land first
+--   (trees, then palms in the gaps; palms may stand nearer the small villas, as on the board), then the east half up to 62 palms, then the
+--   forest beyond the river. Trees in the west get larger crowns (22..24, still inside the 12-stud corridor margin). Trunks keep a crown
+--   radius plus one from the sites_check keep-clear boxes (env.LAYOUT.keepClear). New: walks A (the north-west villa loop to the temple),
+--   F (along the Sulu Terraces), G (to the gym door); low hedges (<= 2.4 high) in the west lawns where tall planting would cut the sight-lines.
 -- Tidy (owner's look, 2026-10-31): the big grey courts became lawn (Grass-material parts in the terrain's grass colour over the old Pavement
 --   cells) with walks and small terraces; the planting is much denser (100 palms, 256 broadleaf trees; the low shrubs gave way to canopy) so the oval reads as canopy.
 -- Source: "San_benito_blueprint.png": pale winding paths link every zone; dense palms and broadleaf trees fill the oval and the banks beyond
@@ -90,6 +96,10 @@ return function(env)
 		{ w = 5, pts = { { 760, 220 }, { 785, 202 } } },
 		{ w = 5, pts = { { 700, 258 }, { 722, 257 } } },
 		{ w = 5, pts = { { 776, 256 }, { 800, 272 } } },
+		-- Revision 3: A the north-west loop past the Acacia and Mahogany doors to the temple; F along the Sulu Terraces to the east walk; G to the gym
+		{ w = 5, pts = { { 636, 206 }, { 616, 201 }, { 629, 184 }, { 642, 170 }, { 654, 156 }, { 660, 146 }, { 676, 140 } } },
+		{ w = 5, pts = { { 704, 273.5 }, { 776, 273.5 }, { 800, 273 } } },
+		{ w = 5, pts = { { 696, 266 }, { 676, 268 } } },
 	}
 	env.section("LandscapedPath/Walks", function(ctx)
 		for _, wk in ipairs(WALKS) do
@@ -107,6 +117,23 @@ return function(env)
 		env.gui(board, Enum.NormalId.Left, "WELLNESS TOURISM. The Farm at San Benito is an operating resort representing Lipa's contemporary wellness tourism: gardens, accommodation, dining and organized activities. Visits involve bookings or paid services.", nil, DARK, 40, 18)
 		box(ctx, "WellnessPost", 702, 704, 0, 3, 195, 196, DARK, WOOD)
 		box(ctx, "WellnessPost", 702, 704, 0, 3, 204, 205, DARK, WOOD)
+	end)
+
+	------------------------------------------------------------------ Hedges (Revision 3): low clipped hedges in the west lawns, all <= 2.4 high, outside the
+	-- lanes, the keep-clear boxes and the walks; the sight-line rays (eye y 6) pass over them.
+	local HEDGES = {
+		{ 684, 698, 196, 199 }, { 684, 698, 207, 210 }, { 684, 698, 216, 219 }, -- plaza lawn east of the jeep apron (x > 682), west of the Wellness board
+		{ 651, 657, 252, 259 }, { 684, 696, 253, 257 }, -- plaza lawn either side of the InfoPanel zone (x 664..676) and south of the Guide box
+		{ 714, 734, 205, 208 }, -- central lawn between the Wellness board and the round pavilion
+		{ 704, 714, 246, 250 }, { 706, 718, 263, 268 }, -- either side of the walk to the amphitheater aisle
+		{ 658, 661, 262, 292 }, { 691, 694, 272, 292 }, -- along the gym, between the drive and the south walk
+		{ 654, 657, 194, 210 }, { 654, 657, 222, 227 }, -- plaza lawn west of the jeep box (x < 658)
+		{ 664, 676, 128, 133 }, { 694, 700, 187, 192 }, -- north-west of the temple; south of the labyrinth beside its walk
+	}
+	env.section("Structure/Hedges", function(ctx)
+		for _, h in ipairs(HEDGES) do
+			box(ctx, "Hedge", h[1], h[2], 0, 2.4, h[3], h[4], C3(40, 96, 46), GRASSM)
+		end
 	end)
 
 	------------------------------------------------------------------ Planting
@@ -129,8 +156,9 @@ return function(env)
 		return not (neg and pos)
 	end
 	local E = L.ellipse
-	-- tall = palm or tree (collides, crowns reach ~10): kept out of the corridors too; low = shrub (<= 3 high).
-	local function valid(x, z, tall)
+	-- tall = palm or tree (collides, crowns reach ~10): kept out of the corridors too; low = shrub (<= 3 high). palm = a palm (fronds high
+	-- above the roofs): it may stand 9 x 8 from a small villa without a pool (trees keep 16 x 15).
+	local function valid(x, z, tall, palm)
 		if x < 582 or x > 958 or z < 92 or z > 388 then return false end
 		local ein = ((x - E.cx) / (E.a - E.w / 2 - 6)) ^ 2 + ((z - E.cz) / (E.b - E.w / 2 - 6)) ^ 2
 		local eout = ((x - E.cx) / (E.a + E.w / 2 + 6)) ^ 2 + ((z - E.cz) / (E.b + E.w / 2 + 6)) ^ 2
@@ -139,8 +167,16 @@ return function(env)
 		for _, o in ipairs(L.occupied) do
 			if x > o[1] - r and x < o[2] + r and z > o[3] - r and z < o[4] + r then return false end
 		end
+		if tall then -- Revision 3: a crown radius plus one from the keep-clear boxes (their queries see non-colliding crowns and fronds)
+			local k = palm and 10 or 13
+			for _, o in ipairs(L.keepClear) do
+				if x > o[1] - k and x < o[2] + k and z > o[3] - k and z < o[4] + k then return false end
+			end
+		end
 		for _, v in ipairs(L.smallVillas) do -- the 10 x 8 house and its pool, within 12 x 11 of the centre
-			if math.abs(x - v[1]) < 12 + r and math.abs(z - v[2]) < 11 + r then return false end
+			local mx, mz = 12 + r, 11 + r
+			if palm and not v[3] then mx, mz = 9, 8 end
+			if math.abs(x - v[1]) < mx and math.abs(z - v[2]) < mz then return false end
 		end
 		for _, wk in ipairs(WALKS) do
 			for i = 1, #wk.pts - 1 do
@@ -157,15 +193,22 @@ return function(env)
 		end
 		return true
 	end
+	-- Revision 3: candidates in three tiers (1 = land west of x 770, 2 = land east, 3 = beyond the river), hash order inside each tier.
+	local function inLand(x, z) return ((x - 770) / 182) ^ 2 + ((z - 240) / 140) ^ 2 <= 1 end
 	local cands = {}
 	for i = 0, 54 do
 		for j = 0, 42 do
 			local x = 582 + 7 * i + (hash(i, j) - 0.5) * 4
 			local z = 92 + 7 * j + (hash(j + 101, i) - 0.5) * 4
-			table.insert(cands, { x = x, z = z, h = hash(i + 7, j + 13) })
+			local tier = inLand(x, z) and (x < 770 and 1 or 2) or 3
+			table.insert(cands, { x = x, z = z, h = hash(i + 7, j + 13), tier = tier })
 		end
 	end
-	table.sort(cands, function(a, b) return a.h < b.h end)
+	table.sort(cands, function(a, b)
+		if a.tier ~= b.tier then return a.tier < b.tier end
+		return a.h < b.h
+	end)
+	local PALMS, TREES = 62, 390
 	local palms, trees, shrubs = {}, {}, {}
 	local function spaced(list, x, z, d)
 		for _, p in ipairs(list) do
@@ -173,13 +216,23 @@ return function(env)
 		end
 		return true
 	end
+	-- 1. west trees, 2. west palms in the gaps (nearer the villas, spaced 6), 3. east palms up to PALMS, 4. east trees, then the forest beyond the river
 	for _, c in ipairs(cands) do
-		if #palms < 100 and valid(c.x, c.z, true) and spaced(palms, c.x, c.z, 8) and spaced(trees, c.x, c.z, 7) then
+		if c.tier == 1 and valid(c.x, c.z, true) and spaced(trees, c.x, c.z, 6.5) then table.insert(trees, c) end
+	end
+	for _, c in ipairs(cands) do
+		if c.tier == 1 and #palms < PALMS and valid(c.x, c.z, true, true) and spaced(trees, c.x, c.z, 6) and spaced(palms, c.x, c.z, 6) then
 			table.insert(palms, c)
-		elseif #trees < 256 and valid(c.x, c.z, true) and spaced(palms, c.x, c.z, 6.5) and spaced(trees, c.x, c.z, 6.5) then
+		end
+	end
+	for _, c in ipairs(cands) do
+		if c.tier == 2 and #palms < PALMS and valid(c.x, c.z, true, true) and spaced(trees, c.x, c.z, 7) and spaced(palms, c.x, c.z, 8) then
+			table.insert(palms, c)
+		end
+	end
+	for _, c in ipairs(cands) do
+		if c.tier >= 2 and #trees < TREES and valid(c.x, c.z, true) and spaced(palms, c.x, c.z, 6.5) and spaced(trees, c.x, c.z, 6.5) then
 			table.insert(trees, c)
-		elseif #shrubs < 0 and valid(c.x, c.z, false) and spaced(shrubs, c.x, c.z, 5) then
-			table.insert(shrubs, c)
 		end
 	end
 	-- palms in three containers of at most 45 (360 parts each, under the 400 cap)
@@ -191,17 +244,20 @@ return function(env)
 			end
 		end)
 	end
-	-- broadleaf trees (crowns 17..23 across, under the 12-stud corridor margin; the board's canopy) in two containers; the shrubs (<= 3 high) go with the second
+	-- broadleaf trees (crowns 17..23 across, 22..24 in the west; under the 12-stud corridor margin; the board's canopy) in three containers
+	-- of at most 130 (390 parts each); the shrubs (<= 3 high, none at present) go with the last
 	local function plantTrees(ctx, i0, i1)
 		for i = i0, math.min(i1, #trees) do
 			local t = trees[i]
 			local k = hash(t.z, t.x)
-			env.tree(ctx, t.x, t.z, 17 + 6 * k, 17 + 6 * k)
+			local d = t.tier == 1 and (22 + 2 * k) or (17 + 6 * k)
+			env.tree(ctx, t.x, t.z, d, d)
 		end
 	end
 	env.section("Structure/Trees", function(ctx) plantTrees(ctx, 1, 130) end)
-	env.section("Structure/TreesB", function(ctx)
-		plantTrees(ctx, 131, 256)
+	env.section("Structure/TreesB", function(ctx) plantTrees(ctx, 131, 260) end)
+	env.section("Structure/TreesC", function(ctx)
+		plantTrees(ctx, 261, 390)
 		for _, sh in ipairs(shrubs) do
 			env.shrub(ctx, sh.x, sh.z, 2.4 + 1.2 * hash(sh.x + 3, sh.z))
 		end

@@ -1,6 +1,7 @@
 -- site07_halls: the Temple of Five Elements with its labyrinth garden, and the Holistic Medical Sanctuary of Site 07.
 -- Studio copy: ServerStorage.Builders.site07_halls. Assembler: builders/site07.luau. Check: tests/site07_check.luau, groups north, east.
--- Owns Structure/Temple, Structure/Sanctuary. Budget 300.
+-- Owns Structure/Temple, Structure/Sanctuary, Structure/Gym. Budget 300.
+-- Revision 3 (session 062, west half denser): the Pure Energy Gym, the board's hip-roofed block just north of the parking area.
 -- Source: "San_benito_blueprint.png": inset E (Temple of Five Elements and garden: a square two-tier hip-roofed pavilion on a stone plinth
 --   behind a round garden of concentric stone and green rings with a fountain at its centre, hedges and paths around); in the main view the
 --   round garden lies north-west of the Big Lagoon. The Holistic Medical Sanctuary is the long two-storey block under brown hip roofs in the
@@ -67,5 +68,16 @@ return function(env)
 			local x = 833.5 + 7.6 * k
 			box(ctx, "SanctuaryWindow", x, x + 4, 12, 16.5, 287.75, 288, GLASS, GL)
 		end
+	end)
+
+	------------------------------------------------------------------ Pure Energy Gym (x 664..688, z 272..288): one storey, brown hip roof, door north
+	-- Board: a long low building with a brown hip roof just north of the parking area's west end. The door faces the plaza (north); walk G
+	-- (site07_grounds) leads to it from the south walk. Kept out of lane (c) (x 698..702) and the InfoPanel zone (z <= 258).
+	env.section("Structure/Gym", function(ctx)
+		box(ctx, "GymBody", 664, 688, 0, 10, 272, 288, CREAM, CONC)
+		hipRoof(ctx, "GymRoof", 662.8, 689.2, 270.8, 289.2, 10, 4, ROOF, SLATE)
+		box(ctx, "GymDoor", 674, 678, 0, 8.4, 271.7, 272, DARK, WOOD)
+		box(ctx, "GymWindow", 666, 671, 3.5, 7.5, 271.75, 272, GLASS, GL)
+		box(ctx, "GymWindow", 681, 686, 3.5, 7.5, 271.75, 272, GLASS, GL)
 	end)
 end
