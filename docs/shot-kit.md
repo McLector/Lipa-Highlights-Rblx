@@ -77,4 +77,12 @@ Slice 4 rows (provisional, tuned by each builder the first time it captures; the
 | 2 Market | crowd close-up at the north stair foot: two facing pairs of shoppers between the hall wall and the tricycle queue (beside iso_stairN.png and bp2_iso_vendors_tricycles.png; the figures read small from far away, so use this view) | -228, 10, 112 | -246, 3.5, 90 |
 | 2 Market | crowd in context: use the stair-foot rows above ((-205,28,70) to (-236,3,105) and (-205,28,262) to (-236,3,215)) and the south side yard iso ((-300,40,310) to (-400,4,255), beside iso_shedsA.png): 11 shoppers, 4 at the north foot, 3 at the south foot, 4 in the yards | see rows above | see rows above |
 
+Handoff 062 rows (captured 2026-10-31 on the rebuilt sites; the provisional rows 6 and 7 in the first table aimed at the old slots and stay as the "before" shots):
+
+| Site | Shot | Camera position (x, y, z) | Look at (x, y, z) |
+|---|---|---|---|
+| 2 Market | overview: the whole hall front, the name banner, both stair feet, kerb traffic and both side yards | -150, 55, 255 | -310, 14, 160 |
+| 6 The Outlets | whole site from the north-west (entrance pylon, promenade and oval, retail blocks, Aboitiz Pitch, curved grandstand, parking) | 360, 150, -460 | 560, 0, -700 |
+| 6 The Outlets | top-down (slot 450 x 300 centred on (550, -700); the southernmost few studs fall just off the frame) | 550, 380, -699 | 550, 0, -700 |
+
 Per site, take at least: the front oblique above, a straight-on front, and one close-up of any signage or text.

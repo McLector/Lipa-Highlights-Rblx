@@ -54,7 +54,7 @@ They live in **one place**: `EXPECTED` at the top of `tests/run_all.luau`. Run `
 ## Backup log wip17..wip33 (sizes, times and SHA-256 read from the files on 2026-10-31; only wip33 was verified with run_all here)
 | File | Saved | Bytes | SHA-256 | Note |
 |---|---|---|---|---|
-| `slice-36-wip17.rbxl` | 2026-10-30 14:58 | 633,755 | `0B082C048D6EAEF47233BD4A7462D5BEE9674ECD598101C2F2E3753307081629` | re-save of wip16 (see the note above) |
+| `slice-36-wip17.rbxl` | 2026-10-30 14:58 | 633,755 | `0B082C048D6EAEF47233BD4A7462D5BEE9674ECD598101C2F2E3753307081629` | re-save of wip16 (see the earlier working backup below) |
 | `slice-36-wip18.rbxl` | 2026-10-30 17:48 | 636,331 | `38D6DA57F857638EEAE01A13BE2F3D73D8C933CAE9FD798475CA5E18A4411147` | contents not recorded |
 | `slice-36-wip19.rbxl` | 2026-10-30 21:53 | 636,828 | `2D8B95A8A3889D327197B8A06114D8D83D1A4E2963B48D87B9D834E2429359A1` | contents not recorded |
 | `slice-36-wip20.rbxl` | 2026-10-30 23:10 | 643,375 | `22CE26668D99FE188B4DCF33F86333119587FF490F95A1F00F3C11BF236E7B4D` | contents not recorded |
