@@ -6,6 +6,8 @@
 -- Revision 2 (board rebuild, 2026-10-31): groups. Set shared.site08_only = "general" | "entrance" | "clubhouse" | "hotel" | "context" first
 -- to run one; run_all leaves it nil and runs all. Photo pins the Mount Malarayat blueprint board contradicts were REPLACED, each logged
 -- old -> new in briefs/site08.md Revision 2 (RoofTier, WindowTrim, StoneCourse, CartBody, the 16-pine count, the part range).
+-- Revision 3 (owner look, 2026-10-31): groups "mountain" (a wedge ridge behind the clubhouse replaces the cylinder tiers), "course" (fairways,
+-- greens with flags, bunkers, ponds lying on the slope), "planting" (dense woods and palms); the entrance group gains the flush-lagoon pins.
 local HttpService = game:GetService("HttpService")
 local ONLY = shared.site08_only
 local function run(group) return ONLY == nil or ONLY == group end
@@ -336,8 +338,317 @@ if run("general") then
 	check("every label is fixed-size and fits its part (no long TextScaled line)", #bad == 0, #bad .. " bad: " .. table.concat(bad, "; ", 1, math.min(#bad, 4)))
 end
 
+------------------------------------------------------------------ Revision 3 helpers: plates lying on the slope
+-- A plate is a thin Block (thin axis = its smallest size) or a Cylinder disc (thin axis = X). samplesOf returns its top-surface centre and four
+-- points at 0.4 of its in-plane extent (inside a disc's radius); liftRange is min/max of (sample y - terrain y).
+local function plateAxes(p)
+	local cf, sz = p.CFrame, p.Size
+	local axes = { { cf.RightVector, sz.X }, { cf.UpVector, sz.Y }, { cf.LookVector, sz.Z } }
+	local thin = 1
+	if not (p:IsA("Part") and p.Shape == Enum.PartType.Cylinder) then
+		for i = 2, 3 do
+			if axes[i][2] < axes[thin][2] then thin = i end
+		end
+	end
+	local n = axes[thin][1]
+	if n.Y < 0 then n = -n end
+	local inPlane = {}
+	for i = 1, 3 do
+		if i ~= thin then table.insert(inPlane, axes[i]) end
+	end
+	return n, axes[thin][2], inPlane
+end
+local function samplesOf(p)
+	local n, t, inPlane = plateAxes(p)
+	local top = p.Position + n * (t / 2)
+	local pts = { top }
+	for _, a in ipairs(inPlane) do
+		for _, s in ipairs({ -0.4, 0.4 }) do table.insert(pts, top + a[1] * (a[2] * s)) end
+	end
+	return pts
+end
+local function liftRange(p)
+	local lo, hi = math.huge, -math.huge
+	for _, q in ipairs(samplesOf(p)) do
+		local h = q.Y - gnd(q.X, q.Z)
+		lo, hi = math.min(lo, h), math.max(hi, h)
+	end
+	return lo, hi
+end
+local function flushBad(list, lo, hi)
+	local bad = {}
+	for _, p in ipairs(list) do
+		local a, b = liftRange(p)
+		if a < lo or b > hi then table.insert(bad, string.format("%s@(%.0f,%.0f) %.2f..%.2f", p.Name, p.Position.X, p.Position.Z, a, b)) end
+	end
+	return bad
+end
+-- Is the world point (x, z) on the plate's footprint? (Block: inside its in-plane rectangle; disc: inside its radius.)
+local function onPlate(p, x, z)
+	local _, _, inPlane = plateAxes(p)
+	local d = Vector3.new(x - p.Position.X, 0, z - p.Position.Z)
+	if p:IsA("Part") and p.Shape == Enum.PartType.Cylinder then
+		return d.Magnitude <= inPlane[1][2] / 2
+	end
+	for _, a in ipairs(inPlane) do
+		local flat = Vector3.new(a[1].X, 0, a[1].Z)
+		if flat.Magnitude < 1e-3 then return false end
+		if math.abs(d:Dot(flat.Unit)) > a[2] / 2 then return false end
+	end
+	return true
+end
+-- The corners of the solid: a box's 8; a WedgePart's 6 (its slope rises toward +Z, so the two top corners at -Z are empty box corners).
+local function corners(p)
+	local list, cf, h = {}, p.CFrame, p.Size / 2
+	local wedge = p:IsA("WedgePart")
+	for _, sx in ipairs({ -1, 1 }) do
+		for _, sy in ipairs({ -1, 1 }) do
+			for _, sz in ipairs({ -1, 1 }) do
+				if not (wedge and sy == 1 and sz == -1) then
+					table.insert(list, cf:PointToWorldSpace(Vector3.new(sx * h.X, sy * h.Y, sz * h.Z)))
+				end
+			end
+		end
+	end
+	return list
+end
+local function partsOf(root)
+	local list = {}
+	for _, d in ipairs(root and root:GetDescendants() or {}) do
+		if d:IsA("BasePart") then table.insert(list, d) end
+	end
+	return list
+end
+local function isBlue(p)
+	local r, g, b = rgb(p)
+	return b >= r + 60 and b >= g
+end
+-- The pinned walking lanes (sites_check site 8, briefs/site08.md): 4 wide.
+local LANES = {
+	{ { 450, 552 }, { 450, 700 }, { 524, 700 } },
+	{ { 548, 708 }, { 592, 752 } },
+	{ { 585, 753 }, { 537, 815 } },
+	{ { 520, 722 }, { 436, 758 }, { 426, 788 } },
+}
+local function laneDist(x, z)
+	local best = math.huge
+	for _, lane in ipairs(LANES) do
+		for i = 1, #lane - 1 do
+			local ax, az, bx, bz = lane[i][1], lane[i][2], lane[i + 1][1], lane[i + 1][2]
+			local dx, dz = bx - ax, bz - az
+			local t = math.clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1)
+			best = math.min(best, math.sqrt((x - ax - t * dx) ^ 2 + (z - az - t * dz) ^ 2))
+		end
+	end
+	return best
+end
+-- Minimum lane distance over a 5 x 5 grid on the plate's footprint (disc: the points inside it).
+local function plateLaneDist(p)
+	local n, t, inPlane = plateAxes(p)
+	local top = p.Position + n * (t / 2)
+	local disc = p:IsA("Part") and p.Shape == Enum.PartType.Cylinder
+	local best = math.huge
+	for i = -2, 2 do
+		for j = -2, 2 do
+			if not disc or (i * i + j * j) <= 4 then
+				local q = top + inPlane[1][1] * (inPlane[1][2] * 0.25 * i) + inPlane[2][1] * (inPlane[2][2] * 0.25 * j)
+				best = math.min(best, laneDist(q.X, q.Z))
+			end
+		end
+	end
+	return best
+end
+
+------------------------------------------------------------------ MOUNTAIN (Revision 3): the board's Mount Malarayat, a wedge ridge behind the clubhouse
+if run("mountain") then
+	local mb = site:FindFirstChild("MountainBackdrop")
+	local parts = partsOf(mb)
+	local round, wedges, solid = 0, 0, 0
+	for _, p in ipairs(parts) do
+		if p:IsA("Part") and p.Shape ~= Enum.PartType.Block then round += 1 end
+		if p:IsA("WedgePart") or p:IsA("CornerWedgePart") then wedges += 1 end
+		if p.CanCollide or p.CanQuery then solid += 1 end
+	end
+	check("mountain: no Cylinder or Ball parts (the stacked tank tiers are gone)", #parts > 0 and round == 0, round .. " round of " .. #parts)
+	check("mountain: built from at least 100 wedges (a faceted ridge, Taal method)", wedges >= 100, tostring(wedges))
+	check("mountain: every part is non-colliding and never blocks a query", #parts > 0 and solid == 0, tostring(solid))
+	local top, topAt, out = -math.huge, nil, 0
+	local uLo, uHi, aLo, aHi, front = math.huge, -math.huge, math.huge, -math.huge, 0
+	local greenHit = false
+	for _, p in ipairs(parts) do
+		for _, c in ipairs(corners(p)) do
+			if c.Y > top then top, topAt = c.Y, c end
+			if c.X < 358 or c.X > 762 or c.Z < 558 or c.Z > 882 then out += 1 end
+			if c.Y >= 70 then
+				local u = (c.X - c.Z) * S
+				uLo, uHi = math.min(uLo, u), math.max(uHi, u)
+			end
+			local a = math.deg(math.atan2(c.Z - 410, c.X - 360))
+			aLo, aHi = math.min(aLo, a), math.max(aHi, a)
+		end
+		if p.Position.X + p.Position.Z < 1440 and p.Position.X < 730 and p.Position.Z < 864 then front += 1 end
+		local lp = p.CFrame:PointToObjectSpace(Vector3.new(724, p.Position.Y, 620))
+		if math.abs(lp.X) <= p.Size.X / 2 and math.abs(lp.Z) <= p.Size.Z / 2 and math.abs(lp.Y) <= p.Size.Y / 2 then greenHit = true end
+	end
+	check("mountain: the summit stands at least 115 high (about 80 above the plateau), east (x >= 690)", topAt ~= nil and top >= 115 and topAt.X >= 690,
+		topAt and string.format("%.1f at (%.0f, %.0f)", top, topAt.X, topAt.Z) or "no parts")
+	local peaks = within(mb, "BackdropPeak")
+	check("mountain: exactly one BackdropPeak and it reaches the summit", #peaks == 1 and topY(peaks[1]) >= top - 1,
+		#peaks .. " found" .. (peaks[1] and (", top " .. fmt(topY(peaks[1]))) or ""))
+	check("mountain: a broad ridge, above y 70 over at least 120 studs along the ridge line", uHi - uLo >= 120, fmt(uHi - uLo))
+	check("mountain: spans at least 40 degrees of the board-view camera (360, 410)", aHi - aLo >= 40, fmt(aHi - aLo))
+	local bearing = function(x, z) return math.deg(math.atan2(z - 600, x - 450)) end
+	check("mountain: the summit is behind the clubhouse seen from the gate (bearing within 15 degrees)",
+		topAt ~= nil and math.abs(bearing(topAt.X, topAt.Z) - bearing(620, 780)) <= 15, topAt and fmt(bearing(topAt.X, topAt.Z) - bearing(620, 780)) or "none")
+	check("mountain: nothing stands in front of the clubhouse rear (centres x + z >= 1440, or the east arm x >= 730, or the back strip z >= 864)",
+		#parts > 0 and front == 0, tostring(front))
+	check("mountain: every corner inside the slot (x 360..760, z 560..880, 2 studs slack)", #parts > 0 and out == 0, tostring(out))
+	check("mountain: hole 2's green at (724, 620) is not buried", not greenHit)
+end
+
+------------------------------------------------------------------ COURSE (Revision 3): fairways, greens with flags, bunkers, ponds on the slope
+if run("course") then
+	local fair, greens, bunkers = allNamed("Fairway"), allNamed("PuttingGreen"), allNamed("Bunker")
+	local fairBlocks, area, pale = 0, 0, 0
+	for _, f in ipairs(fair) do
+		local r, g, b = rgb(f)
+		if g < 150 or g - r < 40 or g - b < 60 then pale += 1 end
+		if not (f:IsA("Part") and f.Shape == Enum.PartType.Cylinder) then
+			fairBlocks += 1
+			local _, _, inPlane = plateAxes(f)
+			area += inPlane[1][2] * inPlane[2][2]
+		end
+	end
+	check("course: at least 5 fairways (Fairway blocks), lighter green than the grass", fairBlocks >= 5 and pale == 0, fairBlocks .. " fairways, " .. pale .. " off colour")
+	check("course: fairway blocks cover at least 7000 square studs", area >= 7000, fmt(area))
+	local bad = flushBad(fair, 0.6, 1.6)
+	check("course: fairways lie on the slope (top 0.6..1.6 above the terrain)", #fair > 0 and #bad == 0, #bad .. " bad: " .. table.concat(bad, "; ", 1, math.min(#bad, 4)))
+	local flags = allNamed("GreenFlag")
+	local noFlag = 0
+	for _, g in ipairs(greens) do
+		local ok = false
+		for _, f in ipairs(flags) do
+			if off(f.Position, g.Position).Magnitude <= 6 then ok = true end
+		end
+		if not ok then noFlag += 1 end
+	end
+	check("course: at least 5 putting greens, each with a GreenFlag on it", #greens >= 5 and noFlag == 0, #greens .. " greens, " .. noFlag .. " without a flag")
+	bad = flushBad(greens, 0.6, 1.8)
+	check("course: greens lie on the slope (top 0.6..1.8 above the terrain)", #greens > 0 and #bad == 0, #bad .. " bad: " .. table.concat(bad, "; ", 1, math.min(#bad, 4)))
+	local dull = 0
+	for _, b in ipairs(bunkers) do
+		local r, g, bl = rgb(b)
+		if r < 200 or bl > 190 or r - bl < 30 then dull += 1 end
+	end
+	check("course: at least 10 sand bunkers, sand coloured", #bunkers >= 10 and dull == 0, #bunkers .. " bunkers, " .. dull .. " off colour")
+	bad = flushBad(bunkers, 0.6, 1.8)
+	check("course: bunkers lie on the slope (top 0.6..1.8 above the terrain)", #bunkers > 0 and #bad == 0, #bad .. " bad: " .. table.concat(bad, "; ", 1, math.min(#bad, 4)))
+	local ponds, okPonds, left, nearHotel = {}, 0, 0, 0
+	for _, d in ipairs(site:GetDescendants()) do
+		if d:IsA("Model") and d.Name == "CoursePond" then table.insert(ponds, d) end
+	end
+	local hotel = site:FindFirstChild("Hotel")
+	local hc = hotel and hotel:GetBoundingBox().Position
+	local pondBad = {}
+	for _, pd in ipairs(ponds) do
+		local water, stones = within(pd, "PondWater"), within(pd, "PondStone")
+		local good = #water >= 1 and #stones >= 4
+		for _, w in ipairs(water) do
+			if w.CanCollide or w.Transparency < 0.1 or w.Transparency > 0.6 or not isBlue(w) then good = false end
+		end
+		for _, b in ipairs(flushBad(water, 0.6, 1.8)) do table.insert(pondBad, b) end
+		if good then okPonds += 1 end
+		local c = pd:GetBoundingBox().Position
+		if c.X > 480 then left += 1 end
+		if hc and off(c, hc).Magnitude <= 80 then nearHotel += 1 end
+	end
+	check("course: at least 4 CoursePond models of blue translucent non-colliding PondWater with 4+ PondStone each", okPonds >= 4,
+		okPonds .. " good of " .. #ponds)
+	check("course: pond water lies flush on the slope (top 0.6..1.8 above the terrain)", #ponds > 0 and #pondBad == 0,
+		#pondBad .. " bad: " .. table.concat(pondBad, "; ", 1, math.min(#pondBad, 4)))
+	check("course: ponds on the board's left half (x > 480: 2+) and by the hotel (within 80: 1+)", left >= 2 and nearHotel >= 1,
+		left .. " left, " .. nearHotel .. " by the hotel")
+	local inLane = {}
+	for _, list in ipairs({ fair, greens, bunkers }) do
+		for _, p in ipairs(list) do
+			if p.CanCollide and plateLaneDist(p) < 3 then table.insert(inLane, string.format("%s@(%.0f,%.0f)", p.Name, p.Position.X, p.Position.Z)) end
+		end
+	end
+	check("course: no colliding course plate within 3 studs of a walking lane", #inLane == 0, table.concat(inLane, "; ", 1, math.min(#inLane, 4)))
+end
+
+------------------------------------------------------------------ PLANTING (Revision 3): the board's dense tropical planting
+if run("planting") then
+	local broad = allNamed("BroadleafTrunk")
+	local pines = allNamed("PineTrunk")
+	local palmAt = {}
+	for _, t in ipairs(allNamed("PalmTrunk")) do
+		palmAt[string.format("%.0f,%.0f", t.Position.X, t.Position.Z)] = t.Position
+	end
+	local palms = {}
+	for _, p in pairs(palmAt) do table.insert(palms, p) end
+	check("planting: at least 180 broadleaf trees", #broad >= 180, tostring(#broad))
+	check("planting: at least 30 palms", #palms >= 30, tostring(#palms))
+	local trunks = {}
+	for _, t in ipairs(broad) do table.insert(trunks, t.Position) end
+	for _, t in ipairs(pines) do table.insert(trunks, t.Position) end
+	for _, p in ipairs(palms) do table.insert(trunks, p) end
+	check("planting: at least 230 trees in all (broadleaf, palms, pines)", #trunks >= 230, tostring(#trunks))
+	local drive = 0
+	for _, p in ipairs(palms) do
+		if math.abs(p.X - 450) <= 12 and p.Z >= 616 and p.Z <= 700 then drive += 1 end
+	end
+	check("planting: at least 10 palms line the drive (within 12 of x 450, z 616..700)", drive >= 10, tostring(drive))
+	local rim = 0
+	for _, p in ipairs(trunks) do
+		if math.min(p.X - 360, 760 - p.X, p.Z - 560, 880 - p.Z) <= 24 then rim += 1 end
+	end
+	check("planting: a perimeter belt of at least 40 trees within 24 of the slot edge", rim >= 40, tostring(rim))
+	local plates = {}
+	for _, nm in ipairs({ "Fairway", "PuttingGreen", "Bunker", "PondWater" }) do
+		for _, p in ipairs(allNamed(nm)) do table.insert(plates, p) end
+	end
+	local onCourse = {}
+	for _, t in ipairs(trunks) do
+		for _, p in ipairs(plates) do
+			if onPlate(p, t.X, t.Z) then
+				table.insert(onCourse, string.format("(%.0f,%.0f) on %s", t.X, t.Z, p.Name))
+				break
+			end
+		end
+	end
+	check("planting: no tree stands on a fairway, green, bunker or pond", #plates > 0 and #onCourse == 0,
+		#onCourse .. ": " .. table.concat(onCourse, "; ", 1, math.min(#onCourse, 4)))
+end
+
+------------------------------------------------------------------ ENTRANCE lagoons (Revision 3): water lying flush in a stone edge
+if run("entrance") then
+	local ent = site:FindFirstChild("Entrance")
+	local water = within(ent, "LagoonWater")
+	local bad = flushBad(water, 0.6, 1.6)
+	check("entrance: lagoon water lies flush on the slope (top 0.6..1.6 above the terrain, not a raised slab)", #water > 0 and #bad == 0,
+		#bad .. " bad: " .. table.concat(bad, "; ", 1, math.min(#bad, 4)))
+	local grey = 0
+	for _, w in ipairs(water) do
+		if not isBlue(w) then grey += 1 end
+	end
+	check("entrance: lagoon water is blue", #water > 0 and grey == 0, tostring(grey))
+	local edges = within(ent, "LagoonEdge")
+	local e, w = 0, 0
+	for _, p in ipairs(edges) do
+		if p.Position.X > 456 then e += 1 elseif p.Position.X < 444 then w += 1 end
+	end
+	check("entrance: each lagoon has a stone edge (8+ LagoonEdge parts east and west)", e >= 8 and w >= 8, e .. " east, " .. w .. " west")
+end
+
 ------------------------------------------------------------------ Part budget
 if run("general") then
+	local all = 0
+	for _, d in ipairs(site:GetDescendants()) do
+		if d:IsA("BasePart") then all += 1 end
+	end
+	-- Revision 3: the owner asked for about 1900..2300 parts (course, woods, mountain); BuildCheck's cap is 2500.
+	check("whole site (kept included) is 1900..2500 parts", all >= 1900 and all <= 2500, tostring(all))
 	local n = 0
 	for _, d in ipairs(site:GetDescendants()) do
 		if d:IsA("BasePart") and not isRig(d) and not isKept(d) then n += 1 end

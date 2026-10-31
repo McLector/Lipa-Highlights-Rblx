@@ -7,8 +7,8 @@
 --   leaves drawn open, stone gate pillars, a yellow-rimmed round planter at the pavilion front.
 --   Flag poles (4) on a raised planter island in front of the pavilion, west of the drive axis.
 --   Rock monument with the lettering MOUNT MALARAYAT / GOLF AND COUNTRY CLUB (ASCII, fixed TextSize; the real sign, photo 03; owner-approved text),
---   east of the drive, facing the road; the entrance lagoon at its foot and a second lagoon west of the forecourt, each two level part-water terraces
---   (the slope) with boulder weirs, a small fall, rim and island boulders. No terrain writes.
+--   east of the drive, facing the road; the entrance lagoon at its foot and a second lagoon west of the forecourt (Revision 3: each a translucent
+--   water capsule lying on the slope 1.0 above the terrain inside a stone kerb ring, with rim boulders and stones in the water). No terrain writes.
 -- Pinned (site08_check entrance group; sites_check lane a and the road-eye sight-line): every tall or wide thing is tested with env.sightClear and
 -- skipped if it would cut a window sight-line; the drive lane (x 448..452, ground + 2 .. + 9) stays open under the east canopy (underside y 19).
 return function(env)
@@ -181,46 +181,59 @@ return function(env)
 		assert(placed >= 12, "site08_entrance: only " .. placed .. " monument rocks clear the sight-lines")
 	end, mon)
 
-	------------------------------------------------------------------ lagoons: level water terraces, weirs, falls, boulders
+	------------------------------------------------------------------ lagoons (Revision 3): water lying on the slope in a stone edge, boulders
+	-- Revision 2's level terraces stood up to 5 studs above the low ground (owner: "flat raised blue slabs"). Each lagoon is now a capsule
+	-- (a slab between two end discs) whose top follows the terrain 1.0 above it (the brief's thin-plate rule), translucent blue, inside a stone
+	-- kerb ring 0.5 higher (LagoonEdge: the two long sides and 6 segments round each end), with rim boulders and the board's stones in the water.
+	-- East: centres x 474..548 (the rock sign's foot); west: x 375..403. Both z 562..583 (radius 10.5), clear of the paved forecourt x 414..463.
+	local LAGOONS = { { x0 = 474, x1 = 548 }, { x0 = 375, x1 = 403 } }
+	local LZ, LR = 572.5, 10.5
 	env.section("Entrance", function(ctx)
-		local function water(x0, x1, top)
-			local w = box(ctx, "LagoonWater", x0, x1, math.min(gnd(x0, 572), gnd(x1, 572)) - 0.6, top, 561, 584, C.LAGOON, M.GLASS)
-			w.Transparency = 0.25
-			w.CanCollide = false
-			return w
-		end
-		water(458, 500, 13.4)
-		water(498, 560, 19.0)
-		water(364, 392, 3.0)
-		water(390, 414, 5.6)
-		for _, f in ipairs({ { 498, 13.4, 18.6, 568, 576 }, { 390, 3.0, 5.3, 568, 574 } }) do
-			local fall = box(ctx, "LagoonFall", f[1] - 0.3, f[1] + 0.3, f[2], f[3], f[4], f[5], C.FOAM, M.GLASS)
-			fall.Transparency = 0.3
-			fall.CanCollide = false
+		for _, L in ipairs(LAGOONS) do
+			local cx = (L.x0 + L.x1) / 2
+			local parts = {
+				env.slab(ctx, "LagoonWater", cx, LZ, 1, 0, L.x1 - L.x0, LR * 2, 1.0, 2.5, C.LAGOON, M.GLASS),
+				env.disc(ctx, "LagoonWater", L.x0, LZ, LR * 2, 0.95, 2.5, C.LAGOON, M.GLASS),
+				env.disc(ctx, "LagoonWater", L.x1, LZ, LR * 2, 0.95, 2.5, C.LAGOON, M.GLASS),
+			}
+			for _, w in ipairs(parts) do
+				w.Transparency = 0.2
+				w.Reflectance = 0.1
+				w.CanCollide = false
+			end
+			-- Stone kerb: the two long sides, then 6 tangential segments round each end.
+			for _, s in ipairs({ -1, 1 }) do
+				env.slab(ctx, "LagoonEdge", cx, LZ + s * (LR + 0.8), 1, 0, L.x1 - L.x0, 1.6, 1.5, 3, C.STONE, M.LIME)
+			end
+			local rr = LR + 0.8
+			for _, e in ipairs({ { L.x0, -1 }, { L.x1, 1 } }) do
+				for k = 0, 5 do
+					local a = math.rad(-75 + k * 30)
+					local ux, uz = e[2] * math.cos(a), math.sin(a)
+					env.slab(ctx, "LagoonEdge", e[1] + ux * rr, LZ + uz * rr, -uz, ux, 2 * math.pi * rr / 12 + 0.6, 1.6, 1.5, 3, C.STONE, M.LIME)
+				end
+			end
 		end
 		local n = 0
-		local function boulder(x, z, d, waterTop)
-			local base = waterTop or gnd(x, z)
+		local function boulder(x, z, d, inWater)
+			local base = gnd(x, z) + (inWater and 0.7 or 0.6)
 			local top = base + d * 0.45
 			if env.sightClear(x, z, d / 2, top) then
 				ball(ctx, "LagoonBoulder", x, top - d / 2, z, d, (n % 2 == 0) and C.ROCK or C.ROCK_D, M.ROCK)
 				n += 1
 			end
 		end
-		-- Weirs between the terraces and the low ends.
-		for z = 563, 583, 4 do
-			boulder(499, z, 4.2, 15.5)
-			boulder(391, z, 3.4, 4.2)
-			boulder(459, z, 3.2, 11.5)
-			boulder(365, z, 3.2, 1.8)
-		end
-		-- South rims (the water stands above the ground toward the low ends).
-		for x = 466, 552, 8 do boulder(x, 561.5, 3.2 + (x % 3) * 0.5, math.max(gnd(x, 561), x < 498 and 12.2 or 17.6)) end
-		for x = 370, 410, 8 do boulder(x, 561.5, 3.0 + (x % 3) * 0.5, math.max(gnd(x, 561), x < 390 and 2.0 or 4.6)) end
-		-- Boulders standing in the water (the board's round stones).
-		for _, p in ipairs({ { 506, 572, 13.4 }, { 518, 566, 19.0 }, { 530, 577, 19.0 }, { 544, 568, 19.0 }, { 488, 578, 13.4 }, { 474, 568, 13.4 },
-			{ 372, 572, 3.0 }, { 382, 566, 3.0 }, { 400, 576, 5.6 }, { 408, 566, 5.6 } }) do
-			boulder(p[1], p[2], 3.6, p[3] - 0.8)
+		-- Rim boulders on the kerb: north side (under the rock sign), south side, the ends.
+		for x = 466, 556, 9 do boulder(x, 585, 3.4 + (x % 3) * 0.5) end
+		for x = 470, 550, 10 do boulder(x, 561.5, 3.0 + (x % 3) * 0.4) end
+		for _, p in ipairs({ { 462, 569 }, { 462, 577 }, { 560, 567 }, { 560, 578 } }) do boulder(p[1], p[2], 3.8) end
+		for x = 368, 410, 7 do boulder(x, 585, 3.2 + (x % 3) * 0.4) end
+		for x = 372, 406, 8.5 do boulder(x, 561.5, 3.0 + (x % 3) * 0.4) end
+		for _, p in ipairs({ { 362.5, 568 }, { 362.5, 577 } }) do boulder(p[1], p[2], 3.4) end
+		-- Stones standing in the water (the board's round stones).
+		for _, p in ipairs({ { 488, 576 }, { 500, 567 }, { 514, 578 }, { 526, 566 }, { 538, 575 }, { 549, 569 }, { 479, 566 },
+			{ 380, 575 }, { 392, 567 }, { 402, 577 } }) do
+			boulder(p[1], p[2], 3.6, true)
 		end
 		assert(n >= 20, "site08_entrance: only " .. n .. " lagoon boulders clear the sight-lines")
 	end, lag)

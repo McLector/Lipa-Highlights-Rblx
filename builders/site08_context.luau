@@ -4,6 +4,9 @@
 -- boulders (446,850), (456,853), the palm (455,862) and the palm (430,830) give way to the hotel and its pool terrace; the pines drop from 16 to the
 -- ones clear of the board's woods; the board's dense broadleaf woods are added (Structure/Woods), every tree tested against the pinned lanes,
 -- keep-clear boxes and sight-lines (env.sightClear) and kept off the greens, tees, fairway corridors, ponds and buildings.
+-- Revision 3 (owner look, 2026-10-31): the MountainBackdrop's stacked cylinder tiers (they read as tanks) become a faceted wedge ridge behind the
+-- clubhouse; the Woods move to site08_course (one exclusion list with the new course); the pines and palms that stood in the new mountain or on
+-- the new course move (briefs/site08.md Revision 3); the bunker boulders step off the new bunker plates.
 return function(env)
 	local V, CF, ANG, PI, S = env.V, env.CF, env.ANG, env.PI, env.S
 	local C, M = env.C, env.M
@@ -31,7 +34,7 @@ return function(env)
 		for i, p in ipairs(rim) do
 			boulder(ctx, p[1], p[2], 2.6 + (i % 3) * 0.7)
 		end
-		for _, p in ipairs({ { 706, 642 }, { 742, 610 }, { 382, 702 }, { 418, 722 }, { 701, 606 } }) do
+		for _, p in ipairs({ { 714, 650 }, { 732, 600 }, { 372, 694 }, { 426, 728 }, { 698, 604 } }) do
 			boulder(ctx, p[1], p[2], 3)
 		end
 	end)
@@ -67,28 +70,114 @@ return function(env)
 		signpost(ctx, 372, 600, "3")
 	end)
 
-	------------------------------------------------------------------ MountainBackdrop: tiered summits along the east edge, CanCollide off
-	local function mpart(ctx, name, x, z, y0, y1, dia, color)
-		local p = vcyl(ctx, name, x, z, y0, y1, dia, color, M.SMOOTH)
-		p.CanCollide = false
-		return p
+	------------------------------------------------------------------ MountainBackdrop (Revision 3): the board's Mount Malarayat as a faceted wedge ridge
+	-- A heightfield of triangles (two WedgeParts each, the site09_taal method) in the corner behind the clubhouse. The foot runs along x + z = 1480
+	-- from (758, 722) to (602, 878), 50 studs behind the clubhouse's rear wall (x + z = 1429); the back row sits on the slot edges x 758 / z 878.
+	-- Columns d = x - z (13, from the east end to the north-west end), rows foot / mid / ridge / back. The summit (90 above the ground, y about 127)
+	-- stands behind the clubhouse seen from the gate (as far right as the sites_check pin x >= 690 allows), with shoulders rising from the left,
+	-- as on the board. Two low arms widen it in the board view:
+	-- east along x 734..757 south to z 566 (x >= 748 beside hole 2's green and bunker), and north-west along z 866..878 to x 548 (behind the pool).
+	-- Every part anchored, CanCollide/CanQuery/CanTouch/CastShadow false. BackdropPeak = the wedge reaching the summit (sites_check: x >= 690, y >= 60).
+	local THICK, PEAK_H = 2, 90
+	local MT = {
+		FOREST = Color3.fromRGB(56, 96, 58), LOW = Color3.fromRGB(64, 104, 68), HIGH = Color3.fromRGB(76, 110, 92), SUMMIT = Color3.fromRGB(90, 118, 112),
+	}
+	local SUN = V(-0.45, 0.75, -0.5).Unit
+	local function mwedge(ctx, size, cf, color)
+		local w = ctx:wedge("MountainFace", size, cf, color, M.GRASS)
+		w.CanCollide, w.CanQuery, w.CanTouch, w.CastShadow = false, false, false, false
+		return w
+	end
+	-- Triangle a, b, c from two wedges (site09_taal: split at the foot of the altitude onto the longest edge). hRel = height band 0..1.
+	local function tri(ctx, a, b, c, hRel)
+		local nrm = (b - a):Cross(c - a)
+		if nrm.Magnitude < 4 then return end
+		nrm = nrm.Unit
+		if nrm.Y < 0 then nrm = -nrm end
+		local base = hRel < 0.3 and MT.FOREST or (hRel < 0.6 and MT.LOW or (hRel < 0.85 and MT.HIGH or MT.SUMMIT))
+		local f = 0.72 + 0.28 * math.max(0, nrm:Dot(SUN))
+		local color = Color3.new(base.R * f, base.G * f, base.B * f)
+		local ab, ac, bc = b - a, c - a, c - b
+		local abd, acd, bcd = ab:Dot(ab), ac:Dot(ac), bc:Dot(bc)
+		if abd > acd and abd > bcd then
+			c, a = a, c
+		elseif acd > bcd and acd > abd then
+			a, b = b, a
+		end
+		ab, ac, bc = b - a, c - a, c - b
+		local right = ac:Cross(ab).Unit
+		local up = bc:Cross(right).Unit
+		local backv = bc.Unit
+		local height = math.abs(ab:Dot(up))
+		mwedge(ctx, V(THICK, height, math.abs(ab:Dot(backv))), CFrame.fromMatrix((a + b) / 2, right, up, backv), color)
+		mwedge(ctx, V(THICK, height, math.abs(ac:Dot(backv))), CFrame.fromMatrix((a + c) / 2, -right, up, -backv), color)
+	end
+	local RIDGE = { 0, 22, 38, 50, 56, 52, 70, 90, 76, 62, 48, 28, 0 } -- summit at column 7 (d = -146): behind the clubhouse seen from the gate
+	local RFRAC = { 0.62, 0.6, 0.64, 0.58, 0.62, 0.6, 0.64, 0.6, 0.62, 0.58, 0.62, 0.6, 0.62 }
+	local cols = {}
+	for k = 0, 12 do
+		local d = 36 - 26 * k
+		local fx, fz = (1480 + d) / 2, (1480 - d) / 2
+		local kx, kz
+		if d >= -120 then kx, kz = 758, 758 - d else kx, kz = 878 + d, 878 end
+		local h = RIDGE[k + 1]
+		local spur = 0.5 + 0.14 * math.sin(k * 2.1)
+		local function at(t, lift)
+			local x, z = fx + (kx - fx) * t, fz + (kz - fz) * t
+			return { V(x, gnd(x, z) + lift, z), math.max(lift, 0) }
+		end
+		cols[k] = { at(0, -1), at(0.32, h > 0 and h * spur or -1), at(RFRAC[k + 1], h > 0 and h or -1), at(1, -1) }
 	end
 	env.section("MountainBackdrop", function(ctx)
-		local summits = { { 580, 0.9 }, { 615, 1.0 }, { 650, 0.85 }, { 685, 1.0 }, { 760, 0.95 }, { 800, 1.0 }, { 835, 0.9 }, { 865, 0.85 } }
-		for i, s in ipairs(summits) do
-			local z, k = s[1], s[2]
-			local c1, c2 = i % 2 == 0 and C.MTN or C.MTN_D, i % 2 == 0 and C.MTN_D or C.MTN
-			mpart(ctx, "MountainTier", 728, z, 30, 44, 46 * k, c1)
-			mpart(ctx, "MountainTier", 728, z, 44, 54, 36 * k, c2)
-			mpart(ctx, "MountainTier", 728, z, 54, 62, 24 * k, c1)
+		for k = 0, 11 do
+			local c0, c1 = cols[k], cols[k + 1]
+			for r = 1, 3 do
+				local hRel = (c0[r][2] + c0[r + 1][2] + c1[r][2] + c1[r + 1][2]) / 4 / PEAK_H
+				local hTop = math.max(c0[r][2], c0[r + 1][2], c1[r][2], c1[r + 1][2]) / PEAK_H
+				tri(ctx, c0[r][1], c1[r][1], c1[r + 1][1], (hRel + hTop) / 2)
+				tri(ctx, c0[r][1], c1[r + 1][1], c0[r + 1][1], (hRel + hTop) / 2)
+			end
 		end
-		mpart(ctx, "PeakTier", 735, 720, 30, 50, 46, C.MTN_D)
-		mpart(ctx, "PeakTier", 735, 720, 50, 60, 38, C.MTN)
-		mpart(ctx, "PeakTier", 735, 720, 60, 66, 32, C.MTN_D)
-		mpart(ctx, "BackdropPeak", 735, 720, 66, 90, 30, C.MTN)
-		for _, z in ipairs({ 598, 668, 742, 848 }) do
-			box(ctx, "RidgeBlock", 712, 748, 30, 40, z - 10, z + 10, C.MTN_D, M.SMOOTH).CanCollide = false
+		-- East arm: a jagged skyline at x 757 over a foot inboard of it, z 566..734 (south to north).
+		local ARM = { 6, 12, 14, 22, 20, 28, 26, 34, 32, 40, 38, 46, 44 }
+		local prevF, prevT
+		for i = 0, #ARM - 1 do
+			local z = 566 + 14 * i
+			local fx = z < 650 and 748 or (z < 664 and 748 - (z - 650) or 734)
+			local F, T = V(fx, gnd(fx, z) - 1, z), V(757, gnd(757, z) + ARM[i + 1], z)
+			if prevF then
+				local hRel = (ARM[i] + ARM[i + 1]) / 2 / PEAK_H
+				tri(ctx, prevF, F, T, hRel * 0.7)
+				tri(ctx, prevF, T, prevT, hRel)
+			end
+			prevF, prevT = F, T
 		end
+		-- North-west arm behind the pool: foot z 866, skyline z 878, x 548..604, rising into the main ridge's end.
+		local WEST = { { 548, 4 }, { 562, 14 }, { 576, 22 }, { 590, 18 }, { 604, 28 } }
+		for i = 1, #WEST - 1 do
+			local a, b = WEST[i], WEST[i + 1]
+			local F0, F1 = V(a[1], gnd(a[1], 866) - 1, 866), V(b[1], gnd(b[1], 866) - 1, 866)
+			local T0, T1 = V(a[1], gnd(a[1], 878) + a[2], 878), V(b[1], gnd(b[1], 878) + b[2], 878)
+			local hRel = (a[2] + b[2]) / 2 / PEAK_H
+			tri(ctx, F0, F1, T1, hRel * 0.7)
+			tri(ctx, F0, T1, T0, hRel)
+		end
+		-- The one wedge whose box reaches highest carries the pinned name.
+		local best, bestY = nil, -math.huge
+		for _, p in ipairs(ctx:parts()) do
+			local cf, h = p.CFrame, p.Size / 2
+			for _, sx in ipairs({ -1, 1 }) do
+				for _, sy in ipairs({ -1, 1 }) do
+					for _, sz in ipairs({ -1, 1 }) do
+						local y = cf:PointToWorldSpace(V(sx * h.X, sy * h.Y, sz * h.Z)).Y
+						if y > bestY then best, bestY = p, y end
+					end
+				end
+			end
+		end
+		assert(best and bestY >= 115, "site08_context: the mountain summit is below y 115")
+		assert(best.Position.X >= 690, "site08_context: BackdropPeak's centre is west of x 690 (sites_check pin)")
+		best.Name = "BackdropPeak"
 	end)
 
 	------------------------------------------------------------------ LeisureSpacesPanel: board on two posts near the Guide (text unchanged)
@@ -122,9 +211,10 @@ return function(env)
 	------------------------------------------------------------------ pines, palms and shrubs (Structure/Trees)
 	local pinesBuilt = 0
 	env.section("Structure/Trees", function(ctx)
+		-- Revision 3: the row along the south edge and pairs at the mountain foot (the old spots stood on the new fairways, pond or mountain).
 		for _, p in ipairs({
-			{ 612, 612 }, { 640, 606 }, { 664, 636 }, { 628, 664 }, { 664, 684 },
-			{ 688, 640 }, { 690, 820 }, { 692, 870 }, { 600, 866 }, { 648, 870 },
+			{ 600, 606 }, { 628, 604 }, { 656, 606 }, { 684, 604 }, { 604, 664 },
+			{ 690, 660 }, { 700, 752 }, { 716, 738 }, { 600, 860 }, { 472, 622 },
 		}) do
 			if env.sightClear(p[1], p[2], 5, gnd(p[1], p[2]) + 34) then
 				env.pine(ctx, p[1], p[2])
@@ -132,61 +222,18 @@ return function(env)
 			end
 		end
 		for _, p in ipairs({
-			{ 515, 822 }, { 508, 846 }, { 520, 872 }, { 560, 878 }, { 590, 872 }, { 490, 872 }, { 505, 806 },
+			{ 515, 822 }, { 508, 846 }, { 520, 872 }, { 490, 872 }, { 505, 806 },
 			{ 377, 836 }, { 438, 840 }, { 470, 862 },
 		}) do
 			if env.sightClear(p[1], p[2], 2, gnd(p[1], p[2]) + 18) then env.palm(ctx, p[1], p[2]) end
 		end
 		for _, p in ipairs({
-			{ 470, 650 }, { 480, 680 }, { 600, 600 }, { 612, 626 }, { 650, 650 }, { 680, 620 }, { 690, 660 },
+			{ 470, 650 }, { 480, 680 }, { 600, 600 }, { 586, 614 }, { 642, 598 }, { 712, 600 }, { 696, 668 },
 			{ 540, 876 }, { 500, 878 }, { 450, 822 },
 		}) do
 			env.clump(ctx, p[1], p[2])
 		end
 	end)
 	assert(pinesBuilt >= 6, "site08_context: only " .. pinesBuilt .. " pines clear the sight-lines")
-
-	------------------------------------------------------------------ the board's broadleaf woods (Structure/Woods)
-	local function localOf(x, z) -- world -> clubhouse local (lx, lz)
-		local a, b = (620 - x) / S, (z - 780) / S
-		return (a + b) / 2, (a - b) / 2
-	end
-	local EXCL = {
-		{ 436, 500, 766, 852 }, -- ponds A and B
-		{ 358, 462, 822, 880 }, -- hotel and its pool terrace
-		{ 566, 594, 626, 654 }, { 704, 744, 600, 640 }, { 694, 754, 598, 654 }, -- hole 2 tee, green, bunkers
-		{ 372, 424, 576, 734 }, -- hole 3 tee, fairway, green, bunkers
-		{ 414, 438, 778, 806 }, -- hole 1 tee
-		{ 566, 744, 604, 660 }, -- hole 2 fairway corridor
-		{ 512, 584, 664, 728 }, -- Guide plaza, panel, jeep stop
-		{ 700, 760, 560, 880 }, -- mountain backdrop strip
-		{ 360, 560, 560, 616 }, -- the entrance (site08_entrance owns it)
-	}
-	local cands = {}
-	for x = 368, 750, 14 do
-		for z = 622, 874, 14 do
-			table.insert(cands, { x + env.rng:NextNumber(-3, 3), z + env.rng:NextNumber(-3, 3) })
-		end
-	end
-	for i = #cands, 2, -1 do
-		local j = env.rng:NextInteger(1, i)
-		cands[i], cands[j] = cands[j], cands[i]
-	end
-	env.section("Structure/Woods", function(ctx)
-		local n = 0
-		for _, p in ipairs(cands) do
-			if n >= 70 then break end
-			local x, z = p[1], p[2]
-			local ok = x > 364 and x < 756 and z < 876
-			for _, r in ipairs(EXCL) do
-				if ok and x > r[1] - 6 and x < r[2] + 6 and z > r[3] - 6 and z < r[4] + 6 then ok = false end
-			end
-			local lx, lz = localOf(x, z)
-			if ok and lx > -74 and lx < 140 and lz > -32 and lz < 66 then ok = false end
-			if ok and env.sightClear(x, z, 7, gnd(x, z) + 17) then
-				env.broadleaf(ctx, x, z, 0.9 + env.rng:NextNumber(0, 0.25))
-				n += 1
-			end
-		end
-	end)
+	-- The broadleaf woods (Structure/Woods) moved to site08_course in Revision 3.
 end

@@ -1,4 +1,4 @@
--- site08: Mount Malarayat Golf & Country Club, rebuilt from the Mount Malarayat Golf Resort Blueprint board (Revision 2, 2026-10-31). ASSEMBLER.
+-- site08: Mount Malarayat Golf & Country Club, rebuilt from the Mount Malarayat Golf Resort Blueprint board (Revision 2, 2026-10-31; Revision 3 the same day: mountain, course, planting, lagoons). ASSEMBLER.
 -- Studio copy: ServerStorage.Builders.site08; run with
 --   return require(game.ServerStorage.Builders.site08:Clone())()
 -- Check: tests/site08_check.luau (ServerStorage.Checks.site08_check), groups general, entrance, clubhouse, hotel, context; plus the site-8 block of
@@ -19,8 +19,10 @@
 --   site08_clubhouse  Clubhouse, Structure/Forecourt, Structure/Pool                               560
 --   site08_hotel      Hotel                                                                         360
 --   site08_context    MountainBackdrop, LeisureSpacesPanel, Structure/Pond, Structure/Course,
---                     Structure/Trees, Structure/Woods                                              720
+--                     Structure/Trees                                                               720
 --   site08_entrance   Entrance                                                                      400
+--   site08_course     Structure/Fairways, Structure/Ponds, Structure/Woods, Structure/Grove,
+--                     Structure/Palms (Revision 3: the board's course and dense planting)           1150
 -- Every container holds at most 400 parts (hard error at plan time); the site (built + kept) at most 2500 (BuildCheck).
 -- env: V CF ANG PI S PADY ORIGIN CFL ID BuildKit C (colours) M (materials) rng (Random, fixed seed per module)
 --   env.gnd(x, z)                          terrain height under a world point
@@ -29,6 +31,9 @@
 --   env.hip(ctx, cf, L, D, h, color, mat)  hip roof: 2 wedges + 4 CornerWedgeParts named RoofTile, eave plane centred at cf, ridge along local X (L >= D) or Z
 --   env.arch(ctx, name, cf, w, h, depth, color, mat)  arched opening: a box w x (h - w/2) and a half-hidden disc of diameter w on top (name and name.."Head")
 --   env.palm/pine/broadleaf/clump(ctx, x, z)            planting, seated on the terrain (world frame ctx)
+--   env.slab(ctx, name, cx, cz, dx, dz, len, wid, lift, thick, color, mat)   a plate lying on the slope: top `lift` above the terrain at
+--                                          (cx, cz), tilted with the local terrain gradient, long axis along (dx, dz)
+--   env.disc(ctx, name, cx, cz, dia, lift, thick, color, mat)                a round plate (Cylinder, axis = the terrain normal), same seating
 --   env.sightClear(x, z, r, ytop)          false if a thing of radius r and top ytop at (x, z) would cut a pinned sight-line (road eye or Guide eye to the
 --                                          clubhouse windows) or stand in a walking lane or keep-clear box
 --   env.section(path, fn [, dest [, frame]])   fresh BuildKit ctx (frame default ID), plans its parts into the container or dest
@@ -57,8 +62,10 @@ return function()
 		{ name = "site08_clubhouse", owns = { Clubhouse = true, ["Structure/Forecourt"] = true, ["Structure/Pool"] = true }, budget = 560, seed = 801 },
 		{ name = "site08_hotel", owns = { Hotel = true }, budget = 360, seed = 802 },
 		{ name = "site08_context", owns = { MountainBackdrop = true, LeisureSpacesPanel = true, ["Structure/Pond"] = true, ["Structure/Course"] = true,
-			["Structure/Trees"] = true, ["Structure/Woods"] = true }, budget = 720, seed = 803 },
+			["Structure/Trees"] = true }, budget = 720, seed = 803 },
 		{ name = "site08_entrance", owns = { Entrance = true }, budget = 400, seed = 804 },
+		{ name = "site08_course", owns = { ["Structure/Fairways"] = true, ["Structure/Ponds"] = true, ["Structure/Woods"] = true,
+			["Structure/Grove"] = true, ["Structure/Palms"] = true }, budget = 1150, seed = 805 },
 	}
 	local TREE = {
 		{ "Clubhouse", "", "Model" },
@@ -73,6 +80,10 @@ return function()
 		{ "Structure/Course", "Structure", "Model" },
 		{ "Structure/Trees", "Structure", "Model" },
 		{ "Structure/Woods", "Structure", "Model" },
+		{ "Structure/Fairways", "Structure", "Model" },
+		{ "Structure/Ponds", "Structure", "Model" },
+		{ "Structure/Grove", "Structure", "Model" },
+		{ "Structure/Palms", "Structure", "Model" },
 	}
 
 	local sites = workspace:FindFirstChild("Sites")
@@ -196,6 +207,25 @@ return function()
 		local c2 = ball(ctx, "BroadleafCrown", x + 2.5 * size, g + 13.5 * size, z - 1.5 * size, 8.5 * size, C.LEAF_D, M.GRASS)
 		c1.CanCollide, c2.CanCollide = false, false
 	end
+	-- Plates lying on the slope (Revision 3: fairways, greens, bunkers, ponds, lagoons). The terrain gradient is read from four raycasts 2 studs
+	-- around the centre; the top surface sits `lift` above the terrain at the centre (>= 0.8, the brief's thin-plate rule) and follows the slope.
+	local function groundFrame(cx, cz, dx, dz)
+		local gx = (gnd(cx + 2, cz) - gnd(cx - 2, cz)) / 4
+		local gz = (gnd(cx, cz + 2) - gnd(cx, cz - 2)) / 4
+		local n = V(-gx, 1, -gz).Unit
+		local f = V(dx, gx * dx + gz * dz, dz).Unit
+		return n, f
+	end
+	local function slab(ctx, name, cx, cz, dx, dz, len, wid, lift, thick, color, material)
+		local n, f = groundFrame(cx, cz, dx, dz)
+		local top = V(cx, gnd(cx, cz) + lift, cz)
+		return ctx:part(name, V(len, thick, wid), CFrame.fromMatrix(top - n * (thick / 2), f, n), color, material)
+	end
+	local function disc(ctx, name, cx, cz, dia, lift, thick, color, material)
+		local n, f = groundFrame(cx, cz, 1, 0)
+		local top = V(cx, gnd(cx, cz) + lift, cz)
+		return ctx:cyl(name, V(thick, dia, dia), CFrame.fromMatrix(top - n * (thick / 2), n, f), color, material)
+	end
 	local function clump(ctx, x, z, color)
 		local g = gnd(x, z)
 		ball(ctx, "Shrub", x, g + 1.2, z, 2.4, color or C.SHRUB, M.GRASS).CanCollide = false
@@ -286,7 +316,7 @@ return function()
 		local env = {
 			V = V, CF = CF, ANG = ANG, PI = PI, S = S, PADY = PADY, ORIGIN = ORIGIN, CFL = CFL, ID = ID, BuildKit = BuildKit, C = C, M = M,
 			rng = Random.new(def.seed), gnd = gnd, lw = lw, box = box, vcyl = vcyl, ball = ball, hip = hip, arch = arch,
-			palm = palm, pine = pine, broadleaf = broadleaf, clump = clump, sightClear = sightClear,
+			palm = palm, pine = pine, broadleaf = broadleaf, clump = clump, sightClear = sightClear, slab = slab, disc = disc,
 			used = function() return used end, budget = budget,
 		}
 		function env.container(path) return owned(path) end
