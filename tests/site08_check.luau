@@ -8,6 +8,7 @@
 -- old -> new in briefs/site08.md Revision 2 (RoofTier, WindowTrim, StoneCourse, CartBody, the 16-pine count, the part range).
 -- Revision 3 (owner look, 2026-10-31): groups "mountain" (a wedge ridge behind the clubhouse replaces the cylinder tiers), "course" (fairways,
 -- greens with flags, bunkers, ponds lying on the slope), "planting" (dense woods and palms); the entrance group gains the flush-lagoon pins.
+-- Polish (2026-10-31): group "ground" (no terrain Grass blades under water, bunkers, paving, floors; builders/site08_ground.luau).
 local HttpService = game:GetService("HttpService")
 local ONLY = shared.site08_only
 local function run(group) return ONLY == nil or ONLY == group end
@@ -639,6 +640,65 @@ if run("entrance") then
 		if p.Position.X > 456 then e += 1 elseif p.Position.X < 444 then w += 1 end
 	end
 	check("entrance: each lagoon has a stone edge (8+ LagoonEdge parts east and west)", e >= 8 and w >= 8, e .. " east, " .. w .. " west")
+end
+
+------------------------------------------------------------------ GROUND (polish, 2026-10-31): no Grass blades through water, sand, paving or floors
+-- Terrain Grass draws blades about 0.9 above its surface, so they poke through clear water and thin plates. builders/site08_ground.luau
+-- repaints the terrain under these parts (1 voxel pad). Samples: the footprint centre and four points at 0.4 of its horizontal extent.
+if run("ground") then
+	local tp = RaycastParams.new()
+	tp.FilterType = Enum.RaycastFilterType.Include
+	tp.FilterDescendantsInstances = { workspace.Terrain }
+	local function matAt(x, z)
+		local r = workspace:Raycast(Vector3.new(x, 300, z), Vector3.new(0, -600, 0), tp)
+		return r and r.Material or nil
+	end
+	local function footSamples(p)
+		local cf, sz = p.CFrame, p.Size
+		local axes = { { cf.RightVector, sz.X }, { cf.UpVector, sz.Y }, { cf.LookVector, sz.Z } }
+		local up = 1
+		for i = 2, 3 do
+			if math.abs(axes[i][1].Y) > math.abs(axes[up][1].Y) then up = i end
+		end
+		local pts = { p.Position }
+		for i = 1, 3 do
+			if i ~= up then
+				for _, s in ipairs({ -0.4, 0.4 }) do table.insert(pts, p.Position + axes[i][1] * (axes[i][2] * s)) end
+			end
+		end
+		return pts
+	end
+	local function sampleBad(names, want)
+		local n, bad, list = 0, 0, {}
+		for _, nm in ipairs(names) do
+			for _, p in ipairs(allNamed(nm)) do
+				for _, q in ipairs(footSamples(p)) do
+					-- Within 4 of the slot edge the surface blends with the voxel outside the slot (the road verge, not repainted): skipped.
+					if math.min(q.X - 360, 760 - q.X, q.Z - 560, 880 - q.Z) < 4 then continue end
+					n += 1
+					local m = matAt(q.X, q.Z)
+					local okM = m ~= nil and (want and m == want or (not want and m ~= Enum.Material.Grass))
+					if not okM then
+						bad += 1
+						if #list < 4 then table.insert(list, string.format("%s@(%.0f,%.0f)=%s", nm, q.X, q.Z, m and m.Name or "nil")) end
+					end
+				end
+			end
+		end
+		return n, bad, list
+	end
+	local n, bad, list = sampleBad({ "LagoonWater", "PondWater", "PoolWater", "PoolWaterLobe", "HotelPoolWater" })
+	check("ground: no Grass under any water part (lagoons, ponds, pools; 20+ samples)", n >= 20 and bad == 0,
+		bad .. " of " .. n .. ": " .. table.concat(list, "; "))
+	n, bad, list = sampleBad({ "Bunker" }, Enum.Material.Sand)
+	check("ground: Sand under every bunker (10+ bunkers, 50+ samples)", n >= 50 and bad == 0, bad .. " of " .. n .. ": " .. table.concat(list, "; "))
+	n, bad, list = sampleBad({ "EntrancePaving", "ForecourtKerb", "ForecourtPlate", "GatehousePlinth", "PoolDeck", "HotelPoolDeck", "HotelPodium",
+		"Plinth", "LoggiaFloor", "EntryFloor" })
+	check("ground: no Grass under paving, decks, plinths and floors (40+ samples)", n >= 40 and bad == 0, bad .. " of " .. n .. ": " .. table.concat(list, "; "))
+	n, bad, list = sampleBad({ "MonumentBase", "LagoonEdge" })
+	check("ground: no Grass under the rock sign base and the lagoon stone edges", n >= 20 and bad == 0, bad .. " of " .. n .. ": " .. table.concat(list, "; "))
+	local lawn = matAt(600, 600)
+	check("ground: the open lawn at (600, 600) is still Grass (control)", lawn == Enum.Material.Grass, lawn and lawn.Name or "nil")
 end
 
 ------------------------------------------------------------------ Part budget

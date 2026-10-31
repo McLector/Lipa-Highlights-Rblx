@@ -5,7 +5,7 @@
 --   tests/sites_check.luau (orientation, lanes, keep-clear boxes, sight-lines). Brief: briefs/site08.md (Revision 2 at the end).
 -- HARDCODED (asserted at run time against SiteData row 8): model Workspace.Sites.Site08_Malarayat (must already exist, never created here),
 --   pivot (560, 19.8, 720) facing NW, slot 400 x 320 (x 360..760, z 560..880). The ground is the plane y = 0.1 (x - 360) - 0.2 with the clubhouse
---   pad cut flat at y 20 (x 572..668, z 704..844); every module seats its parts by raycasting workspace.Terrain (env.gnd). No terrain writes.
+--   pad cut flat at y 20 (x 572..668, z 704..844); every module seats its parts by raycasting workspace.Terrain (env.gnd). No terrain writes, except site08_ground at the end.
 -- FRAMES: the pivot is yawed NW and is NOT an origin.
 --   env.ID   world frame (identity): x, y, z are world coordinates.
 --   env.CFL  the clubhouse frame: ORIGIN (620, 20, 780), local +X = SW, local +Z = NW (the frontage), +Y up; world = (620 - s(lx+lz), 20 + ly, 780 + s(lx-lz)).
@@ -383,6 +383,9 @@ return function()
 		if i % 200 == 0 then task.wait() end
 	end
 	site.WorldPivot = CFrame.lookAt(POS, POS + V(-S, 0, -S))
+	-- Polish (2026-10-31): repaint the terrain Grass under the water, bunkers and paving (the one terrain write; idempotent).
+	local groundMod = builders:FindFirstChild("site08_ground")
+	local ground = groundMod and require(groundMod:Clone())() or nil
 
 	local names = {}
 	for _, c in ipairs(site:GetChildren()) do table.insert(names, c.Name) end
@@ -404,5 +407,6 @@ return function()
 		modules = table.concat(mods, ","),
 		containers = table.concat(perContainer, ","),
 		children = table.concat(names, ","),
+		groundRepainted = ground and ground.repaintedVoxels or "missing",
 	}
 end

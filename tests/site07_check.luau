@@ -582,6 +582,47 @@ if group("ground") then
 		end
 	end
 	check("every river, lagoon and pool water part tops at y >= 0.95", #low == 0, #low .. " low: " .. table.concat(low, ",", 1, math.min(#low, 4)))
+	-- grass cleanup (owner, 2026-10-31): terrain Grass draws blades ~0.9 above its surface, through thin parts. builders/site07_ground.luau
+	-- repaints the terrain under every ground-level water, path, deck, court and floor part (padded 1 voxel) to Mud / Ground / Pavement.
+	-- Each named part is sampled at its centre and 4 points 1.5 studs inside its footprint: the top voxel there is not Grass.
+	local T = workspace.Terrain
+	local function topMat(x, z)
+		local mats, occ = T:ReadVoxels(Region3.new(Vector3.new(x - 0.01, -8, z - 0.01), Vector3.new(x + 0.01, 4, z + 0.01)):ExpandToGrid(4), 4)
+		for y = mats.Size.Y, 1, -1 do
+			if occ[1][y][1] > 0 then return mats[1][y][1] end
+		end
+		return Enum.Material.Air
+	end
+	local function samplePoints(p)
+		local cf, s = p.CFrame, p.Size
+		local ax = { { cf.RightVector, s.X }, { cf.UpVector, s.Y }, { cf.LookVector, s.Z } }
+		table.sort(ax, function(a, b) return math.abs(a[1].Y) > math.abs(b[1].Y) end)
+		local c = Vector3.new(cf.X, 0, cf.Z)
+		local u, v = Vector3.new(ax[2][1].X, 0, ax[2][1].Z).Unit, Vector3.new(ax[3][1].X, 0, ax[3][1].Z).Unit
+		local hu, hv = math.max(ax[2][2] / 2 - 1.5, 0), math.max(ax[3][2] / 2 - 1.5, 0)
+		if p:IsA("Part") and p.Shape == Enum.PartType.Cylinder then hu, hv = hu * 0.7, hv * 0.7 end
+		return { c, c + u * hu + v * hv, c + u * hu - v * hv, c - u * hu + v * hv, c - u * hu - v * hv }
+	end
+	local NO_GRASS = { "RiverWater", "LagoonWater", "FrontLagoonWater", "PoolWater", "NarraPoolWater", "SmallPoolWater", "AcquaPool",
+		"EntryPath", "PathSegment", "LabyrinthPath", "SouthWalk", "ParkingLot", "ParkingDrive", "AmphiTier", "LagoonPavilionDeck",
+		"LagoonBoardwalk", "NarraDeck", "AcquaDeck", "SmallPoolDeck", "VillaBody", "NarraVillaBody", "SmallVillaBody", "FrontOfficePlinth",
+		"SanctuaryPlinth", "TemplePlinth", "GuardPostBody", "BanabaHallBody", "EntryBridge" }
+	local grassy, samples, missing = {}, 0, {}
+	for _, name in ipairs(NO_GRASS) do
+		local list = allNamed(name)
+		if #list == 0 then table.insert(missing, name) end
+		for _, p in ipairs(list) do
+			for _, q in ipairs(samplePoints(p)) do
+				samples += 1
+				if topMat(q.X, q.Z) == Enum.Material.Grass then table.insert(grassy, name .. "@" .. math.floor(q.X) .. "," .. math.floor(q.Z)) end
+			end
+		end
+	end
+	check("every no-grass part name is present (" .. #NO_GRASS .. " names)", #missing == 0, table.concat(missing, ","))
+	check("no terrain Grass under water, paths, decks, courts or floors (" .. samples .. " samples)", #grassy == 0,
+		#grassy .. " grassy: " .. table.concat(grassy, " ", 1, math.min(#grassy, 6)))
+	-- the lawns stay Grass: a lawn point clear of every ground part (only tree crowns above it)
+	check("lawn control (840, 200) is still terrain Grass", topMat(840, 200) == Enum.Material.Grass, topMat(840, 200).Name)
 end
 
 return HttpService:JSONEncode(results)

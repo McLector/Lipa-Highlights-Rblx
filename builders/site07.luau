@@ -8,7 +8,7 @@
 -- FRAME: WORLD coordinates. The helpers take world x, y, z directly (+X east, +Z south, y above the ground at 0). The board's north is
 --   world north. The model faces W: WorldPivot = CFrame.lookAt(ORIGIN, ORIGIN + (-1,0,0)) is written after parenting.
 -- KEEP SET: Guide, InfoPanel, JeepStop, JeepSignPole, JeepSign, Jeepney, LocalNPCs are never touched, moved or recreated. EVERY other child
---   of the model is destroyed on every run (a keep list, not a replace list) and rebuilt by the modules. NO TERRAIN WRITES: the rivers and
+--   of the model is destroyed on every run (a keep list, not a replace list) and rebuilt by the modules. NO TERRAIN WRITES in the modules (the last step, site07_ground, only repaints Grass): the rivers and
 --   lagoons are parts, flush with the ground; the old Pavement cells and the old terrain lagoon (x 700..800, z 300..352) are covered by parts.
 -- IDEMPOTENT. Fail-safe order (site05): everything is planned unparented first, so an error leaves the old model untouched; then the old
 --   non-kept children are destroyed and the plan is parented in batches with task.wait().
@@ -374,7 +374,12 @@ return function()
 	end
 	for path, n in pairs(counts) do perContainer[#perContainer + 1] = path .. "=" .. n end
 	table.sort(perContainer)
+	-- grass cleanup (2026-10-31): the last step repaints the terrain Grass under the ground-level parts (builders/site07_ground.luau,
+	-- Grass -> Mud / Pavement / Ground only, inside the slot). Idempotent; skipped if the module is missing.
+	local groundMod = builders:FindFirstChild("site07_ground")
+	local ground = groundMod and require(groundMod:Clone())() or nil
 	return {
+		ground = ground and (ground.repainted .. " repainted") or "missing",
 		parts = total,
 		builtParts = used,
 		keptParts = kept,

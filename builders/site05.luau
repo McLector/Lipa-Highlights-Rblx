@@ -9,8 +9,9 @@
 --   above the ground (ground y 0; asserted within 0.6 by a raycast). The model faces +Z: WorldPivot = CFrame.lookAt(ORIGIN, ORIGIN + (0,0,1))
 --   is written after parenting (RightVector -X, the "yawed 180" pivot of the old builder).
 -- KEEP SET: Guide, InfoPanel, JeepStop, JeepSignPole, JeepSign, Jeepney, LocalNPCs are never touched, moved or recreated. EVERY other child of
---   the model is destroyed on every run (a keep list, not a replace list) and rebuilt by the modules. No terrain writes (the forecourt
---   Pavement region x -52..52, z 0..92 of builders/world.luau stays as it is).
+--   the model is destroyed on every run (a keep list, not a replace list) and rebuilt by the modules. The only terrain write is the last
+--   step, builders/site05_ground.luau: Grass -> Pavement/Concrete under the site's ground-contact parts (the forecourt Pavement region
+--   x -52..52, z 0..92 of builders/world.luau stays as it is).
 -- IDEMPOTENT. Fail-safe order (site03): everything is planned unparented first, so an error leaves the old model untouched; then the old
 --   non-kept children are destroyed and the plan is parented in batches with task.wait().
 --
@@ -325,7 +326,11 @@ return function()
 	end
 	for path, n in pairs(counts) do perContainer[#perContainer + 1] = path .. "=" .. n end
 	table.sort(perContainer)
+	-- Last step: repaint terrain Grass under the rebuilt parts (no parts made; idempotent).
+	local groundMod = builders:FindFirstChild("site05_ground")
+	local terrainReport = groundMod and require(groundMod:Clone())() or "missing"
 	return {
+		terrain = terrainReport,
 		parts = total,
 		builtParts = used,
 		keptParts = kept,

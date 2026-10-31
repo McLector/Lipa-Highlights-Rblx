@@ -2,7 +2,7 @@
 -- (Standard tier S1, 2026-10-31: "Mount Carmel Monastery Blueprint.png", briefs/site05.md Revision 2). Written BEFORE the rebuild.
 -- Studio copy: ServerStorage.Checks.site05_check. Run in Edit via execute_luau:
 --   require(game.ServerStorage.Checks.site05_check:Clone())      -- returns JSON {passed, failed, failures}
--- Groups (set shared.site05_only = "general" | "facade" | "chapel" | "monastery" | "rectory" | "grounds" | "clear" first to run one;
+-- Groups (set shared.site05_only = "general" | "facade" | "chapel" | "monastery" | "rectory" | "grounds" | "clear" | "terrain" first to run one;
 -- run_all leaves it nil and runs all; SET IT BACK TO nil after a filtered run).
 -- Frame: the site pivot is yawed 180 degrees, but the builder works in world-aligned local axes (origin = the pivot position), so every
 -- coordinate here is world position minus the site position: local +Z = south = the facade side, +X = east. Heights are above the
@@ -540,6 +540,49 @@ if group("clear") then
 		end
 	end
 	check("thin ground-level paving lies inside the repainted Pavement region (x +-52, z 0..92)", #stray == 0, table.concat(stray, "; ", 1, math.min(#stray, 3)))
+end
+
+------------------------------------------------------------------ terrain: no Grass blades under paving, floors, footprints (builders/site05_ground.luau)
+-- Terrain Grass draws blades about 0.9 above its surface, so they poke through thin paving and up along wall and building bases.
+-- The ground step repaints Grass -> Pavement/Concrete under every ground-contact non-grass part; lawns and beds keep Grass.
+if group("terrain") then
+	local T = workspace.Terrain
+	local function terr(x, z) -- material of the surface voxel (y -4..0) holding site-local (x, z)
+		local wx, wz = math.floor((SITE_POS.X + x) / 4) * 4, math.floor((SITE_POS.Z + z) / 4) * 4
+		local m = T:ReadVoxels(Region3.new(Vector3.new(wx, -4, wz), Vector3.new(wx + 4, 0, wz + 4)), 4)
+		return m[1][1][1]
+	end
+	local GRASS = Enum.Material.Grass
+	local spots = {
+		{ "DriveEast", 65, 68 }, { "ShrineYard", 100, 80 }, { "ShrineBody", 92, 64 }, { "PrayerSlab (pews)", 60, 40 }, { "GrottoPad", 80, -51 },
+		{ "WalkwayFloor", -60, -60 }, { "VerandaDeck", -101, 5 }, { "CourtPath", -62, -2 }, { "CourtPathN", -72, -30 }, { "ChapelPath", -50, -30 },
+		{ "GazeboFloor", -82, 22 }, { "Podium", 0, -6 }, { "NaveBlock", 0, -38 }, { "MonasteryBlock", -67, -75 }, { "RectoryBlock", 95, -37 },
+		{ "AnnexBlock", 55, -37 }, { "WallBase N", 0, -88 }, { "WallBase E", 108, 0 }, { "CourtWallBase", -71, 34 },
+	}
+	local bad = {}
+	for _, s in ipairs(spots) do
+		local m = terr(s[2], s[3])
+		if m == GRASS then table.insert(bad, s[1]) end
+	end
+	check("NEW: terrain under " .. #spots .. " paving/floor/footprint spots is not Grass", #bad == 0, #bad .. " Grass: " .. table.concat(bad, ", ", 1, math.min(#bad, 6)))
+	-- Every ground-contact part (bottom <= 0.9, 3+ wide, not Grass material, not a rig, not Landscape) sits on non-Grass terrain at its centre.
+	local under, total = {}, 0
+	for _, p in ipairs(site:GetDescendants()) do
+		if p:IsA("BasePart") and not isRig(p) and p.Material ~= GRASS and not p:IsDescendantOf(site:FindFirstChild("Landscape") or p) then
+			local l = lp(p)
+			local x0, x1 = extent(p, "X")
+			local z0, z1 = extent(p, "Z")
+			local y0 = extent(p, "Y")
+			if y0 <= 0.9 and math.max(x1 - x0, z1 - z0) >= 3 and math.abs(l.X) <= 108 and math.abs(l.Z) <= 88 then
+				total += 1
+				if terr(l.X, l.Z) == GRASS then table.insert(under, p.Name) end
+			end
+		end
+	end
+	check("NEW: every ground-contact paving/floor/wall part (" .. total .. ") stands on non-Grass terrain", total >= 40 and #under == 0, #under .. " on Grass: " .. table.concat(under, ", ", 1, math.min(#under, 6)))
+	-- Lawn controls keep Grass: the courtyard lawn and the open lawn west of the island.
+	check("NEW: the courtyard lawn (-84, -24) is still Grass terrain", terr(-84, -24) == GRASS, terr(-84, -24).Name)
+	check("NEW: the open lawn inside the south-west wall (-78, 44) is still Grass terrain", terr(-78, 44) == GRASS, terr(-78, 44).Name)
 end
 
 return HttpService:JSONEncode(results)
