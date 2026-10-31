@@ -17,7 +17,7 @@ return function(t)
 		return require(game.ServerStorage.BuildCheck:Clone())
 	end
 	local function SiteData()
-		return require(game.ReplicatedStorage.LipaShared.SiteData)
+		return require(game.ReplicatedStorage.LipaShared.SiteData:Clone()) -- fresh copy: a cached require hid the 450 x 300 Outlets slot (062)
 	end
 
 	local function newPart(parent, name, size, pos, anchored)
@@ -275,13 +275,13 @@ return function(t)
 
 	t.test("bounds are measured in world axes for a diagonal (45 degree) site", function()
 		local BC = loadBuildCheck()
-		local row = SiteData().byId(6) -- facing SW, footprint 300 x 200: limits x +-165, z +-110
+		local row = SiteData().byId(6) -- facing SW; limits are size / 2 * 1.1 in world x and z (450 x 300 since 061: x +-247.5, z +-165)
 		local ok = makeFixture(row, { pre = function(m)
 			newPart(m.Structure, "LongX", Vector3.new(280, 2, 2), row.pos + Vector3.new(0, 1, 0), true)
 		end })
 		expect.equal(describe(BC.checkSite(ok, row)), "")
 		local bad = makeFixture(row, { pre = function(m)
-			newPart(m.Structure, "LongZ", Vector3.new(2, 2, 230), row.pos + Vector3.new(0, 1, 0), true)
+			newPart(m.Structure, "LongZ", Vector3.new(2, 2, row.size.Y * 1.1 + 20), row.pos + Vector3.new(0, 1, 0), true) -- 20 past the z limit, whatever the slot
 		end })
 		local res = BC.checkSite(bad, row)
 		expect.truthy(failed(res, "bounds within footprint +10%"))
