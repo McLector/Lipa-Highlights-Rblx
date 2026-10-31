@@ -170,8 +170,20 @@ return function(env)
 				placed += 1
 			end
 		end
+		-- Session 062 (owner: the front rocks hid most of GOLF AND COUNTRY CLUB): the five big front rocks (x 514..549, tops 22.3..25.8) are
+		-- gone from in front of the lettering (x 519.7..544.3; line 2 spans y 20.3..22.3). Two flank the slab ends instead, and low foot stones
+		-- below the sign's bottom edge (tops capped at y 18.8, the slab starts at 19.2) sit in front of the text. site08_check group "sign".
+		for _, r in ipairs({ { 520, 586.5, 3.5 }, { 527, 586, 3 }, { 535, 586.5, 3.5 }, { 542, 586, 3 } }) do
+			local x, z, d = r[1], r[2], r[3]
+			local g = gnd(x, z)
+			local top = math.min(g + d * 0.5, 18.8)
+			if top - g >= 0.8 then
+				ball(ctx, "MonumentRock", x, top - d / 2, z, d, (placed % 2 == 0) and C.ROCK_D or C.ROCK, M.ROCK)
+				placed += 1
+			end
+		end
 		for _, r in ipairs({
-			{ 514, 586.5, 7 }, { 522, 586, 6 }, { 531, 586.5, 7.5 }, { 540, 586, 6 }, { 549, 586.5, 7 },
+			{ 508, 586.5, 6.5 }, { 553, 586.5, 7 },
 			{ 511, 594, 12 }, { 521, 596, 14 }, { 532, 597, 15 }, { 543, 596, 14 }, { 553, 594, 12 },
 			{ 526, 603, 12 }, { 538, 604, 13 }, { 549, 602, 11 }, { 516, 602, 10 },
 			{ 506, 589, 8 }, { 558, 588, 9 }, { 560, 598, 10 }, { 504, 597, 9 },
@@ -218,6 +230,8 @@ return function(env)
 		local function boulder(x, z, d, inWater)
 			local base = gnd(x, z) + (inWater and 0.7 or 0.6)
 			local top = base + d * 0.45
+			-- Session 062: rim boulders at the sign's foot stay below its bottom edge (y 19.2) in front of the lettering.
+			if z > 580 and x > 514 and x < 550 then top = math.min(top, 18.8) end
 			if env.sightClear(x, z, d / 2, top) then
 				ball(ctx, "LagoonBoulder", x, top - d / 2, z, d, (n % 2 == 0) and C.ROCK or C.ROCK_D, M.ROCK)
 				n += 1

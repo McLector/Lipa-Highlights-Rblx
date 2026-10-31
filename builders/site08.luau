@@ -107,7 +107,7 @@ return function()
 		PAVE = Color3.fromRGB(150, 150, 156), PAVE_L = Color3.fromRGB(196, 192, 184), CONC = Color3.fromRGB(186, 178, 166),
 		BRICK = Color3.fromRGB(160, 70, 50), COPING = Color3.fromRGB(226, 214, 190), AQUA = Color3.fromRGB(60, 180, 215),
 		LAGOON = Color3.fromRGB(52, 120, 160), FOAM = Color3.fromRGB(225, 240, 245),
-		PINE = Color3.fromRGB(40, 92, 52), TRUNK = Color3.fromRGB(120, 98, 70), FROND = Color3.fromRGB(50, 110, 50),
+		PINE = Color3.fromRGB(40, 92, 52), PINE_L = Color3.fromRGB(50, 108, 60), TRUNK = Color3.fromRGB(120, 98, 70), FROND = Color3.fromRGB(50, 110, 50),
 		LEAF = Color3.fromRGB(52, 112, 50), LEAF_D = Color3.fromRGB(38, 90, 44), SHRUB = Color3.fromRGB(46, 100, 50),
 		MTN = Color3.fromRGB(70, 104, 96), MTN_D = Color3.fromRGB(52, 82, 76), TIMBER = Color3.fromRGB(150, 104, 64), BROWN = Color3.fromRGB(130, 90, 60),
 		WHITE = Color3.fromRGB(245, 245, 240), RED = Color3.fromRGB(210, 45, 45), YELLOW = Color3.fromRGB(226, 190, 60), BLUE = Color3.fromRGB(50, 80, 160),
@@ -178,12 +178,22 @@ return function()
 	end
 
 	------------------------------------------------------------------ planting (one spec for the whole site; site08_check pins palms and pines)
+	-- Pine (session 062, owner: the stacked cylinder tiers looked poor): the 34-tall trunk and a tapered crown of 4 overlapping tiers, each a
+	-- square pyramid of 4 CornerWedgeParts named PineCrown (the hip-roof corner layout, L = D), every second tier turned 45 degrees and a shade
+	-- lighter. Tier = { base above the ground, width, rise }: tops 18, 24, 30, 36 (the tip covers the trunk); the widest corner is
+	-- 7.2 / sqrt(2) = 5.09 from the axis, so callers test env.sightClear(x, z, 5.1, g + 36). 17 parts per pine. Foliage does not collide.
+	local PINE_TIERS = { { 6, 7.2, 12 }, { 13, 6.0, 11 }, { 20, 4.8, 10 }, { 27, 3.4, 9 } }
 	local function pine(ctx, x, z)
 		local g = gnd(x, z)
 		vcyl(ctx, "PineTrunk", x, z, g, g + 34, 1.2, C.TRUNK, M.WOOD)
-		for k = 0, 7 do
-			local y0 = 6 + k * 3.5
-			vcyl(ctx, "PineTier", x, z, g + y0, g + y0 + 3.2, 9.5 - k * 0.95, C.PINE, M.GRASS)
+		for k, t in ipairs(PINE_TIERS) do
+			local a, h = t[2] / 2, t[3]
+			local cf = CF(x, g + t[1], z) * ANG(0, (k % 2 == 0) and PI / 4 or 0, 0)
+			local col = (k % 2 == 0) and C.PINE_L or C.PINE
+			for _, c in ipairs({ { 1, -1, PI }, { -1, -1, -PI / 2 }, { 1, 1, PI / 2 }, { -1, 1, 0 } }) do
+				local w = ctx:_make("CornerWedgePart", "PineCrown", V(a, h, a), cf * CF(c[1] * a / 2, h / 2, c[2] * a / 2) * ANG(0, c[3], 0), col, M.GRASS)
+				w.CanCollide = false
+			end
 		end
 	end
 	local function palm(ctx, x, z)

@@ -216,7 +216,8 @@ return function(env)
 			{ 600, 606 }, { 628, 604 }, { 656, 606 }, { 684, 604 }, { 604, 664 },
 			{ 690, 660 }, { 700, 752 }, { 716, 738 }, { 600, 860 }, { 472, 622 },
 		}) do
-			if env.sightClear(p[1], p[2], 5, gnd(p[1], p[2]) + 34) then
+			-- Session 062: the tapered crown reaches 5.09 from the axis and its tip g + 36 (was the 4.75-radius tier stack, top g + 34).
+			if env.sightClear(p[1], p[2], 5.1, gnd(p[1], p[2]) + 36) then
 				env.pine(ctx, p[1], p[2])
 				pinesBuilt += 1
 			end

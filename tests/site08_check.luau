@@ -9,6 +9,8 @@
 -- Revision 3 (owner look, 2026-10-31): groups "mountain" (a wedge ridge behind the clubhouse replaces the cylinder tiers), "course" (fairways,
 -- greens with flags, bunkers, ponds lying on the slope), "planting" (dense woods and palms); the entrance group gains the flush-lagoon pins.
 -- Polish (2026-10-31): group "ground" (no terrain Grass blades under water, bunkers, paving, floors; builders/site08_ground.luau).
+-- Session 062 (owner): group "pines" (tapered conifers replace the stacked tiers), group "sign" (both lines of the rock sign seen from the
+-- approach), and a dense no-Grass grid under the water in "ground". Pins replaced in place are logged in briefs/site08.md Revision 4.
 local HttpService = game:GetService("HttpService")
 local ONLY = shared.site08_only
 local function run(group) return ONLY == nil or ONLY == group end
@@ -277,12 +279,17 @@ if run("context") then
 		if extent(t, "Y") < 33 then short += 1 end
 	end
 	check("context: every pine trunk is at least 33 tall", #trunks > 0 and short == 0, short .. " short")
-	check("context: each pine has 8 tiers", #trunks > 0 and #tiers == #trunks * 8, #tiers .. " tiers for " .. #trunks)
+	-- Session 062 (owner: the stacked tiers look poor): the two tier pins are REPLACED in place (briefs/site08.md Revision 4).
+	-- old: "context: each pine has 8 tiers" (#PineTier == #trunks * 8)
+	local crowns = allNamed("PineCrown")
+	check("context: each pine has a crown of 4 tiers (16 PineCrown corner wedges per trunk)", #trunks > 0 and #crowns == #trunks * 16,
+		#crowns .. " crown wedges for " .. #trunks .. " trunks (" .. #tiers .. " old tiers)")
+	-- old: "context: pine tiers are slender (widest <= 9.6)" (the tier cylinder's diameter); now the tier's width (2 x the wedge's half-width)
 	local wide = 0
-	for _, t in ipairs(tiers) do
-		if math.max(t.Size.Y, t.Size.Z) > 9.6 then wide += 1 end
+	for _, t in ipairs(crowns) do
+		if 2 * math.max(t.Size.X, t.Size.Z) > 9.6 then wide += 1 end
 	end
-	check("context: pine tiers are slender (widest <= 9.6)", #tiers > 0 and wide == 0, tostring(wide))
+	check("context: pine crowns are slender (widest tier <= 9.6)", #crowns > 0 and wide == 0, tostring(wide))
 	check("context: at least 30 broadleaf trees (the board's dense woods)", #allNamed("BroadleafTrunk") >= 30, tostring(#allNamed("BroadleafTrunk")))
 	local mb = site:FindFirstChild("MountainBackdrop")
 	local n = 0
@@ -674,6 +681,7 @@ if run("ground") then
 			for _, p in ipairs(allNamed(nm)) do
 				for _, q in ipairs(footSamples(p)) do
 					-- Within 4 of the slot edge the surface blends with the voxel outside the slot (the road verge, not repainted): skipped.
+					-- Logged in briefs/site08.md Revision 4: the verge is outside the plot; the water parts are pinned without this skip below.
 					if math.min(q.X - 360, 760 - q.X, q.Z - 560, 880 - q.Z) < 4 then continue end
 					n += 1
 					local m = matAt(q.X, q.Z)
@@ -699,6 +707,182 @@ if run("ground") then
 	check("ground: no Grass under the rock sign base and the lagoon stone edges", n >= 20 and bad == 0, bad .. " of " .. n .. ": " .. table.concat(list, "; "))
 	local lawn = matAt(600, 600)
 	check("ground: the open lawn at (600, 600) is still Grass (control)", lawn == Enum.Material.Grass, lawn and lawn.Name or "nil")
+	-- Session 062: blades still showed through the lagoon water along the slot edge (the 0.4-extent samples above never reach a footprint's
+	-- edge, and the edge skip hid the strip). Dense grid: every 1 stud over each water footprint padded 1 stud, no edge skip.
+	local WATER = { LagoonWater = true, PondWater = true, PoolWater = true, PoolWaterLobe = true, HotelPoolWater = true }
+	local wn, wbad, wlist = 0, 0, {}
+	for _, p in ipairs(site:GetDescendants()) do
+		if p:IsA("BasePart") and WATER[p.Name] and not isRig(p) then
+			local cf, sz = p.CFrame, p.Size
+			local axes = { { cf.RightVector, sz.X }, { cf.UpVector, sz.Y }, { cf.LookVector, sz.Z } }
+			local up = 1
+			for i = 2, 3 do
+				if math.abs(axes[i][1].Y) > math.abs(axes[up][1].Y) then up = i end
+			end
+			local ip = {}
+			for i = 1, 3 do
+				if i ~= up then
+					local f = Vector3.new(axes[i][1].X, 0, axes[i][1].Z)
+					table.insert(ip, { f.Unit, axes[i][2] * f.Magnitude })
+				end
+			end
+			local disc = p:IsA("Part") and p.Shape == Enum.PartType.Cylinder and up == 1
+			local c = p.Position
+			local R = disc and math.max(ip[1][2], ip[2][2]) / 2 + 1 or (ip[1][2] + ip[2][2]) / 2 + 1
+			local b = 0
+			for x = math.floor(c.X - R), math.ceil(c.X + R) do
+				for z = math.floor(c.Z - R), math.ceil(c.Z + R) do
+					local d = Vector3.new(x - c.X, 0, z - c.Z)
+					local inside
+					if disc then
+						inside = d.Magnitude <= math.max(ip[1][2], ip[2][2]) / 2 + 1
+					else
+						inside = math.abs(d:Dot(ip[1][1])) <= ip[1][2] / 2 + 1 and math.abs(d:Dot(ip[2][1])) <= ip[2][2] / 2 + 1
+					end
+					if inside then
+						wn += 1
+						if matAt(x, z) == Enum.Material.Grass then b += 1 end
+					end
+				end
+			end
+			wbad += b
+			if b > 0 and #wlist < 6 then table.insert(wlist, string.format("%s@(%.0f,%.0f) %d", p.Name, c.X, c.Z, b)) end
+		end
+	end
+	check("ground: no Grass under or within 1 stud of any water part (1-stud grid, no edge skip; 3000+ samples)", wn >= 3000 and wbad == 0,
+		wbad .. " of " .. wn .. ": " .. table.concat(wlist, "; "))
+end
+
+------------------------------------------------------------------ PINES (session 062): tapered conifers, not stacked discs
+-- Each pine: a trunk and 4 crown tiers, each a square pyramid of 4 CornerWedgeParts (PineCrown), narrowing upward, overlapping into one cone.
+if run("pines") then
+	local trunks, crowns = allNamed("PineTrunk"), allNamed("PineCrown")
+	local notWedge = 0
+	for _, c in ipairs(crowns) do
+		if not c:IsA("CornerWedgePart") then notWedge += 1 end
+	end
+	check("pines: no stacked cylinder tiers remain and every crown piece is a CornerWedgePart", #allNamed("PineTier") == 0 and #crowns > 0 and notWedge == 0,
+		#allNamed("PineTier") .. " PineTier, " .. #crowns .. " PineCrown, " .. notWedge .. " not wedges")
+	local per, orphan = {}, 0
+	for _, t in ipairs(trunks) do per[t] = {} end
+	for _, c in ipairs(crowns) do
+		local best, bd = nil, 6
+		for _, t in ipairs(trunks) do
+			local d = off(c.Position, t.Position).Magnitude
+			if d < bd then best, bd = t, d end
+		end
+		if best then table.insert(per[best], c) else orphan += 1 end
+	end
+	local badTaper, badCone, badShape, badCollide = {}, {}, {}, 0
+	for t, list in pairs(per) do
+		local tiers = {}
+		for _, c in ipairs(list) do
+			local base = c.Position.Y - c.Size.Y / 2
+			local key = string.format("%.1f", base)
+			tiers[key] = tiers[key] or { base = base, top = base + c.Size.Y, w = 2 * math.max(c.Size.X, c.Size.Z), n = 0 }
+			tiers[key].n += 1
+			if c.CanCollide then badCollide += 1 end
+		end
+		local arr = {}
+		for _, v in pairs(tiers) do table.insert(arr, v) end
+		table.sort(arr, function(a, b) return a.base < b.base end)
+		local where = string.format("(%.0f,%.0f)", t.Position.X, t.Position.Z)
+		local ok = #arr == 4
+		for i, v in ipairs(arr) do
+			if v.n ~= 4 then ok = false end
+			if i > 1 and not (v.w < arr[i - 1].w - 0.5) then ok = false end
+		end
+		if not ok then table.insert(badTaper, where .. " " .. #arr .. " tiers") end
+		local g = t.Position.Y - extent(t, "Y") / 2
+		local tTop = t.Position.Y + extent(t, "Y") / 2
+		if #arr >= 1 then
+			local cone = arr[1].base - g >= 4 and arr[#arr].top >= tTop
+			for i = 2, #arr do
+				if arr[i].base >= arr[i - 1].top then cone = false end
+			end
+			if not cone then table.insert(badCone, where) end
+			if arr[#arr].top - arr[1].base < 2.5 * arr[1].w then table.insert(badShape, where) end
+		else
+			table.insert(badCone, where .. " no crown")
+			table.insert(badShape, where .. " no crown")
+		end
+		if not t.CanCollide then badCollide += 1 end
+	end
+	check("pines: every crown is 4 tiers of 4 wedges, each tier at least 0.5 narrower than the one below (tapered)", #trunks > 0 and #badTaper == 0 and orphan == 0,
+		#badTaper .. " bad, " .. orphan .. " orphan wedges: " .. table.concat(badTaper, "; ", 1, math.min(#badTaper, 4)))
+	check("pines: the tiers overlap into one cone, the crown starts 4+ above the ground and its tip covers the trunk top", #trunks > 0 and #badCone == 0,
+		table.concat(badCone, "; "))
+	check("pines: conifer silhouette (crown height at least 2.5 x the bottom tier width)", #trunks > 0 and #badShape == 0, table.concat(badShape, "; "))
+	check("pines: foliage is non-colliding, trunks collide", #trunks > 0 and badCollide == 0, tostring(badCollide))
+end
+
+------------------------------------------------------------------ SIGN (session 062): both lines of the rock sign read from the approach
+-- Targets: a grid on the glyph block of each TextLabel (TextService width, TextSize tall), on the sign face. Every ray from each approach eye
+-- must reach MonumentSign first (nothing filtered: rocks, boulders, shrubs, water all count as blocking). Eyes: the pinned road eye at the
+-- foot of the drive (sites_check), a standing eye south-west of the lagoon and one straight in front of the sign (outside the slot, the verge).
+if run("sign") then
+	local TS = game:GetService("TextService")
+	local sign = site:FindFirstChild("MonumentSign", true)
+	local gui = sign and sign:FindFirstChildOfClass("SurfaceGui")
+	local lines = {}
+	if gui and gui.Face == Enum.NormalId.Front then
+		local ppsd = gui.PixelsPerStud
+		local top = sign.Position.Y + sign.Size.Y / 2
+		local face = sign.Position.Z - sign.Size.Z / 2
+		for _, l in ipairs(gui:GetChildren()) do
+			if l:IsA("TextLabel") then
+				local px = TS:GetTextSize(l.Text, l.TextSize, l.Font, Vector2.new(1e4, 1e4))
+				local cy = top - (l.Position.Y.Scale + l.Size.Y.Scale / 2) * sign.Size.Y
+				local cx = sign.Position.X - sign.Size.X / 2 + (l.Position.X.Scale + l.Size.X.Scale / 2) * sign.Size.X
+				local w, h = px.X / ppsd, l.TextSize / ppsd
+				local pts = {}
+				for i = 0, 6 do
+					for _, fy in ipairs({ -0.3, 0, 0.3 }) do
+						table.insert(pts, Vector3.new(cx - 0.45 * w + i * 0.15 * w, cy + fy * h, face + 0.05))
+					end
+				end
+				table.insert(lines, { text = l.Text, pts = pts })
+			end
+		end
+	end
+	local EYES = { { "road eye", Vector3.new(450, 14.5, 556) }, { "south-west eye", Vector3.new(490, 18.3, 552) }, { "front eye", Vector3.new(532, 22.5, 552) } }
+	for _, want in ipairs({ "MOUNT MALARAYAT", "GOLF AND COUNTRY CLUB" }) do
+		local line
+		for _, L in ipairs(lines) do
+			if L.text == want then line = L end
+		end
+		local hits, total, blockers = 0, 0, {}
+		for _, e in ipairs(EYES) do
+			local eh = 0
+			for _, q in ipairs(line and line.pts or {}) do
+				total += 1
+				local r = workspace:Raycast(e[2], (q - e[2]) * 1.02)
+				if r and r.Instance == sign then
+					hits += 1
+					eh += 1
+				elseif r then
+					blockers[r.Instance.Name] = true
+				end
+			end
+			if line then table.insert(blockers, e[1] .. " " .. eh .. "/" .. #line.pts) end
+		end
+		local names = {}
+		for k, v in pairs(blockers) do table.insert(names, type(k) == "string" and k or v) end
+		check("sign: every ray from 3 approach eyes reaches the sign on " .. want .. " (63 rays)", line ~= nil and total == 63 and hits == total,
+			hits .. "/" .. total .. ": " .. table.concat(names, ", "))
+	end
+	local tall = {}
+	for _, nm in ipairs({ "MonumentRock", "LagoonBoulder", "Shrub" }) do
+		for _, p in ipairs(allNamed(nm)) do
+			local top = p.Position.Y + extent(p, "Y") / 2
+			if sign and p.Position.X > 518 and p.Position.X < 546 and p.Position.Z < sign.Position.Z - sign.Size.Z / 2 and p.Position.Z > 576
+				and top > sign.Position.Y - sign.Size.Y / 2 then
+				table.insert(tall, string.format("%s@(%.0f,%.0f) top %.1f", nm, p.Position.X, p.Position.Z, top))
+			end
+		end
+	end
+	check("sign: no rock, boulder or shrub in front of the lettering (x 518..546) rises above the sign's bottom edge", sign ~= nil and #tall == 0,
+		#tall .. ": " .. table.concat(tall, "; ", 1, math.min(#tall, 4)))
 end
 
 ------------------------------------------------------------------ Part budget
