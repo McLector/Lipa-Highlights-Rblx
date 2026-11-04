@@ -1,5 +1,116 @@
 # Lipa-Highlights-Rblx
-Art appreciation final project detailing the highlights of Lipa City, introducing some of it's cultural identity through tourist destinations. You can expect to see some brief introduction of places that has their own guides, chill music and nice vibes.
+
+A self-guided sunset tour of **Lipa City, Batangas**, built in Roblox Studio. It is the Art Appreciation final project: ten real destinations, each with a local guide, short stories, a trivia question and a stamp for your Lipa Passport, introducing the city's cultural identity through chill music and nice vibes.
+
+> **AI assistant?** Jump to [Rules for AI assistants](#rules-for-ai-assistants-read-this-first). They are binding.
+> **Teammate?** Jump to the [Team guide](#team-guide).
+
+**Contents:** [The tour](#the-tour-10-sites) · [How it plays](#how-it-plays) · [How it is built](#how-it-is-built) · [Repository layout](#repository-layout) · [Tests and checks](#tests-and-checks) · [Content and sources](#content-and-sources) · [Docs](#docs) · [Status](#status) · [Rules for AI assistants](#rules-for-ai-assistants-read-this-first) · [Team guide](#team-guide)
+
+---
+
+## The tour: 10 sites
+
+You start at New Lipa City Hall (site 10) and may visit the rest in any order. Site data lives in `src/ReplicatedStorage/LipaShared/SiteData.luau`; the written content is in `content/tour_content.md`.
+
+| # | Site | Theme | Guide |
+|---|---|---|---|
+| 1 | Plaza Independencia & Metropolitan Cathedral | Lipa's historic heart | Lola Cora, parishioner |
+| 2 | Candido B. Lopez Memorial Public Market | The palengke, everyday Lipa | Aling Nena, market vendor |
+| 3 | Lomi King | Lipa's thick, hearty noodle soup | Kuya Ben, lomi cook |
+| 4 | Cafe de Lipa | Kapeng barako, bold local coffee | Mika, barista |
+| 5 | Monastery of Our Lady of Mount Carmel | Prayer and pilgrimage since 1946 | Ate Liza, chapel volunteer |
+| 6 | The Outlets at LIMA Estate | Outdoor lifestyle mall | Paolo, football player |
+| 7 | The Farm at San Benito | Wellness retreat | Ms. Grace, resort staff |
+| 8 | Mount Malarayat Golf & Country Club | Golf with a mountain view | Jun, caddie |
+| 9 | Tagbakin | Lakeside spot where the city first began | Mang Tonyo, fisherman |
+| 10 | New Lipa City Hall | Welcome and start of the tour | Ate Joy, City tourism guide |
+
+The stamp grid is themed Eat, Pray, Love, with a gold Welcome stamp for City Hall.
+
+## How it plays
+
+- **Welcome screen.** Pick an outfit (barong or baro't saya) and press Start, which also starts the ambient music. A mute toggle is always available.
+- **Guides.** Walk up to a guide and press **E**. They talk in short, casual lines (typewriter dialogue, Next / Close), share "Did you know" facts and a "Look at" line about the art of the building, and stamp your passport. The dialogue closes if you walk away.
+- **Trivia.** One multiple-choice question per site. The answer key stays on the server (`QuizKey`) and is never sent to clients.
+- **Lipa Passport.** The HUD shows `Passport x/10`. Stamping all ten opens a certificate with your name and the local date.
+- **Self-guiding.** A "next stop" hint under the HUD, a NEXT pin, signposts and a tour map point first-time players onward without removing freedom.
+- **Jeepney.** At any jeepney stop a menu lists destinations. The ride really drives; most trips take 5 to 13 seconds and none exceeds 18.
+- **Mood.** Golden-hour lighting (Lighting ClockTime 17.5), lamps that glow at runtime, relaxing music, and Filipino filler buildings instead of empty template grass.
+- **Server checks.** Stamping and jeep rides are validated on the server: rate limits, id validity, distance to the guide or stop, cooldowns. A recorded playtest of the earlier build is in `docs/ship/slice-23-playtest.md`.
+
+## How it is built
+
+Roblox place files cannot be merged, so **the world is built by code and saved as text**. Each site has a Luau builder in `builders/` that deletes and recreates that site, so re-running it is safe. Git tracks the builders and scripts; the `.rbxl` place file stays outside the repo.
+
+**Structures follow the blueprints and reference photos strictly** (owner rule). The blueprint decides massing and layout, the photos decide visible detail, and a structure is done when its blueprint-view shot matches by eye, not merely when checks pass. Budgets: BuildCheck allows 2,500 parts per site and 25,000 for the world.
+
+**Builders (`builders/`)**
+- `world.luau`: terrain and roads. **Never run it**, it wipes all terrain.
+- `site01.luau` to `site10.luau`, plus sub-builders such as `site02_hall`, `site07_water`, `site10_wing`.
+- `guides.luau`, `npcs.luau`, `placeholders.luau`, `filler.luau`, `roads_extra.luau`, `mood.luau`, `spawn.luau`, `remotes.luau`, `credits.luau`.
+
+**Game scripts (`src/`, mapped to Studio services)**
+
+| Studio location | Files |
+|---|---|
+| `ReplicatedStorage/LipaShared` | `SiteData` (the ten sites), `TourContent` (all text), `PassportLogic`, `DialogueLogic`, `GuidanceLogic`, `CertificateLogic`, `CreditsData`, `RoadData` |
+| `ServerScriptService` | `PassportServer`, `JeepneyServer`, `NpcIdle`, `LampGlow`, `UnitTestRunner` |
+| `ServerStorage` | `BuildKit` (builder helpers), `BuildCheck` (structure checks), `LipaServer/StampRules`, `JeepRules`, `QuizKey` |
+| `StarterPlayerScripts` | `WelcomeClient`, `GuideClient`, `PassportClient`, `JeepneyClient` |
+
+Logic modules are pure (no Instances) so they can be unit tested.
+
+## Repository layout
+
+```text
+briefs/      one design brief per site (site01.md .. site10.md)
+builders/    Luau scripts that build the world, sites, guides, NPCs and mood
+content/     human-readable tour text, dialogue draft, photo credits
+docs/        plans, baseline, footprints, shot kit, integration guide, handoffs
+  handoff/   session-by-session handoff notes (001 onward)
+  ship/      playtest and ship notes
+src/         game scripts, mirrored to Studio services
+tests/       unit tests, per-site checks, run_all, cross-check scripts
+tools/       hash.js (disk vs Studio), outfit_textures.py
+.github/     PR template, Copilot instructions
+```
+
+## Tests and checks
+
+Write the check first and see it fail, then make it pass.
+
+- **Unit tests** (`tests/*_Test.luau`): passport, certificate, dialogue, guidance, jeep and stamp rules, quiz key, site data, tour content, credits data, build kit and build check.
+- **Stored checks** (`tests/siteNN_check.luau`, `sites_check`, `world_check`, `roads_check`, `routes_check`, `qa_check`, `guides_check`, `npcs_check`, `placeholders_check`, `filler_check`, `guidance_play_check`).
+- **`run_all`** runs every stored check, the unit suite, BuildCheck for all ten sites, the world check, the pivots and the terrain cell count, and compares them with `EXPECTED` in `tests/run_all.luau`. In Studio's Command Bar (Edit mode):
+  ```lua
+  require(game.ServerStorage.Checks.run_all:Clone())()
+  ```
+  It must report `"ok":true`.
+- **Cross-checks** on disk: `pwsh -NoProfile -File tests/credits_crosscheck.ps1`, `tests/tour_content_crosscheck.ps1`, `node tests/roads_match.js`, and `tests/test_outfit_textures.py`.
+- **Studio equals disk:** compare `node tools/hash.js <file>` with the hash of the Studio script.
+
+## Content and sources
+
+- Dialogue and on-screen text are plain ASCII with no invented facts. Unsourced claims are marked `[VERIFY]`, landmark names are exact.
+- Text lives in `content/tour_content.md` (checked against the module by `tests/tour_content_crosscheck.ps1`), `content/dialogue_draft.md` and `content/tour_content_changes.md`.
+- Photo and map sources per site are credited in `content/site_credits.md`, mirrored in `CreditsData.luau`. Author and course details are on the in-game credits board and in that file.
+- The place file, source photos and grading documents are shared privately and are not in this repo.
+
+## Docs
+
+- [`docs/PLAN.md`](docs/PLAN.md) and [`docs/PLAN-v2.md`](docs/PLAN-v2.md): the original and second-pass plans.
+- [`docs/baseline.md`](docs/baseline.md): the verified baseline and backup log.
+- [`docs/INTEGRATING.md`](docs/INTEGRATING.md): how the owner applies merged PRs to the real place.
+- [`docs/CONTRIBUTIONS.md`](docs/CONTRIBUTIONS.md), [`CONTRIBUTING.md`](CONTRIBUTING.md): contribution records and workflow.
+- [`docs/footprints.md`](docs/footprints.md), [`docs/shot-kit.md`](docs/shot-kit.md): site footprints and the camera shots used to compare models with blueprints.
+- [`docs/handoff/`](docs/handoff/): the running log of every work session.
+
+## Status
+
+As of 2026-11-04, work is on branch `feat/tour-v2` (the second pass: City Hall start, blueprint-faithful structures, sunset mood, self-guiding, moving jeepney, filler buildings). The latest handoff is [`docs/handoff/062-handoff.md`](docs/handoff/062-handoff.md): the ten sites are built and `run_all` is green.
+
+Open items: the Farm's west half is still thinner than its east, jeepney wheels sink into the terrain render, the new jeep stop pads do not collide, and a hand playthrough (Start, Mute, a jeep ride, lamps at 17.5) is still owed. Still being set up by the owner: task issues, roles, due date and the repo licence.
 
 ---
 
@@ -115,5 +226,5 @@ Files several people touch (`SiteData.luau`, `CreditsData.luau` with `content/si
 - Do not squash or rewrite your history: your commits are the record of your work.
 - Stuck, or a Git conflict? Stop and message the group. Do not guess.
 
-### 7. Status (2026-10-22)
-Still being set up by the owner: GitHub invitations, the task issues, the private folder with the place file and photos, everyone's role, the due date, the repo licence. More: `docs/PLAN.md`, `docs/baseline.md`, `docs/INTEGRATING.md`, `docs/CONTRIBUTIONS.md`.
+### 7. Status
+See the [Status](#status) section at the top. More: `docs/PLAN.md`, `docs/baseline.md`, `docs/INTEGRATING.md`, `docs/CONTRIBUTIONS.md`.
